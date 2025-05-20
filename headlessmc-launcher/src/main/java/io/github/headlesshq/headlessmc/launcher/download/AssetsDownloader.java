@@ -5,7 +5,7 @@ import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.val;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
 import io.github.headlesshq.headlessmc.api.config.HasConfig;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
@@ -28,7 +28,7 @@ public class AssetsDownloader {
     private final ChecksumService checksumService = new ChecksumService();
     private final DummyAssets dummyAssets = new DummyAssets();
 
-    private final CommandLine commandLine;
+    private final CommandLineManager commandLine;
     private final DownloadService downloadService;
     private final HasConfig config;
     private final FileManager files;

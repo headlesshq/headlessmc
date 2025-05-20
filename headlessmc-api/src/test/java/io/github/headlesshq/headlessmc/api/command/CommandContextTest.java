@@ -1,112 +1,123 @@
 package io.github.headlesshq.headlessmc.api.command;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.val;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
+import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
 import io.github.headlesshq.headlessmc.api.MockedHeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.impl.MultiCommand;
-import org.junit.jupiter.api.Assertions;
+import io.github.headlesshq.headlessmc.api.process.PrintWriterPrintStream;
+import io.github.headlesshq.headlessmc.api.process.ReadableOutputStream;
+import lombok.Cleanup;
 import org.junit.jupiter.api.Test;
+import picocli.CommandLine;
 
-import java.util.Collections;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommandContextTest {
-    // own instance because we want to test the log
-    private static final MockedHeadlessMc HMC = new MockedHeadlessMc();
-
     @Test
-    public void testCommandContextImpl() {
-        val ctx = new CommandContextImpl(HMC);
-        Assertions.assertDoesNotThrow(() -> ctx.execute("test"));
+    public void test() throws IOException {
+        HeadlessMc headlessMc = new MockedHeadlessMc();
+        @Cleanup
+        ReadableOutputStream os = new ReadableOutputStream();
+        @Cleanup
+        ReadableOutputStream err = new ReadableOutputStream();
+        headlessMc.getCommandLine().getInAndOutProvider().setOut(() -> new PrintWriterPrintStream(os, true));
+        headlessMc.getCommandLine().getInAndOutProvider().setErr(() -> new PrintWriterPrintStream(err, true));
 
-        ctx.add(TestCommands.COMMAND_1);
-        ctx.add(TestCommands.COMMAND_2);
-        ctx.add(new MultiCommand(HMC));
-        HMC.getCommandLine().setCommandContext(ctx);
-        TestCommands.COMMAND_1.setUsed(false);
-        TestCommands.COMMAND_2.setUsed(false);
-        Assertions.assertEquals(3, ctx.commands.size());
-        Assertions.assertEquals(TestCommands.COMMAND_1, ctx.commands.get(0));
-        Assertions.assertEquals(TestCommands.COMMAND_2, ctx.commands.get(1));
+        CommandContext context = new CommandContextImpl(headlessMc, RootTestCommand.class);
+        context.execute("-h");
 
-        Assertions.assertFalse(TestCommands.COMMAND_1.isUsed());
-        Assertions.assertFalse(TestCommands.COMMAND_2.isUsed());
+        String output = read(os.getInputStream());
+        String expected = "Usage: root [-hV] [COMMAND]\n" +
+                "Test Command2\n" +
+                "  -h, --help      Show this help message and exit.\n" +
+                "  -V, --version   Print version information and exit.\n" +
+                "Commands:\n" +
+                "  test1  Test Command2";
+        assertEquals(expected, output);
 
-        ctx.execute("");
-        Assertions.assertFalse(TestCommands.COMMAND_1.isUsed());
-        Assertions.assertFalse(TestCommands.COMMAND_2.isUsed());
+        String errorOutput = read(err.getInputStream());
+        assertEquals("", errorOutput);
 
-        ctx.execute("Command1");
-        Assertions.assertTrue(TestCommands.COMMAND_1.isUsed());
-        Assertions.assertFalse(TestCommands.COMMAND_2.isUsed());
-        TestCommands.COMMAND_1.setUsed(false);
+        context.execute("test1");
+        assertEquals("hello", context.getPicocli().getSubcommands().get("test1").getExecutionResult());
 
-        ctx.execute("Command2");
-        Assertions.assertFalse(TestCommands.COMMAND_1.isUsed());
-        Assertions.assertTrue(TestCommands.COMMAND_2.isUsed());
-        TestCommands.COMMAND_2.setUsed(false);
+        String out = read(os.getInputStream());
+        System.out.println(out);
 
-        ctx.execute("multi Command2 Command1");
-        Assertions.assertTrue(TestCommands.COMMAND_1.isUsed());
-        Assertions.assertTrue(TestCommands.COMMAND_2.isUsed());
-        TestCommands.COMMAND_1.setUsed(false);
-        TestCommands.COMMAND_2.setUsed(false);
+        context.execute("test1 --test world");
+        assertEquals("world", context.getPicocli().getSubcommands().get("test1").getExecutionResult());
 
-        HMC.setLog(null);
-        Assertions.assertNull(HMC.getLog());
-        ctx.execute("test");
-        Assertions.assertFalse(TestCommands.COMMAND_1.isUsed());
-        Assertions.assertFalse(TestCommands.COMMAND_2.isUsed());
-        Assertions.assertEquals(
-            "Couldn't find command for '[test]', did you mean 'multi'?",
-            HMC.getLog());
+
+        //context.execute("test1");
+
+        //assertEquals("hello", context.getPicocli().getExecutionResult());
+
+        //context.execute("test2");
+        //errorOutput = read(err.getInputStream());
+        //System.out.println(errorOutput);
     }
 
-    @RequiredArgsConstructor
-    private enum TestCommands implements Command {
-        COMMAND_1("command1"),
-        COMMAND_2("command2");
+    private String read(InputStream inputStream) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            List<String> lines = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
 
-        @Getter
-        private final String name;
-        @Getter
-        @Setter
-        private boolean used;
-
-        @Override
-        public void execute(String line, String... args) {
-            setUsed(true);
+            return String.join("\n", lines);
         }
+    }
+
+    @CommandLine.Command(
+        name = "root",
+        version = HeadlessMcApi.NAME_VERSION,
+        mixinStandardHelpOptions = true,
+        description = "Test Command2",
+        subcommands = {TestCommand1.class}
+    )
+    private static class RootTestCommand {
+
+    }
+
+    @CommandLine.Command(
+        name = "test1",
+        version = HeadlessMcApi.NAME_VERSION,
+        mixinStandardHelpOptions = true,
+        description = "Test Command2"
+    )
+    private static class TestCommand1 extends CommandImpl implements Callable<String> {
+        @CommandLine.Option(names = "--test")
+        private String option = "hello";
 
         @Override
-        public boolean matches(String line, String... args) {
-            return new AbstractCommand(HMC, name, "") {
-                @Override
-                public void execute(String line, String... args) {
-                }
-            }.matches(line, args);
+        public String call() {
+            ctx.log("test1called");
+            return option;
         }
+    }
+
+    @CommandLine.Command(
+        name = "test2",
+        version = HeadlessMcApi.NAME_VERSION,
+        mixinStandardHelpOptions = true,
+        description = "Test Command2"
+    )
+    private static class TestCommand2 extends CommandImpl implements Callable<String> {
+        @CommandLine.Option(names = "-option")
+        private String option = "world";
 
         @Override
-        public Iterable<String> getArgs() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public String getArgDescription(String arg) {
-            return "";
-        }
-
-        @Override
-        public Iterable<Map.Entry<String, String>> getArgs2Descriptions() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public String getDescription() {
-            return "";
+        public String call() {
+            ctx.log("test1called");
+            return option;
         }
     }
 

@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.jline;
 
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.api.process.WritableInputStream;
@@ -26,7 +26,7 @@ public class JLineCommandListenerTest {
     @Test
     @SuppressWarnings("deprecation")
     public void testJLineCommandListener() throws IOException {
-        CommandLine commandLine = new CommandLine();
+        CommandLineManager commandLine = new CommandLineManager();
         WritableInputStream wis = new WritableInputStream();
         commandLine.getInAndOutProvider().setIn(() -> wis);
         commandLine.getInAndOutProvider().setOut(() -> System.out);

@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher;
 
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
@@ -50,7 +50,7 @@ public class LauncherMock {
         val fileManager = base.createRelative("fileManager");
         val configs = new ConfigService(fileManager);
         configs.refresh();
-        val in = new CommandLine();
+        val in = new CommandLineManager();
         LoggingService loggingService = new LoggingService();
         val hmc = new HeadlessMcImpl(configs, in, new ExitManager(), loggingService);
 

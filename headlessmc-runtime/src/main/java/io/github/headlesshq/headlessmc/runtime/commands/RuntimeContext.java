@@ -8,7 +8,7 @@ import io.github.headlesshq.headlessmc.api.command.CommandContextImpl;
 import io.github.headlesshq.headlessmc.api.command.ParseUtil;
 import io.github.headlesshq.headlessmc.api.command.PasswordCommand;
 import io.github.headlesshq.headlessmc.api.command.impl.HelpCommand;
-import io.github.headlesshq.headlessmc.api.command.impl.MemoryCommand;
+import io.github.headlesshq.headlessmc.api.command.MemoryCommand;
 import io.github.headlesshq.headlessmc.api.command.impl.MultiCommand;
 import io.github.headlesshq.headlessmc.runtime.RuntimeProperties;
 import io.github.headlesshq.headlessmc.runtime.reflection.RuntimeReflection;

@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.server.commands;
 import io.github.headlesshq.headlessmc.api.command.CommandContext;
 import io.github.headlesshq.headlessmc.api.command.CommandContextImpl;
 import io.github.headlesshq.headlessmc.api.command.impl.HelpCommand;
-import io.github.headlesshq.headlessmc.api.command.impl.QuitCommand;
+import io.github.headlesshq.headlessmc.api.command.QuitCommand;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.command.AbstractLauncherCommand;

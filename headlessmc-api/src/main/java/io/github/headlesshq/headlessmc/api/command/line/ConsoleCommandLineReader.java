@@ -20,7 +20,7 @@ class ConsoleCommandLineReader implements CommandLineReader {
     @Override
     public void read(HeadlessMc hmc) throws IOError {
         String line;
-        CommandLine ctx = hmc.getCommandLine();
+        CommandLineManager ctx = hmc.getCommandLine();
         while ((line = ctx.isHidingPasswords() ? String.valueOf(console.readPassword()) : console.readLine()) != null) {
             ctx.getCommandConsumer().accept(line);
             if (ctx.isQuickExitCli()) {

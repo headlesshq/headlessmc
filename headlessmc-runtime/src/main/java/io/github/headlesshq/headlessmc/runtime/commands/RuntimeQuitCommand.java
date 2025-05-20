@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.runtime.commands;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.command.YesNoContext;
-import io.github.headlesshq.headlessmc.api.command.impl.QuitCommand;
+import io.github.headlesshq.headlessmc.api.command.QuitCommand;
 import io.github.headlesshq.headlessmc.runtime.RuntimeProperties;
 
 public class RuntimeQuitCommand extends QuitCommand {

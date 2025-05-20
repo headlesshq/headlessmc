@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher;
 
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import lombok.CustomLog;
 import lombok.experimental.UtilityClass;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.command.QuickExitCli;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
 import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
 
 /**
@@ -19,9 +19,9 @@ public class QuickExitCliHandler {
      * the command is empty or "cli" {@code false} will be returned. Otherwise
      * {@code true} will be returned, the given {@link Launcher}s command
      * context will be run on the given command and {@link
-     * CommandLine#setQuickExitCli(boolean)} will be set to
+     * CommandLineManager#setQuickExitCli(boolean)} will be set to
      * {@code true}. If a command needs more input it can set
-     * {@link CommandLine#setWaitingForInput(boolean)} to {@code true} which will
+     * {@link CommandLineManager#setWaitingForInput(boolean)} to {@code true} which will
      * cause this method call the given {@link CommandLineReader}. An exception are the
      * args "--version", "-version" or "version". These will also return
      * {@code true} and print {@link Launcher#VERSION}.
@@ -42,7 +42,7 @@ public class QuickExitCliHandler {
                 return true;
             }
 
-            CommandLine clm = launcher.getCommandLine();
+            CommandLineManager clm = launcher.getCommandLine();
             clm.setQuickExitCli(true);
             clm.getCommandConsumer().accept(cmd);
             if (clm.isWaitingForInput()) {

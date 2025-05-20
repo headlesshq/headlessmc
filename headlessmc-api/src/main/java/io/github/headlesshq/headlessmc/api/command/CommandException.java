@@ -8,7 +8,7 @@ import lombok.experimental.StandardException;
  * that something with his input went wrong.
  */
 @StandardException
-public class CommandException extends Exception {
+public class CommandException extends RuntimeException {
     /**
      * Constructs a new CommandException with the specified detail message.  The
      * cause is not initialized, and may subsequently be initialized by

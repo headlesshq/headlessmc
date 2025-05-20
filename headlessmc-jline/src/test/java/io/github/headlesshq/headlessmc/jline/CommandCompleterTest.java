@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.command.CommandContextImpl;
 import io.github.headlesshq.headlessmc.api.command.impl.HelpCommand;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.logging.LoggingService;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CommandCompleterTest {
     @Test
     public void testCommandCompleter() {
-        HeadlessMc hmc = new HeadlessMcImpl(ConfigImpl::empty, new CommandLine(), new ExitManager(), new LoggingService());
+        HeadlessMc hmc = new HeadlessMcImpl(ConfigImpl::empty, new CommandLineManager(), new ExitManager(), new LoggingService());
         HelpCommand helpCommand = new HelpCommand(hmc);
         CommandContextImpl commands = new CommandContextImpl(hmc) {{
             add(helpCommand);

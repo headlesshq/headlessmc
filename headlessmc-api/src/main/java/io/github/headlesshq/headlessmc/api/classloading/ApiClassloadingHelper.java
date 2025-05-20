@@ -1,18 +1,17 @@
 package io.github.headlesshq.headlessmc.api.classloading;
 
-import lombok.CustomLog;
-import lombok.experimental.UtilityClass;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
-import io.github.headlesshq.headlessmc.api.command.CommandContext;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import lombok.CustomLog;
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
- * Its possible that multiple classes named {@link HeadlessMcApi} exist on multiple Classloaders.
+ * It's possible that multiple classes named {@link HeadlessMcApi} exist on multiple Classloaders.
  * E.g. when running the Runtime and HMC-Specifics together:
  * The Runtime instance might be loaded through the system classloader,
  * while the HMC-Specifics instance will be loaded through the modloaders classloader.
@@ -24,11 +23,11 @@ import java.util.*;
 public class ApiClassloadingHelper {
     /**
      * Looks for {@link HeadlessMcApi} classes in all parent classloaders of the current one that has loaded this class.
-     * If it finds an instance that has not been loaded by this classloader it will check if the {@link CommandLine}
+     * If it finds an instance that has not been loaded by this classloader it will check if the {@link CommandLineManager}
      * provided by that instance is listening and if it does it will install a {@link ClAgnosticCommandContext} on that instance.
      *
      * @param headlessMc the HeadlessMc whose CommandLine to use for the ClAgnosticCommandContext.
-     * @return the instance of the {@link CommandLine} on a remote instance that is already listening, or {@code null}.
+     * @return the instance of the {@link CommandLineManager} on a remote instance that is already listening, or {@code null}.
      */
     public static @Nullable Object installOnOtherInstances(HeadlessMc headlessMc) {
         Object result = null;
@@ -67,7 +66,8 @@ public class ApiClassloadingHelper {
                         log.warn("Found another listening API instance? " + apiClass + " on classloader " + apiClass.getClassLoader());
                     }
 
-                    Class<?> clAgnosticCommandContextClass = Class.forName(ClAgnosticCommandContext.class.getName(), true, apiClass.getClassLoader());
+                    // TODO: !!!!!!!!!!!!!!!!!!!!! How do we work around exposing Picoli?
+                    /*Class<?> clAgnosticCommandContextClass = Class.forName(ClAgnosticCommandContext.class.getName(), true, apiClass.getClassLoader());
                     headlessMc.getDeencapsulator().deencapsulate(clAgnosticCommandContextClass);
                     // ClAgnosticCommandContext clAgnosticCommandContext = new ClAgnosticCommandContext(headlessMc.getCommandLine());
                     Object clAgnosticCommandContext = clAgnosticCommandContextClass.getConstructor(Object.class).newInstance(headlessMc.getCommandLine());
@@ -75,7 +75,7 @@ public class ApiClassloadingHelper {
                     headlessMc.getDeencapsulator().deencapsulate(commandContext);
                     Method setCommandContext = commandLine.getClass().getMethod("setCommandContext", commandContext);
                     // commandLine.setCommandContext(clAgnosticCommandContext);
-                    setCommandContext.invoke(commandLine, clAgnosticCommandContext);
+                    setCommandContext.invoke(commandLine, clAgnosticCommandContext);*/
                     result = commandLine;
                     log.info("Installed ClAgnosticCommandContext on instance " + apiClass + " on classloader " + apiClass.getClassLoader());
                 } else {

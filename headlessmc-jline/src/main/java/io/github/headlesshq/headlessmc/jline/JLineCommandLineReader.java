@@ -4,7 +4,7 @@ import lombok.CustomLog;
 import lombok.Getter;
 import lombok.Setter;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
 import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
 import io.github.headlesshq.headlessmc.api.config.Property;
@@ -55,7 +55,7 @@ public class JLineCommandLineReader implements CommandLineReader {
 
     @Override
     public void read(HeadlessMc hmc) throws IOError {
-        CommandLine commandLine = hmc.getCommandLine();
+        CommandLineManager commandLine = hmc.getCommandLine();
         long nanos = System.nanoTime();
         try {
             open(hmc);
@@ -107,10 +107,10 @@ public class JLineCommandLineReader implements CommandLineReader {
         enableProgressbar = hmc.getConfig().get(JLineProperties.ENABLE_PROGRESS_BAR, true);
         progressbarProvider.setProgressBarStyle(hmc.getConfig().get(JLineProperties.PROGRESS_BAR_STYLE, null));
         if (hmc.getConfig().get(JLineProperties.PREVENT_DEPRECATION_WARNING, true)) {
-            System.setProperty("org.jline.terminal.disableDeprecatedProviderWarning", "true");
+            System.setProperty("org.args.terminal.disableDeprecatedProviderWarning", "true");
         }
 
-        CommandLine commandLine = hmc.getCommandLine();
+        CommandLineManager commandLine = hmc.getCommandLine();
         dumb = !hmc.getConfig().get(JLineProperties.FORCE_NOT_DUMB, false)
             && (hmc.getConfig().get(JLineProperties.DUMB, false)
             || System.console() == null && hmc.getConfig().get(JLineProperties.DUMB_WHEN_NO_CONSOLE, true)

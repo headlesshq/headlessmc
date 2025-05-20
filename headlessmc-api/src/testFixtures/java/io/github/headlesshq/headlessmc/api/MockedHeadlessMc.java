@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.api;
 import lombok.Getter;
 import lombok.Setter;
 import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.Config;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
@@ -16,7 +16,7 @@ public class MockedHeadlessMc implements HeadlessMc {
     public static final MockedHeadlessMc INSTANCE = new MockedHeadlessMc();
     private Deencapsulator deencapsulator = new Deencapsulator();
     private MockedExitManager exitManager = new MockedExitManager();
-    private CommandLine commandLine = new CommandLine();
+    private CommandLineManager commandLine = new CommandLineManager();
     private LoggingService loggingService = new LoggingService();
     private Config config = ConfigImpl.empty();
     private String log = null;

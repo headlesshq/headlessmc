@@ -4,11 +4,14 @@ plugins {
 
 dependencies {
     api project(':headlessmc-logging')
+    api 'info.picocli:picocli:4.7.7'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+
     runtimeOnly group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     testImplementation group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
 
-    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.42'
-    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
+    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.38'
+    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
 
     testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.14.2'
     testFixturesRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.14.2'

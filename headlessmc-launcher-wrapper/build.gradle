@@ -23,8 +23,8 @@ dependencies {
     testPluginCompileOnly project(':headlessmc-launcher')
     testPluginImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
 
-    testPluginCompileOnly 'org.projectlombok:lombok:1.18.42'
-    testPluginAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
+    testPluginCompileOnly 'org.projectlombok:lombok:1.18.38'
+    testPluginAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
 }
 
 processResources {

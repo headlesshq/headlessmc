@@ -21,6 +21,11 @@ public class ReadableOutputStream extends OutputStream {
 
             return writes.removeFirst();
         }
+
+        @Override
+        public int available() {
+            return writes.isEmpty() ? -1 : writes.size();
+        }
     };
 
     @Override

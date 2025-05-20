@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.command.login;
 
-import io.github.headlesshq.headlessmc.api.command.Command;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
 import io.github.headlesshq.headlessmc.launcher.command.LaunchContext;

@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.api;
 
 import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.HasConfig;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.logging.Logger;
@@ -26,7 +26,7 @@ public interface HeadlessMc extends LogsMessages, HasConfig {
      *
      * @return the command line instance managing commands and the terminal for this HeadlessMc instance.
      */
-    CommandLine getCommandLine();
+    CommandLineManager getCommandLine();
 
     /**
      * Instead of calling {@link System#exit(int)} it is advised to call this instead.

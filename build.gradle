@@ -21,7 +21,7 @@ allprojects {
         // Consider switching to https://github.com/freefair/gradle-plugins/tree/main/lombok-plugin looks more maintained?
         apply plugin: 'io.franzbecker.gradle-lombok'
         lombok {
-            version '1.18.42'
+            version '1.18.38'
         }
     }
 
@@ -64,16 +64,16 @@ allprojects {
     }
 
     dependencies {
-        compileOnly 'org.jetbrains:annotations:26.0.2-1'
-        testCompileOnly 'org.jetbrains:annotations:26.0.2-1'
+        compileOnly 'org.jetbrains:annotations:26.0.2'
+        testCompileOnly 'org.jetbrains:annotations:24.1.0'
 
         // no lombok for modlauncher cause we do bad hacks there in the java9 stub.
         if (project != project(':headlessmc-modlauncher')) {
-            compileOnly 'org.projectlombok:lombok:1.18.42'
-            annotationProcessor 'org.projectlombok:lombok:1.18.42'
+            compileOnly 'org.projectlombok:lombok:1.18.38'
+            annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
-            testCompileOnly 'org.projectlombok:lombok:1.18.42'
-            testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
+            testCompileOnly 'org.projectlombok:lombok:1.18.38'
+            testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
         }
 
         testImplementation 'org.junit.jupiter:junit-jupiter-api:5.14.2'
@@ -160,13 +160,17 @@ allprojects {
             )
         }
 
-        if (project != project(':headlessmc-lwjgl')) {
+        if (project != project(':headlessmc-lwjgl') && project != project(':headlessmc-runtime')) {
             manifest {
                 attributes(
                     "Automatic-Module-Name": "io.github.headlesshq.${project.name.replace("launcher-", "").replace('-', '.')}"
                 )
             }
         }
+    }
+
+    compileJava {
+        options.compilerArgs += ["-Aproject=${project.group.toString().replace('.', '/')}/${project.name.replace("launcher-", "").replace('-', '.')}"]
     }
 
     shadowJar {

@@ -4,6 +4,9 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Wrapper around {@code me.tongfei.progressbar.ProgressBar}.
+ */
 public interface Progressbar extends AutoCloseable {
     void stepBy(long n);
 

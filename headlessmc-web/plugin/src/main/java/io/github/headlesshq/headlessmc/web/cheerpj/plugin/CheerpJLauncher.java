@@ -1,13 +1,12 @@
 package io.github.headlesshq.headlessmc.web.cheerpj.plugin;
 
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
-import io.github.headlesshq.headlessmc.api.command.Command;
 import io.github.headlesshq.headlessmc.api.command.CommandContext;
 import io.github.headlesshq.headlessmc.api.command.CopyContext;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
 import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
 import io.github.headlesshq.headlessmc.api.config.Config;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
@@ -93,7 +92,7 @@ public class CheerpJLauncher {
         initializeProperties(root);
         Config config = ConfigImpl.empty();
         HasConfig configs = () -> config;
-        CommandLine commandLine = new CommandLine(inAndOutProvider, gui);
+        CommandLineManager commandLine = new CommandLineManager(inAndOutProvider, gui);
         HeadlessMc hmc = new HeadlessMcImpl(configs, commandLine, new ExitManager(), loggingService);
         hmc.getExitManager().setExitManager(i -> {
             if (i != 0) {

@@ -5,7 +5,7 @@ import lombok.Setter;
 import io.github.headlesshq.headlessmc.api.classloading.ApiClassloadingHelper;
 import io.github.headlesshq.headlessmc.api.classloading.ClAgnosticCommandContext;
 import io.github.headlesshq.headlessmc.api.command.CommandContext;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
 
 import java.util.function.Consumer;
@@ -14,7 +14,7 @@ import java.util.function.Consumer;
  * Provides a global instance of {@link HeadlessMc}.
  * The main reason we provide this is, that we only want to open one {@link CommandLineReader} per JVM.
  * If a CommandLineReader is already open, it would be best to install any {@link CommandContext}
- * on the {@link CommandLine} responsible for it instead of opening an own CommandLineReader.
+ * on the {@link CommandLineManager} responsible for it instead of opening an own CommandLineReader.
  * One case where multiple HMC instances exist would be when starting the game with both the Runtime and HMC-Specifics active.
  * To make things more complicated the Runtime instance might be loaded through the system classloader,
  * while the HMC-Specifics instance will be loaded through the modloaders classloader.
@@ -30,6 +30,10 @@ public class HeadlessMcApi {
      * The string "HeadlessMC".
      */
     public static final String NAME = "HeadlessMC";
+    /**
+     * The current name and version of HeadlessMc.
+     */
+    public static final String NAME_VERSION = NAME + " " + VERSION;
 
     private static final HmcInstanceHolder INSTANCE_HOLDER = new HmcInstanceHolder();
     /**

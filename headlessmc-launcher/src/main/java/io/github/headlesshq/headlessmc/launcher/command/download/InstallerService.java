@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.command.download;
 
-import io.github.headlesshq.headlessmc.api.command.Command;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.launcher.Launcher;

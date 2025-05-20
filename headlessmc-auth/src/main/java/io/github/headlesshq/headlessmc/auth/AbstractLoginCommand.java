@@ -1,12 +1,11 @@
 package io.github.headlesshq.headlessmc.auth;
 
-import lombok.CustomLog;
-import lombok.Setter;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.AbstractCommand;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
-import io.github.headlesshq.headlessmc.api.command.CommandUtil;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import lombok.CustomLog;
+import lombok.Setter;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.step.AbstractStep;
@@ -17,6 +16,7 @@ import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
 import net.raphimc.minecraftauth.util.MicrosoftConstants;
 import net.raphimc.minecraftauth.util.logging.ILogger;
 import net.raphimc.minecraftauth.util.logging.JavaConsoleLogger;
+import picocli.CommandLine;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,32 +27,31 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@Setter
 @CustomLog
-public abstract class AbstractLoginCommand extends AbstractCommand {
+public abstract class AbstractLoginCommand<T extends HeadlessMc> extends AbstractCommand<T> {
     private final List<Thread> threads = new CopyOnWriteArrayList<>();
-
     protected final Object webviewLock = new Object();
     protected AbstractStep<?, StepFullJavaSession.FullJavaSession> webview;
     protected volatile Window webviewWindow = null;
 
-    @Setter
     protected Supplier<HttpClient> httpClientFactory = MinecraftAuth::createHttpClient;
 
-    public AbstractLoginCommand(HeadlessMc ctx) {
-        this(ctx, "login", "Logs you into an account.");
-    }
+    @CommandLine.Option(names = {"--webview", "-wv"}, description = "Opens a window to log you in. Might not be supported.")
+    private boolean webviewOption = false;
 
-    public AbstractLoginCommand(HeadlessMc ctx, String name, String description) {
-        super(ctx, name, description);
+    @CommandLine.Option(names = {"--cancel", "-c"}, description = "Opens a window to log you in. Might not be supported.")
+    private boolean cancel = false;
+
+    public AbstractLoginCommand() {
         replaceLoggerOnConstruction();
     }
 
     protected abstract void onSuccessfulLogin(StepFullJavaSession.FullJavaSession session);
 
-    @Override
-    public void execute(String line, String... args) throws CommandException {
-        if (CommandUtil.hasFlag("-webview", args)) {
-            loginWithWebview(args);
+    protected void login() throws CommandException {
+        if (webviewOption) {
+            loginWithWebview();
             return;
         }
 
@@ -67,7 +66,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
     }
 
     protected void loginWithCredentials(String... args) {
-        CommandLine clm = ctx.getCommandLine();
+        CommandLineManager clm = ctx.getCommandLine();
         String email = args[1];
         if (args.length > 2) {
             login(email, args[2], args);
@@ -105,7 +104,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         try {
             HttpClient httpClient = httpClientFactory.get();
             StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_CREDENTIALS_LOGIN.getFromInput(
-                getLogger(args), httpClient, new StepCredentialsMsaCode.MsaCredentials(email, password));
+                getLogger(), httpClient, new StepCredentialsMsaCode.MsaCredentials(email, password));
 
             onSuccessfulLogin(session);
         } catch (Exception e) {
@@ -114,7 +113,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         }
     }
 
-    protected void loginWithWebview(String... args) throws CommandException {
+    protected void loginWithWebview() throws CommandException {
         if (webview == null) {
             webview = provideWebview();
             if (webview == null) {
@@ -133,7 +132,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                         CookieHandler.setDefault(new CookieManager());
                     }
 
-                    StepFullJavaSession.FullJavaSession session = webview.getFromInput(getLogger(args), httpClient, getWebViewCallback());
+                    StepFullJavaSession.FullJavaSession session = webview.getFromInput(getLogger(), httpClient, getWebViewCallback());
                     ctx.log("Session from Webview: " + session.getMcProfile().getName());
                     onSuccessfulLogin(session);
                 } catch (InterruptedException e) {
@@ -192,7 +191,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return null;
     }
 
-    protected void loginWithDeviceCode(String... args) {
+    protected void loginWithDeviceCode() {
         Thread thread = new Thread() {
             @Override
             public void run() {
@@ -202,7 +201,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                     StepMsaDeviceCode.MsaDeviceCodeCallback callback = new StepMsaDeviceCode.MsaDeviceCodeCallback(
                         msaDeviceCode -> ctx.log("Go to " + msaDeviceCode.getDirectVerificationUri()));
 
-                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(getLogger(args), httpClient, callback);
+                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.getFromInput(getLogger(), httpClient, callback);
 
                     onSuccessfulLogin(session);
                 } catch (InterruptedException e) {
@@ -263,12 +262,9 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         ctx.getExitManager().addTaskThread(thread);
     }
 
-    protected ILogger getLogger(String... args) {
-        if (CommandUtil.hasFlag("-verbose", args)) {
-            return MinecraftAuth.LOGGER;
-        } else {
-            return NoLogging.INSTANCE;
-        }
+    protected ILogger getLogger() {
+        // TODO: verbose option?
+        return NoLogging.INSTANCE;
     }
 
     protected boolean hasThreadWithName(String threadName) {

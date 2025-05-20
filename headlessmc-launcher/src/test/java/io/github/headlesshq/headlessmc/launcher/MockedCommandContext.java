@@ -2,7 +2,6 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import lombok.Getter;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.command.Command;
 import io.github.headlesshq.headlessmc.api.command.CommandContext;
 
 import java.util.Collections;

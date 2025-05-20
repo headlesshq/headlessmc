@@ -17,7 +17,7 @@ import java.io.InputStreamReader;
 public class BufferedCommandLineReader implements CommandLineReader {
     @Override
     public void read(HeadlessMc hmc) throws IOError {
-        CommandLine ctx = hmc.getCommandLine();
+        CommandLineManager ctx = hmc.getCommandLine();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(ctx.getInAndOutProvider().getIn().get()))) {
             String line;
             while ((line = in.readLine()) != null) {

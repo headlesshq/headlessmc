@@ -1,16 +1,22 @@
 package io.github.headlesshq.headlessmc.api.command;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import org.jetbrains.annotations.NotNull;
+import picocli.CommandLine;
 
-import java.util.Collections;
-import java.util.Iterator;
-
-@RequiredArgsConstructor
-public class YesNoContext implements CommandContext {
+public class YesNoContext extends CommandContextImpl {
     private final YesNoCallback callback;
     private final HeadlessMc ctx;
+
+    // TODO
+    public YesNoContext(YesNoCallback callback, HeadlessMc ctx) {
+        this(new CommandLine(null), callback, ctx);
+    }
+
+    public YesNoContext(CommandLine picocli, YesNoCallback callback, HeadlessMc ctx) {
+        super(picocli);
+        this.callback = callback;
+        this.ctx = ctx;
+    }
 
     public static void goBackAfter(HeadlessMc ctx, YesNoCallback callback) {
         ctx.getCommandLine().setWaitingForInput(true);
@@ -38,11 +44,6 @@ public class YesNoContext implements CommandContext {
         } catch (CommandException ce) {
             ctx.log(ce.getMessage());
         }
-    }
-
-    @Override
-    public @NotNull Iterator<Command> iterator() {
-        return Collections.emptyIterator();
     }
 
 }

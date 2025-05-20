@@ -11,17 +11,15 @@ import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.jline.JLineCommandLineReader;
 import io.github.headlesshq.headlessmc.jline.JLineProperties;
-import io.github.headlesshq.headlessmc.launcher.auth.*;
 import io.github.headlesshq.headlessmc.launcher.command.LaunchContext;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfoCache;
 import io.github.headlesshq.headlessmc.launcher.download.ChecksumService;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
-import io.github.headlesshq.headlessmc.launcher.files.*;
 import io.github.headlesshq.headlessmc.launcher.java.JavaService;
 import io.github.headlesshq.headlessmc.launcher.launch.ProcessFactory;
 import io.github.headlesshq.headlessmc.launcher.mods.ModManager;
@@ -56,7 +54,7 @@ public class LauncherBuilder {
     private LoggingService loggingService = new LoggingService();
     private ChecksumService sha1Service = new ChecksumService();
     private ExitManager exitManager = new ExitManager();
-    private CommandLine commandLine = new CommandLine();
+    private CommandLineManager commandLine = new CommandLineManager();
     private PluginManager pluginManager = new PluginManager();
     private VersionInfoCache versionInfoCache = new VersionInfoCache();
 

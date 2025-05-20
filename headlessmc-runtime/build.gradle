@@ -4,16 +4,19 @@ dependencies {
     jarLibsApi project(':headlessmc-api')
     jarLibsApi project(':headlessmc-logging')
 
+    jarLibsApi 'info.picocli:picocli:4.7.7'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+
     jarLibs group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     jarLibs project(':headlessmc-jline')
 }
 
 module {
-    name = 'headlessmc.runtime'
+    name = 'io.github.headlesshq.headlessmc.runtime'
     access = ACC_OPEN
 
     // I do not think we actually need to export anything
-    // Rather, we just cannot export jline or com/sun packages
+    // Rather, we just cannot export args or com/sun packages
     exports 'io/github/headlesshq/headlessmc/api'
     exports 'io/github/headlesshq/headlessmc/api/classloading'
     exports 'io/github/headlesshq/headlessmc/api/command'

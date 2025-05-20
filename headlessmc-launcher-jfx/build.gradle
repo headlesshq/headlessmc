@@ -12,6 +12,7 @@ run {
     standardInput = System.in
 }
 
+// TODO: remove!
 module {
     name = 'headlessmc.launcher'
     access = ACC_OPEN

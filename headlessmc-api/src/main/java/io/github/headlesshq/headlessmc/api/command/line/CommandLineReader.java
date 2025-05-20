@@ -24,7 +24,7 @@ public interface CommandLineReader extends ProgressBarProvider {
 
     /**
      * Listens for commands on a terminal, console or other InputStreams provided by the {@link InAndOutProvider}.
-     * This reader is configured by the {@link CommandLine} provided by the given {@link HeadlessMc} instance.
+     * This reader is configured by the {@link CommandLineManager} provided by the given {@link HeadlessMc} instance.
      * This method will block.
      *
      * @param hmc the instance of HeadlessMc providing the CommandLine.
@@ -35,7 +35,7 @@ public interface CommandLineReader extends ProgressBarProvider {
     /**
      * Starts {@link #read(HeadlessMc)} on a Thread provided by the {@link #DEFAULT_THREAD_FACTORY}.
      *
-     * @param hmc the HeadlessMc instance providing the {@link CommandLine}.
+     * @param hmc the HeadlessMc instance providing the {@link CommandLineManager}.
      */
     default void readAsync(HeadlessMc hmc) {
         readAsync(hmc, DEFAULT_THREAD_FACTORY);
@@ -44,10 +44,13 @@ public interface CommandLineReader extends ProgressBarProvider {
     /**
      * Starts {@link #read(HeadlessMc)} on a Thread provided by the given {@link ThreadFactory}.
      *
-     * @param hmc the HeadlessMc instance providing the {@link CommandLine}.
+     * @param hmc the HeadlessMc instance providing the {@link CommandLineManager}.
      * @param factory the factory providing the Thread to run this listener on.
      */
     default void readAsync(HeadlessMc hmc, ThreadFactory factory) {
+        // TODO: schedule executables on command line thread that run when command is entered
+        // TODO: expose lock for command execution, so that we can change HeadlessMc safely from another Thread!
+
         // TODO: it would be useful to know which thread the command line is listening on?
         factory.newThread(() -> read(hmc)).start();
     }
@@ -63,7 +66,7 @@ public interface CommandLineReader extends ProgressBarProvider {
      * <p>CommandLineReaders that allow multiple readers on their input streams do not need to implement this.
      * Method might be synchronized on this instance.
      *
-     * @param hmc the HeadlessMc instance whose {@link CommandLine} will be used to configure this CommandLineReader.
+     * @param hmc the HeadlessMc instance whose {@link CommandLineManager} will be used to configure this CommandLineReader.
      * @throws IOException if something goes wrong when opening the terminal.
      */
     default void open(HeadlessMc hmc) throws IOException {
