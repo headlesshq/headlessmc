@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.version.family;
 
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 
 import java.util.Collection;
 import java.util.Set;

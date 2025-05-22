@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.mods;
 
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 
 import java.io.IOException;

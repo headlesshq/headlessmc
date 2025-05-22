@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import lombok.CustomLog;
 import lombok.experimental.UtilityClass;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.auth.AbstractLoginCommand;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
@@ -25,7 +25,7 @@ public final class Main {
         } finally {
             exitManager.onMainThreadEnd(throwable);
             if (throwable instanceof ExitToWrapperException) {
-                HeadlessMcApi.setInstance(null);
+                HeadlessMc.setInstance(null);
                 LauncherApi.setLauncher(null);
             } else {
                 // These "System.exit()" calls are here because of the LoginCommands

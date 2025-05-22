@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.os;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 
 /**
  * Represents an Operating System.

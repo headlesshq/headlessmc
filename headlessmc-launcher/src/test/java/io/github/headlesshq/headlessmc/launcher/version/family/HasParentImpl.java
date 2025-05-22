@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 
 @Getter
 @Setter

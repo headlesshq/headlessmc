@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.mods;
 
-import io.github.headlesshq.headlessmc.api.HasId;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasId;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.api.Platform;
 import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 import org.jetbrains.annotations.Nullable;

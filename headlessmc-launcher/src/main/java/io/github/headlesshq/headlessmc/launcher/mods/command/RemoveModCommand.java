@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.mods.command;
 
-import io.github.headlesshq.headlessmc.api.HasId;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasId;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.mods.ModdableGame;

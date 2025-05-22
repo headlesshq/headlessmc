@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountManager;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfo;
@@ -35,7 +35,7 @@ public class Launcher implements HeadlessMc {
     /**
      * The current version of HeadlessMc.
      */
-    public static final String VERSION = HeadlessMcApi.VERSION;
+    public static final String VERSION = HeadlessMc.VERSION;
 
     /**
      * A HeadlessMc instance that this Launcher delegates to for CommandLine, ExitManager, etc..

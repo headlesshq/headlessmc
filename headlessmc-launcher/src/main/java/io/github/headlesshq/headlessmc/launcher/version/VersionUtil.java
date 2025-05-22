@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.version;
 
 import lombok.CustomLog;
 import lombok.experimental.UtilityClass;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import org.semver4j.Semver;
 

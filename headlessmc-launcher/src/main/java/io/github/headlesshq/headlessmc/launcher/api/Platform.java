@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.api;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import org.jetbrains.annotations.Nullable;
 
 @Getter

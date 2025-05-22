@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.specifics;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.files.FileManager;
 import io.github.headlesshq.headlessmc.launcher.files.LauncherConfig;

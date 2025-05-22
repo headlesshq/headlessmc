@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
-import io.github.headlesshq.headlessmc.api.command.HasDescription;
+import io.github.headlesshq.headlessmc.api.traits.HasDescription;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.plugin.HeadlessMcPlugin;

@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.command;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.command.ParseUtil;

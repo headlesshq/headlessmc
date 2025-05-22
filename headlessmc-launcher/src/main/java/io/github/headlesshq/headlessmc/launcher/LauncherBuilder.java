@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
 import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
@@ -83,7 +83,7 @@ public class LauncherBuilder {
     }
 
     public LauncherBuilder initFileManager() {
-        return ifNull(LauncherBuilder::fileManager, LauncherBuilder::fileManager, () -> FileManager.mkdir(HeadlessMcApi.NAME));
+        return ifNull(LauncherBuilder::fileManager, LauncherBuilder::fileManager, () -> FileManager.mkdir(HeadlessMc.NAME));
     }
 
     public LauncherBuilder runAutoConfiguration() {

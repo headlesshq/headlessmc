@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.java;
 
 import lombok.CustomLog;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.os.OS;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 public class JavaVersionFinder {
     public List<Java> findJavaVersions(JavaScanner javaScanner, OS os) {
         List<Java> result = new ArrayList<>();
-        checkDirectory(javaScanner, Paths.get(HeadlessMcApi.NAME).resolve("java"), os);
+        checkDirectory(javaScanner, Paths.get(HeadlessMc.NAME).resolve("java"), os);
         if (os.getType() == OS.Type.WINDOWS) {
             Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
             for (Path rootPath : rootDirectories) {

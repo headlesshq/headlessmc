@@ -2,8 +2,8 @@ package io.github.headlesshq.headlessmc.launcher.server;
 
 import lombok.CustomLog;
 import lombok.Data;
-import io.github.headlesshq.headlessmc.api.HasId;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasId;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.mods.ModdableGame;
 import io.github.headlesshq.headlessmc.launcher.api.Platform;
 import io.github.headlesshq.headlessmc.os.OS;

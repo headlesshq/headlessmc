@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.testplugin;
 
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;

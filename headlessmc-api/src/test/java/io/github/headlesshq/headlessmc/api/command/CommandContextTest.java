@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.api.command;
 
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.MockedHeadlessMc;
 import io.github.headlesshq.headlessmc.api.process.PrintWriterPrintStream;
 import io.github.headlesshq.headlessmc.api.process.ReadableOutputStream;
@@ -78,7 +78,7 @@ public class CommandContextTest {
 
     @CommandLine.Command(
         name = "root",
-        version = HeadlessMcApi.NAME_VERSION,
+        version = HeadlessMc.NAME_VERSION,
         mixinStandardHelpOptions = true,
         description = "Test Command2",
         subcommands = {TestCommand1.class}
@@ -89,7 +89,7 @@ public class CommandContextTest {
 
     @CommandLine.Command(
         name = "test1",
-        version = HeadlessMcApi.NAME_VERSION,
+        version = HeadlessMc.NAME_VERSION,
         mixinStandardHelpOptions = true,
         description = "Test Command2"
     )
@@ -106,7 +106,7 @@ public class CommandContextTest {
 
     @CommandLine.Command(
         name = "test2",
-        version = HeadlessMcApi.NAME_VERSION,
+        version = HeadlessMc.NAME_VERSION,
         mixinStandardHelpOptions = true,
         description = "Test Command2"
     )

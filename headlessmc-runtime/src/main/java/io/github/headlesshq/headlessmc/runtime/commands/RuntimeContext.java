@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.runtime.commands;
 import io.github.headlesshq.headlessmc.runtime.commands.reflection.*;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.CommandContextImpl;
 import io.github.headlesshq.headlessmc.api.command.ParseUtil;
 import io.github.headlesshq.headlessmc.api.command.PasswordCommand;
@@ -59,7 +59,7 @@ public class RuntimeContext extends CommandContextImpl {
     }
 
     protected void setAsInstance(RuntimeReflection reflection) {
-        HeadlessMcApi.setInstance(reflection);
+        HeadlessMc.setInstance(reflection);
     }
 
 }

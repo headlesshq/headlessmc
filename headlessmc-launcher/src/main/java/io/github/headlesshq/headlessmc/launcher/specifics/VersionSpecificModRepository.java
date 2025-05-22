@@ -1,8 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.specifics;
 
-import io.github.headlesshq.headlessmc.api.HasName;
-import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
-import lombok.*;
+import lombok.Data;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 
 import java.io.IOException;
 import java.net.MalformedURLException;

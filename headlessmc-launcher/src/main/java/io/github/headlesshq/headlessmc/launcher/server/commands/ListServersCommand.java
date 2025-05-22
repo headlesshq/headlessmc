@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.server.commands;
 
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.util.Table;

@@ -20,7 +20,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl:
     ``` sh
-    curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
+    curl -L https://github.com/3arthqu4ke/headlessmc/releases/latest/download/headlessmc-launcher-linux-x64 -o headlessmc-launcher
     ```
 
 === "Windows"
@@ -31,7 +31,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl.exe in the Command prompt:
     ```lang-powershell
-    curl.exe -L --output headlessmc-launcher.exe --url https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-windows-x64.exe
+    curl.exe -L --output headlessmc-launcher.exe --url https://github.com/3arthqu4ke/headlessmc/releases/latest/download/headlessmc-launcher-windows-x64.exe
     ```
 
 === "MacOS"
@@ -45,7 +45,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl:
     ``` sh
-    curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
+    curl -L https://github.com/3arthqu4ke/headlessmc/releases/latest/download/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
 
 ### Java

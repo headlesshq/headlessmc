@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.runtime;
 
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.classloading.ApiClassloadingHelper;
 import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
@@ -32,7 +32,7 @@ public class RuntimeInitializer {
 
     protected HeadlessMc instance(Config config, LoggingService loggingService) {
         HeadlessMc hmc = new HeadlessMcImpl(() -> config, new CommandLineManager(), new ExitManager(), loggingService);
-        HeadlessMcApi.setInstance(hmc);
+        HeadlessMc.setInstance(hmc);
         return hmc;
     }
 

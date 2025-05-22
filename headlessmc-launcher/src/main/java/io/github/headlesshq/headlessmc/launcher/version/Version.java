@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.version;
 
 import com.google.gson.JsonObject;
-import io.github.headlesshq.headlessmc.api.HasId;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasId;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.version.family.HasParent;
 import org.jetbrains.annotations.Nullable;
 

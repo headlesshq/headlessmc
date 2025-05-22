@@ -1,49 +1,47 @@
 package io.github.headlesshq.headlessmc.api.command;
 
-import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import picocli.CommandLine;
+import io.github.headlesshq.headlessmc.api.command.CommandException;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 
-public class YesNoContext extends CommandContextImpl {
-    private final YesNoCallback callback;
-    private final HeadlessMc ctx;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
-    // TODO
-    public YesNoContext(YesNoCallback callback, HeadlessMc ctx) {
-        this(new CommandLine(null), callback, ctx);
-    }
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public class YesNoContext implements CommandContext {
+    private static final Pattern YES = Pattern.compile("y+e*s*", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NO = Pattern.compile("n+o*", Pattern.CASE_INSENSITIVE);
 
-    public YesNoContext(CommandLine picocli, YesNoCallback callback, HeadlessMc ctx) {
-        super(picocli);
-        this.callback = callback;
-        this.ctx = ctx;
-    }
-
-    public static void goBackAfter(HeadlessMc ctx, YesNoCallback callback) {
-        ctx.getCommandLine().setWaitingForInput(true);
-        CommandContext current = ctx.getCommandLine().getCommandContext();
-        ctx.getCommandLine().setCommandContext(new YesNoContext(result -> {
-            try {
-                ctx.getCommandLine().setWaitingForInput(false);
-                callback.accept(result);
-            } finally {
-                ctx.getCommandLine().setCommandContext(current);
-            }
-        }, ctx));
-    }
+    private final Consumer<Boolean> callback;
 
     @Override
     public void execute(String command) {
-        try {
-            if ("y".equalsIgnoreCase(command)) {
-                callback.accept(true);
-            } else if ("n".equalsIgnoreCase(command)) {
-                callback.accept(false);
-            } else {
-                ctx.log("Expected one of y/n...");
-            }
-        } catch (CommandException ce) {
-            ctx.log(ce.getMessage());
+        if (YES.matcher(command).matches()) {
+            callback.accept(true);
+        } else if (NO.matcher(command).matches()) {
+            callback.accept(false);
+        } else {
+            throw new CommandException("[Y/n] expected.");
         }
+    }
+
+    @Override
+    public List<Suggestion> getSuggestions(int argIndex, int positionInArg, int cursor, String... args) {
+        return new ArrayList<>(Arrays.asList(
+                new Suggestion("y", null, true),
+                new Suggestion("n", null, true))
+        );
+    }
+
+    public static void input(CommandLineManager commandLineManager, Consumer<Boolean> callback) {
+        CommandContext before = commandLineManager.getInteractiveContext();
+        commandLineManager.setInteractiveContext(new YesNoContext(result -> {
+            commandLineManager.setInteractiveContext(before);
+            callback.accept(result);
+        }));
     }
 
 }

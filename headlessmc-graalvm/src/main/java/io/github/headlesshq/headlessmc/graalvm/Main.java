@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.graalvm;
 
 import lombok.CustomLog;
-import io.github.headlesshq.headlessmc.api.HeadlessMcApi;
+import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
 import io.github.headlesshq.headlessmc.api.process.InAndOutProvider;
 import io.github.headlesshq.headlessmc.java.Java;
@@ -31,7 +31,7 @@ import java.util.*;
 
 @CustomLog
 public class Main {
-    private static final Path HEADLESSMC_PATH = Paths.get(HeadlessMcApi.NAME);
+    private static final Path HEADLESSMC_PATH = Paths.get(HeadlessMc.NAME);
 
     public static void main(String[] args) throws IOException {
         LoggingService service = new LoggingService();
@@ -42,7 +42,7 @@ public class Main {
                 && (args[0].equalsIgnoreCase("version")
                     || args[0].equalsIgnoreCase("-version")
                     || args[0].equalsIgnoreCase("--version"))) {
-            new InAndOutProvider().getOut().get().println(HeadlessMcApi.NAME + " - " + HeadlessMcApi.VERSION);
+            new InAndOutProvider().getOut().get().println(HeadlessMc.NAME + " - " + HeadlessMc.VERSION);
             return;
         }
 

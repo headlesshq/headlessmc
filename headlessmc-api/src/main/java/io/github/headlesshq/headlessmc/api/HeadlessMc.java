@@ -1,58 +1,20 @@
 package io.github.headlesshq.headlessmc.api;
 
-import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
-import io.github.headlesshq.headlessmc.api.config.HasConfig;
-import io.github.headlesshq.headlessmc.api.exit.ExitManager;
-import io.github.headlesshq.headlessmc.logging.Logger;
-import io.github.headlesshq.headlessmc.logging.LoggingService;
-
 /**
- * Represents a HeadlessMc instance.
- * An instance handles commands, logging and configuration and exiting the process.
+ * Information about HeadlessMc.
  */
-public interface HeadlessMc extends LogsMessages, HasConfig {
+public class HeadlessMc {
     /**
-     * Safe Wrapper for dev.xdark.deencapsulation.Deencapsulation,
-     * which can be used to access classes beyond Java 9 module boundaries.
-     *
-     * @return a service that can be used to access classes beyond Java 9 module boundaries.
+     * The current version of HeadlessMc.
      */
-    Deencapsulator getDeencapsulator();
-
+    public static final String VERSION = "3.0.0";
     /**
-     * Returns the command line belonging to this instance.
-     * The command line manages commands and the terminal for this HeadlessMc instance.
-     *
-     * @return the command line instance managing commands and the terminal for this HeadlessMc instance.
+     * The string "HeadlessMc".
      */
-    CommandLineManager getCommandLine();
-
+    public static final String NAME = "HeadlessMc";
     /**
-     * Instead of calling {@link System#exit(int)} it is advised to call this instead.
-     *
-     * @return the manager managing exiting this java process.
+     * The current name and version of HeadlessMc.
      */
-    ExitManager getExitManager();
-
-    /**
-     * The LoggingService for this instance.
-     * Configures {@link Logger}s.
-     *
-     * @return the logging service for this instance.
-     */
-    LoggingService getLoggingService();
-
-    /**
-     * Logs the given message in a human-readable format instead of logging it.
-     * This method is meant to be used instead of a logger for communicating
-     * console output to the user.
-     *
-     * @param message the message to log on the console.
-     */
-    @Override
-    default void log(String message) {
-        getCommandLine().getInAndOutProvider().getOut().get().println(message);
-    }
+    public static final String NAME_VERSION = NAME + " " + VERSION;
 
 }

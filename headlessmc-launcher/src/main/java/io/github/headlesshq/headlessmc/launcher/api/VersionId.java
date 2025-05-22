@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.api;
 
 import lombok.Data;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionArgument;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;

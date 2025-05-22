@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.api.util;
 
-import io.github.headlesshq.headlessmc.api.util.Table;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -45,7 +45,7 @@ public class ExitManager {
      * @param exitCode the exit code to exit the process.
      */
     public void exit(int exitCode) {
-        this.exitCode = exitCode; // in case this doesnt exit the process
+        this.exitCode = exitCode;
         this.exitManager.accept(exitCode);
     }
 

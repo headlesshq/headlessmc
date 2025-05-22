@@ -2,8 +2,8 @@ package io.github.headlesshq.headlessmc.launcher.command;
 
 import lombok.CustomLog;
 import lombok.Data;
-import io.github.headlesshq.headlessmc.api.HasId;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasId;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.FindByCommand;
 import io.github.headlesshq.headlessmc.api.util.Table;

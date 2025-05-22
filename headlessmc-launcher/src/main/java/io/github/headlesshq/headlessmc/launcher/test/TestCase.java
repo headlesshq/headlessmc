@@ -6,7 +6,7 @@ import lombok.CustomLog;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.version;
 
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.os.OS;
 import org.jetbrains.annotations.Nullable;
 

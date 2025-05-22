@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.instrumentation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
