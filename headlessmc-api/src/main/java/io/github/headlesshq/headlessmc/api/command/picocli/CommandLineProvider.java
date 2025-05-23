@@ -2,12 +2,16 @@ package io.github.headlesshq.headlessmc.api.command.picocli;
 
 import io.github.headlesshq.headlessmc.api.di.Injector;
 import io.github.headlesshq.headlessmc.api.logging.StdIO;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Default;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import picocli.CommandLine;
 
 import java.io.PrintWriter;
 
+@ApplicationScoped
 public class CommandLineProvider implements Provider<CommandLine> {
     private final StdIO stdIO;
     private final Injector injector;
@@ -21,6 +25,8 @@ public class CommandLineProvider implements Provider<CommandLine> {
     }
 
     @Override
+    @Default
+    @Produces
     public CommandLine get() {
         return new CommandLine(command, new CommandFactory(injector)) {
             @Override

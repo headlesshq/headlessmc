@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.api.logging;
 
 import io.github.headlesshq.headlessmc.api.Application;
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.util.function.Supplier;
  */
 @Getter
 @Setter
+@ApplicationScoped
 public class StdIO implements Out {
     /**
      * The standard OutputStream.

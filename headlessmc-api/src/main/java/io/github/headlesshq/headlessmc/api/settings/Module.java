@@ -1,9 +1,11 @@
 package io.github.headlesshq.headlessmc.api.settings;
 
 import jakarta.inject.Inject;
+import lombok.Getter;
 
+@Getter
 public class Module {
-    public final SettingGroup root;
+    private final SettingGroup root;
 
     @Inject
     public Module(SettingGroup root) {

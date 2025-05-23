@@ -1,0 +1,121 @@
+plugins {
+    id 'application'
+}
+
+def MAIN_CLASS = 'io.github.headlesshq.headlessmc.launcher.Main'
+application {
+    mainClass.set(MAIN_CLASS)
+}
+
+run {
+    standardInput = System.in
+}
+
+configurations {
+    includeJarInResources {
+        transitive false
+    }
+}
+
+dependencies {
+    jarLibsApi project(':headlessmc-api')
+    jarLibsApi project(':headlessmc-os')
+    jarLibsApi project(':headlessmc-java')
+    jarLibsApi project(':headlessmc-logging')
+    jarLibsApi project(':headlessmc-lwjgl')
+    jarLibsApi project(':headlessmc-auth')
+    jarLibsApi project(':headlessmc-guice')
+
+    jarLibsApi 'net.raphimc:MinecraftAuth:4.1.1'
+
+    jarLibsApi 'info.picocli:picocli:4.7.7'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+
+    jarLibs group: 'org.ow2.asm', name: 'asm', version: '9.8'
+    jarLibs group: 'org.ow2.asm', name: 'asm-tree', version: '9.8'
+    jarLibs group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    jarLibs group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
+    jarLibs 'org.semver4j:semver4j:5.7.0'
+    jarLibs 'com.electronwill.night-config:toml:3.8.2'
+    jarLibs 'org.yaml:snakeyaml:2.4'
+    jarLibs project(':headlessmc-jline')
+
+    includeJarInResources ('net.kunmc.lab:forgecli:1.2.0:all') {
+        transitive false
+    }
+
+    testImplementation(testFixtures(project(':headlessmc-api')))
+    testImplementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+}
+
+processResources {
+    into('headlessmc') {
+        from project(':headlessmc-lwjgl')['jar']
+        // TODO: this does not actually include, I think the excludes on the shadow task might cause it?
+        from configurations.includeJarInResources
+        rename 'ForgeCLI(.*).jar', 'forge-cli.jar'
+        rename 'forgecli(.*).jar', 'forge-cli.jar'
+        rename 'headlessmc-lwjgl(.*).jar', 'headlessmc-lwjgl.jar'
+    }
+}
+
+jar {
+    //noinspection GroovyAssignabilityCheck
+    manifest {
+        attributes('Main-Class': MAIN_CLASS)
+    }
+
+    into ('headlessmc') {
+        from configurations.includeJarInResources
+        rename 'ForgeCLI(.*).jar', 'forge-cli.jar'
+        rename 'forgecli(.*).jar', 'forge-cli.jar'
+    }
+
+    exclude("module-info.class")
+    exclude("META-INF/maven/com.google.code.gson/**")
+}
+
+// shadowJar always explodes the contents of jars and cannot distinguish between
+// a dependency and a jar in our resources, this works around that.
+// https://github.com/johnrengelman/shadow/issues/111#issuecomment-317233031
+// TODO: FOR SOME REASON this includes the asm of the ForgeCLI, not our ASM?!?!?!?!?!
+//  fixed for now by updating ForgeCLI, but this is REALLY ANNOYING and needs to be fixed ASAP!
+tasks.register('shadowBugWorkaround', Jar) {
+    dependsOn jar
+    dependsOn project(':headlessmc-lwjgl')['jar']
+
+    destinationDirectory.set(layout.buildDirectory.dir('shadow-bug-workaround'))
+    archiveBaseName.set('headlessmc-launcher-shadow-bug')
+
+    into ('headlessmc') {
+        from configurations.includeJarInResources
+        from project(':headlessmc-lwjgl')['jar']
+
+        rename 'ForgeCLI(.*).jar', 'forge-cli.jar'
+        rename 'forgecli(.*).jar', 'forge-cli.jar'
+
+        rename 'headlessmc-lwjgl(.*).jar', 'headlessmc-lwjgl.jar'
+    }
+}
+
+shadowJar {
+    dependsOn shadowBugWorkaround
+    from shadowBugWorkaround
+
+    // TODO: fix this, since it breaks graalvm, because the resource is not available!!!
+    // ignore the forge-cli jar from processResources as it will get expanded
+    // that the runtime and lwjgl jars get expanded isnt problematic
+    processResources.exclude('forgecli*.jar')
+    processResources.exclude('ForgeCLI*.jar')
+    processResources.exclude('forge-cli.jar')
+
+    exclude("META-INF/maven/com.google.code.gson/**")
+    exclude("META-INF/versions/**")
+    exclude("headlessmc/META-INF/**")
+    exclude("io/github/headlesshq/headlessmc/runtime/**")
+    exclude("dev/xdark/**")
+    exclude("net/kunmc/lab/**")
+    exclude("module-info.class")
+    exclude("LICENSE")
+}

@@ -1,0 +1,8 @@
+dependencies {
+    api project(':headlessmc-api')
+    api project(':headlessmc-jline')
+    compileOnly 'jakarta.inject:jakarta.inject-api:2.0.1'
+
+    implementation 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0'
+    implementation 'org.jboss.weld.se:weld-se-core:6.0.3.Final'
+}

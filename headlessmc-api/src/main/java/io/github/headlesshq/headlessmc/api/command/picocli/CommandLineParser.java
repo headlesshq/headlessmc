@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.api.command.picocli;
 
 import io.github.headlesshq.headlessmc.api.command.CommandException;
+import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * This class contains code needed to split Lines of text into an array of arguments.
@@ -15,6 +16,7 @@ import io.github.headlesshq.headlessmc.api.command.CommandException;
  * so we cannot rely on this method.
  * This package contains the needed JLine classes.
  */
+@ApplicationScoped
 public class CommandLineParser {
     public String[] parse(String line) throws CommandException {
         Parser parser = new DefaultParser();

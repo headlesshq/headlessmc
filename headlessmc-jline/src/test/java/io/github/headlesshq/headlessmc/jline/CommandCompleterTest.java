@@ -23,18 +23,8 @@ public class CommandCompleterTest {
     @Test
     public void testCommandCompleter() {
         Application app = TestApplication.create();
-
-
-
-        HeadlessMc hmc = new HeadlessMcImpl(ConfigImpl::empty, new CommandLineManager(), new ExitManager(), new LoggingService());
-        HelpCommand helpCommand = new HelpCommand(hmc);
-        CommandContextImpl commands = new CommandContextImpl(hmc) {{
-            add(helpCommand);
-        }};
-
-        hmc.getCommandLine().setCommandContext(commands);
         List<Candidate> candidates = new ArrayList<>();
-        new CommandCompleter(hmc).complete(null, new ParsedLine() {
+        new CommandCompleter(app).complete(null, new ParsedLine() {
             @Override
             public String word() {
                 return null;

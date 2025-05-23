@@ -9,9 +9,12 @@ include 'headlessmc-modlauncher'
 include 'headlessmc-auth'
 include 'headlessmc-lwjgl'
 include 'headlessmc-launcher'
+include 'headlessmc-launcher-new'
 include 'headlessmc-launcher-jfx'
 include 'headlessmc-launcher-wrapper'
 include 'headlessmc-web'
+include 'headlessmc-version'
+include 'headlessmc-weld'
 
 include 'headlessmc-web-plugin'
 project(':headlessmc-web-plugin').projectDir = file('headlessmc-web/plugin')

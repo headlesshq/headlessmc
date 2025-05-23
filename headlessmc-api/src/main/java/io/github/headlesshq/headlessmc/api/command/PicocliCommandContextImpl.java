@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.api.command;
 
 import io.github.headlesshq.headlessmc.api.command.picocli.CommandLineParser;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
+@ApplicationScoped
 @RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class PicocliCommandContextImpl implements PicocliCommandContext {
     private final CommandLine picocli;

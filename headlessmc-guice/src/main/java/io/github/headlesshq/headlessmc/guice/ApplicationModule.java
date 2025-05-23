@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
 import io.github.headlesshq.headlessmc.api.Application;
@@ -21,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Wiring to get an {@link Application} from {@link Guice}.
+ */
 public class ApplicationModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -31,7 +35,7 @@ public class ApplicationModule extends AbstractModule {
         bind(Out.class).to(StdIO.class).in(Singleton.class);
         bind(CommandLine.class).toProvider(CommandLineProvider.class).in(Singleton.class);
         bind(CommandLineReader.class)
-                .annotatedWith(Names.named("fallback"))
+                .annotatedWith(JLineCommandLineReaderProvider.Fallback.class)
                 .toProvider(DefaultCommandLineReaderProvider.class)
                 .in(Singleton.class);
         bind(CommandLineReader.class)

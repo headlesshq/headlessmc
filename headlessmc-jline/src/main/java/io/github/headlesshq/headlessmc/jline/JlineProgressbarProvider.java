@@ -1,17 +1,16 @@
 package io.github.headlesshq.headlessmc.jline;
 
-import io.github.headlesshq.headlessmc.api.settings.Config;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
 import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import jakarta.enterprise.context.ApplicationScoped;
+import lombok.Getter;
+import lombok.Setter;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
 
 @Getter
 @Setter
-@NoArgsConstructor
+@ApplicationScoped
 public class JlineProgressbarProvider implements ProgressBarProvider {
     private volatile String progressBarStyle = null;
 
@@ -24,6 +23,7 @@ public class JlineProgressbarProvider implements ProgressBarProvider {
         if (unit != null) {
             builder.setUnit(unit.getName(), unit.getMax());
         }
+
         String style = progressBarStyle;
         if (style != null) {
             // ProgressBarStyle is not an enum anymore after 0.10.0

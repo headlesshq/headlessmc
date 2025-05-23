@@ -6,7 +6,11 @@ import io.github.headlesshq.headlessmc.api.di.Injector;
 import io.github.headlesshq.headlessmc.api.logging.Out;
 import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.api.settings.SettingGroup;
+import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * Represents a command line application.
+ */
 public interface Application extends Out {
     SettingGroup getSettings();
 

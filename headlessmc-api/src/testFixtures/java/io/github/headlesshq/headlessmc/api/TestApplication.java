@@ -37,7 +37,7 @@ public class TestApplication extends ApplicationImpl {
             StdIO stdio = new StdIO();
             Injector injector = new TestInjector();
             CommandLineProvider commandLineProvider = new CommandLineProvider(stdio, injector, TestCommand.class);
-            CommandLine commandLine = commandLineProvider.create();
+            CommandLine commandLine = commandLineProvider.get();
 
             return new TestApplication(SettingGroup.create("hmc", "test"),
                     new TestInjector(),

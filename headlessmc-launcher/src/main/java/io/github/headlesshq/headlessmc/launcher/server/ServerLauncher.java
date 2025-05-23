@@ -27,10 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.github.headlesshq.headlessmc.launcher.LauncherProperties.ALWAYS_IN_MEMORY;
@@ -218,7 +215,7 @@ public class ServerLauncher {
     private Path createNonPausingBatFile(Path bat) throws IOException {
         List<String> lines = Files.readAllLines(bat);
         List<String> filteredLines = lines.stream()
-                .filter(line -> !line.trim().toLowerCase().contains("pause"))
+                .filter(line -> !line.trim().toLowerCase(Locale.ENGLISH).contains("pause"))
                 .collect(Collectors.toList());
 
         Path result = bat.getParent().resolve("hmc_run_server.bat");

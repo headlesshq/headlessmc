@@ -1,9 +1,11 @@
 package io.github.headlesshq.headlessmc.api.settings;
 
 import lombok.Data;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 // TODO: merge with other setting group?
@@ -38,8 +40,8 @@ final class SettingGroupImpl implements SettingGroup {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public @NotNull Iterator<SettingKey<?>> iterator() {
-        return (Iterator) settings.values().iterator();
+    public Iterable<SettingKey<?>> keys() {
+        return (Iterable) settings.values();
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
