@@ -5,11 +5,12 @@ import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.di.Injector;
 import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.api.settings.SettingGroup;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class ApplicationImpl implements Application {
     private final Object lock = new Object();
     private final SettingGroup settings;

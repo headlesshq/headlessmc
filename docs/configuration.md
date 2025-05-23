@@ -742,11 +742,6 @@ Type: `#!java Map` Default: `#!java "{}"`
 
 `${user_properties}` game argument for minecraft.
 
-#### hmc.vm_size
-Type: `#!java int` Default: `#!java 128`
-
-Size of the headlessmc-runtime VM memory.
-
 #### hmc.wrapper.close.classloader
 Type: `#!java boolean` Default: `#!java true`
 

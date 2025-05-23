@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.jline;
 
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
-import io.github.headlesshq.headlessmc.api.config.HasConfig;
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.api.command.Progressbar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
 
@@ -13,11 +13,7 @@ import me.tongfei.progressbar.ProgressBarStyle;
 @Setter
 @NoArgsConstructor
 public class JlineProgressbarProvider implements ProgressBarProvider {
-    private volatile String progressBarStyle = System.getProperty(JLineProperties.PROGRESS_BAR_STYLE.getName());
-
-    public JlineProgressbarProvider(HasConfig config) {
-        this.progressBarStyle = config.getConfig().get(JLineProperties.PROGRESS_BAR_STYLE, null);
-    }
+    private volatile String progressBarStyle = null;
 
     @Override
     public Progressbar displayProgressBar(Progressbar.Configuration configuration) {

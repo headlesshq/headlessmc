@@ -51,7 +51,6 @@ dependencies {
 processResources {
     dependsOn ':headlessmc-lwjgl:macosMenuAgentJar'
     into('headlessmc') {
-        from project(':headlessmc-runtime')['shadowJar']
         from project(':headlessmc-lwjgl')['jar']
         from { project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile }
         // TODO: this does not actually include, I think the excludes on the shadow task might cause it?
@@ -59,7 +58,6 @@ processResources {
         rename 'ForgeCLI(.*).jar', 'forge-cli.jar'
         rename 'forgecli(.*).jar', 'forge-cli.jar'
         rename 'headlessmc-lwjgl(.*).jar', 'headlessmc-lwjgl.jar'
-        rename 'headlessmc-runtime(.*).jar', 'headlessmc-runtime.jar'
     }
 }
 
@@ -86,7 +84,6 @@ jar {
 //  fixed for now by updating ForgeCLI, but this is REALLY ANNOYING and needs to be fixed ASAP!
 tasks.register('shadowBugWorkaround', Jar) {
     dependsOn jar
-    dependsOn project(':headlessmc-runtime')['shadowJar']
     dependsOn project(':headlessmc-lwjgl')['jar']
     dependsOn ':headlessmc-lwjgl:macosMenuAgentJar'
 
@@ -95,7 +92,6 @@ tasks.register('shadowBugWorkaround', Jar) {
 
     into ('headlessmc') {
         from configurations.includeJarInResources
-        from project(':headlessmc-runtime')['shadowJar']
         from project(':headlessmc-lwjgl')['jar']
         from { project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile }
 
@@ -103,7 +99,6 @@ tasks.register('shadowBugWorkaround', Jar) {
         rename 'forgecli(.*).jar', 'forge-cli.jar'
 
         rename 'headlessmc-lwjgl(.*).jar', 'headlessmc-lwjgl.jar'
-        rename 'headlessmc-runtime(.*).jar', 'headlessmc-runtime.jar'
     }
 }
 

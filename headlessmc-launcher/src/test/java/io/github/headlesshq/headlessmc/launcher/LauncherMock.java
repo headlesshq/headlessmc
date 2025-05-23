@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher;
 
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.val;

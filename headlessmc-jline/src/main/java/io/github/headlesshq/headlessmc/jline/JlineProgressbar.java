@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.jline;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
+import io.github.headlesshq.headlessmc.api.command.Progressbar;
 import me.tongfei.progressbar.ProgressBar;
 
 @Getter

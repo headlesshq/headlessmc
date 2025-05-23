@@ -14,4 +14,13 @@ public interface CommandLineManager {
 
     CommandLineReader getReader();
 
+    default CommandContext getActiveContext() {
+        CommandContext context = getInteractiveContext();
+        if (context == null) {
+            context = getContext();
+        }
+
+        return context;
+    }
+
 }

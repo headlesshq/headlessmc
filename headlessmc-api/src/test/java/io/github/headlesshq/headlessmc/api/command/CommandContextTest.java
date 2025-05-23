@@ -1,10 +1,11 @@
 package io.github.headlesshq.headlessmc.api.command;
 
+import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.MockedHeadlessMc;
-import io.github.headlesshq.headlessmc.api.process.PrintWriterPrintStream;
-import io.github.headlesshq.headlessmc.api.process.ReadableOutputStream;
+import io.github.headlesshq.headlessmc.api.TestApplication;
+import io.github.headlesshq.headlessmc.api.command.picocli.CommandLineProvider;
+import io.github.headlesshq.headlessmc.api.logging.PrintWriterPrintStream;
+import io.github.headlesshq.headlessmc.api.logging.ReadableOutputStream;
 import lombok.Cleanup;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -22,15 +23,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CommandContextTest {
     @Test
     public void test() throws IOException {
-        HeadlessMc headlessMc = new MockedHeadlessMc();
+        Application app = TestApplication.create();
         @Cleanup
         ReadableOutputStream os = new ReadableOutputStream();
         @Cleanup
         ReadableOutputStream err = new ReadableOutputStream();
-        headlessMc.getCommandLine().getInAndOutProvider().setOut(() -> new PrintWriterPrintStream(os, true));
-        headlessMc.getCommandLine().getInAndOutProvider().setErr(() -> new PrintWriterPrintStream(err, true));
+        app.getCommandLine().getStdIO().setOut(() -> new PrintWriterPrintStream(os, true));
+        app.getCommandLine().getStdIO().setErr(() -> new PrintWriterPrintStream(err, true));
 
-        CommandContext context = new CommandContextImpl(headlessMc, RootTestCommand.class);
+        CommandLine commandLine = new CommandLineProvider(app.getCommandLine().getStdIO(), app.getInjector(), RootTestCommand.class).get();
+        PicocliCommandContext context = new PicocliCommandContextImpl(commandLine);
         context.execute("-h");
 
         String output = read(os.getInputStream());
@@ -93,13 +95,12 @@ public class CommandContextTest {
         mixinStandardHelpOptions = true,
         description = "Test Command2"
     )
-    private static class TestCommand1 extends CommandImpl implements Callable<String> {
+    private static class TestCommand1 implements Callable<String> {
         @CommandLine.Option(names = "--test")
         private String option = "hello";
 
         @Override
         public String call() {
-            ctx.log("test1called");
             return option;
         }
     }
@@ -110,13 +111,12 @@ public class CommandContextTest {
         mixinStandardHelpOptions = true,
         description = "Test Command2"
     )
-    private static class TestCommand2 extends CommandImpl implements Callable<String> {
+    private static class TestCommand2 implements Callable<String> {
         @CommandLine.Option(names = "-option")
         private String option = "world";
 
         @Override
         public String call() {
-            ctx.log("test1called");
             return option;
         }
     }

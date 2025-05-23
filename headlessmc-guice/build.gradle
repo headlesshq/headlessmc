@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-api')
+    api project(':headlessmc-jline')
+    compileOnly 'jakarta.inject:jakarta.inject-api:2.0.1'
+    api 'com.google.inject:guice:7.0.0'
+}

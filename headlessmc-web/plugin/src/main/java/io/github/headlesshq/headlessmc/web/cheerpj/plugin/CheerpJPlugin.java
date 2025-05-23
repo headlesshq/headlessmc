@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.web.cheerpj.plugin;
 
 import lombok.SneakyThrows;
-import io.github.headlesshq.headlessmc.api.command.line.BufferedCommandLineReader;
+import io.github.headlesshq.headlessmc.api.command.BufferedCommandLineReader;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.plugin.HeadlessMcPlugin;
 import io.github.headlesshq.headlessmc.logging.Logger;
@@ -34,9 +34,9 @@ public class CheerpJPlugin implements HeadlessMcPlugin {
         }
 
         gui.init();
-        CheerpJMain.setupInAndOutProvider(gui, launcher.getCommandLine().getInAndOutProvider());
+        CheerpJMain.setupStdIO(gui, launcher.getCommandLine().getStdIO());
         LoggingService loggingService = launcher.getLoggingService();
-        loggingService.setStreamFactory(() -> launcher.getCommandLine().getInAndOutProvider().getOut().get());
+        loggingService.setStreamFactory(() -> launcher.getCommandLine().getStdIO().getOut().get());
         loggingService.init(); // reinitialize
 
         logger.info("HeadlessMc GUI initialized.");
@@ -45,7 +45,7 @@ public class CheerpJPlugin implements HeadlessMcPlugin {
         PrintStream outPipe = new PrintStream(new PipedOutputStream(inputStream));
         gui.getCommandHandler().set(outPipe::println);
 
-        launcher.getCommandLine().getInAndOutProvider().setIn(() -> inputStream);
+        launcher.getCommandLine().getStdIO().setIn(() -> inputStream);
         launcher.getCommandLine().setCommandLineProvider(BufferedCommandLineReader::new);
         // TODO: when starting a process we gotta pump its in and outputstreams to the gui!
     }

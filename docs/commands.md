@@ -444,8 +444,7 @@ You can list all commands available in HeadlessMc with the `help` command.
     | `<version>`    | `arg`     | The name or id of a version of Minecraft to launch.                                                                |
     | `-lwjgl`       | `flag`    | If you want to launch the game in headless mode.                                                                   |
     | `-noout`       | `flag`    | Silences output of Minecraft.                                                                                      |
-    | `-specifics`   | `flag`    | Automatically downloads the [hmc-specifics](https://github.com/headlesshq/hmc-specifics) for the version.          |
-    | `-commands`    | `flag`    | Enables the headlessmc-runtime, a weaker version of the hmc-specifics.                                             |
+    | `-specifics`   | `flag`    | Automatically downloads the [hmc-specifics](https://github.com/3arthqu4ke/hmc-specifics) for the version.          |
     | `-inmemory`    | `flag`    | Launches the game [in-memory](in-memory.md).                                                                       |
     | `-jndi`        | `flag`    | Patches JNDI lookups in Log4J (usually always on).                                                                 |
     | `-lookup`      | `flag`    | Patches all lookups in Log4J (usually always on).                                                                  |

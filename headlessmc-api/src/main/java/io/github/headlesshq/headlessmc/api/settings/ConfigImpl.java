@@ -29,6 +29,11 @@ class ConfigImpl implements Config {
     }
 
     @Override
+    public <V> @Nullable V get(NullableSettingKey<V> key) {
+        return getSetting(key).getWithFallbackToDefault();
+    }
+
+    @Override
     public <V> void set(Scope scope, SettingKey<V> key, V value) {
         Setting<V> setting = getSetting(key);
         setting.values.put(scope, value == null ? null : Optional.of(value));
@@ -102,7 +107,7 @@ class ConfigImpl implements Config {
 
     static ConfigImpl load(Path applicationPath, Path configPath) throws IOException {
         Properties properties = new Properties();
-        try (InputStream in = Files.newInputStream(applicationPath)) {
+        try (InputStream in = Files.newInputStream(configPath)) {
             properties.load(in);
         }
 
@@ -157,7 +162,9 @@ class ConfigImpl implements Config {
                 }
 
                 return Optional.ofNullable(values.get(Scope.APPLICATION))
-                        .orElseGet(() -> values.get(Scope.CONFIG))
+                        .map(Optional::ofNullable)
+                        .orElseGet(() -> Optional.ofNullable(values.get(Scope.USER)))
+                        .orElse(Optional.empty())
                         .orElse(null);
             }
         }

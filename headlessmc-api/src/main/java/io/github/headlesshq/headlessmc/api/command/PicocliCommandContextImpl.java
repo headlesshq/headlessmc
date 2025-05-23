@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.api.command;
 
-import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.picocli.CommandLineParser;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.AutoComplete;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class PicocliCommandContextImpl implements PicocliCommandContext {
     private final CommandLine picocli;
     private volatile int exitCode = 0;

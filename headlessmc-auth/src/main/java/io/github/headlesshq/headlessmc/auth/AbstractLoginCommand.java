@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.auth;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.AbstractCommand;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import lombok.CustomLog;
 import lombok.Setter;
 import net.lenni0451.commons.httpclient.HttpClient;

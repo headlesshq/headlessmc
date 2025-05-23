@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.launcher;
 
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import lombok.CustomLog;
 import lombok.experimental.UtilityClass;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.command.QuickExitCli;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
+import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
 
 /**
  * @see QuickExitCli

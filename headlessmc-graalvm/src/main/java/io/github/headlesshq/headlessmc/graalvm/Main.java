@@ -2,8 +2,8 @@ package io.github.headlesshq.headlessmc.graalvm;
 
 import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.process.InAndOutProvider;
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.api.process.StdIO;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloadRequest;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
@@ -42,7 +42,7 @@ public class Main {
                 && (args[0].equalsIgnoreCase("version")
                     || args[0].equalsIgnoreCase("-version")
                     || args[0].equalsIgnoreCase("--version"))) {
-            new InAndOutProvider().getOut().get().println(HeadlessMc.NAME + " - " + HeadlessMc.VERSION);
+            new StdIO().getOut().get().println(HeadlessMc.NAME + " - " + HeadlessMc.VERSION);
             return;
         }
 

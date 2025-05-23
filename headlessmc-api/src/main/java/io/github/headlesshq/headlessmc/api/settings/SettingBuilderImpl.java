@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.api.settings;
 
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +66,20 @@ public final class SettingBuilderImpl<V> implements SettingBuilder<V> {
         newAliases.addAll(Arrays.asList(aliases));
         this.withAliases = newAliases;
         return this;
+    }
+
+    @Override
+    public SettingKey<@Nullable V> nullable() {
+        List<String> aliases = this.withAliases == null ? emptyList() : unmodifiableList(this.withAliases);
+        Function<Config, V> value = this.withValue == null ? c -> null : this.withValue;
+        return group.add(new SettingKeyImpl<>(
+                requireNonNull(withType, "withType not called"),
+                requireNonNull(withName, "withName not called"),
+                requireNonNull(withDescription, "withDescription not called"),
+                aliases,
+                value,
+                requireNonNull(withParser, "withParser not called")
+        ));
     }
 
     public SettingKey<V> build() {

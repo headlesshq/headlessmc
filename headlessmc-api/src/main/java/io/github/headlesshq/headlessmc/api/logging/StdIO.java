@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  */
 @Getter
 @Setter
-public class StdIO {
+public class StdIO implements Out {
     /**
      * The standard OutputStream.
      * @see FileDescriptor#out
@@ -53,5 +53,10 @@ public class StdIO {
      * @see System#console()
      */
     private volatile Supplier<@Nullable Console> console = System::console;
+
+    @Override
+    public void log(String message) {
+        getOut().get().println(message);
+    }
 
 }

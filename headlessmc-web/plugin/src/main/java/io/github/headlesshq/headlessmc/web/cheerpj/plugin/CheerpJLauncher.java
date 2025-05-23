@@ -1,18 +1,18 @@
 package io.github.headlesshq.headlessmc.web.cheerpj.plugin;
 
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.command.CommandContext;
 import io.github.headlesshq.headlessmc.api.command.CopyContext;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
+import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
 import io.github.headlesshq.headlessmc.api.config.Config;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.config.HasConfig;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
-import io.github.headlesshq.headlessmc.api.process.InAndOutProvider;
+import io.github.headlesshq.headlessmc.api.process.StdIO;
 import io.github.headlesshq.headlessmc.auth.AbstractLoginCommand;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
@@ -63,7 +63,7 @@ import java.util.logging.Level;
 @RequiredArgsConstructor
 public class CheerpJLauncher {
     private static final UUID CACHE_UUID = UUID.fromString("e75fc20d-e629-4bf9-a236-c7acb4e9e0af");
-    private final InAndOutProvider inAndOutProvider;
+    private final StdIO StdIO;
     private final CheerpJGUI gui;
 
     public void launch() {
@@ -73,7 +73,7 @@ public class CheerpJLauncher {
 
         LoggingService loggingService = new LoggingService();
         loggingService.setPathFactory(() -> headlessMcRoot.resolve("headlessmc.log"));
-        loggingService.setStreamFactory(() -> inAndOutProvider.getOut().get());
+        loggingService.setStreamFactory(() -> StdIO.getOut().get());
         loggingService.setFormatterFactory(NoThreadFormatter::new);
         loggingService.init();
         loggingService.setLevel(Level.INFO);
@@ -92,7 +92,7 @@ public class CheerpJLauncher {
         initializeProperties(root);
         Config config = ConfigImpl.empty();
         HasConfig configs = () -> config;
-        CommandLineManager commandLine = new CommandLineManager(inAndOutProvider, gui);
+        CommandLineManager commandLine = new CommandLineManager(StdIO, gui);
         HeadlessMc hmc = new HeadlessMcImpl(configs, commandLine, new ExitManager(), loggingService);
         hmc.getExitManager().setExitManager(i -> {
             if (i != 0) {

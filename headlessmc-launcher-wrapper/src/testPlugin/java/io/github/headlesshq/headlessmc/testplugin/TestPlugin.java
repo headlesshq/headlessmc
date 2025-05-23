@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.testplugin;
 
 import lombok.CustomLog;
-import io.github.headlesshq.headlessmc.api.command.line.DefaultCommandLineProvider;
+import io.github.headlesshq.headlessmc.api.command.DefaultCommandLineProvider;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
@@ -48,11 +48,11 @@ public class TestPlugin implements HeadlessMcPlugin {
         // TransformerPlugin will not let us load this class
         assertThrows(ClassNotFoundException.class, () -> Class.forName("io.github.headlesshq.headlessmc.testplugin.DummyClassThatCantBeLoaded"));
         // ReadablePrintStream out = new ReadablePrintStream();
-        // launcher.getInAndOutProvider().setOut(() -> out);
-        // launcher.getInAndOutProvider().setErr(() -> out);
+        // launcher.getStdIO().setOut(() -> out);
+        // launcher.getStdIO().setErr(() -> out);
         TestInputStream in = new TestInputStream();
-        launcher.getCommandLine().getInAndOutProvider().setIn(() -> in);
-        launcher.getCommandLine().setCommandLineProvider(new DefaultCommandLineProvider(launcher.getCommandLine().getInAndOutProvider()));
+        launcher.getCommandLine().getStdIO().setIn(() -> in);
+        launcher.getCommandLine().setCommandLineProvider(new DefaultCommandLineProvider(launcher.getCommandLine().getStdIO()));
 
         System.setProperty(LauncherProperties.RE_THROW_LAUNCH_EXCEPTIONS.getName(), "true");
         Java java = launcher.getJavaService().getCurrent();

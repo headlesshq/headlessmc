@@ -23,7 +23,6 @@ public class LaunchCommand extends AbstractDownloadingVersionCommand {
         super(launcher, "launch", "Launches the game.");
         args.put("<version/id>", "Name or id of the version to launch. If you use the id you need to use the -id flag as well.");
         args.put("-id", "Use if you specified an id instead of a version name.");
-        args.put("-commands", "Starts the game with the built-in command line support.");
         args.put("-lwjgl", "Removes lwjgl code, causing Minecraft not to render anything.");
         args.put("-inmemory", "Launches the game in the same JVM headlessmc is running in.");
         args.put("-jndi", "Patches the Log4J vulnerability.");

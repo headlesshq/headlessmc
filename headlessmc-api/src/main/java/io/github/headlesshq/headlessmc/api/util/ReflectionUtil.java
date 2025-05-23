@@ -57,7 +57,7 @@ public class ReflectionUtil {
     @SuppressWarnings("unchecked")
     public static <T> T invoke(String method, Object instance, T def, Class<?>[] parameterTypes, Object... args) {
         try {
-            DEENCAPSULATOR.deencapsulate(instance.getClass());
+            //DEENCAPSULATOR.deencapsulate(instance.getClass());
             Method execute = instance.getClass().getMethod(method, parameterTypes);
             execute.setAccessible(true);
             return (T) execute.invoke(instance, args);

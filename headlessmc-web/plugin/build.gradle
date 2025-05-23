@@ -11,11 +11,6 @@ dependencies {
     // CheerpJ does not provide KeyFactory.getInstance("EC");
     jarLibs group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.83'
 
-    jarLibs(project(':headlessmc-runtime')) {
-        transitive false
-    }
-
-
     api project(':headlessmc-launcher')
     compileOnly project(':headlessmc-web')
 }

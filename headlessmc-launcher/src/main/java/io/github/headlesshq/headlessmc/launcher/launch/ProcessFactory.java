@@ -4,7 +4,7 @@ import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
+import io.github.headlesshq.headlessmc.api.command.Progressbar;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.download.AssetsDownloader;

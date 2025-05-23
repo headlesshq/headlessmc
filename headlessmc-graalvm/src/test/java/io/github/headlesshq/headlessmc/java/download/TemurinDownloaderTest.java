@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.java.download;
 
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
 import io.github.headlesshq.headlessmc.api.config.Config;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.graalvm.Java11DownloadClient;

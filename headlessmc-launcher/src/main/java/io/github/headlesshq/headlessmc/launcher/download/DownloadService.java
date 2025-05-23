@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.download;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
 import io.github.headlesshq.headlessmc.java.download.DownloadClient;
 import io.github.headlesshq.headlessmc.launcher.files.IOService;
 import io.github.headlesshq.headlessmc.launcher.util.IOConsumer;

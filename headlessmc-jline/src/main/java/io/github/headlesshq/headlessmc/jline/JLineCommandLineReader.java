@@ -1,14 +1,13 @@
 package io.github.headlesshq.headlessmc.jline;
 
+import io.github.headlesshq.headlessmc.api.Application;
+import io.github.headlesshq.headlessmc.api.command.*;
+import io.github.headlesshq.headlessmc.api.logging.StdIO;
+import io.github.headlesshq.headlessmc.api.settings.SettingKey;
 import lombok.CustomLog;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
-import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
-import io.github.headlesshq.headlessmc.api.config.Property;
-import io.github.headlesshq.headlessmc.api.process.InAndOutProvider;
 import org.jetbrains.annotations.Nullable;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -26,8 +25,11 @@ import java.util.function.BiConsumer;
  */
 @Getter
 @CustomLog
-public class JLineCommandLineReader implements CommandLineReader {
+@RequiredArgsConstructor
+public class JLineCommandLineReader implements CommandLineReader, HidesPasswords {
     private final JlineProgressbarProvider progressbarProvider = new JlineProgressbarProvider();
+
+    private final JLineSettings settings;
 
     /**
      * The prefix to display when reading from the command line.
@@ -51,11 +53,18 @@ public class JLineCommandLineReader implements CommandLineReader {
      */
     protected volatile boolean dumb;
 
-    protected volatile boolean enableProgressbar = Boolean.parseBoolean(System.getProperty(JLineProperties.ENABLE_PROGRESS_BAR.getName(), "true"));
+    @Setter
+    protected volatile boolean hidingPasswords;
+    protected volatile boolean enableProgressbar;
 
     @Override
-    public void read(HeadlessMc hmc) throws IOError {
+    public void read(Application hmc) throws IOError {
         CommandLineManager commandLine = hmc.getCommandLine();
+        CommandContext context = commandLine.getInteractiveContext();
+        if (context == null) {
+            return;
+        }
+
         long nanos = System.nanoTime();
         try {
             open(hmc);
@@ -70,7 +79,9 @@ public class JLineCommandLineReader implements CommandLineReader {
                 }
 
                 try {
-                    line = commandLine.isHidingPasswords() ? currentLineReader.readLine(readPrefix, '*') : currentLineReader.readLine(readPrefix);
+                    line = isHidingPasswords()
+                            ? currentLineReader.readLine(readPrefix, '*')
+                            : currentLineReader.readLine(readPrefix);
                 } catch (EndOfFileException ignored) {
                     // Continue reading after EOT
                     continue;
@@ -81,14 +92,12 @@ public class JLineCommandLineReader implements CommandLineReader {
                 }
 
                 line = line.trim();
-                commandLine.getCommandConsumer().accept(line);
-                if (commandLine.isQuickExitCli()) {
-                    if (!commandLine.isWaitingForInput()) {
-                        break;
-                    }
-
-                    log.debug("Waiting for more input...");
+                context = commandLine.getInteractiveContext();
+                if (context == null) {
+                    return;
                 }
+
+                context.execute(line);
             }
         } catch (UserInterruptException | IOException e) {
             // TODO: on UserInterruptException kill Mc process?
@@ -103,32 +112,32 @@ public class JLineCommandLineReader implements CommandLineReader {
     }
 
     @Override
-    public synchronized void open(HeadlessMc hmc) throws IOException {
-        enableProgressbar = hmc.getConfig().get(JLineProperties.ENABLE_PROGRESS_BAR, true);
-        progressbarProvider.setProgressBarStyle(hmc.getConfig().get(JLineProperties.PROGRESS_BAR_STYLE, null));
-        if (hmc.getConfig().get(JLineProperties.PREVENT_DEPRECATION_WARNING, true)) {
+    public synchronized void open(Application hmc) throws IOException {
+        enableProgressbar = hmc.getConfig().get(settings.progressBar);
+        progressbarProvider.setProgressBarStyle(hmc.getConfig().get(settings.progressBarStyle));
+        if (hmc.getConfig().get(settings.noDeprecationWarning)) {
             System.setProperty("org.args.terminal.disableDeprecatedProviderWarning", "true");
         }
 
         CommandLineManager commandLine = hmc.getCommandLine();
-        dumb = !hmc.getConfig().get(JLineProperties.FORCE_NOT_DUMB, false)
-            && (hmc.getConfig().get(JLineProperties.DUMB, false)
-            || System.console() == null && hmc.getConfig().get(JLineProperties.DUMB_WHEN_NO_CONSOLE, true)
+        dumb = !hmc.getConfig().get(settings.forceNotDumb)
+            && (hmc.getConfig().get(settings.dumb)
+            || System.console() == null && hmc.getConfig().get(settings.dumbWhenNoConsole)
             || System.getProperty("java.class.path").contains("idea_rt.jar"));
 
-        String providers = hmc.getConfig().get(JLineProperties.PROVIDERS, "jni");
-        InAndOutProvider io = commandLine.getInAndOutProvider();
+        String providers = hmc.getConfig().get(settings.providers);
+        StdIO io = commandLine.getStdIO();
 
         Terminal currentTerminal = buildTerminal(hmc, dumb, providers, io);
         log.info("JLine Terminal type: " + currentTerminal.getType() + ", name: " + currentTerminal.getName() + " (" + currentTerminal + ")");
         LineReader reader = buildLineReader(currentTerminal, hmc);
         reader.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
-        if (!hmc.getConfig().get(JLineProperties.BRACKETED_PASTE, true)) {
+        if (!hmc.getConfig().get(settings.bracketedPaste)) {
             reader.unsetOpt(LineReader.Option.BRACKETED_PASTE);
         }
 
         reader.unsetOpt(LineReader.Option.INSERT_TAB);
-        this.readPrefix = hmc.getConfig().get(JLineProperties.READ_PREFIX, null);
+        this.readPrefix = hmc.getConfig().get(settings.readPrefix);
         this.terminal = currentTerminal;
         this.lineReader = reader;
     }
@@ -157,32 +166,32 @@ public class JLineCommandLineReader implements CommandLineReader {
         return progressbarProvider.displayProgressBar(configuration);
     }
 
-    protected Terminal buildTerminal(HeadlessMc hmc, boolean dumb, String providers, InAndOutProvider io) throws IOException {
+    protected Terminal buildTerminal(Application hmc, boolean dumb, String providers, StdIO io) throws IOException {
         return buildTerminalBuilder(hmc, dumb, providers, io).build();
     }
 
-    protected LineReader buildLineReader(Terminal terminal, HeadlessMc hmc) {
-        return LineReaderBuilder.builder().appName("HeadlessMC").terminal(terminal).completer(new CommandCompleter(hmc)).build();
+    protected LineReader buildLineReader(Terminal terminal, Application hmc) {
+        return LineReaderBuilder.builder().appName("HeadlessMc").terminal(terminal).completer(new CommandCompleter(hmc)).build();
     }
 
-    protected TerminalBuilder buildTerminalBuilder(HeadlessMc hmc, boolean dumb, String providers, InAndOutProvider io) {
+    protected TerminalBuilder buildTerminalBuilder(Application hmc, boolean dumb, String providers, StdIO io) {
         // terribly complicated TerminalBuilder because on Windows JLine cannot be trusted to find the correct provider?!?!?!?!
         // Honestly this is kinda weird
         TerminalBuilder terminalBuilder = TerminalBuilder
                 .builder()
-                .streams(hmc.getConfig().get(JLineProperties.JLINE_IN, false) ? io.getIn().get() : null,
-                        hmc.getConfig().get(JLineProperties.JLINE_OUT, false) ? io.getOut().get() : null)
+                .streams(hmc.getConfig().get(settings.jlineIn) ? io.getIn().get() : null,
+                        hmc.getConfig().get(settings.jlineOut) ? io.getOut().get() : null)
                 .dumb(dumb)
-                .type(hmc.getConfig().get(JLineProperties.TYPE, null));
+                .type(hmc.getConfig().get(settings.type));
 
-        configureNullable(terminalBuilder, JLineProperties.EXEC, hmc, TerminalBuilder::exec, false);
-        configureNullable(terminalBuilder, JLineProperties.JNI, hmc, TerminalBuilder::jni, true);
-        configureNullable(terminalBuilder, JLineProperties.JANSI, hmc, TerminalBuilder::jansi, false);
-        configureNullable(terminalBuilder, JLineProperties.JNA, hmc, TerminalBuilder::jna, true);
-        configureNullable(terminalBuilder, JLineProperties.SYSTEM, hmc, TerminalBuilder::system, null);
+        configureNullable(terminalBuilder, settings.exec, hmc, TerminalBuilder::exec);
+        configureNullable(terminalBuilder, settings.jni, hmc, TerminalBuilder::jni);
+        configureNullable(terminalBuilder, settings.jansi, hmc, TerminalBuilder::jansi);
+        configureNullable(terminalBuilder, settings.jna, hmc, TerminalBuilder::jna);
+        configureNullable(terminalBuilder, settings.system, hmc, TerminalBuilder::system);
 
         try {
-            terminalBuilder.ffm(hmc.getConfig().get(JLineProperties.FFM, false));
+            terminalBuilder.ffm(hmc.getConfig().get(settings.ffm));
             terminalBuilder.providers(providers);
         } catch (NoSuchMethodError ignored) { // e.g. 1.12.2 ships an older version of JLine which does not have this
             log.debug("Running an older version of JLine, FFM and/or providers not supported.");
@@ -192,11 +201,10 @@ public class JLineCommandLineReader implements CommandLineReader {
     }
 
     protected void configureNullable(TerminalBuilder builder,
-                                     Property<Boolean> property,
-                                     HeadlessMc hmc,
-                                     BiConsumer<TerminalBuilder, Boolean> action,
-                                     @Nullable Boolean def) {
-        Boolean value = hmc.getConfig().get(property, def);
+                                     SettingKey<Boolean> property,
+                                     Application hmc,
+                                     BiConsumer<TerminalBuilder, Boolean> action) {
+        Boolean value = hmc.getConfig().get(property);
         if (value != null) {
             action.accept(builder, value);
         }

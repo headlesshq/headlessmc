@@ -7,6 +7,9 @@ dependencies {
     api 'info.picocli:picocli:4.7.7'
     annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
 
+    compileOnly 'jakarta.inject:jakarta.inject-api:2.0.1'
+    testCompileOnly 'jakarta.inject:jakarta.inject-api:2.0.1'
+
     runtimeOnly group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     testImplementation group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
 

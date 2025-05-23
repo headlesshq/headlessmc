@@ -1,14 +1,13 @@
 package io.github.headlesshq.headlessmc.api.settings;
 
+import jakarta.inject.Inject;
+
 public class Module {
-    public final SettingGroup group;
+    public final SettingGroup root;
 
-    public Module(Module module) {
-        this(module.group);
-    }
-
-    public Module(SettingGroup group) {
-        this.group = group;
+    @Inject
+    public Module(SettingGroup root) {
+        this.root = root;
     }
 
 }

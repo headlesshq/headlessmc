@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 @Data
-final class SettingKeyImpl<V> implements SettingKey<V> {
+class SettingKeyImpl<V> implements SettingKey<V> {
     private final Class<V> type;
     private final String name;
     private final String description;

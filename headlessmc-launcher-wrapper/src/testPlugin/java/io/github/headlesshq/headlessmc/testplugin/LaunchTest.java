@@ -121,7 +121,7 @@ public class LaunchTest {
                 ExitTrap.trapExit();
             }
 
-            ps.println("launch " + version.get().getId() + " -id -commands -lwjgl -stay " + inMemoryFlag);
+            ps.println("launch " + version.get().getId() + " -id -lwjgl -stay " + inMemoryFlag);
         });
 
         // for some reason test might hang here?

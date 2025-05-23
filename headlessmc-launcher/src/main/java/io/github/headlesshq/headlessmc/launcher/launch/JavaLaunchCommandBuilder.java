@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.launch;
 import lombok.Builder;
 import lombok.CustomLog;
 import lombok.Getter;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
+import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
 import io.github.headlesshq.headlessmc.api.config.Config;
 import io.github.headlesshq.headlessmc.api.config.HmcProperties;
 import io.github.headlesshq.headlessmc.java.Java;
@@ -173,24 +173,6 @@ public class JavaLaunchCommandBuilder {
         mainClass = launcher.getConfig().get(LauncherProperties.CUSTOM_MAIN_CLASS, mainClass);
         result.add(mainClass);
         return mainClass;
-    }
-
-    private void addIgnoreList(List<String> result) {
-        if (runtime) {
-            // put headlessmc-runtime.jar on the ignoreList of the bootstraplauncher as it should be loaded by it
-            for (int i = 0; i < result.size(); i++) {
-                if (SystemPropertyHelper.isSystemProperty(result.get(i))) {
-                    String[] nameValue = SystemPropertyHelper.splitSystemProperty(result.get(i));
-                    if ("ignoreList".equals(nameValue[0])) {
-                        String value = nameValue[1] + "," + InstrumentationHelper.RUNTIME_JAR;
-                        result.set(i, SystemPropertyHelper.toSystemProperty(nameValue[0], value));
-                        return;
-                    }
-                }
-            }
-
-            result.add(SystemPropertyHelper.toSystemProperty("ignoreList", InstrumentationHelper.RUNTIME_JAR));
-        }
     }
 
     // here to make the javadoc happy

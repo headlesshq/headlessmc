@@ -180,7 +180,6 @@ For available properties see the [HmcProperties](headlessmc-api/src/main/java/io
 [LauncherProperties](headlessmc-launcher/src/main/java/io/github/headlesshq/headlessmc/launcher/LauncherProperties.java), the
 [JLineProperties](headlessmc-jline/src/main/java/io/github/headlesshq/headlessmc/jline/JLineProperties.java), the
 [LoggingProperties](headlessmc-logging/src/main/java/io/github/headlesshq/headlessmc/logging/LoggingProperties.java), the
-[RuntimeProperties](headlessmc-runtime/src/main/java/io/github/headlesshq/headlessmc/runtime/RuntimeProperties.java) or the
 [LwjglProperties](headlessmc-lwjgl/src/main/java/io/github/headlesshq/headlessmc/lwjgl/LwjglProperties.java).
 
 You can e.g. set `hmc.gamedir` to run the game inside another directory.

@@ -12,6 +12,8 @@ import java.util.function.Consumer;
 public interface Config {
     <V> V get(SettingKey<V> key);
 
+    <V> @Nullable V get(NullableSettingKey<V> key);
+
     <V> void set(Scope scope, SettingKey<V> key, V value);
 
     Path getConfigPath();

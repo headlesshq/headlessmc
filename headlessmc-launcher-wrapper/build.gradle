@@ -88,7 +88,6 @@ tasks.withType(JacocoReport) {
         classDirectories.setFrom(files(classDirectories.files.collect {
             def tree = fileTree(dir: it, exclude: [
                     '**/headlessmc/headlessmc-launcher.jar',
-                    '**/headlessmc/headlessmc-runtime.jar',
                     '**/headlessmc/headlessmc-lwjgl.jar',
                     '**/headlessmc/headlessmc-macos-menu-agent.jar',
                     '**/headlessmc/forge-cli.jar',
@@ -111,7 +110,6 @@ tasks.withType(JacocoReport) {
     additionalClassDirs(project(':headlessmc-api').layout.buildDirectory.dir('classes/java/main').get().asFile)
     additionalClassDirs(project(':headlessmc-lwjgl').layout.buildDirectory.dir('classes/java/main').get().asFile)
     additionalClassDirs(project(':headlessmc-modlauncher').layout.buildDirectory.dir('classes/java/main').get().asFile)
-    additionalClassDirs(project(':headlessmc-runtime').layout.buildDirectory.dir('classes/java/main').get().asFile)
 
     reports {
         xml.required.set(true)

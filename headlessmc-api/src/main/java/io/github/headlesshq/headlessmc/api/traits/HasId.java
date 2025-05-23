@@ -4,6 +4,11 @@ package io.github.headlesshq.headlessmc.api.traits;
  * A type which can be identified by an id.
  */
 public interface HasId {
+    /**
+     * @return the id identifying this object.
+     */
+    int getId();
+
     static <T extends HasId> T getById(int id, Iterable<T> ids) {
         return getById(String.valueOf(id), ids);
     }
@@ -17,10 +22,5 @@ public interface HasId {
 
         return null;
     }
-
-    /**
-     * @return the id identifying this object.
-     */
-    int getId();
 
 }

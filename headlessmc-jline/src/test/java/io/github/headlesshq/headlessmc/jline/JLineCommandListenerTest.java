@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.jline;
 
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.api.process.WritableInputStream;
@@ -28,8 +28,8 @@ public class JLineCommandListenerTest {
     public void testJLineCommandListener() throws IOException {
         CommandLineManager commandLine = new CommandLineManager();
         WritableInputStream wis = new WritableInputStream();
-        commandLine.getInAndOutProvider().setIn(() -> wis);
-        commandLine.getInAndOutProvider().setOut(() -> System.out);
+        commandLine.getStdIO().setIn(() -> wis);
+        commandLine.getStdIO().setOut(() -> System.out);
         commandLine.setQuickExitCli(true);
         commandLine.setWaitingForInput(false);
         System.setIn(wis);
@@ -53,7 +53,7 @@ public class JLineCommandListenerTest {
 
         TerminalBuilder.setTerminalOverride(new DumbTerminal(
                 new DumbTerminalProvider(), SystemStream.Output, "dumb", "dumb",
-                commandLine.getInAndOutProvider().getIn().get(), commandLine.getInAndOutProvider().getOut().get(),
+                commandLine.getStdIO().getIn().get(), commandLine.getStdIO().getOut().get(),
                 StandardCharsets.UTF_8, Terminal.SignalHandler.SIG_IGN));
 
         HeadlessMc hmc = new HeadlessMcImpl(ConfigImpl::empty, commandLine, new ExitManager(), new LoggingService());

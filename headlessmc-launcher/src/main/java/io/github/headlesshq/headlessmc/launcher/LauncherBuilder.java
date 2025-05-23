@@ -11,7 +11,7 @@ import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.jline.JLineCommandLineReader;

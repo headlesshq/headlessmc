@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.java.download;
 
 import lombok.Data;
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
 import io.github.headlesshq.headlessmc.os.OS;
 import org.jetbrains.annotations.Nullable;
 

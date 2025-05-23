@@ -35,7 +35,6 @@ public class JavaLaunchCommandBuilderTest implements UsesResources {
             "-Djava.library.path=natives_path", "-cp",
             "test" + File.pathSeparator + "test",
             "-DSomeSystemProperty=${some_arg}",
-            "-DignoreList=headlessmc-runtime.jar",
             "-Dhmc.main_method=path.to.MainClass",
             "io.github.headlesshq.headlessmc.runtime.Main",
             "--username", "d", "--versionType", "release", "-game-arg");

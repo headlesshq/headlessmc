@@ -160,7 +160,7 @@ allprojects {
             )
         }
 
-        if (project != project(':headlessmc-lwjgl') && project != project(':headlessmc-runtime')) {
+        if (project != project(':headlessmc-lwjgl')) {
             manifest {
                 attributes(
                     "Automatic-Module-Name": "io.github.headlesshq.${project.name.replace("launcher-", "").replace('-', '.')}"
@@ -255,7 +255,6 @@ dependencies {
     api project(':headlessmc-launcher-wrapper')
     api project(':headlessmc-modlauncher')
     api project(':headlessmc-lwjgl')
-    api project(':headlessmc-runtime')
 }
 
 tasks.register('jacocoRootReport', JacocoReport) {
@@ -299,7 +298,6 @@ tasks.withType(JacocoReport) {
             def tree = fileTree(dir: it, exclude: [
                     '**/headlessmc/headlessmc-launcher.jar',
                     '**/headlessmc-launcher-wrapper.jar',
-                    '**/headlessmc/headlessmc-runtime.jar',
                     '**/headlessmc/headlessmc-lwjgl.jar',
                     '**/headlessmc/headlessmc-macos-menu-agent.jar',
                     '**/headlessmc/forge-cli.jar',

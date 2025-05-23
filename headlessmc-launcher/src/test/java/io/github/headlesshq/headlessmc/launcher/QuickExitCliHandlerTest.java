@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLineReader;
+import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOError;

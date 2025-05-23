@@ -1,9 +1,7 @@
 package io.github.headlesshq.headlessmc.api.command;
 
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
 import io.github.headlesshq.headlessmc.api.Application;
-import io.github.headlesshq.headlessmc.api.process.InAndOutProvider;
+import io.github.headlesshq.headlessmc.api.logging.StdIO;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -26,8 +24,8 @@ public interface CommandLineReader extends ProgressBarProvider {
     };
 
     /**
-     * Listens for commands on a terminal, console or other InputStreams provided by the {@link InAndOutProvider}.
-     * This reader is configured by the {@link io.github.headlesshq.headlessmc.api.command.line.CommandLineManager} provided by the given {@link Application} instance.
+     * Listens for commands on a terminal, console or other InputStreams provided by the {@link StdIO}.
+     * This reader is configured by the {@link CommandLineManager} provided by the given {@link Application} instance.
      * This method will block.
      *
      * @param application the instance of HeadlessMc providing the CommandLine.
@@ -38,7 +36,7 @@ public interface CommandLineReader extends ProgressBarProvider {
     /**
      * Starts {@link #read(Application)} on a Thread provided by the {@link #DEFAULT_THREAD_FACTORY}.
      *
-     * @param application the Application instance providing the {@link io.github.headlesshq.headlessmc.api.command.line.CommandLineManager}.
+     * @param application the Application instance providing the {@link CommandLineManager}.
      */
     default void readAsync(Application application) {
         readAsync(application, DEFAULT_THREAD_FACTORY);
@@ -47,7 +45,7 @@ public interface CommandLineReader extends ProgressBarProvider {
     /**
      * Starts {@link #read(Application)} on a Thread provided by the given {@link ThreadFactory}.
      *
-     * @param application the Application instance providing the {@link io.github.headlesshq.headlessmc.api.command.line.CommandLineManager}.
+     * @param application the Application instance providing the {@link CommandLineManager}.
      * @param factory the factory providing the Thread to run this listener on.
      */
     default void readAsync(Application application, ThreadFactory factory) {

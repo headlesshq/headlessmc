@@ -28,7 +28,6 @@ public class LaunchOptions {
     private final List<String> additionalGameArgs;
     private final LaunchAccount account;
     private final boolean server;
-    private final boolean runtime;
     private final boolean lwjgl;
     private final boolean jndi;
     private final boolean lookup;
@@ -80,7 +79,6 @@ public class LaunchOptions {
                     || launcher.getConfig().get(AUTO_DOWNLOAD_SPECIFICS, false);
 
             return this
-                .runtime(CommandUtil.hasFlag("-commands", args))
                 .specifics(specifics)
                 .lwjgl(lwjgl)
                 .inMemory(CommandUtil.hasFlag("-inmemory", args) || launcher.getConfig().get(ALWAYS_IN_MEMORY, false))

@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.graalvm;
 
-import io.github.headlesshq.headlessmc.api.command.line.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.command.line.Progressbar;
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.api.command.Progressbar;
 import io.github.headlesshq.headlessmc.java.download.DownloadClient;
 
 import java.io.IOError;
