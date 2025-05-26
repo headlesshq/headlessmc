@@ -1,7 +1,8 @@
 package io.github.headlesshq.headlessmc.jline;
 
-import io.github.headlesshq.headlessmc.api.settings.Module;
+import io.github.headlesshq.headlessmc.api.settings.NullableSettingKey;
 import io.github.headlesshq.headlessmc.api.settings.SettingGroup;
+import io.github.headlesshq.headlessmc.api.settings.SettingGroupInitializer;
 import io.github.headlesshq.headlessmc.api.settings.SettingKey;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Getter
 @ApplicationScoped
-public class JLineSettings extends Module {
+public class JLineSettings extends SettingGroupInitializer {
     private final SettingGroup group = getRoot().group("hmc.jline", "JLine configuration");
 
     private final SettingKey<Boolean> enabled = group.setting(Boolean.class)
@@ -33,14 +34,13 @@ public class JLineSettings extends Module {
             .withValue("jni")
             .build();
 
-    private final SettingKey<String> readPrefix = group.setting(String.class)
+    private final NullableSettingKey<@Nullable String> readPrefix = group.setting(String.class)
             .withName("hmc.jline.readPrefix")
             .withAlias("hmc.args.read.prefix") // legacy name
             .withDescription("A prefix to display when reading with the JLine Command Line.")
-            .withValue("> ")
-            .build();
+            .nullable();
 
-    private final SettingKey<@Nullable String> type = group.setting(String.class)
+    private final NullableSettingKey<@Nullable String> type = group.setting(String.class)
             .withName("hmc.jline.type")
             .withAlias("hmc.args.type") // legacy name
             .withDescription("A prefix to display when reading with the JLine Command Line.")
@@ -130,7 +130,7 @@ public class JLineSettings extends Module {
             .withValue(false)
             .build();
 
-    private final SettingKey<@Nullable Boolean> system = group.setting(Boolean.class)
+    private final NullableSettingKey<@Nullable Boolean> system = group.setting(Boolean.class)
             .withName("hmc.jline.system")
             .withAlias("hmc.args.system") // legacy name
             .withDescription("Enables System Terminal support.")
@@ -143,7 +143,7 @@ public class JLineSettings extends Module {
             .withValue(true)
             .build();
 
-    private final SettingKey<@Nullable String> progressBarStyle = group.setting(String.class)
+    private final NullableSettingKey<@Nullable String> progressBarStyle = group.setting(String.class)
             .withName("hmc.jline.progressBarStyle")
             .withAlias("hmc.jline.progressbar.style") // legacy name
             .withDescription("Sets the JLine Progressbar Style (COLORFUL_UNICODE_BLOCK, COLORFUL_UNICODE_BAR, UNICODE_BLOCK, or ASCII).")

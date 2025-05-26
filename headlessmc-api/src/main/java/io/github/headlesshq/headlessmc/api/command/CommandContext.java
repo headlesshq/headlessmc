@@ -6,4 +6,6 @@ package io.github.headlesshq.headlessmc.api.command;
 public interface CommandContext extends ProvidesSuggestions {
     void execute(String command) throws CommandException;
 
+    void executeArgs(String... args) throws CommandException;
+
 }

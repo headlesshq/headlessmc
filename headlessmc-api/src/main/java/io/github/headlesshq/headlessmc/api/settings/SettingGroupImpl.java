@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.api.settings;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
@@ -7,8 +8,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
-// TODO: merge with other setting group?
 @Data
 final class SettingGroupImpl implements SettingGroup {
     private final Map<String, SettingReference<?>> settings = new ConcurrentHashMap<>();
@@ -47,22 +48,42 @@ final class SettingGroupImpl implements SettingGroup {
     @SuppressWarnings({"rawtypes", "unchecked"})
     <V> SettingKey<V> add(SettingKey<V> key) {
         String lower = key.getName().toLowerCase(Locale.ENGLISH);
-        SettingReference<?> ref = settings.get(lower);
-        if (ref == null) {
-            ref = new SettingReference<>();
-        } else if (!ref.getType().isAssignableFrom(key.getType())) {
+        SettingReference<?> ref = settings.computeIfAbsent(lower, v -> new SettingReference.NonNull<>(key));
+        if (!ref.getType().isAssignableFrom(key.getType())) {
             throw new IllegalArgumentException("Trying to register key " + key + " of type "
                     + key.getType() + " but is already registered with type " + ref.getType());
+        } else if (!(ref instanceof SettingKey)) {
+            throw new IllegalStateException("Trying to register non-null key " + key
+                    + " but a nullable key is already registered: " + ref.reference);
         }
 
         ref.setReference((SettingKey) key);
         return (SettingKey) ref;
     }
 
-    private static final class SettingReference<V> implements SettingKey<V> {
-        private volatile SettingKey<V> reference;
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    <V> NullableSettingKey<V> addNullable(NullableSettingKey<V> key) {
+        String lower = key.getName().toLowerCase(Locale.ENGLISH);
+        SettingReference<?> ref = settings.computeIfAbsent(lower, v -> new SettingReference<>(key));
+        if (!ref.getType().isAssignableFrom(key.getType())) {
+            throw new IllegalArgumentException("Trying to register key " + key + " of type "
+                    + key.getType() + " but is already registered with type " + ref.getType());
+        } else if (ref instanceof SettingKey) {
+            // we cannot allow this because someone could try to use the old key to call set(key, null)...
+            // if it was only getting it would be fine
+            throw new IllegalStateException("Trying to register nullable key " + key
+                    + " but a non-nullable key is already registered: " + ref.reference);
+        }
 
-        private void setReference(SettingKey<V> ref) {
+        ref.setReference((NullableSettingKey) key);
+        return (NullableSettingKey) ref;
+    }
+
+    @AllArgsConstructor
+    private static class SettingReference<V> implements NullableSettingKey<V> {
+        protected volatile NullableSettingKey<V> reference;
+
+        protected void setReference(NullableSettingKey<V> ref) {
             this.reference = ref;
         }
 
@@ -72,7 +93,7 @@ final class SettingGroupImpl implements SettingGroup {
         }
 
         @Override
-        public V getDefaultValue(Config config) {
+        public Supplier<V> getDefaultValue(Config config) {
             return reference.getDefaultValue(config);
         }
 
@@ -107,6 +128,22 @@ final class SettingGroupImpl implements SettingGroup {
         @Override
         public int hashCode() {
             return Objects.hash(getType(), getName());
+        }
+
+        public static final class NonNull<V> extends SettingReference<V> implements SettingKey<V> {
+            public NonNull(SettingKey<V> reference) {
+                super(reference);
+            }
+
+            @Override
+            protected void setReference(NullableSettingKey<V> ref) {
+                if (!(ref instanceof SettingKey<?>)) {
+                    throw new IllegalArgumentException("Trying to set non-nullable key " + ref
+                            + " on nullable setting key " + reference);
+                }
+
+                super.setReference(ref);
+            }
         }
     }
 

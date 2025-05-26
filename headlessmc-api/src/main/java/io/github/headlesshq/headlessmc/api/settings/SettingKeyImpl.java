@@ -1,13 +1,15 @@
 package io.github.headlesshq.headlessmc.api.settings;
 
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Data
-class SettingKeyImpl<V> implements SettingKey<V> {
+class SettingKeyImpl<V> implements NullableSettingKey<V> {
     private final Class<V> type;
     private final String name;
     private final String description;
@@ -24,8 +26,8 @@ class SettingKeyImpl<V> implements SettingKey<V> {
     private final Function<Config, Parser<V>> parser;
 
     @Override
-    public V getDefaultValue(Config config) {
-        return defaultValue.apply(config);
+    public Supplier<V> getDefaultValue(Config config) {
+        return () -> defaultValue.apply(config);
     }
 
     @Override
@@ -43,6 +45,17 @@ class SettingKeyImpl<V> implements SettingKey<V> {
     @Override
     public int hashCode() {
         return Objects.hash(getType(), getName());
+    }
+
+    public static final class NonNullSettingKey<V> extends SettingKeyImpl<V> implements SettingKey<V> {
+        public NonNullSettingKey(Class<V> type,
+                                      String name,
+                                      String description,
+                                      List<String> aliases,
+                                      Function<Config, @NotNull V> defaultValue,
+                                      Function<Config, Parser<V>> parser) {
+            super(type, name, description, aliases, defaultValue, parser);
+        }
     }
 
 }

@@ -63,7 +63,7 @@ import java.util.logging.Level;
 @RequiredArgsConstructor
 public class CheerpJLauncher {
     private static final UUID CACHE_UUID = UUID.fromString("e75fc20d-e629-4bf9-a236-c7acb4e9e0af");
-    private final StdIO StdIO;
+    private final StdIO stdIO;
     private final CheerpJGUI gui;
 
     public void launch() {
@@ -73,7 +73,7 @@ public class CheerpJLauncher {
 
         LoggingService loggingService = new LoggingService();
         loggingService.setPathFactory(() -> headlessMcRoot.resolve("headlessmc.log"));
-        loggingService.setStreamFactory(() -> StdIO.getOut().get());
+        loggingService.setStreamFactory(() -> stdIO.getOut().get());
         loggingService.setFormatterFactory(NoThreadFormatter::new);
         loggingService.init();
         loggingService.setLevel(Level.INFO);

@@ -1,12 +1,15 @@
 package io.github.headlesshq.headlessmc.api.command;
 
 import io.github.headlesshq.headlessmc.api.Application;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.io.BufferedReader;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+@ApplicationScoped
+@CommandLineReader.Implementation
 class BufferedCommandLineReader implements CommandLineReader {
     @Override
     public void read(Application application) throws IOError {

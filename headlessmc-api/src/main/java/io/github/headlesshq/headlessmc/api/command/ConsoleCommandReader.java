@@ -12,6 +12,7 @@ import static java.lang.String.valueOf;
 
 @Getter
 @Setter
+@CommandLineReader.Implementation
 class ConsoleCommandReader implements CommandLineReader, HidesPasswords {
     private volatile boolean hidingPasswords = false;
 

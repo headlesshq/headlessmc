@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.jline;
 import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.command.*;
 import io.github.headlesshq.headlessmc.api.logging.StdIO;
-import io.github.headlesshq.headlessmc.api.settings.SettingKey;
+import io.github.headlesshq.headlessmc.api.settings.NullableSettingKey;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.CustomLog;
@@ -28,6 +28,7 @@ import java.util.function.BiConsumer;
 @Getter
 @CustomLog
 @ApplicationScoped
+@CommandLineReader.Implementation
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class JLineCommandLineReader implements CommandLineReader, HidesPasswords {
     private final JlineProgressbarProvider progressbarProvider;
@@ -203,7 +204,7 @@ public class JLineCommandLineReader implements CommandLineReader, HidesPasswords
     }
 
     protected void configureNullable(TerminalBuilder builder,
-                                     SettingKey<Boolean> property,
+                                     NullableSettingKey<Boolean> property,
                                      Application hmc,
                                      BiConsumer<TerminalBuilder, Boolean> action) {
         Boolean value = hmc.getConfig().get(property);
