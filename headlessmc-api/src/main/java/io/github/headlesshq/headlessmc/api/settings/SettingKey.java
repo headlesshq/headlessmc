@@ -3,12 +3,12 @@ package io.github.headlesshq.headlessmc.api.settings;
 import io.github.headlesshq.headlessmc.api.traits.HasAliases;
 import io.github.headlesshq.headlessmc.api.traits.HasDescription;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
+import org.jetbrains.annotations.NotNull;
 
-public interface SettingKey<V> extends HasName, HasDescription, HasAliases {
-    Class<V> getType();
+import java.util.function.Supplier;
 
-    V getDefaultValue(Config config);
-
-    Parser<V> getParser(Config config);
+public interface SettingKey<V> extends HasName, HasDescription, HasAliases, NullableSettingKey<V> {
+    @Override
+    Supplier<@NotNull V> getDefaultValue(Config config);
 
 }

@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.web.cheerpj.plugin;
 
-import io.github.headlesshq.headlessmc.api.process.StdIO;
+import io.github.headlesshq.headlessmc.api.logging.StdIO;
 
 import javax.swing.*;
 import java.io.InputStream;
@@ -14,13 +14,13 @@ public class CheerpJMain {
         CheerpJGUI gui = CheerpJGUI.getInstance();
         gui.init();
 
-        StdIO StdIO = new StdIO();
+        StdIO stdIO = new StdIO();
         setupStdIO(gui, StdIO);
 
         new CheerpJLauncher(StdIO, gui).launch();
     }
 
-    public static void setupStdIO(CheerpJGUI cheerpJGUI, StdIO StdIO) {
+    public static void setupStdIO(CheerpJGUI cheerpJGUI, StdIO stdIO) {
         PrintStream out = new PrintStream(new OutputStream() {
             @Override
             public void write(int b) {
@@ -34,10 +34,10 @@ public class CheerpJMain {
         System.setOut(out);
         System.setErr(out);
 
-        StdIO.setConsole(() -> null);
-        StdIO.setOut(() -> out);
-        StdIO.setErr(() -> out);
-        StdIO.setIn(() -> new InputStream() {
+        stdIO.setConsole(() -> null);
+        stdIO.setOut(() -> out);
+        stdIO.setErr(() -> out);
+        stdIO.setIn(() -> new InputStream() {
             @Override
             public int read() {
                 throw new UnsupportedOperationException("Not supported yet.");

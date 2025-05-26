@@ -2,21 +2,31 @@ package io.github.headlesshq.headlessmc.api.command;
 
 import io.github.headlesshq.headlessmc.api.logging.StdIO;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 
+@Getter
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor = @__(@Inject))
-public class DefaultCommandLineReaderProvider implements Provider<CommandLineReader> {
+public class DefaultCommandLineReaderProvider {
+    private final Instance<CommandLineReader> readers;
     private final StdIO stdIO;
 
-    @Override
+    @Inject
+    public DefaultCommandLineReaderProvider(@CommandLineReader.Implementation Instance<CommandLineReader> readers,
+                                            StdIO stdIO) {
+        this.readers = readers;
+        this.stdIO = stdIO;
+    }
+
+    @Produces
+    @ApplicationScoped
     public CommandLineReader get() {
         if (stdIO.getConsole().get() != null) {
-            return new ConsoleCommandReader();
+            return readers.select(ConsoleCommandReader.class).get();
         } else { // e.g. in IntelliJ's run tab terminal
-            return new BufferedCommandLineReader();
+            return readers.select(BufferedCommandLineReader.class).get();
         }
     }
 

@@ -18,14 +18,19 @@ import java.util.function.Consumer;
 // TODO: should get a setting group so it can parse all settings in that group beforehand
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 class ConfigImpl implements Config {
-    private final Map<SettingKey<?>, Setting<?>> cachedValues;
+    private final Map<NullableSettingKey<?>, Setting<?>> cachedValues;
     private final Path configPath;
     private final Path applicationPath;
     private final Properties properties;
 
     @Override
     public <V> V get(SettingKey<V> key) {
-        return getSetting(key).getWithFallbackToDefault();
+        Setting<V> setting = getSetting(key);
+        if (setting.key instanceof SettingKey) {
+            return Objects.requireNonNull(setting.getWithFallbackToDefault());
+        }
+
+        throw new IllegalStateException("Setting with key " + key + " is not non-null!");
     }
 
     @Override
@@ -36,7 +41,16 @@ class ConfigImpl implements Config {
     @Override
     public <V> void set(Scope scope, SettingKey<V> key, V value) {
         Setting<V> setting = getSetting(key);
-        setting.values.put(scope, value == null ? null : Optional.of(value));
+        setting.values.put(scope, Optional.of(value));
+        if (scope.isWrittenToConfig()) {
+            onChange(setting, value);
+        }
+    }
+
+    @Override
+    public <V> void set(Scope scope, NullableSettingKey<V> key, @Nullable V value) {
+        Setting<V> setting = getSetting(key);
+        setting.values.put(scope, Optional.ofNullable(value));
         if (scope.isWrittenToConfig()) {
             onChange(setting, value);
         }
@@ -95,7 +109,7 @@ class ConfigImpl implements Config {
     }
 
     @SuppressWarnings("unchecked")
-    private <V> Setting<V> getSetting(SettingKey<V> key) {
+    private <V> Setting<V> getSetting(NullableSettingKey<V> key) {
         Setting<?> setting = cachedValues.computeIfAbsent(key, Setting::new);
         // we could be a bit more lenient here to allow SettingKeys of super types, but that is a slippery slope
         if (!key.getType().equals(setting.key.getType())) {
@@ -117,19 +131,18 @@ class ConfigImpl implements Config {
     @RequiredArgsConstructor
     private final class Setting<V> {
         private final EnumMap<Scope, Optional<V>> values = new EnumMap<>(Scope.class);
-        private final SettingKey<V> key;
+        private final NullableSettingKey<V> key;
 
-        private volatile String systemProperty;
-        private volatile V parsedSystemProperty;
+        private volatile @Nullable String systemProperty;
+        private volatile @Nullable V parsedSystemProperty;
+        private volatile @Nullable V defaultValue;
 
-        private volatile V defaultValue;
-
-        public V getWithFallbackToDefault() {
+        public @Nullable V getWithFallbackToDefault() {
             synchronized (values) {
                 V value = get();
                 if (value == null) {
                     if (defaultValue == null) {
-                        defaultValue = key.getDefaultValue(ConfigImpl.this);
+                        defaultValue = key.getDefaultValue(ConfigImpl.this).get();
                     }
 
                     value = defaultValue;
@@ -162,7 +175,7 @@ class ConfigImpl implements Config {
                 }
 
                 return Optional.ofNullable(values.get(Scope.APPLICATION))
-                        .map(Optional::ofNullable)
+                        .map(Optional::of)
                         .orElseGet(() -> Optional.ofNullable(values.get(Scope.USER)))
                         .orElse(Optional.empty())
                         .orElse(null);

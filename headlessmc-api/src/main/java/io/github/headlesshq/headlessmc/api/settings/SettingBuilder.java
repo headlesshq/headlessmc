@@ -1,7 +1,5 @@
 package io.github.headlesshq.headlessmc.api.settings;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.function.Function;
 
 public interface SettingBuilder<V> {
@@ -19,7 +17,7 @@ public interface SettingBuilder<V> {
 
     SettingBuilder<V> withAlias(String... aliases);
 
-    SettingKey<@Nullable V> nullable();
+    NullableSettingKey<V> nullable(); // TODO: NullableSettingKey!
 
     SettingKey<V> build();
 

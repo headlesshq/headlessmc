@@ -2,9 +2,13 @@ package io.github.headlesshq.headlessmc.api.command;
 
 import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.logging.StdIO;
+import jakarta.inject.Qualifier;
 
 import java.io.IOError;
 import java.io.IOException;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -94,5 +98,10 @@ public interface CommandLineReader extends ProgressBarProvider {
     default Progressbar displayProgressBar(Progressbar.Configuration configuration) {
         return Progressbar.dummy();
     }
+
+    @Qualifier
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Implementation { }
 
 }

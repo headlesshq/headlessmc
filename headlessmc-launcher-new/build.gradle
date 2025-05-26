@@ -24,7 +24,6 @@ dependencies {
     jarLibsApi project(':headlessmc-logging')
     jarLibsApi project(':headlessmc-lwjgl')
     jarLibsApi project(':headlessmc-auth')
-    jarLibsApi project(':headlessmc-guice')
 
     jarLibsApi 'net.raphimc:MinecraftAuth:4.1.1'
 

@@ -7,12 +7,13 @@ import lombok.Getter;
 import lombok.Setter;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
+import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
 @ApplicationScoped
 public class JlineProgressbarProvider implements ProgressBarProvider {
-    private volatile String progressBarStyle = null;
+    private volatile @Nullable String progressBarStyle = null;
 
     @Override
     public Progressbar displayProgressBar(Progressbar.Configuration configuration) {

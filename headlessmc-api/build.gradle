@@ -7,10 +7,10 @@ dependencies {
     api 'info.picocli:picocli:4.7.7'
     annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
 
-    testFixturesCompileOnly 'jakarta.inject:jakarta.inject-api:2.0.1'
-
     runtimeOnly group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     testImplementation group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
+
+    runtimeOnly 'org.jboss.weld.se:weld-se-core:6.0.3.Final'
 
     testFixturesCompileOnly 'org.projectlombok:lombok:1.18.38'
     testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.38'

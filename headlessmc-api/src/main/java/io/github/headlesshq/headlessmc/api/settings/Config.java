@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.api.settings;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -10,11 +11,13 @@ import java.util.function.Consumer;
 
 // groups?
 public interface Config {
-    <V> V get(SettingKey<V> key);
+    <V> V get(SettingKey<@NotNull V> key);
 
     <V> @Nullable V get(NullableSettingKey<V> key);
 
     <V> void set(Scope scope, SettingKey<V> key, V value);
+
+    <V> void set(Scope scope, NullableSettingKey<V> key, @Nullable V value);
 
     Path getConfigPath();
 

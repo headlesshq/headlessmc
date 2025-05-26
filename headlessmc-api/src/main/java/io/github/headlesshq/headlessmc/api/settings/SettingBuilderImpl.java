@@ -21,9 +21,9 @@ public final class SettingBuilderImpl<V> implements SettingBuilder<V> {
 
     private String withName;
     private String withDescription;
-    private List<String> withAliases;
-    private Function<Config, V> withValue;
-    private Function<Config, Parser<V>> withParser;
+    private @Nullable List<String> withAliases;
+    private @Nullable Function<Config, V> withValue;
+    private @Nullable Function<Config, Parser<V>> withParser;
 
     SettingBuilderImpl(SettingGroupImpl group, Class<V> type) {
         this.group = group;
@@ -69,10 +69,10 @@ public final class SettingBuilderImpl<V> implements SettingBuilder<V> {
     }
 
     @Override
-    public SettingKey<@Nullable V> nullable() {
+    public NullableSettingKey<@Nullable V> nullable() {
         List<String> aliases = this.withAliases == null ? emptyList() : unmodifiableList(this.withAliases);
         Function<Config, V> value = this.withValue == null ? c -> null : this.withValue;
-        return group.add(new SettingKeyImpl<>(
+        return group.addNullable(new SettingKeyImpl<>(
                 requireNonNull(withType, "withType not called"),
                 requireNonNull(withName, "withName not called"),
                 requireNonNull(withDescription, "withDescription not called"),
@@ -84,7 +84,7 @@ public final class SettingBuilderImpl<V> implements SettingBuilder<V> {
 
     public SettingKey<V> build() {
         List<String> aliases = this.withAliases == null ? emptyList() : unmodifiableList(this.withAliases);
-        return group.add(new SettingKeyImpl<>(
+        return group.add(new SettingKeyImpl.NonNullSettingKey<>(
                 requireNonNull(withType, "withType not called"),
                 requireNonNull(withName, "withName not called"),
                 requireNonNull(withDescription, "withDescription not called"),

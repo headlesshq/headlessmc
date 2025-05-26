@@ -18,9 +18,18 @@ public class YesNoContext implements CommandContext {
 
     @Override
     public void execute(String command) {
-        if (YES.matcher(command).matches()) {
+        executeArgs(command);
+    }
+
+    @Override
+    public void executeArgs(String... args) throws CommandException {
+        if (args.length == 0) {
+            throw new CommandException("[Y/n] expected.");
+        }
+
+        if (YES.matcher(args[0]).matches()) {
             callback.accept(true);
-        } else if (NO.matcher(command).matches()) {
+        } else if (NO.matcher(args[0]).matches()) {
             callback.accept(false);
         } else {
             throw new CommandException("[Y/n] expected.");

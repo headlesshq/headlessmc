@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @ApplicationScoped
-public class HmcSettings extends Module {
+public class HmcSettings extends SettingGroupInitializer {
     private final SettingKey<String> main = getRoot().setting(String.class)
             .withName("hmc.main_method")
             .withDescription("The class with the Minecraft main method passed to the launched Minecraft instance.")

@@ -12,9 +12,4 @@ public interface SettingGroup extends HasName, HasDescription {
 
     Iterable<SettingKey<?>> keys();
 
-    // TODO: we need to merge these?
-    static SettingGroup create(String name, String description) {
-        return new SettingGroupImpl(name, description);
-    }
-
 }

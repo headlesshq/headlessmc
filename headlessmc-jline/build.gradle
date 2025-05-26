@@ -5,7 +5,6 @@ dependencies {
         exclude module: 'jline'
     }
     implementation 'net.java.dev.jna:jna:5.17.0'
-    compileOnly 'jakarta.inject:jakarta.inject-api:2.0.1'
     // TODO: maybe also package jansi for testing?
     testImplementation(testFixtures(project(':headlessmc-api')))
 }
