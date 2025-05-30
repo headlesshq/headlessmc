@@ -2,8 +2,11 @@ package io.github.headlesshq.headlessmc.api.settings;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 final class Parsers {
     private static final Map<Class<?>, Parser<?>> builtInParsers = new HashMap<>();
@@ -34,13 +37,6 @@ final class Parsers {
             }
         });
 
-        register(String.class, new AbstractParser<String>(String.class) {
-            @Override
-            public String parse(String value) {
-                return value;
-            }
-        });
-
         Parser<Long> longParser = register(Long.class, new AbstractParser<Long>(Long.class) {
             @Override
             public Long parse(String value) {
@@ -68,6 +64,16 @@ final class Parsers {
         });
 
         register(Float.class, doubleParser.map(Float.class, Double::floatValue));
+
+        Parser<String> stringParser = register(String.class, new AbstractParser<String>(String.class) {
+            @Override
+            public String parse(String value) {
+                return value;
+            }
+        });
+
+        register(Path.class, stringParser.map(Path.class, Paths::get));
+        register(UUID.class, stringParser.map(UUID.class, UUID::fromString));
     }
 
 }

@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.launcher.download.AssetsDownloader;
 import io.github.headlesshq.headlessmc.launcher.version.Library;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import org.jetbrains.annotations.Nullable;
+import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class IntegrityCommand extends AbstractVersionCommand {
+@CommandLine.Command
+public class IntegrityCommand {
+    private final Launcher ctx;
+
     public IntegrityCommand(Launcher ctx) {
         super(ctx, "integrity", "Checks the integrity of the libraries of a version.");
     }

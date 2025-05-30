@@ -51,6 +51,7 @@ public class FabricCommand extends AbstractDownloadingVersionCommand implements 
             defaultUrl = LEGACY;
         }
 
+        // TODO: arg
         String url = ctx.getConfig().get(LauncherProperties.FABRIC_URL, defaultUrl);
         try {
             downloadInstaller(url, jar);

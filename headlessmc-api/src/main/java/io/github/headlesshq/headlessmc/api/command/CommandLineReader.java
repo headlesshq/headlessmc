@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * Represents a blocking task that reads commands from a terminal, console or other InputStream.
- * Might implement {@link HidesPasswords}.
+ * Might implement {@link SupportsHidingPasswords}.
  */
 @FunctionalInterface
 public interface CommandLineReader extends ProgressBarProvider {
@@ -89,6 +89,27 @@ public interface CommandLineReader extends ProgressBarProvider {
      */
     default void close() throws IOException {
         // see JLineCommandLineReader
+    }
+
+    /**
+     * Examines if this CommandLineReader supports hiding passwords.
+     * For that we need to be in a proper terminal.
+     * If this implementation does not provide password support a dummy object is returned.
+     *
+     * @return this as {@link SupportsHidingPasswords} or a dummy object.
+     */
+    default SupportsHidingPasswords getPasswordSupport() {
+        return this instanceof SupportsHidingPasswords ? (SupportsHidingPasswords) this : new SupportsHidingPasswords() {
+            @Override
+            public void setHidingPasswords(boolean hidingPasswords) {
+                // no
+            }
+
+            @Override
+            public boolean isHidingPasswords() {
+                return false;
+            }
+        };
     }
 
     /**

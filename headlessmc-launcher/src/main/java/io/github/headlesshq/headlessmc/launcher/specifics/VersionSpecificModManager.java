@@ -1,12 +1,11 @@
 package io.github.headlesshq.headlessmc.launcher.specifics;
 
+import io.github.headlesshq.headlessmc.launcher.files.GameFiles;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
-import io.github.headlesshq.headlessmc.launcher.files.FileManager;
-import io.github.headlesshq.headlessmc.launcher.files.LauncherConfig;
 import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 
@@ -36,7 +35,7 @@ import java.util.stream.Stream;
 public class VersionSpecificModManager {
     private final List<VersionSpecificModRepository> specificMods = new ArrayList<>();
     private final DownloadService downloadService;
-    private final LauncherConfig directories;
+    private final GameFiles directories;
 
     public VersionSpecificModRepository getRepository(String name) throws VersionSpecificException {
         VersionSpecificModRepository repository = HasName.getByName(name, specificMods);

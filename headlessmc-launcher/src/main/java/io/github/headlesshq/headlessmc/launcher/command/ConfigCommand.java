@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.command.FindByCommand;
-import io.github.headlesshq.headlessmc.api.config.Config;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.api.config.PropertyTypes;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import io.github.headlesshq.headlessmc.launcher.Launcher;

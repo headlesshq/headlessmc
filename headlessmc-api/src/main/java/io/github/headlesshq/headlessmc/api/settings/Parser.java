@@ -20,7 +20,13 @@ public interface Parser<V> {
         return new AbstractParser<T>(type) {
             @Override
             public T parse(String value) throws ParseException {
-                return mapper.apply(Parser.this.parse(value));
+                try {
+                    return mapper.apply(Parser.this.parse(value));
+                } catch (ParseException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new ParseException(e);
+                }
             }
         };
     }

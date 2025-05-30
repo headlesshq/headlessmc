@@ -33,7 +33,7 @@ public class JLineCommandLineReaderProvider extends DefaultCommandLineReaderProv
     @Specializes
     @ApplicationScoped
     public CommandLineReader get() {
-        if (config.get(jLineSettings.getEnabled())) {
+        if (config.get(jLineSettings.enabled())) {
             return getReaders().select(JLineCommandLineReader.class).get();
         }
 

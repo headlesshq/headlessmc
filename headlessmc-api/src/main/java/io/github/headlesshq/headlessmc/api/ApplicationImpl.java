@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor = @__(@Inject))
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ApplicationImpl implements Application {
     private final Object lock = new Object();
     private final SettingGroup settings;

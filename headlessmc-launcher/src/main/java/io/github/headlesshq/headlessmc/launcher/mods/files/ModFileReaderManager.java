@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.mods.files;
 
 import io.github.headlesshq.headlessmc.launcher.api.Platform;
 import io.github.headlesshq.headlessmc.launcher.mods.ModdableGame;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApplicationScoped
 public class ModFileReaderManager {
     private final Map<Platform, ModFileReader> readers = new HashMap<>();
 

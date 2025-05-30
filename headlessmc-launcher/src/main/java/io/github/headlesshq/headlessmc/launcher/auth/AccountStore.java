@@ -1,38 +1,36 @@
 package io.github.headlesshq.headlessmc.launcher.auth;
 
-import lombok.CustomLog;
-import lombok.RequiredArgsConstructor;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.auth.AccountJsonLoader;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
-import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
-import io.github.headlesshq.headlessmc.launcher.files.LauncherConfig;
+import io.github.headlesshq.headlessmc.launcher.settings.LauncherSettings;
+import jakarta.inject.Inject;
+import lombok.CustomLog;
+import lombok.RequiredArgsConstructor;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 @CustomLog
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class AccountStore {
     private final AccountJsonLoader accountJsonLoader;
-    private final LauncherConfig launcherConfig;
-
-    public AccountStore(LauncherConfig launcherConfig) {
-        this(new AccountJsonLoader(), launcherConfig);
-    }
+    private final LauncherSettings settings;
+    private final Config config;
 
     public void save(List<ValidatedAccount> accounts) throws IOException {
-        if (!launcherConfig.getConfig().getConfig().get(LauncherProperties.STORE_ACCOUNTS, true)) {
+        if (!config.get(settings.storeAccounts())) {
             return;
         }
 
-        File file = launcherConfig.getFileManager().create("auth", ".accounts.json");
-        accountJsonLoader.save(file.toPath(), accounts);
+        Path path = config.getApplicationPath().resolve("auth").resolve("accounts.json");
+        accountJsonLoader.save(path, accounts);
     }
 
     public List<ValidatedAccount> load() throws IOException {
-        File file = launcherConfig.getFileManager().create("auth", ".accounts.json");
-        return accountJsonLoader.load(file.toPath());
+        Path path = config.getApplicationPath().resolve("auth").resolve("accounts.json");
+        return accountJsonLoader.load(path);
     }
 
 }

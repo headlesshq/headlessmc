@@ -6,7 +6,7 @@ import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
-import io.github.headlesshq.headlessmc.api.config.HasConfig;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.LazyService;
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ServerManager extends LazyService<Server> implements ModdableGameProvider {
     private final List<ServerType> serverTypes = new ArrayList<>();
-    private final HasConfig config;
+    private final Config config;
     private final Path serversDir;
     private final boolean cache;
 
@@ -154,7 +154,7 @@ public class ServerManager extends LazyService<Server> implements ModdableGamePr
         return null;
     }
 
-    public static ServerManager create(HasConfig config, FileManager launcherFileManager) {
+    public static ServerManager create(Config config, FileManager launcherFileManager) {
         Path serversDir = launcherFileManager.createRelative("servers").getBase().toPath();
         ServerManager serverManager = new ServerManager(config, serversDir, false);
         serverManager.getServerTypes().add(new ServerType(Platform.PAPER, new PaperDownloader()));
@@ -231,7 +231,7 @@ public class ServerManager extends LazyService<Server> implements ModdableGamePr
                                    String version,
                                    String typeVersion,
                                    String nameIn) throws IOException {
-        String testDir = config.getConfig().get(LauncherProperties.SERVER_TEST_DIR, null);
+        String testDir = config.get(LauncherProperties.SERVER_TEST_DIR, null);
         if (!cache && testDir != null) {
             return Paths.get(testDir);
         }
@@ -258,7 +258,7 @@ public class ServerManager extends LazyService<Server> implements ModdableGamePr
             return null;
         }
 
-        String testDir = config.getConfig().get(LauncherProperties.SERVER_TEST_DIR, null);
+        String testDir = config.get(LauncherProperties.SERVER_TEST_DIR, null);
         if (testDir == null) {
             return null;
         }
@@ -268,15 +268,15 @@ public class ServerManager extends LazyService<Server> implements ModdableGamePr
             return null;
         }
 
-        String testTypeName = config.getConfig().get(LauncherProperties.SERVER_TEST_TYPE, null);
-        String testVersion = config.getConfig().get(LauncherProperties.SERVER_TEST_VERSION, null);
+        String testTypeName = config.get(LauncherProperties.SERVER_TEST_TYPE, null);
+        String testVersion = config.get(LauncherProperties.SERVER_TEST_VERSION, null);
         ServerType testType;
         if (testTypeName == null || testVersion == null || (testType = getServerType(testTypeName)) == null) {
             throw new IllegalArgumentException("Please specify override type and version: " + testTypeName);
         }
 
-        String testName = config.getConfig().get(LauncherProperties.SERVER_TEST_NAME, testPath.getFileName().toString());
-        String testBuild = config.getConfig().get(LauncherProperties.SERVER_TEST_BUILD, "latest");
+        String testName = config.get(LauncherProperties.SERVER_TEST_NAME, testPath.getFileName().toString());
+        String testBuild = config.get(LauncherProperties.SERVER_TEST_BUILD, "latest");
         return new Server(
                 testPath,
                 testName,

@@ -9,18 +9,46 @@ import io.github.headlesshq.headlessmc.java.download.JavaDownloadRequest;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.jline.JLineProperties;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
-import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
+import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
+import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
-public class JavaCommand extends AbstractLauncherCommand {
-    public JavaCommand(Launcher launcher) {
-        super(launcher, "java", "Reloads the config property "
-            + LauncherProperties.JAVA.getName() + ".");
-        args.put("<version>", "Specify a version of Java to download.");
-        args.put("<distribution>", "Specify a distribution of Java to download.");
-        args.put("-jdk", "Download the Java JDK instead of the JRE.");
-        args.put("-current", "Output the java version of the JVM headlessmc is running in.");
+@Setter
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
+@CommandLine.Command(name = "java", description = "Manage Java versions.")
+public class JavaCommand implements Callable<@Nullable Java> {
+    private final Launcher ctx;
+
+    @CommandLine.Parameters(description = "Any number of input numbers")
+    private List<String> args = new ArrayList<>();
+
+    @CommandLine.Option(names = {"--current", "-c"}, description = "Outputs the current Java version.")
+    private boolean current;
+
+    @CommandLine.Option(names = {"--jdk"}, description = "Outputs the current Java version.")
+    private boolean jdk;
+
+    @Override
+    public @Nullable Java call() throws CommandException {
+        if (current) {
+            Java current = ctx.getJavaService().getCurrent();
+            if (current != null) {
+                ctx.log("Current: Java " + current.getVersion() + " at " + current.getPath());
+            } else {
+                ctx.log("Current Java unknown.");
+            }
+
+            return current;
+        }
+
+        return null;
     }
 
     @Override

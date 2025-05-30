@@ -1,9 +1,14 @@
 package io.github.headlesshq.headlessmc.launcher.auth;
 
-import lombok.*;
-import io.github.headlesshq.headlessmc.api.config.Config;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
-import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
+import io.github.headlesshq.headlessmc.launcher.settings.LauncherSettings;
+import io.github.headlesshq.headlessmc.launcher.settings.OfflineSettings;
+import jakarta.inject.Inject;
+import lombok.CustomLog;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Synchronized;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
@@ -17,14 +22,14 @@ import java.util.Objects;
 
 @Getter
 @CustomLog
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class AccountManager {
-    private static final String OFFLINE_UUID = "22689332a7fd41919600b0fe1135ee34";
-
     private final List<ValidatedAccount> accounts = new ArrayList<>();
     private final AccountValidator accountValidator;
     private final OfflineChecker offlineChecker;
     private final AccountStore accountStore;
+    private final OfflineSettings offlineSettings;
+    private final LauncherSettings settings;
 
     @Synchronized
     public @Nullable ValidatedAccount getPrimaryAccount() {
@@ -72,22 +77,28 @@ public class AccountManager {
             throw new AuthException(e.getMessage());
         }
 
-        val email = config.get(LauncherProperties.EMAIL);
-        val password = config.get(LauncherProperties.PASSWORD);
-        if (email != null && password != null) {
-            log.info("Logging in with Email and password...");
-            try {
-                HttpClient httpClient = MinecraftAuth.createHttpClient();
-                StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_CREDENTIALS_LOGIN.getFromInput(
-                    httpClient, new StepCredentialsMsaCode.MsaCredentials(email, password));
-                ValidatedAccount validatedAccount = accountValidator.validate(session);
-                addAccount(validatedAccount);
-            } catch (Exception e) {
-                throw new AuthException(e.getMessage(), e);
+        String email = config.get(settings.email());
+        String password = config.get(settings.password());
+        if (email != null) {
+            if (password != null) {
+                log.info("Logging in with Email and password...");
+                try {
+                    HttpClient httpClient = MinecraftAuth.createHttpClient();
+                    StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_CREDENTIALS_LOGIN.getFromInput(
+                            httpClient, new StepCredentialsMsaCode.MsaCredentials(email, password));
+                    ValidatedAccount validatedAccount = accountValidator.validate(session);
+                    addAccount(validatedAccount);
+                } catch (Exception e) {
+                    throw new AuthException(e.getMessage(), e);
+                }
+            } else {
+                throw new AuthException(settings.email().getName() + " specified, but not " + settings.password().getName());
             }
+        } else if (password != null) {
+            throw new AuthException(settings.password().getName() + " specified, but not " + settings.email().getName());
         }
 
-        if (config.get(LauncherProperties.REFRESH_ON_LAUNCH, false)) {
+        if (config.get(settings.refreshOnLaunch())) {
             ValidatedAccount primary = getPrimaryAccount();
             if (primary != null) {
                 try {
@@ -109,11 +120,11 @@ public class AccountManager {
 
     public LaunchAccount getOfflineAccount(Config config) throws AuthException {
         return new LaunchAccount(
-            config.get(LauncherProperties.OFFLINE_TYPE, "msa"),
-            config.get(LauncherProperties.OFFLINE_USERNAME, "Offline"),
-            config.get(LauncherProperties.OFFLINE_UUID, OFFLINE_UUID),
-            config.get(LauncherProperties.OFFLINE_TOKEN, ""),
-            config.get(LauncherProperties.XUID, ""));
+            config.get(offlineSettings.offlineType()),
+            config.get(offlineSettings.offlineUserName()),
+            config.get(offlineSettings.offlineUUID()),
+            config.get(offlineSettings.offlineToken()),
+            config.get(settings.xuid()));
     }
 
 }

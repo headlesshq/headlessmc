@@ -279,10 +279,7 @@ tasks.register('jacocoRootReport', JacocoReport) {
 tasks.register('copyJars', Copy) {
     dependsOn subprojects.shadowJar
     subprojects.each { subproject ->
-        // jfx jar is > 100MB, I do not want to fill my github storage?
-        if (subproject.name != 'headlessmc-launcher-jfx') {
-            from(subproject.shadowJar)
-        }
+        from(subproject.shadowJar)
     }
 
     into project.file(System.getProperty('hmc.jar.dir', 'build/libs'))
@@ -306,16 +303,7 @@ tasks.withType(JacocoReport) {
                     '**/headlessmc/forge-cli.jar',
                     '**/org/objectweb/asm/**',
                     'io/github/headlesshq/headlessmc/lwjgl/agent/**',
-                    'io/github/headlesshq/headlessmc/web/**',
-                    'io/github/headlesshq/headlessmc/web/**/*.*',
-                    'io/github/headlesshq/headlessmc/web/cheerpj/**/*.*',
-                    'io/github/headlesshq/headlessmc/web/cheerpj/plugin/**',
-                    'io/github/headlesshq/headlessmc/web/cheerpj/plugin/*.*'
             ])
-            // because 'io/github/headlesshq/headlessmc/web/cheerpj/plugin/**' does not work
-            return tree.exclude { details ->
-                return details.file.canonicalPath.contains('headlessmc-web')
-            }
         }))
     }
 

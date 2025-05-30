@@ -67,11 +67,6 @@ tasks.withType(JacocoReport) {
                     'io/github/headlesshq/headlessmc/web/cheerpj/plugin/**',
                     'io/github/headlesshq/headlessmc/web/cheerpj/plugin/*.*'
             ])
-            // because 'io/github/headlesshq/headlessmc/web/cheerpj/plugin/**' does not work
-            return tree.exclude { details ->
-                return details.file.canonicalPath.contains('headlessmc-web')
-                    || details.file.canonicalPath.contains('headlessmc-graalvm')
-            }
         }))
     }
 

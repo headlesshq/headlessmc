@@ -2,12 +2,16 @@ package io.github.headlesshq.headlessmc.launcher.command;
 
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
+import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
+import picocli.CommandLine;
 
-public class OfflineCommand extends AbstractLauncherCommand {
-    public OfflineCommand(Launcher ctx) {
-        super(ctx, "offline", "Toggles Offline mode.");
-    }
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
+@CommandLine.Command(name = "offline", description = "Toggles offline mode.")
+public class OfflineCommand {
+    private final Launcher launcher;
 
+    // TODO
     @Override
     public void execute(String line, String... args) throws CommandException {
         boolean value = !ctx.getAccountManager().getOfflineChecker().isOffline();

@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import lombok.CustomLog;
 import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
-import io.github.headlesshq.headlessmc.launcher.util.AbstractDownloadService;
+import io.github.headlesshq.headlessmc.launcher.download.AbstractDownloadService;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 
 import java.io.IOException;

@@ -1,9 +1,10 @@
 package io.github.headlesshq.headlessmc.auth;
 
-import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.AbstractCommand;
+import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
+import io.github.headlesshq.headlessmc.api.command.SupportsHidingPasswords;
+import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.Setter;
 import net.lenni0451.commons.httpclient.HttpClient;
@@ -16,96 +17,100 @@ import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
 import net.raphimc.minecraftauth.util.MicrosoftConstants;
 import net.raphimc.minecraftauth.util.logging.ILogger;
 import net.raphimc.minecraftauth.util.logging.JavaConsoleLogger;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.CookieHandler;
 import java.net.CookieManager;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @Setter
 @CustomLog
-public abstract class AbstractLoginCommand<T extends HeadlessMc> extends AbstractCommand<T> {
-    private final List<Thread> threads = new CopyOnWriteArrayList<>();
-    protected final Object webviewLock = new Object();
-    protected AbstractStep<?, StepFullJavaSession.FullJavaSession> webview;
-    protected volatile Window webviewWindow = null;
+public abstract class AbstractLoginCommand {
+    private final Application ctx;
+    private final LoginState state;
 
-    protected Supplier<HttpClient> httpClientFactory = MinecraftAuth::createHttpClient;
+    @CommandLine.Option(names = {"--email", "-e"}, description = "Logs in with an E-Mail.")
+    private @Nullable String email;
+
+    @CommandLine.Option(names = {"--password", "-p"}, description = "Specify together with E-Mail for logging in (not recommended).")
+    private @Nullable String password;
 
     @CommandLine.Option(names = {"--webview", "-wv"}, description = "Opens a window to log you in. Might not be supported.")
-    private boolean webviewOption = false;
+    private boolean webview = false;
 
     @CommandLine.Option(names = {"--cancel", "-c"}, description = "Opens a window to log you in. Might not be supported.")
     private boolean cancel = false;
 
-    public AbstractLoginCommand() {
+    @Inject
+    public AbstractLoginCommand(Application ctx, LoginState state) {
+        this.state = state;
+        this.ctx = ctx;
         replaceLoggerOnConstruction();
     }
 
     protected abstract void onSuccessfulLogin(StepFullJavaSession.FullJavaSession session);
 
     protected void login() throws CommandException {
-        if (webviewOption) {
+        if (cancel) {
+            cancelLoginProcess();
+        }
+
+        if (webview) {
             loginWithWebview();
             return;
         }
 
-        if (args.length > 1 && args[1].equalsIgnoreCase("-cancel")) {
-            cancelLoginProcess(args);
-        } else if (args.length >= 2 && args[1].contains("@")) {
-            loginWithCredentials(args);
-        } else {
-            // TODO: still unclear, cannot specify logger
-            loginWithDeviceCode(args);
+        String email = this.email;
+        if (email != null) {
+            loginWithCredentials(email, password);
+        } else if (password != null) {
+            throw new CommandException("Please specify --email <E-Mail>.");
+        } else if (!cancel) {
+            loginWithDeviceCode();
         }
     }
 
-    protected void loginWithCredentials(String... args) {
+    protected void loginWithCredentials(String email, @Nullable String password) throws CommandException {
         CommandLineManager clm = ctx.getCommandLine();
-        String email = args[1];
-        if (args.length > 2) {
-            login(email, args[2], args);
+        if (password != null) {
+            login(email, password);
             return;
         }
 
         String helpMessage = "Enter your password or type 'abort' to cancel the login process."
-            + (clm.isHidingPasswordsSupported()
+            + ((ctx.getCommandLine().getReader() instanceof SupportsHidingPasswords)
                 ? ""
                 : " (Your password will be visible when you type!)");
         ctx.log(helpMessage);
 
-        boolean passwordsHiddenBefore = clm.isHidingPasswords();
-        clm.setHidingPasswords(true);
-        clm.setWaitingForInput(true);
-        clm.setCommandContext(
-            new LoginContext(ctx, clm.getCommandContext(), helpMessage) {
+        SupportsHidingPasswords passwords = ctx.getCommandLine().getReader().getPasswordSupport();
+        boolean passwordsHiddenBefore = passwords.isHidingPasswords();
+        passwords.setHidingPasswords(true);
+        ctx.getCommandLine().setInteractiveContext(
+            new LoginContext(ctx, ctx.getCommandLine().getInteractiveContext(), helpMessage) {
                 @Override
                 protected void onCommand(String password) {
                     try {
-                        login(email, password, args);
+                        login(email, password);
                     } finally {
                         returnToPreviousContext();
                         if (!passwordsHiddenBefore) {
-                            clm.setHidingPasswords(false);
+                            passwords.setHidingPasswords(false);
                         }
-
-                        clm.setWaitingForInput(false);
                     }
                 }
-            });
+            }
+        );
     }
 
-    protected void login(String email, String password, String... args) {
+    protected void login(String email, String password) {
         try {
-            HttpClient httpClient = httpClientFactory.get();
+            HttpClient httpClient = state.getHttpClientFactory().get();
             StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_CREDENTIALS_LOGIN.getFromInput(
                 getLogger(), httpClient, new StepCredentialsMsaCode.MsaCredentials(email, password));
-
             onSuccessfulLogin(session);
         } catch (Exception e) {
             ctx.log("Failed to login: " + e.getMessage());
@@ -168,8 +173,8 @@ public abstract class AbstractLoginCommand<T extends HeadlessMc> extends Abstrac
                     frame.setVisible(false);
                     webviewWindow = frame;
                 }
-            });
-
+            }
+        );
     }
 
     protected AbstractStep<?, StepFullJavaSession.FullJavaSession> provideWebview() throws CommandException {
@@ -196,7 +201,7 @@ public abstract class AbstractLoginCommand<T extends HeadlessMc> extends Abstrac
             @Override
             public void run() {
                 try {
-                    HttpClient httpClient = httpClientFactory.get();
+                    HttpClient httpClient = state.getHttpClientFactory().get();
 
                     StepMsaDeviceCode.MsaDeviceCodeCallback callback = new StepMsaDeviceCode.MsaDeviceCodeCallback(
                         msaDeviceCode -> ctx.log("Go to " + msaDeviceCode.getDirectVerificationUri()));
@@ -224,23 +229,10 @@ public abstract class AbstractLoginCommand<T extends HeadlessMc> extends Abstrac
         startLoginThread(thread);
     }
 
-    protected void cancelLoginProcess(String... args) throws CommandException {
-        if (args.length <= 2) {
-            throw new CommandException("Please specify the login process id!");
+    protected void cancelLoginProcess() {
+        if (!state.cancelLogin()) {
+            ctx.log("There was no login process to cancel.");
         }
-
-        synchronized (threads) {
-            for (Thread thread : threads) {
-                if (("HMC Login Thread - " + args[2]).equals(thread.getName())) {
-                    thread.interrupt();
-                    threads.remove(thread);
-                    ctx.log("Cancelled login process " + args[2] + ".");
-                    return;
-                }
-            }
-        }
-
-        ctx.log("Failed to find login process with id " + args[2] + "!");
     }
 
     protected void startLoginThread(Thread thread) {
@@ -264,10 +256,6 @@ public abstract class AbstractLoginCommand<T extends HeadlessMc> extends Abstrac
     protected ILogger getLogger() {
         // TODO: verbose option?
         return NoLogging.INSTANCE;
-    }
-
-    protected boolean hasThreadWithName(String threadName) {
-        return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 
     protected void replaceLoggerOnConstruction() {

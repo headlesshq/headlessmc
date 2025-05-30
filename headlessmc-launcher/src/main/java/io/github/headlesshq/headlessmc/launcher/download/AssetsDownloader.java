@@ -1,16 +1,17 @@
 package io.github.headlesshq.headlessmc.launcher.download;
 
 import com.google.gson.JsonObject;
+import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
+import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.api.settings.Config;
+import io.github.headlesshq.headlessmc.launcher.cdi.Beans;
+import io.github.headlesshq.headlessmc.launcher.files.GameFiles;
+import io.github.headlesshq.headlessmc.launcher.settings.AssetSettings;
+import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
+import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.val;
-import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
-import io.github.headlesshq.headlessmc.api.config.HasConfig;
-import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
-import io.github.headlesshq.headlessmc.launcher.files.FileManager;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -21,27 +22,28 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 @CustomLog
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class AssetsDownloader {
-    private static final String URL = "https://resources.download.minecraft.net/";
-
-    private final ChecksumService checksumService = new ChecksumService();
-    private final DummyAssets dummyAssets = new DummyAssets();
-
-    private final CommandLineManager commandLine;
+    private final CommandLineReader commandLineReader;
+    private final ChecksumService checksumService;
     private final DownloadService downloadService;
-    private final HasConfig config;
-    private final FileManager files;
-    private final String url;
-    private final String id;
+    private final @Beans.AssetsUrl URL assetsUrl;
+    private final DummyAssets dummyAssets;
+    private final AssetSettings settings;
+    private final GameFiles files; // TODO: qualify for injection
+    private final Config config;
 
     @Setter
     protected boolean shouldLog = true;
 
-    public void download() throws IOException {
-        Path index = files.getDir("assets").toPath().resolve("indexes").resolve(id + ".json");
+    // TODO: move these into download method
+    private final String url;
+    private final String id;
+
+    public void download(String url, String id) throws IOException {
+        Path index = files.getMcDirectory().resolve("assets").resolve("indexes").resolve(id + ".json");
         // Why does this file always corrupt on CheerpJ?
-        if (config.getConfig().get(LauncherProperties.ALWAYS_DOWNLOAD_ASSETS_INDEX, false) || !Files.exists(index)) {
+        if (config.get(settings.alwaysDownloadAssetIndex()) || !Files.exists(index)) {
             log.info("Downloading assets from " + url);
             downloadService.download(url, index.toAbsolutePath());
         }
@@ -52,14 +54,14 @@ public class AssetsDownloader {
         }
 
         ParallelIOService ioService = new ParallelIOService(
-                config.getConfig().get(LauncherProperties.ASSETS_DELAY, 0L),
-                Math.max(1, config.getConfig().get(LauncherProperties.ASSETS_RETRIES, 3L).intValue()),
-                config.getConfig().get(LauncherProperties.ASSETS_PARALLEL, true),
-                config.getConfig().get(LauncherProperties.ASSETS_BACKOFF, true)
+                config.get(settings.delay()),
+                Math.max(1, config.get(settings.retries())),
+                config.get(settings.parallel()),
+                config.get(settings.backoff())
         );
 
         // TODO: provide better ETA, later assets take longer
-        try (Progressbar progressbar = commandLine.displayProgressBar(new Progressbar.Configuration("Downloading Assets", objects.size()))) {
+        try (Progressbar progressbar = commandLineReader.displayProgressBar(new Progressbar.Configuration("Downloading Assets", objects.size()))) {
             ioService.setShouldLog(progressbar.isDummy());
             shouldLog = progressbar.isDummy();
 
@@ -81,12 +83,12 @@ public class AssetsDownloader {
     }
 
     protected void downloadAsset(String progress, String name, String hash, @Nullable Long size, boolean mapToResources) throws IOException {
-        val firstTwo = hash.substring(0, 2);
-        val to = files.getDir("assets").toPath().resolve("objects").resolve(firstTwo).resolve(hash);
+        String firstTwo = hash.substring(0, 2);
+        Path to = files.getMcDirectory().resolve("assets").resolve("objects").resolve(firstTwo).resolve(hash);
         Path file = getAssetsFile(name, to, hash, size);
         if (!Files.exists(file)) {
             byte[] bytes = null;
-            if (config.getConfig().get(LauncherProperties.DUMMY_ASSETS, false)) {
+            if (config.get(settings.dummyAssets())) {
                 log.debug("Using dummy asset for " + name);
                 bytes = dummyAssets.getResource(name);
             }
@@ -108,13 +110,13 @@ public class AssetsDownloader {
     }
 
     protected byte @Nullable [] download(String firstTwo, String hash, String progress, String name, Path to, @Nullable Long size) throws IOException {
-        val from = URL + firstTwo + "/" + hash;
+        String from = assetsUrl + firstTwo + "/" + hash;
         if (shouldLog) {
             log.info(progress + " Downloading: " + name + " from " + from + " to " + to);
         }
 
-        boolean checkHash = config.getConfig().get(LauncherProperties.ASSETS_CHECK_HASH, true);
-        boolean checkSize = checkHash || config.getConfig().get(LauncherProperties.ASSETS_CHECK_SIZE, true);
+        boolean checkHash = config.get(settings.checkHash());
+        boolean checkSize = checkHash || config.get(settings.checkSize());
         Long expectedSize = checkSize ? size : null;
         String expectedHash = checkHash ? hash : null;
         return downloadService.download(new URL(from), expectedSize, expectedHash);
@@ -126,13 +128,13 @@ public class AssetsDownloader {
     }
 
     protected boolean shouldCheckFileHash() {
-        return config.getConfig().get(LauncherProperties.ASSETS_CHECK_FILE_HASH, false);
+        return config.get(settings.checkFileHash());
     }
 
     protected void copyToLegacy(String name, Path file, String hash, @Nullable Long size, boolean copy) throws IOException {
         if ("pre-1.6".equals(id)) {
             // TODO: old versions have the map_to_resource thing, copy to resources
-            val legacy = files.getDir("assets").toPath().resolve("virtual").resolve("legacy").resolve(name);
+            Path legacy = files.getMcDirectory().resolve("assets").resolve("virtual").resolve("legacy").resolve(name);
             if (shouldLog) {
                 log.info("Legacy version, copying to " + legacy);
             } else {
@@ -148,7 +150,7 @@ public class AssetsDownloader {
 
     protected void mapToResources(String name, Path file, boolean mapToResources, String hash, @Nullable Long size, boolean copy) throws IOException {
         if (mapToResources) {
-            val resources = files.getDir("resources").toPath().resolve(name);
+            Path resources = files.getMcDirectory().resolve("resources").resolve(name);
             log.debug("Mapping " + name + " to resources " + resources);
             integrityCheck("Resources", resources, hash, size);
             if (copy && !Files.exists(resources)) {
@@ -157,7 +159,7 @@ public class AssetsDownloader {
         }
     }
 
-    protected boolean integrityCheck(String type, Path file, String hash, @Nullable Long size) throws IOException {
+    protected boolean integrityCheck(String type, Path file, @Nullable String hash, @Nullable Long size) throws IOException {
         if (shouldCheckFileHash() && Files.exists(file) && !checksumService.checkIntegrity(file, size, hash)) {
             log.warn(type + " file " + file + " failed the integrity check, deleting...");
             Files.delete(file);

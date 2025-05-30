@@ -3,10 +3,7 @@ package io.github.headlesshq.headlessmc.api.settings;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -43,6 +40,16 @@ final class SettingGroupImpl implements SettingGroup {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Iterable<SettingKey<?>> keys() {
         return (Iterable) settings.values();
+    }
+
+    @Override
+    public <V> CollectionSettingBuilder<V, List<V>> list(Class<V> type) {
+        return new CollectionSettingBuilderImpl<>(this, type, ArrayList::new);
+    }
+
+    @Override
+    public <V> CollectionSettingBuilder<V, Set<V>> set(Class<V> type) {
+        return new CollectionSettingBuilderImpl<>(this, type, LinkedHashSet::new);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

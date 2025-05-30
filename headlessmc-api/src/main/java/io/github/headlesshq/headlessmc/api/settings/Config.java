@@ -8,8 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 // groups?
+// TODO: maybe a handle for settings that are used often?
 public interface Config {
     <V> V get(SettingKey<@NotNull V> key);
 
@@ -26,6 +28,11 @@ public interface Config {
     <V> @Nullable V getRaw(SettingKey<V> key);
 
     void bulkUpdate(Consumer<Config> action);
+
+    default <V> V get(NullableSettingKey<V> key, Supplier<V> defaultValue) {
+        V result = get(key);
+        return result == null ? defaultValue.get() : result;
+    }
 
     static Config load(Path applicationPath, Path configPath) throws IOException {
         return ConfigImpl.load(applicationPath, configPath);

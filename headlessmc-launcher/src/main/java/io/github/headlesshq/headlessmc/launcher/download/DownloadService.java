@@ -1,26 +1,26 @@
 package io.github.headlesshq.headlessmc.launcher.download;
 
+import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.java.download.DownloadClient;
+import io.github.headlesshq.headlessmc.launcher.util.IOConsumer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.java.download.DownloadClient;
-import io.github.headlesshq.headlessmc.launcher.files.IOService;
-import io.github.headlesshq.headlessmc.launcher.util.IOConsumer;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.lenni0451.commons.httpclient.HttpResponse;
 import net.lenni0451.commons.httpclient.RetryHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
 @Getter
 @RequiredArgsConstructor
-public class DownloadService extends IOService implements DownloadClient {
-    private final ChecksumService defaultChecksumService = new ChecksumService();
+public class DownloadService implements DownloadClient {
     private final ChecksumService checksumService;
     @Setter
     private Supplier<HttpClient> httpClientFactory = this::getDefaultHttpClient;
@@ -96,6 +96,13 @@ public class DownloadService extends IOService implements DownloadClient {
         HttpResponse httpResponse = httpClient.get(new URL(url)).execute();
         if (httpResponse.getStatusCode() > 299 || httpResponse.getStatusCode() < 200) {
             throw new IOException("Failed to download " + url + ", response " + httpResponse.getStatusCode() + ": " + httpResponse.getContentAsString());
+        }
+    }
+
+    private void writeToFile(Path file, byte[] content) throws IOException {
+        Files.createDirectories(file.getParent());
+        try (OutputStream os = Files.newOutputStream(file)) {
+            os.write(content);
         }
     }
 

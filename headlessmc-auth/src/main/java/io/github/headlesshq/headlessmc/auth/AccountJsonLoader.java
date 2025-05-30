@@ -3,7 +3,10 @@ package io.github.headlesshq.headlessmc.auth;
 import com.google.gson.*;
 import lombok.CustomLog;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,12 +29,17 @@ public class AccountJsonLoader {
         JsonObject object = new JsonObject();
         object.add("accounts", array);
         String string = new GsonBuilder().setPrettyPrinting().create().toJson(object);
+        Files.createDirectories(location.getParent());
         try (OutputStream os = Files.newOutputStream(location)) {
             os.write(string.getBytes(StandardCharsets.UTF_8));
         }
     }
 
     public List<ValidatedAccount> load(Path location) throws IOException {
+        if (!Files.exists(location)) {
+            return new ArrayList<>();
+        }
+
         JsonElement je;
         try (InputStream is = Files.newInputStream(location);
              InputStreamReader ir = new InputStreamReader(is, StandardCharsets.UTF_8)) {

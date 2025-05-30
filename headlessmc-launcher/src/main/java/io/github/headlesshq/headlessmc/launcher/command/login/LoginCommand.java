@@ -1,25 +1,22 @@
 package io.github.headlesshq.headlessmc.launcher.command.login;
 
-import lombok.CustomLog;
-import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.auth.AbstractLoginCommand;
-import io.github.headlesshq.headlessmc.launcher.Launcher;
-import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
+import io.github.headlesshq.headlessmc.auth.LoginState;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
+import io.github.headlesshq.headlessmc.launcher.ILauncher;
+import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
+import jakarta.inject.Inject;
+import lombok.CustomLog;
 import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 
 @CustomLog
 public class LoginCommand extends AbstractLoginCommand {
-    private final Launcher launcher;
+    private final ILauncher launcher;
 
-    public LoginCommand(Launcher ctx) {
-        super(ctx);
-        this.launcher = ctx;
-    }
-
-    @Override
-    public void execute(String line, String... args) throws CommandException {
-        super.execute(line, args);
+    @Inject
+    public LoginCommand(ILauncher launcher, LoginState state) {
+        super(launcher, state);
+        this.launcher = launcher;
     }
 
     @Override
@@ -28,7 +25,7 @@ public class LoginCommand extends AbstractLoginCommand {
         try {
             validatedAccount = launcher.getAccountManager().getAccountValidator().validate(session);
         } catch (AuthException e) {
-            ctx.log(e.getMessage());
+            launcher.log(e.getMessage()); // TODO: throw CommandException?!
             return;
         }
 

@@ -98,7 +98,7 @@ public abstract class AbstractLaunchProcessLifecycle {
 
         if (!prepare) {
             try {
-                ctx.getCommandLine().open(ctx);
+                ctx.getCommandLine().getReader().open(ctx);
             } catch (IOException ioException) {
                 throw new IllegalStateException("Failed to reopen HeadlessMc CommandLineReader", ioException);
             }
@@ -247,7 +247,7 @@ public abstract class AbstractLaunchProcessLifecycle {
         }
     }
 
-    private int handleLaunchException(int status, Throwable throwable) throws LaunchException {
+    private int handleLaunchException(int status, @Nullable Throwable throwable) throws LaunchException {
         if (status != 0 && throwable != null) {
             if (throwable instanceof RuntimeException) {
                 throw (RuntimeException) throwable;

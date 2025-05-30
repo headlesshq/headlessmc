@@ -3,6 +3,8 @@ package io.github.headlesshq.headlessmc.launcher.mods.modrinth;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,8 @@ import java.util.Collections;
 import java.util.List;
 
 @CustomLog
-@RequiredArgsConstructor
+@ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class Modrinth implements ModDistributionPlatform {
     private static final URL DEFAULT_MODRINTH_API = URLs.url("https://api.modrinth.com/v2/");
 

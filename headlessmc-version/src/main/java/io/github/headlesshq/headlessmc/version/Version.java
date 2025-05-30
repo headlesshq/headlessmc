@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface Version {
     @Nullable String getParentName();
@@ -12,19 +13,24 @@ public interface Version {
 
     int getJava();
 
-    @Nullable Download getClientDownload();
-
-    @Nullable Download getServerDownload();
-
     @Nullable String getMainClass();
+
+    Arguments getGameArguments();
+
+    Arguments getJvmArguments();
+
+    @Unmodifiable
+    Map<String, Download> getDownloads();
 
     @Unmodifiable
     List<Library> getLibraries();
 
-    @Unmodifiable
-    List<Argument> getGameArguments();
+    default @Nullable Download getClientDownload() {
+        return getDownloads().get("client");
+    }
 
-    @Unmodifiable
-    List<Argument> getJvmArguments();
+    default @Nullable Download getServerDownload() {
+        return getDownloads().get("server");
+    }
 
 }

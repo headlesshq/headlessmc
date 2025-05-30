@@ -10,10 +10,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor = @__({@Inject}))
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class CommandLineManagerImpl implements CommandLineManager {
-    private final PicocliCommandContext context;
     private final CommandLineReader reader;
+    private final CommandContext context;
     private final StdIO stdIO;
 
     private volatile CommandContext interactiveContext;

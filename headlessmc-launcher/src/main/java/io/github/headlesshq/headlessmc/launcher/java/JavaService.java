@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.java;
 
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import lombok.CustomLog;
 import lombok.Getter;
 import io.github.headlesshq.headlessmc.java.Java;
@@ -9,9 +10,7 @@ import io.github.headlesshq.headlessmc.java.JavaVersionParser;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloadRequest;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
-import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.LazyService;
-import io.github.headlesshq.headlessmc.launcher.files.ConfigService;
 import io.github.headlesshq.headlessmc.launcher.util.PathUtil;
 import io.github.headlesshq.headlessmc.os.OS;
 import org.jetbrains.annotations.Nullable;
@@ -29,16 +28,16 @@ public class JavaService extends LazyService<Java> implements JavaScanner {
     private final Object lock = new Object();
     @Getter
     private final JavaVersionParser parser;
-    private final ConfigService cfg;
+    private final Config cfg;
     private final OS os;
 
     private volatile Java current;
 
-    public JavaService(ConfigService cfg, OS os) {
+    public JavaService(Config cfg, OS os) {
         this.cfg = cfg;
         this.os = os;
         boolean addFilePermissions = os.getType() == OS.Type.LINUX || os.getType() == OS.Type.OSX;
-        addFilePermissions &= cfg.getConfig().get(LauncherProperties.JAVA_ALWAYS_ADD_FILE_PERMISSIONS, false);
+        addFilePermissions &= cfg.get(LauncherProperties.JAVA_ALWAYS_ADD_FILE_PERMISSIONS, false);
         this.parser = new JavaVersionParser(addFilePermissions);
     }
 

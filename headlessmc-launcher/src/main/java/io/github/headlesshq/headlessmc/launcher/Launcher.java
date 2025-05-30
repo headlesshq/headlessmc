@@ -1,10 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Delegate;
-import io.github.headlesshq.headlessmc.api.HeadlessMc;
+import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountManager;
@@ -24,6 +20,10 @@ import io.github.headlesshq.headlessmc.launcher.server.ServerManager;
 import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModManager;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionService;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Delegate;
 
 /**
  * Represents the HeadlessMc launcher and everything that belongs to it.
@@ -31,7 +31,7 @@ import io.github.headlesshq.headlessmc.launcher.version.VersionService;
 @Getter
 @Setter
 @AllArgsConstructor
-public class Launcher implements HeadlessMc {
+public class Launcher implements Application {
     /**
      * The current version of HeadlessMc.
      */
