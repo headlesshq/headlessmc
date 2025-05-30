@@ -1,7 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.download;
 
-import lombok.SneakyThrows;
 import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
+import jakarta.enterprise.context.ApplicationScoped;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -16,6 +17,7 @@ import java.util.Map;
  * If we want to run the game in headless mode
  * we do not need some assets like sounds and textures.
  */
+@ApplicationScoped
 public class DummyAssets {
     private final Map<String, byte[]> bytes = new HashMap<>();
 

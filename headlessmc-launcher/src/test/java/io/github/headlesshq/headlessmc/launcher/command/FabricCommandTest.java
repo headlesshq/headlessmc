@@ -21,8 +21,7 @@ public class FabricCommandTest implements UsesResources, ParsesVersions {
     public void testDownloadFailure() {
         val command = new FabricCommand(LauncherMock.INSTANCE);
         System.setProperty(LauncherProperties.FABRIC_URL.getName(), "invalid");
-        assertEquals("invalid", LauncherMock.INSTANCE
-            .getConfig().get(LauncherProperties.FABRIC_URL));
+        assertEquals("invalid", LauncherMock.INSTANCE.getConfig().get(LauncherProperties.FABRIC_URL));
 
         val version = parseVersion(getJsonObject("version_parent.json"));
         assertThrows(CommandException.class, () -> command.execute(

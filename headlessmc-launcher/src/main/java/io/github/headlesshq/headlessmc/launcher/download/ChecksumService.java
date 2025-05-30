@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.download;
 
-import lombok.SneakyThrows;
 import io.github.headlesshq.headlessmc.launcher.util.IOConsumer;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

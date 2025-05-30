@@ -1,8 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.files;
 
 import lombok.CustomLog;
-import io.github.headlesshq.headlessmc.api.config.Config;
-import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaScanner;
 import io.github.headlesshq.headlessmc.java.JavaVersionFinder;
@@ -16,18 +15,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+// TODO
 @CustomLog
 public class AutoConfiguration {
-    public static void runAutoConfiguration(FileManager fileManager) {
+    public static void runAutoConfiguration(Path fileManager) {
         runAutoConfiguration(fileManager, new JavaVersionFinder());
     }
 
-    public static void runAutoConfiguration(FileManager fileManager, JavaVersionFinder javaVersionFinder) {
+    public static void runAutoConfiguration(Path fileManager, JavaVersionFinder javaVersionFinder) {
         Config dummyConfig = new ConfigImpl(new Properties(), "dummy", 0);
         if (dummyConfig.get(LauncherProperties.NO_AUTO_CONFIG, false)) {
             return;

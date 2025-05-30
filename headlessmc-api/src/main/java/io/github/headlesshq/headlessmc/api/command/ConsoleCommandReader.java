@@ -13,7 +13,7 @@ import static java.lang.String.valueOf;
 @Getter
 @Setter
 @CommandLineReader.Implementation
-class ConsoleCommandReader implements CommandLineReader, HidesPasswords {
+class ConsoleCommandReader implements CommandLineReader, SupportsHidingPasswords {
     private volatile boolean hidingPasswords = false;
 
     @Override

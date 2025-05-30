@@ -15,15 +15,17 @@ import static java.util.Objects.requireNonNull;
 
 @Setter
 @Accessors(fluent = true)
-public final class SettingBuilderImpl<V> implements SettingBuilder<V> {
-    private final SettingGroupImpl group;
-    private final Class<V> withType;
+class SettingBuilderImpl<V> implements SettingBuilder<V> {
+    final SettingGroupImpl group;
+    final Class<V> withType;
 
-    private String withName;
-    private String withDescription;
-    private @Nullable List<String> withAliases;
-    private @Nullable Function<Config, V> withValue;
-    private @Nullable Function<Config, Parser<V>> withParser;
+    @Nullable String withName;
+    @Nullable String withDescription;
+    @Nullable List<String> withAliases;
+    // TODO: it would be nice if we could support CDI nicely for this
+    @Nullable Function<Config, V> withValue;
+    // TODO: it would be nice if we could support CDI nicely for this
+    @Nullable Function<Config, Parser<V>> withParser;
 
     SettingBuilderImpl(SettingGroupImpl group, Class<V> type) {
         this.group = group;

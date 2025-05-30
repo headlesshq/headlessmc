@@ -157,7 +157,7 @@ public class ProcessFactory {
         File gameJar = new File(version.getFolder(), version.getName() + ".jar");
         log.debug("GameJar: " + gameJar.getAbsolutePath());
         if (!gameJar.exists() || !checkZipIntact(gameJar) && gameJar.delete()) {
-            LibraryDownloader downloader = new LibraryDownloader(downloadService, config.getConfig(), os);
+            LibraryDownloader downloader = new LibraryDownloader(downloadService, config, os);
             VersionExecutable clientDownload = version.getClientDownload();
             if (clientDownload == null) {
                 throw new IOException("Failed find client download in version " + version.getName());
@@ -177,7 +177,7 @@ public class ProcessFactory {
         val features = Features.EMPTY;
         val targets = new ArrayList<Target>(version.getLibraries().size());
         Set<String> libPaths = new HashSet<>();
-        LibraryDownloader libraryDownloader = new LibraryDownloader(downloadService, config.getConfig(), os);
+        LibraryDownloader libraryDownloader = new LibraryDownloader(downloadService, config, os);
         int librariesTODownload = 0;
         for (val library : version.getLibraries()) {
             if (library.getRule().apply(os, features) == Rule.Action.ALLOW) {
@@ -188,7 +188,7 @@ public class ProcessFactory {
 
                 val path = config.getMcFiles().getDir("libraries").toPath().resolve(libPath);
                 if ((library.getSha1() != null || library.getSize() != null)
-                        && config.getConfig().getConfig().get(LauncherProperties.LIBRARIES_CHECK_FILE_HASH, false)
+                        && config.getConfig().get(LauncherProperties.LIBRARIES_CHECK_FILE_HASH, false)
                         && Files.exists(path)
                         && !downloadService.getChecksumService().checkIntegrity(path, library.getSize(), library.getSha1())) {
                     log.warn("Library " + libPath + " failed integrity check, deleting...");
@@ -257,7 +257,7 @@ public class ProcessFactory {
 
     protected void downloadAssets(LaunchOptions options, FileManager files, Version version) throws IOException {
         log.debug("Downloading Assets");
-        new AssetsDownloader(options.getLauncher().getCommandLine(), downloadService, config.getConfig(), files, version.getAssetsUrl(), version.getAssets()).download();
+        new AssetsDownloader(options.getLauncher().getCommandLine(), downloadService, config, files, version.getAssetsUrl(), version.getAssets()).download();
     }
 
     /**

@@ -1,11 +1,12 @@
 package io.github.headlesshq.headlessmc.api.command;
 
-import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.TestApplication;
-import io.github.headlesshq.headlessmc.api.command.picocli.PicocliFactoryImpl;
+import io.github.headlesshq.headlessmc.api.command.picocli.CommandLineEvent;
 import io.github.headlesshq.headlessmc.api.logging.PrintWriterPrintStream;
 import io.github.headlesshq.headlessmc.api.logging.ReadableOutputStream;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.event.Observes;
 import lombok.Cleanup;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -20,50 +21,58 @@ import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Dependent
 public class CommandContextTest {
     @Test
-    public void test() throws IOException {
-        /*Application app = TestApplication.create();
-        @Cleanup
-        ReadableOutputStream os = new ReadableOutputStream();
-        @Cleanup
-        ReadableOutputStream err = new ReadableOutputStream();
-        app.getCommandLine().getStdIO().setOut(() -> new PrintWriterPrintStream(os, true));
-        app.getCommandLine().getStdIO().setErr(() -> new PrintWriterPrintStream(err, true));
+    public void test() {
+        TestApplication.use(app -> {
+            @Cleanup
+            ReadableOutputStream os = new ReadableOutputStream();
+            @Cleanup
+            ReadableOutputStream err = new ReadableOutputStream();
+            app.getCommandLine().getStdIO().setOut(() -> new PrintWriterPrintStream(os, true));
+            app.getCommandLine().getStdIO().setErr(() -> new PrintWriterPrintStream(err, true));
 
-        CommandLine commandLine = new PicocliFactoryImpl(new DefaultPicocliCommandProvider(), app.getInjector(), app.getCommandLine().getStdIO()).get();
-        PicocliCommandContext context = new PicocliCommandContextImpl(commandLine);
-        context.execute("-h");
+            PicocliCommandContext context = (PicocliCommandContext) app.getCommandLine().getContext();
+            context.execute("-h");
 
-        String output = read(os.getInputStream());
-        String expected = "Usage: root [-hV] [COMMAND]\n" +
-                "Test Command2\n" +
-                "  -h, --help      Show this help message and exit.\n" +
-                "  -V, --version   Print version information and exit.\n" +
-                "Commands:\n" +
-                "  test1  Test Command2";
-        assertEquals(expected, output);
+            String output = read(os.getInputStream());
+            String expected = "Usage: headlessmc [-hV] [COMMAND]\n" +
+                    "HeadlessMcCommand\n" +
+                    "  -h, --help      Show this help message and exit.\n" +
+                    "  -V, --version   Print version information and exit.\n" +
+                    "Commands:\n" +
+                    "  test1  Test Command2";
+            assertEquals(expected, output);
 
-        String errorOutput = read(err.getInputStream());
-        assertEquals("", errorOutput);
+            String errorOutput = read(err.getInputStream());
+            assertEquals("", errorOutput);
 
-        context.execute("test1");
-        assertEquals("hello", context.getPicocli().getSubcommands().get("test1").getExecutionResult());
+            context.execute("test1");
+            errorOutput = read(err.getInputStream());
+            assertEquals("", errorOutput);
+            assertEquals("hello", context.getHistory().getFirst().getCommandLine().getSubcommands().get("test1").getExecutionResult());
 
-        String out = read(os.getInputStream());
-        System.out.println(out);
+            context.execute("test1 --test world");
+            errorOutput = read(err.getInputStream());
+            assertEquals("", errorOutput);
+            assertEquals("world", context.getHistory().getFirst().getCommandLine().getSubcommands().get("test1").getExecutionResult());
 
-        context.execute("test1 --test world");
-        assertEquals("world", context.getPicocli().getSubcommands().get("test1").getExecutionResult());*/
+            String out = read(os.getInputStream());
+            System.out.println(out);
 
+            //context.execute("test1");
 
-        //context.execute("test1");
+            //assertEquals("hello", context.getPicocli().getExecutionResult());
 
-        //assertEquals("hello", context.getPicocli().getExecutionResult());
+            //context.execute("test2");
+            //errorOutput = read(err.getInputStream());
+            //System.out.println(errorOutput);
+        });
+    }
 
-        //context.execute("test2");
-        //errorOutput = read(err.getInputStream());
-        //System.out.println(errorOutput);
+    public void registerCommand(@Observes CommandLineEvent event) {
+        event.getCommandLine().addSubcommand("test1", TestCommand1.class);
     }
 
     private String read(InputStream inputStream) throws IOException {
@@ -79,28 +88,19 @@ public class CommandContextTest {
     }
 
     @CommandLine.Command(
-        name = "root",
-        version = HeadlessMc.NAME_VERSION,
-        mixinStandardHelpOptions = true,
-        description = "Test Command2",
-        subcommands = {TestCommand1.class}
-    )
-    private static class RootTestCommand {
-
-    }
-
-    @CommandLine.Command(
         name = "test1",
         version = HeadlessMc.NAME_VERSION,
         mixinStandardHelpOptions = true,
         description = "Test Command2"
     )
-    private static class TestCommand1 implements Callable<String> {
+    @Dependent
+    public static class TestCommand1 implements Callable<String> {
         @CommandLine.Option(names = "--test")
         private String option = "hello";
 
         @Override
         public String call() {
+            System.out.println(option);
             return option;
         }
     }
@@ -111,7 +111,8 @@ public class CommandContextTest {
         mixinStandardHelpOptions = true,
         description = "Test Command2"
     )
-    private static class TestCommand2 implements Callable<String> {
+    @Dependent
+    public static class TestCommand2 implements Callable<String> {
         @CommandLine.Option(names = "-option")
         private String option = "world";
 

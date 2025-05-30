@@ -7,8 +7,7 @@ import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfo;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfoCache;
 import io.github.headlesshq.headlessmc.launcher.download.ChecksumService;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
-import io.github.headlesshq.headlessmc.launcher.files.ConfigService;
-import io.github.headlesshq.headlessmc.launcher.files.LauncherConfig;
+import io.github.headlesshq.headlessmc.launcher.files.GameFiles;
 import io.github.headlesshq.headlessmc.launcher.java.JavaService;
 import io.github.headlesshq.headlessmc.launcher.launch.ProcessFactory;
 import io.github.headlesshq.headlessmc.launcher.mods.Mod;
@@ -28,7 +27,7 @@ public interface ILauncher extends Application {
     /**
      * The directories the HeadlessMc launcher will work in.
      */
-    LauncherConfig getLauncherConfig();
+    GameFiles getGameFiles();
 
     /**
      * A service for checking SHA1 hashes.
@@ -44,11 +43,6 @@ public interface ILauncher extends Application {
      * Actual Launching happens here.
      */
     ProcessFactory getProcessFactory();
-
-    /**
-     * Manages the HeadlessMc configuration.
-     */
-    ConfigService getConfigService();
 
     /**
      * Manages the Java versions we use for launching.

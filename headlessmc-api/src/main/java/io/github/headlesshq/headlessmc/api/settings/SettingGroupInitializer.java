@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor(onConstructor = @__(@Inject))
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class SettingGroupInitializer {
     private final SettingGroup root;
 

@@ -52,7 +52,7 @@ final class LargeFileRequestExecutor extends RequestExecutor {
         return this.executeRequest(connection, cookieManager, request);
     }
 
-    private HttpURLConnection openConnection(final HttpRequest request, final CookieManager cookieManager) throws IOException {
+    private HttpURLConnection openConnection(HttpRequest request, @Nullable CookieManager cookieManager) throws IOException {
         SingleProxySelector proxySelector = null;
         if (this.client.getProxyHandler().isProxySet()) proxySelector = this.client.getProxyHandler().getProxySelector();
         try {

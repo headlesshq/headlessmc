@@ -1,13 +1,12 @@
 package io.github.headlesshq.headlessmc.launcher;
 
-import lombok.CustomLog;
-import lombok.experimental.UtilityClass;
-import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.auth.AbstractLoginCommand;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.launch.ExitToWrapperException;
 import io.github.headlesshq.headlessmc.launcher.version.VersionUtil;
+import lombok.CustomLog;
+import lombok.experimental.UtilityClass;
 
 /**
  * Main entry point for HeadlessMc.
@@ -24,10 +23,7 @@ public final class Main {
             throwable = t;
         } finally {
             exitManager.onMainThreadEnd(throwable);
-            if (throwable instanceof ExitToWrapperException) {
-                HeadlessMc.setInstance(null);
-                LauncherApi.setLauncher(null);
-            } else {
+            if (!(throwable instanceof ExitToWrapperException)) {
                 // These "System.exit()" calls are here because of the LoginCommands
                 // -webview option. It seems that after closing the JFrame there is
                 // still either the AWT, Webview or Javafx thread running, keeping the
@@ -61,7 +57,9 @@ public final class Main {
         }
 
         Launcher launcher = builder.buildDefault();
-        if (!QuickExitCliHandler.checkQuickExit(launcher, args)) {
+        if (args.length > 0) {
+
+        } else {
             log.info(String.format("Detected: %s", builder.os()));
             log.info(String.format("Minecraft Dir: %s", launcher.getMcFiles()));
             launcher.log(VersionUtil.makeTable(VersionUtil.releases(launcher.getVersionService().getContents())));

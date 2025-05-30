@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.CustomLog;
 import lombok.Getter;
 import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
-import io.github.headlesshq.headlessmc.api.config.Config;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.api.config.HmcProperties;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.jline.JLineCommandLineReader;

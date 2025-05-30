@@ -5,7 +5,9 @@ plugins {
 dependencies {
     api project(':headlessmc-logging')
     api 'info.picocli:picocli:4.7.7'
+    compileOnly 'com.google.auto.service:auto-service-annotations:1.1.1'
     annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
 
     runtimeOnly group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     testImplementation group: 'dev.xdark', name: 'deencapsulation', version: '1.0'

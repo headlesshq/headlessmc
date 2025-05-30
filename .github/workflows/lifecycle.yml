@@ -125,13 +125,6 @@ jobs:
       - name: Delete lwjgl sources jar
         run: rm headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-sources.jar
 
-      - name: Delete jfx dev jar
-        run: rm headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*-dev.jar
-      - name: Delete jfx javadoc jar
-        run: rm headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*-javadoc.jar
-      - name: Delete jfx sources jar
-        run: rm headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*-sources.jar
-
       - name: Publish Artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -141,18 +134,10 @@ jobs:
             ./headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
             ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
-            ./headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*.jar
             ./headlessmc-scripts/hmc
             ./headlessmc-scripts/hmc.bat
 
-      - name: Delete Web dev jar
-        run: rm headlessmc-web/build/libs/headlessmc-web-*-dev.jar
-      - name: Delete Web javadoc jar
-        run: rm headlessmc-web/build/libs/headlessmc-web-*-javadoc.jar
-      - name: Delete Web sources jar
-        run: rm headlessmc-web/build/libs/headlessmc-web-*-sources.jar
-
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
@@ -167,18 +152,9 @@ jobs:
         run: mkdocs build -d _site
 
       # Prepare Site deployment
-      - name: Rename Web jar
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: mv headlessmc-web/build/libs/headlessmc-web-*.jar headlessmc-web/build/libs/headlessmc-web.jar
       - name: Create site dir
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: mkdir _site/cheerpj
-      - name: Copy Web jar
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: cp headlessmc-web/build/libs/headlessmc-web.jar _site/cheerpj/
-      - name: Copy web page files
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: cp -a headlessmc-web/page/. _site/cheerpj
+        run: mkdir _site
       - name: Copy javadoc
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
         run: cp -r build/docs/javadoc/ _site/
@@ -823,15 +799,14 @@ jobs:
           #draft: true
           generate_release_notes: true
           files: |
-            ./headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar
-            ./headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
-            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
-            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
-            ./headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*.jar
-            ./headlessmc-scripts/hmc
-            ./headlessmc-scripts/hmc.bat
-            ./headlessmc-launcher-linux-x64
-            ./headlessmc-launcher-windows-x64.exe
-            ./headlessmc-launcher-macos-x64
-            ./headlessmc-launcher-linux-arm64
-            ./headlessmc-launcher-macos-arm64
+            ./merged-artifacts/headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar
+            ./merged-artifacts/headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
+            ./merged-artifacts/headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
+            ./merged-artifacts/headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
+            ./merged-artifacts/headlessmc-scripts/hmc
+            ./merged-artifacts/headlessmc-scripts/hmc.bat
+            ./merged-artifacts/headlessmc-launcher-linux-x64
+            ./merged-artifacts/headlessmc-launcher-windows-x64.exe
+            ./merged-artifacts/headlessmc-launcher-macos-x64
+            ./merged-artifacts/headlessmc-launcher-linux-arm64
+            ./merged-artifacts/headlessmc-launcher-macos-arm64

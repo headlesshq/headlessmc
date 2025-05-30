@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor = @__(@Inject))
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class CommandFactory implements CommandLine.IFactory {
     private final Injector injector;
 

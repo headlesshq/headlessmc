@@ -7,10 +7,12 @@ import io.github.headlesshq.headlessmc.api.settings.SettingKey;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
 @ApplicationScoped
+@Accessors(fluent = true)
 public class JLineSettings extends SettingGroupInitializer {
     private final SettingGroup group = getRoot().group("hmc.jline", "JLine configuration");
 
@@ -30,7 +32,7 @@ public class JLineSettings extends SettingGroupInitializer {
     private final SettingKey<String> providers = group.setting(String.class)
             .withName("hmc.jline.providers")
             .withAlias("hmc.args.providers") // legacy name
-            .withDescription("Analogue to org.jline.terminal.providers")
+            .withDescription("Analog to org.jline.terminal.providers")
             .withValue("jni")
             .build();
 
@@ -43,7 +45,7 @@ public class JLineSettings extends SettingGroupInitializer {
     private final NullableSettingKey<@Nullable String> type = group.setting(String.class)
             .withName("hmc.jline.type")
             .withAlias("hmc.args.type") // legacy name
-            .withDescription("A prefix to display when reading with the JLine Command Line.")
+            .withDescription("The type of the JLine command line.")
             .nullable();
 
     private final SettingKey<Boolean> dumb = group.setting(Boolean.class)

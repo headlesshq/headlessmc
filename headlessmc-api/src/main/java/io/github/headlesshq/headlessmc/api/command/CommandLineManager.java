@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 public interface CommandLineManager {
     StdIO getStdIO();
 
-    PicocliCommandContext getContext();
+    CommandContext getContext();
 
     @Nullable CommandContext getInteractiveContext();
 

@@ -3,9 +3,11 @@ package io.github.headlesshq.headlessmc.api.settings;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 @Getter
 @ApplicationScoped
+@Accessors(fluent = true)
 public class HmcSettings extends SettingGroupInitializer {
     private final SettingKey<String> main = getRoot().setting(String.class)
             .withName("hmc.main_method")

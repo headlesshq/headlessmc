@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 @Getter
-public abstract class Service<T> implements Refreshable, Iterable<T> {
+public abstract class Service<T> implements Iterable<T> {
     protected Collection<T> contents = new ArrayList<>(0);
 
     public static <S, T extends Service<S>> T refresh(T service) {
@@ -19,7 +19,6 @@ public abstract class Service<T> implements Refreshable, Iterable<T> {
 
     protected abstract Collection<T> update();
 
-    @Override
     public void refresh() {
         contents = update();
     }
