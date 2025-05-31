@@ -1,0 +1,13 @@
+{
+  "object": {
+    "next": {
+      "test": [
+        "test"
+      ],
+      "primitive": 1,
+      "object": {
+        "string": "test"
+      }
+    }
+  }
+}

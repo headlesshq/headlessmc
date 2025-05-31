@@ -1,13 +1,13 @@
 package io.github.headlesshq.headlessmc.lwjgl;
 
-import lombok.SneakyThrows;
-import lombok.val;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionApi;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionManager;
 import io.github.headlesshq.headlessmc.lwjgl.redirections.DefaultRedirections;
 import io.github.headlesshq.headlessmc.lwjgl.redirections.ObjectRedirection;
 import io.github.headlesshq.headlessmc.lwjgl.transformer.LwjglTransformer;
 import io.github.headlesshq.headlessmc.lwjgl.util.DescriptionUtil;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.AbstractLwjglClass;
 import org.lwjgl.Lwjgl;

@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.api;
 
-import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.cdi.Injector;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.api.logging.Out;
 import io.github.headlesshq.headlessmc.api.settings.Config;

@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.lwjgl.redirections;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.lwjgl.LwjglProperties;
 import io.github.headlesshq.headlessmc.lwjgl.api.Redirection;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Since Minecrafts Gameloop is just a while(True) loop which calls {@code

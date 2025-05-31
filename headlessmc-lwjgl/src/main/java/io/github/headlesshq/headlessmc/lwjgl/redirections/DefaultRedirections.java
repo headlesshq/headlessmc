@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.lwjgl.redirections;
 
-import lombok.experimental.UtilityClass;
 import io.github.headlesshq.headlessmc.lwjgl.api.Redirection;
+import lombok.experimental.UtilityClass;
 
 import java.util.HashMap;
 import java.util.Map;

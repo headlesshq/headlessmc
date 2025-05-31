@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.mods;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.api.Platform;
@@ -8,6 +7,7 @@ import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 import io.github.headlesshq.headlessmc.launcher.command.download.InstallerService;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;

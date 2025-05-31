@@ -72,6 +72,10 @@ allprojects {
         api 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0'
         api 'com.google.code.findbugs:jsr305:3.0.2'
 
+        if (project != project(':headlessmc-findbugs')) {
+            implementation project(':headlessmc-findbugs')
+        }
+
         // no lombok for modlauncher cause we do bad hacks there in the java9 stub.
         if (project != project(':headlessmc-modlauncher')) {
             compileOnly 'org.projectlombok:lombok:1.18.38'

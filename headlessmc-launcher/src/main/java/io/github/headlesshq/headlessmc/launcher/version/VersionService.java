@@ -1,13 +1,12 @@
 package io.github.headlesshq.headlessmc.launcher.version;
 
 import com.google.gson.JsonElement;
+import io.github.headlesshq.headlessmc.launcher.LazyService;
+import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.val;
-import io.github.headlesshq.headlessmc.launcher.LazyService;
-import io.github.headlesshq.headlessmc.launcher.files.LauncherConfig;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

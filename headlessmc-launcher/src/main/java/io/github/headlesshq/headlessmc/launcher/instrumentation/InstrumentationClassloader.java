@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.instrumentation;
 
+import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.ByteArrayOutputStream;

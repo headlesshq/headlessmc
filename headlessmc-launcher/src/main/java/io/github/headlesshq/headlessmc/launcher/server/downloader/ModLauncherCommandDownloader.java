@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher.server.downloader;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.command.download.ModLauncherCommand;
 import io.github.headlesshq.headlessmc.launcher.server.ServerTypeDownloader;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

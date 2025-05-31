@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.lwjgl.redirections;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.lwjgl.api.Redirection;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionManager;
 import io.github.headlesshq.headlessmc.lwjgl.util.DescriptionUtil;
+import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

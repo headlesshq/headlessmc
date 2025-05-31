@@ -10,7 +10,6 @@ import io.github.headlesshq.headlessmc.launcher.version.VersionService;
 import net.lenni0451.commons.httpclient.HttpResponse;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Paths;
 
 public class VersionInfoUtil {

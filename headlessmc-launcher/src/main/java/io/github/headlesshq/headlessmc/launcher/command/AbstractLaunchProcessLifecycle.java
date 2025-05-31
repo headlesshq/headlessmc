@@ -1,12 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
-import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.command.ParseUtil;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
@@ -16,6 +13,9 @@ import io.github.headlesshq.headlessmc.launcher.launch.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.server.commands.LaunchServerCommand;
 import io.github.headlesshq.headlessmc.launcher.test.CommandTest;
 import io.github.headlesshq.headlessmc.launcher.test.CrashReportWatcher;
+import lombok.CustomLog;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

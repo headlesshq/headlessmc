@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.files;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaScanner;
@@ -9,6 +8,7 @@ import io.github.headlesshq.headlessmc.java.JavaVersionParser;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.os.OSFactory;
+import lombok.CustomLog;
 
 import java.io.File;
 import java.io.IOException;

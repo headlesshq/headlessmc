@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.mods;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.mods.files.ModFileReaderManager;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor

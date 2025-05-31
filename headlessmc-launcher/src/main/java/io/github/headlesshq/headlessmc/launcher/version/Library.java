@@ -4,6 +4,8 @@ import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.os.OS;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
+
 public interface Library extends HasName {
     String getPath(OS os);
 
@@ -11,7 +13,7 @@ public interface Library extends HasName {
 
     Extractor getExtractor();
 
-    String getUrl(String path);
+    URI getUrl(String path);
 
     @Nullable String getSha1();
 

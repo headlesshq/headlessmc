@@ -2,11 +2,11 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import lombok.SneakyThrows;
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import io.github.headlesshq.headlessmc.launcher.version.DefaultVersionFactory;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.SneakyThrows;
+import lombok.val;
 
 import java.io.File;
 

@@ -1,0 +1,12 @@
+[
+  {
+    "action": "allow"
+  },
+  {
+    "action": "disallow",
+    "os": {
+      "name": "osx",
+      "version": "^10\\.5\\.\\d$"
+    }
+  }
+]

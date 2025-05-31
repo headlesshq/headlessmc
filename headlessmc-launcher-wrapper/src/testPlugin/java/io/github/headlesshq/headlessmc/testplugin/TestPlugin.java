@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.testplugin;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.command.DefaultCommandLineProvider;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.plugin.HeadlessMcPlugin;
+import lombok.CustomLog;
 import org.junit.platform.commons.util.ExceptionUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -3,7 +3,6 @@ package io.github.headlesshq.headlessmc.api.settings;
 import io.github.headlesshq.headlessmc.api.traits.HasDescription;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 

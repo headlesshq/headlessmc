@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.instrumentation.paulscode;
 
-import lombok.SneakyThrows;
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.InstrumentationTestUtils;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.Target;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 import paulscode.sound.Library;
 

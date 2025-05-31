@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.version;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.net.URI;
 
 public interface Download {
     String getName();
@@ -11,6 +11,6 @@ public interface Download {
 
     @Nullable Long getSize();
 
-    @Nullable URL getUrl();
+    @Nullable URI getUrl();
 
 }

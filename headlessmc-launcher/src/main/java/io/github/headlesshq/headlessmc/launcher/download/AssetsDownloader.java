@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -27,7 +27,7 @@ public class AssetsDownloader {
     private final CommandLineReader commandLineReader;
     private final ChecksumService checksumService;
     private final DownloadService downloadService;
-    private final @Beans.AssetsUrl URL assetsUrl;
+    private final @Beans.AssetsUrl URI assetsUrl;
     private final DummyAssets dummyAssets;
     private final AssetSettings settings;
     private final GameFiles files; // TODO: qualify for injection

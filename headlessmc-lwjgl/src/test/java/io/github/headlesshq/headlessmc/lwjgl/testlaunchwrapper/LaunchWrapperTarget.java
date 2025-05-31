@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.lwjgl.testlaunchwrapper;
 
-import lombok.val;
 import io.github.headlesshq.headlessmc.lwjgl.LwjglInstrumentationTest;
 import io.github.headlesshq.headlessmc.lwjgl.launchwrapper.LaunchWrapperLwjglTransformer;
 import io.github.headlesshq.headlessmc.lwjgl.launchwrapper.LaunchWrapperTest;
+import lombok.val;
 import net.minecraft.launchwrapper.Launch;
 import org.lwjgl.AbstractLwjglClass;
 import org.lwjgl.Lwjgl;

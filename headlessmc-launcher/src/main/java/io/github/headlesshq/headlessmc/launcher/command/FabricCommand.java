@@ -1,7 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
-import lombok.Getter;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.command.ParseUtil;
@@ -16,10 +14,11 @@ import io.github.headlesshq.headlessmc.launcher.launch.SystemPropertyHelper;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionUtil;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyUtil;
+import lombok.CustomLog;
+import lombok.Getter;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 @Getter

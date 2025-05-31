@@ -1,0 +1,15 @@
+{
+  "id": "1.19-child",
+  "inheritsFrom": "1.19",
+  "releaseTime": "2022-06-17T19:10:29+0000",
+  "time": "2022-06-17T19:10:29+0000",
+  "type": "release",
+  "mainClass": "io.github.headlesshq.headlessmc.launcher.Main",
+  "minecraftArguments": "--userType ${user_type} --versionType ${version_type}",
+  "libraries": [
+    {
+      "name": "child_library_name",
+      "url": "http://child_library_url"
+    }
+  ]
+}

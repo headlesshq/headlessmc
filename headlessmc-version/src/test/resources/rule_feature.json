@@ -1,0 +1,12 @@
+[
+  {
+    "action": "allow"
+  },
+  {
+    "action": "disallow",
+    "features": {
+      "feature": true
+    },
+    "value": "--demo"
+  }
+]

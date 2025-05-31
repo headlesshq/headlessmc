@@ -2,16 +2,15 @@ package io.github.headlesshq.headlessmc.launcher.command.download;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.val;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
-import io.github.headlesshq.headlessmc.launcher.util.URLs;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
 @CustomLog
 public class VersionInfoCache implements Collection<VersionInfo> {
     private static final List<VersionInfo> EMPTY = new ArrayList<>(0);
-    private static final URL URL = URLs.url("https://launchermeta.mojang.com/mc/game/version_manifest.json");
+    private static final URI URL = URI.create("https://launchermeta.mojang.com/mc/game/version_manifest.json");
     @Delegate
     private List<VersionInfo> infos = EMPTY;
     @Getter

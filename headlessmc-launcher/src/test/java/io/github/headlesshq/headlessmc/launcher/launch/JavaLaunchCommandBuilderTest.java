@@ -1,7 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.SneakyThrows;
-import lombok.val;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
@@ -9,6 +7,8 @@ import io.github.headlesshq.headlessmc.launcher.UsesResources;
 import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

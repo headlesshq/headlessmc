@@ -3,12 +3,12 @@ package io.github.headlesshq.headlessmc.launcher.version;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.net.URI;
 
 @Data
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class Logging {
         private final String id;
         private final String sha1;
         private final Long size;
-        private final URL url;
+        private final URI url;
 
         @Deprecated
         @SuppressWarnings("unused") // used by graalvm

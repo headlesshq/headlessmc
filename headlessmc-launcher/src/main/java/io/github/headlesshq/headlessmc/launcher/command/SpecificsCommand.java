@@ -1,8 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
-import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModRepository;

@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.lwjgl.agent;
 
-import lombok.Generated;
 import io.github.headlesshq.headlessmc.lwjgl.api.Transformer;
 import io.github.headlesshq.headlessmc.lwjgl.transformer.AsmUtil;
 import io.github.headlesshq.headlessmc.lwjgl.transformer.LwjglTransformer;
+import lombok.Generated;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 

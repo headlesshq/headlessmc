@@ -1,0 +1,22 @@
+{
+  "downloads": {
+    "artifact": {
+      "path": "_download_path",
+      "sha1": "",
+      "size": 1,
+      "url": "http://_download_url"
+    }
+  },
+  "name": "testpackage:test:testversion",
+  "rules": [
+    {
+      "action": "allow"
+    },
+    {
+      "action": "disallow",
+      "os": {
+        "name": "osx"
+      }
+    }
+  ]
+}

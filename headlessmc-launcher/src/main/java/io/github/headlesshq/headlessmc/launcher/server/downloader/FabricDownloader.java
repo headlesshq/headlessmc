@@ -3,19 +3,18 @@ package io.github.headlesshq.headlessmc.launcher.server.downloader;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.command.FabricCommand;
 import io.github.headlesshq.headlessmc.launcher.server.ServerTypeDownloader;
-import io.github.headlesshq.headlessmc.launcher.util.URLs;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class FabricDownloader implements ServerTypeDownloader {
-    private static final URL URL = URLs.url("https://meta.fabricmc.net/v2/versions/loader");
+    private static final URI URL = URI.create("https://meta.fabricmc.net/v2/versions/loader");
 
     private final ServerTypeDownloader vanillaDownloader;
 

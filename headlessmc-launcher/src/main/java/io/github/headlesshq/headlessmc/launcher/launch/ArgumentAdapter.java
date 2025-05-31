@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.CustomLog;
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.version.Argument;
 import io.github.headlesshq.headlessmc.launcher.version.Features;
 import io.github.headlesshq.headlessmc.launcher.version.Rule;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.CustomLog;
+import lombok.val;
 
 import java.util.ArrayList;
 import java.util.HashMap;

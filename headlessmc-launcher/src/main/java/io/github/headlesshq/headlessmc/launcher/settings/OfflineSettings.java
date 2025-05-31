@@ -8,8 +8,6 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import java.util.UUID;
-
 @Getter
 @ApplicationScoped
 @Accessors(fluent = true)

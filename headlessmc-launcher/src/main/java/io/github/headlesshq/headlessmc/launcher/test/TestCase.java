@@ -2,11 +2,11 @@ package io.github.headlesshq.headlessmc.launcher.test;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import lombok.CustomLog;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.api.traits.HasName;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

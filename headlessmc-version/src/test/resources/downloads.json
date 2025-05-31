@@ -1,0 +1,11 @@
+{
+  "downloads": {
+    "client": {
+      "sha1": "b88808bbb3da8d9f453694b5d8f74a3396f1a533",
+      "size": 28984409,
+      "url": "https://piston-meta.mojang.com"
+    },
+    "client_mappings": {
+    }
+  }
+}

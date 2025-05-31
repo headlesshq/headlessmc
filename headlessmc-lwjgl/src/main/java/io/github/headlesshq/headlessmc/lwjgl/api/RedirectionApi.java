@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.lwjgl.api;
 
+import io.github.headlesshq.headlessmc.lwjgl.RedirectionManagerImpl;
 import io.github.headlesshq.headlessmc.lwjgl.transformer.LwjglTransformer;
 import lombok.experimental.UtilityClass;
-import io.github.headlesshq.headlessmc.lwjgl.RedirectionManagerImpl;
 
 @UtilityClass
 public class RedirectionApi {

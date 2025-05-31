@@ -3,9 +3,9 @@ package io.github.headlesshq.headlessmc.java.download;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import io.github.headlesshq.headlessmc.os.OS;
 import lombok.CustomLog;
 import lombok.Data;
-import io.github.headlesshq.headlessmc.os.OS;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

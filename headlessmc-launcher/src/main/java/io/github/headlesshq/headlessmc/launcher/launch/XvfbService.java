@@ -1,12 +1,12 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.Cleanup;
-import lombok.CustomLog;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.files.ConfigService;
 import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.Cleanup;
+import lombok.CustomLog;
+import lombok.RequiredArgsConstructor;
 
 import java.io.BufferedReader;
 import java.io.IOException;

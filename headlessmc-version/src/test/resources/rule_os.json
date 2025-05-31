@@ -1,0 +1,11 @@
+[
+  {
+    "action": "allow"
+  },
+  {
+    "action": "disallow",
+    "os": {
+      "name": "osx"
+    }
+  }
+]

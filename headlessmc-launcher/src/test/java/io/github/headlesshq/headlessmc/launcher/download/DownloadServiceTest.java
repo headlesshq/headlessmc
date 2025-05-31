@@ -2,12 +2,13 @@ package io.github.headlesshq.headlessmc.launcher.download;
 
 import io.github.headlesshq.headlessmc.jline.JlineProgressbarProvider;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
+import lombok.SneakyThrows;
 import net.lenni0451.commons.httpclient.HttpResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
@@ -18,8 +19,9 @@ public class DownloadServiceTest {
     public void testDownload() throws IOException {
         DownloadService downloadService = new DownloadService() {
             @Override
-            public HttpResponse get(URL url) {
-                return new HttpResponse(url, 404, new byte[0], new HashMap<>());
+            @SneakyThrows
+            public HttpResponse get(URI url) {
+                return new HttpResponse(url.toURL(), 404, new byte[0], new HashMap<>());
             }
         };
 
@@ -28,17 +30,18 @@ public class DownloadServiceTest {
         byte[] bytes = { 1, 2, 3, 4};
         downloadService = new DownloadService() {
             @Override
-            public HttpResponse get(URL url) {
-                return new HttpResponse(url, 200, bytes, new HashMap<>());
+            @SneakyThrows
+            public HttpResponse get(URI url) {
+                return new HttpResponse(url.toURL(), 200, bytes, new HashMap<>());
             }
         };
 
         String sha1 = "12dada1fff4d4787ade3333147202c3b443e376f";
         assertEquals(sha1, downloadService.getChecksumService().hash(bytes));
         assertThrows(IOException.class, () -> finalDownloadService.download("http://example.com", LauncherMock.INSTANCE.getFileManager().getBase().toPath().resolve("test"), null, "wronghash"));
-        assertSame(bytes, downloadService.download(new URL("http://example.com"), null, sha1));
-        assertSame(bytes, downloadService.download(new URL("http://example.com"), null, null));
-        assertSame(bytes, downloadService.download(new URL("http://example.com"), 4L, null));
+        assertSame(bytes, downloadService.download(URI.create("http://example.com"), null, sha1));
+        assertSame(bytes, downloadService.download(URI.create("http://example.com"), null, null));
+        assertSame(bytes, downloadService.download(URI.create("http://example.com"), 4L, null));
     }
 
     // TODO: spin up simple http server and serve some files to check all download stuff?

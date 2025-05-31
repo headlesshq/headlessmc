@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.command.login;
 
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
 import io.github.headlesshq.headlessmc.launcher.command.LaunchContext;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

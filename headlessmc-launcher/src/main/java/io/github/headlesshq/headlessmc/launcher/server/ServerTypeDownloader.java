@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

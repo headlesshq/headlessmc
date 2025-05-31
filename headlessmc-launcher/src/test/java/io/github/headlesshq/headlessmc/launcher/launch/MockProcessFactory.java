@@ -1,7 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.Getter;
-import lombok.Setter;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.files.FileManager;
@@ -9,6 +7,8 @@ import io.github.headlesshq.headlessmc.launcher.files.LauncherConfig;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.Instrumentation;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.File;
 import java.io.IOException;

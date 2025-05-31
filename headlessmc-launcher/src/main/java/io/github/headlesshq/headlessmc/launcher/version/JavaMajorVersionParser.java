@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.version;
 
 import com.google.gson.JsonElement;
-import lombok.val;
 import io.github.headlesshq.headlessmc.java.JavaVersionParser;
+import lombok.val;
 
 class JavaMajorVersionParser {
     public Integer parse(JsonElement element) {

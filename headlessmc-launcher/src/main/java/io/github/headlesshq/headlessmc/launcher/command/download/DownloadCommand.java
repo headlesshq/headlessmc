@@ -1,16 +1,16 @@
 package io.github.headlesshq.headlessmc.launcher.command.download;
 
-import lombok.CustomLog;
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
+import io.github.headlesshq.headlessmc.api.command.FindByCommand;
 import io.github.headlesshq.headlessmc.api.command.YesNoContext;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.command.AbstractLauncherCommand;
-import io.github.headlesshq.headlessmc.api.command.FindByCommand;
 import io.github.headlesshq.headlessmc.launcher.command.VersionTypeFilter;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.CustomLog;
+import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -23,6 +23,7 @@ import java.util.Map;
 @CustomLog
 public class DownloadCommand extends AbstractLauncherCommand
     implements FindByCommand<VersionInfo> {
+    private final Launcher ctx;
     private final AbstractDownloadingVersionCommand downloadCommand;
 
     public DownloadCommand(Launcher ctx) {

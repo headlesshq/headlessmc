@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.instrumentation.log4j;
 
-import lombok.SneakyThrows;
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.util.AbstractUtilityTest;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.Target;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.lookup.Interpolator;
 import org.apache.logging.log4j.core.lookup.JndiLookup;

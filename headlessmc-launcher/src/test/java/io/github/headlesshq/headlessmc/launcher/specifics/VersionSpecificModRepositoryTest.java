@@ -5,19 +5,20 @@ import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URL;
+import java.net.MalformedURLException;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class VersionSpecificModRepositoryTest {
     @Test
-    @Disabled("Requests the GitHub API")
-    public void testVersionSpecificModRepository() throws IOException {
-        URL url = new URL("https://github.com/headlesshq/hmc-test-repo/releases/download/");
-        VersionSpecificModRepository hmcTestRepo = new VersionSpecificModRepository(url, "headlesshq", "hmc-test-repo", "0.2.0", "-release");
-        assertEquals("0.1.0", hmcTestRepo.getVersion(new DownloadService()));
-        assertEquals("hmc-test-repo-1.21.11-0.1.0-lexforge-release.jar", hmcTestRepo.getFileName(hmcTestRepo.getVersion(new DownloadService()), new VersionInfo("1.21.11", Modlauncher.LEXFORGE)));
+    public void testVersionSpecificModRepository() throws MalformedURLException {
+        URI url = URI.create("https://github.com/headlesshq/mc-runtime-test/releases/download/");
+        VersionSpecificModRepository mcRuntimeTest = new VersionSpecificModRepository(url, "mc-runtime-test", "2.2.0", "-release");
+        assertEquals("mc-runtime-test-1.21-2.2.0-neoforge-release.jar", mcRuntimeTest.getFileName(new VersionInfo("1.21", Modlauncher.NEOFORGE)));
+        assertEquals("mc-runtime-test-1.19.2-2.2.0-fabric-release.jar", mcRuntimeTest.getFileName(new VersionInfo("1.19.2", Modlauncher.FABRIC)));
+        URI expected = URI.create("https://github.com/headlesshq/mc-runtime-test/releases/download/2.2.0/mc-runtime-test-1.12.2-2.2.0-lexforge-release.jar");
+        assertEquals(expected, mcRuntimeTest.getDownloadURL(new VersionInfo("1.12.2", Modlauncher.LEXFORGE)));
     }
 
 }

@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.UsesResources;
 import io.github.headlesshq.headlessmc.launcher.version.Features;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

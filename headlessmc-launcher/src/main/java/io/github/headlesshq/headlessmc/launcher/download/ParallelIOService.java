@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher.download;
 
+import io.github.headlesshq.headlessmc.launcher.util.IOConsumer;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import io.github.headlesshq.headlessmc.launcher.util.IOConsumer;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.modlauncher;
 
+import io.github.headlesshq.headlessmc.launcher.api.Platform;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import io.github.headlesshq.headlessmc.launcher.api.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;

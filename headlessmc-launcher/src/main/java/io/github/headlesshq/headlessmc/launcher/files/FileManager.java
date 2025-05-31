@@ -1,14 +1,18 @@
 package io.github.headlesshq.headlessmc.launcher.files;
 
 import lombok.Data;
+import lombok.experimental.Delegate;
 
 import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Data
-public class FileManager {
+public class FileManager implements Path {
+    @Delegate
     private final Path base;
 
     public Path get(String... path) {
@@ -20,7 +24,7 @@ public class FileManager {
         return result;
     }
 
-    public Path createFile(String... path) {
+    public Path file(String... path) {
         Path file = get(path);
         try {
             Files.createDirectories(file.getParent());
@@ -32,7 +36,7 @@ public class FileManager {
         return file;
     }
 
-    public Path createDirectory(String... path) {
+    public Path dir(String... path) {
         Path directory = get(path);
         try {
             Files.createDirectories(directory);
@@ -43,22 +47,38 @@ public class FileManager {
         return directory;
     }
 
-    public Iterable<Path> list(String... path) {
+    public Path forEach(Consumer<Path> action, String... path) {
         Path file = get(path);
-        return null; // TODO
+        try (Stream<Path> stream = Files.walk(file)) {
+            stream.forEach(action);
+        } catch (IOException e) {
+            throw new IOError(e);
+        }
+
+        return file;
     }
 
-    public void delete(String... path) {
-        return; // TODO
+    public Path delete(String... path) {
+        return forEach(p -> {
+            try {
+                Files.deleteIfExists(p);
+            } catch (IOException e) {
+                throw new IOError(e);
+            }
+        }, path);
     }
 
     public FileManager relative(String... path) {
         return new FileManager(get(path));
     }
 
+    public static FileManager of(Path base) {
+        return new FileManager(base);
+    }
+
     public static FileManager mkdir(Path path) {
-        FileManager manager = new FileManager(path);
-        manager.createDirectory();
+        FileManager manager = of(path);
+        manager.dir();
         return manager;
     }
 

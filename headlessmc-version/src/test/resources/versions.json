@@ -1,0 +1,36 @@
+{
+  "latest": {
+    "release": "1.19",
+    "snapshot": "1.19.1-rc1"
+  },
+  "versions": [
+    {
+      "id": "1.19.1-rc1",
+      "type": "snapshot",
+      "url": "http://1.19.1-rc1-url",
+      "time": "2022-06-23T17:01:27+00:00",
+      "releaseTime": "2022-06-23T16:32:41+00:00"
+    },
+    {
+      "id": "1.19",
+      "type": "release",
+      "url": "http://1.19-url",
+      "time": "2022-06-23T16:27:07+00:00",
+      "releaseTime": "2022-06-07T09:42:18+00:00"
+    },
+    {
+      "id": "rd-132211",
+      "type": "old_alpha",
+      "url": "http://rd-132211-url",
+      "time": "2022-03-10T09:51:38+00:00",
+      "releaseTime": "2009-05-13T20:11:00+00:00"
+    },
+    {
+      "id": "b1.6.1",
+      "type": "old_beta",
+      "url": "http://b1.6.1-url",
+      "time": "2022-03-10T09:51:38+00:00",
+      "releaseTime": "2011-05-25T22:00:01+00:00"
+    }
+  ]
+}

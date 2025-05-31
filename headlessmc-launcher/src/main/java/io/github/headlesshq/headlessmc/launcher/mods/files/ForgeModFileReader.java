@@ -4,8 +4,8 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import lombok.Data;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
+import lombok.Data;
 
 import java.io.IOException;
 import java.io.InputStream;

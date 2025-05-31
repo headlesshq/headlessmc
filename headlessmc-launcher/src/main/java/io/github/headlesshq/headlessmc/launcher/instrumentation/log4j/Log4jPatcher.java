@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.instrumentation.log4j;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.AbstractClassTransformer;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.Target;
+import lombok.CustomLog;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;

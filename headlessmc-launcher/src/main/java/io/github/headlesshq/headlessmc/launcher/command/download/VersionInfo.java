@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.command.download;
 
-import lombok.Data;
 import io.github.headlesshq.headlessmc.api.traits.HasId;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
+import lombok.Data;
 
 // TODO: @SerializedName
 @Data

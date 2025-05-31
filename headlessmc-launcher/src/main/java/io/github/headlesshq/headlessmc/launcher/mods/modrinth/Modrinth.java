@@ -3,23 +3,22 @@ package io.github.headlesshq.headlessmc.launcher.mods.modrinth;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import lombok.CustomLog;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.mods.Mod;
 import io.github.headlesshq.headlessmc.launcher.mods.ModDistributionPlatform;
 import io.github.headlesshq.headlessmc.launcher.mods.ModdableGame;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
-import io.github.headlesshq.headlessmc.launcher.util.URLs;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import lombok.CustomLog;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import net.lenni0451.commons.httpclient.HttpResponse;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +27,7 @@ import java.util.List;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class Modrinth implements ModDistributionPlatform {
-    private static final URL DEFAULT_MODRINTH_API = URLs.url("https://api.modrinth.com/v2/");
+    private static final URL DEFAULT_MODRINTH_API = URI.create("https://api.modrinth.com/v2/");
 
     private final DownloadService downloadService;
     private final URL api;

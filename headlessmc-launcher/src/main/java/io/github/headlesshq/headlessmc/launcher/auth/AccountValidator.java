@@ -2,11 +2,10 @@ package io.github.headlesshq.headlessmc.launcher.auth;
 
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
-import lombok.CustomLog;
-import lombok.Data;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
-import io.github.headlesshq.headlessmc.launcher.util.URLs;
+import lombok.CustomLog;
+import lombok.Data;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.lenni0451.commons.httpclient.requests.impl.GetRequest;
 import net.raphimc.minecraftauth.MinecraftAuth;
@@ -15,7 +14,7 @@ import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Base64;
 import java.util.List;
 
@@ -24,7 +23,7 @@ import java.util.List;
  */
 @CustomLog
 public class AccountValidator {
-    private static final URL URL = URLs.url("https://api.minecraftservices.com/entitlements/mcstore");
+    private static final URI URL = URI.create("https://api.minecraftservices.com/entitlements/mcstore");
 
     public ValidatedAccount validate(StepFullJavaSession.FullJavaSession session) throws AuthException {
         log.debug("Validating session " + session.getMcProfile().getName() + " : " + session.getMcProfile().getId());

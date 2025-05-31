@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.lwjgl.redirections;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.lwjgl.api.Redirection;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionManager;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class CastRedirection implements Redirection {

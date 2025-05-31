@@ -1,0 +1,20 @@
+{
+  "id": "version-without-parent",
+  "inheritsFrom": "1.18",
+  "releaseTime": "2022-06-17T19:10:29+0000",
+  "time": "2022-06-17T19:10:29+0000",
+  "type": "release",
+  "mainClass": "io.github.headlesshq.headlessmc.runtime.Main",
+  "arguments": {
+    "game": [],
+    "jvm": [
+      "-DMainClass\u003d net.minecraft.client.main.Main "
+    ]
+  },
+  "libraries": [
+    {
+      "name": "org.lwjgl.lwjgl:lwjgl-platform:2.9.4-nightly-20150209",
+      "url": "http://lwjgl-url"
+    }
+  ]
+}

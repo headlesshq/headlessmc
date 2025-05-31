@@ -2,18 +2,50 @@ package io.github.headlesshq.headlessmc.version.parser;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
+import io.github.headlesshq.headlessmc.version.ExtractionRules;
 import io.github.headlesshq.headlessmc.version.Library;
+import io.github.headlesshq.headlessmc.version.Rule;
 import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Parses a library entry:
+ * <pre>
+ {
+     "downloads": {
+         "classifiers": {
+             "artifact": {
+                "path": "io/netty/netty-transport-native-epoll/...",
+                "sha1": "82f94d0a9d837f6b6a580379373310ff7288c0f8",
+                "size": 42321,
+                "url": "https://libraries.minecraft.net/..."
+             }
+            "natives-linux": {
+                "path": "net/java/jinput/jinput-platform/...",
+                ...
+            },
+            ...
+        },
+    "extract": {
+        "exclude": [
+            "META-INF/"
+        ]
+    },
+    "name": "net.java.jinput:jinput-platform:2.0.5",
+    "natives": {
+        "linux": "natives-linux",
+        "osx": "natives-osx",
+        "windows": "natives-windows"
+    }
+ }</pre>
+ */
 @CustomLog
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 final class LibraryParser {
@@ -37,26 +69,27 @@ final class LibraryParser {
     }
 
     public List<Library> parse(JsonObject json) {
-        val rule = ruleParser.parse(json.get("rules"));
-        val extractor = extractorParser.parse(json.get("extract"));
-        val natives = nativesParser.parse(json.get("natives"));
-        val result = new ArrayList<Library>(natives.isEmpty() ? 1 : natives.size() + 1);
-        val name = json.get("name").getAsString();
-        val baseUrl = JsonUtil.getString(json, "url");
+        Rule rule = ruleParser.parse(json.get("rules"));
+        ExtractionRules extractor = extractorParser.parse(json.get("extract"));
+        Map<String, String> natives = nativesParser.parse(json.get("natives"));
+        List<Library> result = new ArrayList<>(natives.isEmpty() ? 1 : natives.size() + 1);
+        String name = json.get("name").getAsString();
+        String baseUrl = JsonUtil.getString(json, "url");
 
-        val downloads = json.get("downloads");
+        JsonElement downloads = json.get("downloads");
         if (downloads != null && downloads.isJsonObject()) {
-            val artifact = downloads.getAsJsonObject().get("artifact");
+            JsonElement artifact = downloads.getAsJsonObject().get("artifact");
             if (artifact != null && artifact.isJsonObject()) {
                 JsonObject jo = artifact.getAsJsonObject();
                 String url = JsonUtil.getString(jo, "url");
                 String path = JsonUtil.getString(jo, "path");
                 String sha1 = JsonUtil.getString(jo, "sha1");
                 Long size = JsonUtil.getLong(jo, "size");
-                result.add(new LibraryImpl(natives, Extractor.NO_EXTRACTION, name, rule, baseUrl, sha1, size, url, path, false));
+                URI uri = url == null ? null : URI.create(url);
+                result.add(new LibraryImpl(natives, null, name, rule, baseUrl, sha1, size, uri, path, false));
             }
 
-            val classifiers = downloads.getAsJsonObject().get("classifiers");
+            JsonElement classifiers = downloads.getAsJsonObject().get("classifiers");
             if (classifiers != null && classifiers.isJsonObject()) {
                 for (Map.Entry<String, JsonElement> e : classifiers.getAsJsonObject().entrySet()) {
                     Map.Entry<String, String> nativeEntry = getNativeEntry(natives, e.getKey());
@@ -81,10 +114,10 @@ final class LibraryParser {
                         return Rule.Action.DISALLOW;
                     };
 
-                    Extractor nativeExtractor = extractor;
+                    ExtractionRules nativeExtractor = extractor;
                     // if there was no extraction rule specified.
-                    if (!extractor.isExtracting()) {
-                        nativeExtractor = new ExtractorImpl();
+                    if (nativeExtractor == null) {
+                        nativeExtractor = new ExtractionRulesImpl(Collections.emptyList());
                     }
 
                     JsonObject jo = e.getValue().getAsJsonObject();
@@ -92,7 +125,8 @@ final class LibraryParser {
                     String path = JsonUtil.getString(jo, "path");
                     String sha1 = JsonUtil.getString(jo, "sha1");
                     Long size = JsonUtil.getLong(jo, "size");
-                    result.add(new LibraryImpl(natives, nativeExtractor, name, osRule, baseUrl, sha1, size, url, path, true));
+                    URI uri = url == null ? null : URI.create(url);
+                    result.add(new LibraryImpl(natives, nativeExtractor, name, osRule, baseUrl, sha1, size, uri, path, true));
                 }
             }
         }
