@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.lwjgl.launchwrapper;
 
-import lombok.SneakyThrows;
 import io.github.headlesshq.headlessmc.lwjgl.LwjglProperties;
+import lombok.SneakyThrows;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 

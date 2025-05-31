@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.command.download;
 
-import lombok.Data;
-import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
+import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
 @Data

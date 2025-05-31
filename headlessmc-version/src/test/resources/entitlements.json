@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "name": "game_minecraft",
+      "signature": "test.ewogICJzaWduZXJJZCIgOiAiMTIzNDU2NyIsCiAgIm5hbWUiIDogImdhbWVfbWluZWNyYWZ0Igp9.random"
+    },
+    {
+      "name": "game_minecraft_bedrock",
+      "signature": "game_minecraft_bedrock_signature"
+    }
+  ],
+  "signature": "test",
+  "keyId": "1",
+  "random-field-that-i-added": "test"
+}

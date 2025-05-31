@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.api.Platform;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 public class ServerType implements HasName {

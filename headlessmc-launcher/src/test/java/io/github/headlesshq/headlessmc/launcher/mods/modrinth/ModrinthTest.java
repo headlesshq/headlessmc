@@ -4,18 +4,17 @@ import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.mods.Mod;
-import io.github.headlesshq.headlessmc.launcher.util.URLs;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ModrinthTest {
-    private static final URL STAGING_API = URLs.url("https://staging-api.modrinth.com/v2/");
+    private static final URL STAGING_API = URI.create("https://staging-api.modrinth.com/v2/");
 
     @Test
     public void testModrinth() throws IOException, CommandException {

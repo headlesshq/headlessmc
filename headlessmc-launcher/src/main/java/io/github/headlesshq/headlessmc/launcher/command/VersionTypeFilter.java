@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.RequiredArgsConstructor;
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -3,9 +3,9 @@ package io.github.headlesshq.headlessmc.launcher.util;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.util.AbstractUtilityTest;
 import io.github.headlesshq.headlessmc.launcher.UsesResources;
+import lombok.val;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

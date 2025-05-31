@@ -1,9 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.CustomLog;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.command.Progressbar;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
@@ -25,6 +21,10 @@ import io.github.headlesshq.headlessmc.launcher.version.Rule;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionExecutable;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.CustomLog;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -88,7 +88,7 @@ public class ProcessFactory {
         }
 
         if (options.isCloseCommandLine()) {
-            launcher.getCommandLine().close();
+            launcher.getCommandLine().getReader().close();
         }
 
         System.gc(); // suggest JVM to clean up before running mc
@@ -120,7 +120,7 @@ public class ProcessFactory {
                 .os(os)
                 .jvmArgs(options.getAdditionalJvmArgs())
                 .gameArgs(options.getAdditionalGameArgs())
-                .natives(natives.getBase().getAbsolutePath())
+                .natives(natives.toAbsolutePath())
                 .runtime(options.isRuntime())
                 .version(version)
                 .launcher(options.getLauncher())

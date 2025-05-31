@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.command.forge;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Data;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
+import lombok.Data;
 
 import java.util.List;
 

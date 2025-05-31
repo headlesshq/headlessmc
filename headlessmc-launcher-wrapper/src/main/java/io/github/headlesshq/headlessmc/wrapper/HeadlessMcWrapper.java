@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.wrapper;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformerPlugin;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformingClassloader;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformingPluginFinder;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.nio.file.Path;
 import java.util.function.Function;

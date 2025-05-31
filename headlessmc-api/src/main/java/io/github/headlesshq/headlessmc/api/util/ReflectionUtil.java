@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.api.util;
 
+import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
 import lombok.CustomLog;
 import lombok.experimental.UtilityClass;
-import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
 
 import java.lang.reflect.Method;
 import java.util.function.Consumer;

@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.lwjgl.redirections;
 
-import lombok.RequiredArgsConstructor;
-import lombok.val;
 import io.github.headlesshq.headlessmc.lwjgl.api.Redirection;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionManager;
 import io.github.headlesshq.headlessmc.lwjgl.util.DescriptionUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;

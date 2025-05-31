@@ -1,14 +1,14 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
-import lombok.Data;
-import io.github.headlesshq.headlessmc.api.traits.HasId;
-import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.FindByCommand;
+import io.github.headlesshq.headlessmc.api.traits.HasId;
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.api.util.Table;
-import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
+import io.github.headlesshq.headlessmc.launcher.Launcher;
+import lombok.CustomLog;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;

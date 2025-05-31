@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.auth;
 
 import com.google.gson.JsonObject;
-import lombok.Data;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
+import lombok.Data;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 

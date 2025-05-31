@@ -1,12 +1,12 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.download.AssetsDownloader;
 import io.github.headlesshq.headlessmc.launcher.version.Library;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.val;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 

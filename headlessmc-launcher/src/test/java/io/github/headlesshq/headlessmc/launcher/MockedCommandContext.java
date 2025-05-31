@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher;
 
+import io.github.headlesshq.headlessmc.api.command.CommandContext;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.Suggestion;
 import lombok.Getter;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.command.CommandContext;
 
 import java.util.Collections;
 import java.util.Iterator;

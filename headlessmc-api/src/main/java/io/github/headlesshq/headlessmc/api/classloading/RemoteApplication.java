@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.api.classloading;
 
-import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.Application;
+import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.Suggestion;
 
 import java.util.List;

@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.CustomLog;
-import lombok.Getter;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.CustomLog;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

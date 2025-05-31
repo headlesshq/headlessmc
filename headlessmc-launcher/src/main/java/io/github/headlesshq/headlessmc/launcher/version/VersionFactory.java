@@ -2,9 +2,9 @@ package io.github.headlesshq.headlessmc.launcher.version;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;

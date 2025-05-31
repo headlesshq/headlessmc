@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.logging;
 
-import lombok.CustomLog;
-import lombok.Getter;
-import lombok.Setter;
 import io.github.headlesshq.headlessmc.logging.handlers.HmcFileHandler;
 import io.github.headlesshq.headlessmc.logging.handlers.HmcHandler;
 import io.github.headlesshq.headlessmc.logging.handlers.HmcStreamHandler;
+import lombok.CustomLog;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileDescriptor;
@@ -16,8 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 import java.util.logging.*;
+import java.util.logging.Logger;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;

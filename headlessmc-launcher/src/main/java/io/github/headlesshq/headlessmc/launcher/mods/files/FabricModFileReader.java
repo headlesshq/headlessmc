@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.mods.files;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Data;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
+import lombok.Data;
 
 import java.io.IOException;
 import java.io.InputStream;

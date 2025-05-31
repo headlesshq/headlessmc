@@ -1,9 +1,5 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
-import lombok.CustomLog;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.java.Java;
@@ -18,6 +14,10 @@ import io.github.headlesshq.headlessmc.launcher.launch.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.CustomLog;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -128,7 +128,7 @@ public class ServerLauncher {
         }
 
         if (!eula && (options.isCloseCommandLine() || options.isInMemory())) {
-            launcher.getCommandLine().close();
+            launcher.getCommandLine().getReader().close();
         }
 
         if (options.isInMemory()) {

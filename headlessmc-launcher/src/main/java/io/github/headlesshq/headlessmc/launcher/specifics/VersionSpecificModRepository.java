@@ -1,10 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.specifics;
 
-import lombok.Data;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
+import lombok.Data;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -23,7 +22,7 @@ public class VersionSpecificModRepository implements HasName {
      * <p>E.g. <a href=https://github.com/3arthqu4ke/hmc-specifics/releases/download/>
      * https://github.com/3arthqu4ke/hmc-specifics/releases/download/</a>
      */
-    private final URL url;
+    private final URI url;
     /**
      * The name of the version specific mod.
      * <p>E.g. hmc-specifics
@@ -62,10 +61,10 @@ public class VersionSpecificModRepository implements HasName {
      *
      * @param versionInfo the versionInfo containing the version and modlauncher.
      * @return the download URL for the version specific mod release for the specified version and modlauncher.
-     * @throws MalformedURLException if the resulting URL would be malformed.
+     * @throws IllegalArgumentException if the resulting URL would be malformed.
      */
-    public URL getDownloadURL(VersionInfo versionInfo) throws MalformedURLException {
-        return new URL(url + version + "/" + getFileName(versionInfo));
+    public URI getDownloadURL(VersionInfo versionInfo) {
+        return URI.create(url + version + "/" + getFileName(versionInfo));
     }
 
     /**

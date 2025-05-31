@@ -11,19 +11,23 @@ public interface Version {
 
     String getName();
 
-    int getJava();
+    @Nullable Integer getJava();
 
     @Nullable String getMainClass();
 
-    Arguments getGameArguments();
+    @Nullable Arguments getGameArguments();
 
-    Arguments getJvmArguments();
+    @Nullable Arguments getJvmArguments();
 
     @Unmodifiable
     Map<String, Download> getDownloads();
 
     @Unmodifiable
     List<Library> getLibraries();
+
+    @Nullable Assets getAssets();
+
+    @Nullable Logging getLogging();
 
     default @Nullable Download getClientDownload() {
         return getDownloads().get("client");

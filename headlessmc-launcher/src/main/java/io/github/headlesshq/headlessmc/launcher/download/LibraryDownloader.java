@@ -3,7 +3,6 @@ package io.github.headlesshq.headlessmc.launcher.download;
 import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.launcher.settings.LauncherSettings;
 import io.github.headlesshq.headlessmc.launcher.settings.LibrarySettings;
-import io.github.headlesshq.headlessmc.launcher.util.URLs;
 import io.github.headlesshq.headlessmc.launcher.version.Library;
 import io.github.headlesshq.headlessmc.os.OS;
 import jakarta.inject.Inject;
@@ -14,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 
 @CustomLog
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class LibraryDownloader {
-    private static final URL MAVEN_CENTRAL = URLs.url("https://repo1.maven.org/maven2/");
+    private static final URI MAVEN_CENTRAL = URI.create("https://repo1.maven.org/maven2/");
 
     private final LibrarySettings librarySettings;
     private final DownloadService downloadService;
@@ -37,7 +36,7 @@ public class LibraryDownloader {
             return;
         }
 
-        String url = library.getUrl(libPath);
+        URI url = library.getUrl(libPath);
         if (shouldLog) {
             log.info(libPath + " is missing, downloading from " + url);
         }
@@ -68,7 +67,7 @@ public class LibraryDownloader {
             if (!fixedLibPath.equals(libPath)) {
                 try {
                     log.debug("Fixing library " + libPath + " to " + fixedLibPath);
-                    download(MAVEN_CENTRAL + fixedLibPath, to, null, null);
+                    download(URI.create(MAVEN_CENTRAL + fixedLibPath), to, null, null);
                     return true;
                 } catch (IOException e) {
                     log.error("Failed to fix library " + fixedLibPath, e);
@@ -79,7 +78,7 @@ public class LibraryDownloader {
         return false;
     }
 
-    public void download(String url, Path to, @Nullable String hash, @Nullable Long size) throws IOException {
+    public void download(URI url, Path to, @Nullable String hash, @Nullable Long size) throws IOException {
         boolean checkHash = config.get(librarySettings.checkHash());
         boolean checkSize = checkHash || config.get(librarySettings.checkSize());
         Long expectedSize = checkSize ? size : null;

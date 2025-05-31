@@ -1,0 +1,20 @@
+{
+  "id": "version-without-parent",
+  "inheritsFrom": "1.18",
+  "releaseTime": "2022-06-17T19:10:29+0000",
+  "time": "2022-06-17T19:10:29+0000",
+  "type": "release",
+  "mainClass": "io.github.headlesshq.headlessmc.runtime.Main",
+  "arguments": {
+    "game": [],
+    "jvm": [
+      "-DMainClass\u003d net.minecraft.client.main.Main "
+    ]
+  },
+  "libraries": [
+    {
+      "name": "net.fabricmc:fabric-loader:1.33.7",
+      "url": "http://fabric-url"
+    }
+  ]
+}

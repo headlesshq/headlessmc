@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.auth;
 
+import io.github.headlesshq.headlessmc.api.traits.HasName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import io.github.headlesshq.headlessmc.api.traits.HasName;
 import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 
 /**

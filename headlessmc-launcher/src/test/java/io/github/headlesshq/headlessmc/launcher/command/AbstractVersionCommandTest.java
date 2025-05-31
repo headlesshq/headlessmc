@@ -1,12 +1,12 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.Data;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionArgument;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.family.HasParent;
+import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 

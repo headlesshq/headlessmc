@@ -1,16 +1,16 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
+import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
-import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import io.github.headlesshq.headlessmc.launcher.command.download.AbstractDownloadingVersionCommand;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.CustomLog;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

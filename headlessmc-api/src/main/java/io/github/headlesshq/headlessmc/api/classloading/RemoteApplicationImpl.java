@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.api.classloading;
 
-import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.command.CommandContext;
+import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.Suggestion;
 import lombok.RequiredArgsConstructor;
 

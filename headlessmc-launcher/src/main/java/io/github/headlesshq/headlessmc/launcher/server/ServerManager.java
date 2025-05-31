@@ -1,22 +1,21 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
-import io.github.headlesshq.headlessmc.launcher.server.downloader.*;
-import lombok.Cleanup;
-import lombok.CustomLog;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.LazyService;
+import io.github.headlesshq.headlessmc.launcher.api.Platform;
+import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 import io.github.headlesshq.headlessmc.launcher.files.FileManager;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
-import io.github.headlesshq.headlessmc.launcher.api.VersionId;
 import io.github.headlesshq.headlessmc.launcher.mods.ModdableGame;
 import io.github.headlesshq.headlessmc.launcher.mods.ModdableGameProvider;
-import io.github.headlesshq.headlessmc.launcher.api.Platform;
 import io.github.headlesshq.headlessmc.launcher.server.downloader.*;
+import lombok.Cleanup;
+import lombok.CustomLog;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

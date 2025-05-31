@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.lwjgl.redirections;
 
-import lombok.experimental.UtilityClass;
 import io.github.headlesshq.headlessmc.lwjgl.LwjglProperties;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionManager;
 import io.github.headlesshq.headlessmc.lwjgl.redirections.stb.STBImage;
 import io.github.headlesshq.headlessmc.lwjgl.redirections.stb.STBImageRedirection;
 import io.github.headlesshq.headlessmc.lwjgl.redirections.stb.STBImageRedirectionNoAWT;
+import lombok.experimental.UtilityClass;
 
 import java.lang.reflect.Field;
 import java.nio.*;

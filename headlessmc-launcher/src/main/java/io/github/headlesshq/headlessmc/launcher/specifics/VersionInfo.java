@@ -1,10 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher.specifics;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyUtil;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 /**

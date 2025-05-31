@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
@@ -34,14 +34,14 @@ public class DownloadService implements DownloadClient {
     }
 
     public void download(String from, Path to, @Nullable Long size, @Nullable String hash) throws IOException {
-        download(new URL(from), to, size, hash);
+        download(URI.create(from), to, size, hash);
     }
 
-    public void download(URL from, Path to, @Nullable Long size, @Nullable String hash) throws IOException {
+    public void download(URI from, Path to, @Nullable Long size, @Nullable String hash) throws IOException {
         download(from, size, hash, bytes -> writeToFile(to, bytes));
     }
 
-    public void download(URL from, @Nullable Long size, @Nullable String hash, IOConsumer<byte[]> action) throws IOException {
+    public void download(URI from, @Nullable Long size, @Nullable String hash, IOConsumer<byte[]> action) throws IOException {
         HttpResponse response = download(from);
         byte[] bytes = response.getContent();
         if (!checksumService.checkIntegrity(bytes, size, hash)) {
@@ -51,7 +51,7 @@ public class DownloadService implements DownloadClient {
         action.accept(bytes);
     }
 
-    public HttpResponse download(URL from) throws IOException {
+    public HttpResponse download(URI from) throws IOException {
         HttpResponse httpResponse = get(from);
         if (httpResponse.getStatusCode() > 299 || httpResponse.getStatusCode() < 200) {
             throw new IOException("Failed to get " + from + ", response " + httpResponse.getStatusCode() + ": " + httpResponse.getContentAsString());
@@ -60,14 +60,14 @@ public class DownloadService implements DownloadClient {
         return httpResponse;
     }
 
-    public byte[] download(URL from, @Nullable Long size, @Nullable String hash) throws IOException {
+    public byte[] download(URI from, @Nullable Long size, @Nullable String hash) throws IOException {
         byte[][] ref = new byte[1][];
         download(from, size, hash, bytes -> ref[0] = bytes);
         return ref[0];
     }
 
-    public HttpResponse get(URL url) throws IOException {
-        return httpClientFactory.get().get(url).execute();
+    public HttpResponse get(URI url) throws IOException {
+        return httpClientFactory.get().get(url.toURL()).execute();
     }
 
     public HttpClient getDefaultHttpClient() {
@@ -81,7 +81,7 @@ public class DownloadService implements DownloadClient {
 
     @Override
     public String httpGetText(String url) throws IOException {
-        HttpResponse httpResponse = get(new URL(url));
+        HttpResponse httpResponse = get(URI.create(url));
         if (httpResponse.getStatusCode() > 299 || httpResponse.getStatusCode() < 200) {
             throw new IOException("Failed to download " + url + ", response " + httpResponse.getStatusCode() + ": " + httpResponse.getContentAsString());
         }
@@ -93,7 +93,7 @@ public class DownloadService implements DownloadClient {
     public void downloadBigFile(String url, Path destination, String progressBarTitle, ProgressBarProvider progressBarProvider) throws IOException {
         HttpClient httpClient = httpClientFactory.get()
                 .setExecutor(hc -> new LargeFileRequestExecutor(hc, progressBarProvider, progressBarTitle, destination));
-        HttpResponse httpResponse = httpClient.get(new URL(url)).execute();
+        HttpResponse httpResponse = httpClient.get(URI.create(url).toURL()).execute();
         if (httpResponse.getStatusCode() > 299 || httpResponse.getStatusCode() < 200) {
             throw new IOException("Failed to download " + url + ", response " + httpResponse.getStatusCode() + ": " + httpResponse.getContentAsString());
         }

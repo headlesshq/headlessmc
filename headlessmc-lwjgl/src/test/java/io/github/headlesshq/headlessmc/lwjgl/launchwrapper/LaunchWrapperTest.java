@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.lwjgl.launchwrapper;
 
-import lombok.SneakyThrows;
-import lombok.val;
 import io.github.headlesshq.headlessmc.lwjgl.LwjglProperties;
 import io.github.headlesshq.headlessmc.lwjgl.testlaunchwrapper.LaunchWrapperTarget;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 

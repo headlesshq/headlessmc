@@ -1,17 +1,15 @@
 package io.github.headlesshq.headlessmc.test;
 
-import lombok.extern.java.Log;
 import io.github.headlesshq.headlessmc.wrapper.HeadlessMcWrapper;
 import io.github.headlesshq.headlessmc.wrapper.Main;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformerPlugin;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformingClassloader;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformingPluginFinder;
+import lombok.extern.java.Log;
 import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

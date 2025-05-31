@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.auth;
 
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import lombok.Getter;
 import lombok.Setter;
-import io.github.headlesshq.headlessmc.api.settings.Config;
 
 @Setter
 @Getter

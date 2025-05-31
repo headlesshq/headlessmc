@@ -1,11 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.Builder;
-import lombok.CustomLog;
-import lombok.Getter;
 import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
-import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.api.config.HmcProperties;
+import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.jline.JLineCommandLineReader;
 import io.github.headlesshq.headlessmc.jline.JLineProperties;
@@ -13,11 +10,13 @@ import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
-import io.github.headlesshq.headlessmc.launcher.instrumentation.InstrumentationHelper;
 import io.github.headlesshq.headlessmc.launcher.version.Features;
 import io.github.headlesshq.headlessmc.launcher.version.Logging;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.Builder;
+import lombok.CustomLog;
+import lombok.Getter;
 
 import java.io.File;
 import java.io.IOError;

@@ -1,11 +1,11 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import lombok.experimental.UtilityClass;
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.experimental.UtilityClass;
+import lombok.val;
 
 import java.io.File;
 

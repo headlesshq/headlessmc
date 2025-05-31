@@ -1,19 +1,18 @@
 package io.github.headlesshq.headlessmc.launcher.command.forge;
 
-import lombok.CustomLog;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.files.FileManager;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.ResourceExtractor;
 import io.github.headlesshq.headlessmc.launcher.launch.SimpleInMemoryLauncher;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
+import lombok.CustomLog;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

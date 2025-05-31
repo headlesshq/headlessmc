@@ -3,8 +3,6 @@ package io.github.headlesshq.headlessmc.test;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformerPlugin;
 import io.github.headlesshq.headlessmc.wrapper.plugin.TransformingClassloader;
 
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.List;
 
 public class TransformingClassloaderWithJacoco extends TransformingClassloader {

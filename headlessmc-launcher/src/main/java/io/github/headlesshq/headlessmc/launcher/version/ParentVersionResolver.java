@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.version;
 
-import lombok.CustomLog;
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyCleaner;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyUtil;
+import lombok.CustomLog;
+import lombok.val;
 
 import java.util.HashSet;
 import java.util.Map;

@@ -1,17 +1,14 @@
 package io.github.headlesshq.headlessmc.launcher;
 
-import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
-import lombok.SneakyThrows;
-import lombok.experimental.UtilityClass;
-import lombok.val;
 import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
+import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
+import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountManager;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountStore;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountValidator;
-import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfoCache;
 import io.github.headlesshq.headlessmc.launcher.download.ChecksumService;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
@@ -28,6 +25,9 @@ import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModMana
 import io.github.headlesshq.headlessmc.launcher.version.VersionService;
 import io.github.headlesshq.headlessmc.logging.LoggingService;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
+import lombok.val;
 import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 
 import java.nio.file.Files;

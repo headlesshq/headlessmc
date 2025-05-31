@@ -2,10 +2,10 @@ package io.github.headlesshq.headlessmc.launcher.version;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;

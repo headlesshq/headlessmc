@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import net.lenni0451.commons.httpclient.HttpResponse;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public abstract class AbstractDownloadService<T> extends Service<T> {
     private final Launcher launcher;
-    private final URL url;
+    private final URI url;
 
     protected abstract List<T> read(JsonElement element)
         throws IOException, JsonParseException;

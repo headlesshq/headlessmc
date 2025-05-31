@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.command.download;
 
+import io.github.headlesshq.headlessmc.launcher.UsesResources;
 import lombok.SneakyThrows;
 import lombok.val;
-import io.github.headlesshq.headlessmc.launcher.UsesResources;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

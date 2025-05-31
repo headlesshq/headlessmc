@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.instrumentation.paulscode;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.AbstractClassTransformer;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.Target;
+import lombok.CustomLog;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;

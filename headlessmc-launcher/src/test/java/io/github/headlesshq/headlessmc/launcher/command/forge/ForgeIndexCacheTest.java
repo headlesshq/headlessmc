@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.command.forge;
 
-import lombok.val;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
 import io.github.headlesshq.headlessmc.launcher.UsesResources;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.AbstractCommand;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
+import lombok.CustomLog;
 
 import java.util.Locale;
 import java.util.logging.Level;

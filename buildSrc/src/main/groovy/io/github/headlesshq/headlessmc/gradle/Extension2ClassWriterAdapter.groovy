@@ -1,9 +1,8 @@
 package io.github.headlesshq.headlessmc.gradle
 
-import static ModuleExtension.ACC_MANDATED
-
 import org.objectweb.asm.ClassWriter
 
+import static ModuleExtension.ACC_MANDATED
 import static org.objectweb.asm.Opcodes.ACC_MODULE
 import static org.objectweb.asm.Opcodes.V9
 

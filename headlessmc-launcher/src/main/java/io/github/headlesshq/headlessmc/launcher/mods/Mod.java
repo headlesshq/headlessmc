@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.mods;
 
-import lombok.Data;
+import io.github.headlesshq.headlessmc.api.traits.HasDescription;
 import io.github.headlesshq.headlessmc.api.traits.HasId;
 import io.github.headlesshq.headlessmc.api.traits.HasName;
-import io.github.headlesshq.headlessmc.api.traits.HasDescription;
+import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

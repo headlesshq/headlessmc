@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.instrumentation.log4j;
 
-import lombok.experimental.UtilityClass;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.Transformer;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Patchers {

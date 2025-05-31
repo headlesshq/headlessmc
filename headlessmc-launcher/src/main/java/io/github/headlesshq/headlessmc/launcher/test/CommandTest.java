@@ -1,9 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.test;
 
-import lombok.CustomLog;
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
+import lombok.CustomLog;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;

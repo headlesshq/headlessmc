@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.java;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.os.OS;
+import lombok.CustomLog;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -30,6 +30,8 @@ public class JavaVersionFinder {
                 result.addAll(checkDirectory(javaScanner, rootPath.resolve("usr").resolve("lib").resolve("jvm"), os));
                 result.addAll(checkDirectory(javaScanner, rootPath.resolve("usr").resolve("local"), os));
             }
+
+            // search <user-home>/.sdkman/candidates/java/?
         }
 
         result.sort(Comparator.naturalOrder());

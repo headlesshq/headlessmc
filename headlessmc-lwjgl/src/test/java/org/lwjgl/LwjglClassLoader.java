@@ -1,7 +1,7 @@
 package org.lwjgl;
 
-import lombok.RequiredArgsConstructor;
 import io.github.headlesshq.headlessmc.lwjgl.api.Transformer;
+import lombok.RequiredArgsConstructor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
