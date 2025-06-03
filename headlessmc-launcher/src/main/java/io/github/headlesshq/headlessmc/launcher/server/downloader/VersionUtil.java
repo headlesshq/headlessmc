@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.server.downloader;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfo;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfoUtil;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 
 import java.io.IOException;
 

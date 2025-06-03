@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.server.downloader;
 
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerTypeDownloader;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionExecutable;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;

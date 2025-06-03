@@ -4,12 +4,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.version.DefaultVersionFactory;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionParseException;
 import io.github.headlesshq.headlessmc.launcher.version.VersionService;
 import net.lenni0451.commons.httpclient.HttpResponse;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Paths;
 
 public class VersionInfoUtil {
@@ -23,7 +24,7 @@ public class VersionInfoUtil {
 
         // TODO: this more elegantly, version.json cache that does not fill the VersionService
         //  but that cache can be used before downloading version.jsons
-        HttpResponse response = downloadService.download(new URL(versionInfo.getUrl()));
+        HttpResponse response = downloadService.download(URI.create(versionInfo.getUrl()));
         String string = response.getContentAsString();
         DefaultVersionFactory defaultVersionFactory = new DefaultVersionFactory();
         JsonElement element = JsonParser.parseString(string);

@@ -6,7 +6,7 @@ import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.command.FabricCommand;
 import io.github.headlesshq.headlessmc.launcher.command.forge.ForgeCommand;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;

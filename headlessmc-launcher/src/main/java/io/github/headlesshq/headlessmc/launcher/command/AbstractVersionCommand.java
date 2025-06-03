@@ -6,7 +6,7 @@ import io.github.headlesshq.headlessmc.api.traits.HasName;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionArgument;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyUtil;
 import io.github.headlesshq.headlessmc.launcher.version.family.HasParent;
 import org.jetbrains.annotations.Nullable;

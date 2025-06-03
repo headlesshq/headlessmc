@@ -18,7 +18,7 @@ import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModRepo
 import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificMods;
 import io.github.headlesshq.headlessmc.launcher.version.Features;
 import io.github.headlesshq.headlessmc.launcher.version.Rule;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionExecutable;
 import io.github.headlesshq.headlessmc.os.OS;
 import lombok.CustomLog;

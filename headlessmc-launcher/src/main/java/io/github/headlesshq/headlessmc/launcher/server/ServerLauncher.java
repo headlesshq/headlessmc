@@ -13,7 +13,7 @@ import io.github.headlesshq.headlessmc.launcher.files.FileManager;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.util.IOUtil;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

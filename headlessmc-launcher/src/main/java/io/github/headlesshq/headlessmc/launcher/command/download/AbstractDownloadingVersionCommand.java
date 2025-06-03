@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.command.AbstractVersionCommand;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractDownloadingVersionCommand extends AbstractVersionCommand {

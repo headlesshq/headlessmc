@@ -76,6 +76,12 @@ allprojects {
             implementation project(':headlessmc-findbugs')
         }
 
+        if (project != project(':headlessmc-findbugs') && project != project(':headlessmc-cdi')) {
+            implementation project(':headlessmc-cdi')
+            compileOnly libs.auto.service
+            annotationProcessor libs.auto.service.processor
+        }
+
         // no lombok for modlauncher cause we do bad hacks there in the java9 stub.
         if (project != project(':headlessmc-modlauncher')) {
             compileOnly 'org.projectlombok:lombok:1.18.38'
@@ -85,8 +91,8 @@ allprojects {
             testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
         }
 
-        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
-        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0'
+        //testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
+        //testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0'
     }
 
     test {

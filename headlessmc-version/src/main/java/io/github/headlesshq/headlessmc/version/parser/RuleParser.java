@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.version.Rule;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+@ApplicationScoped
 final class RuleParser {
     public Rule parse(@Nullable JsonElement jsonElement) {
         if (jsonElement == null || !jsonElement.isJsonArray()) {

@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 

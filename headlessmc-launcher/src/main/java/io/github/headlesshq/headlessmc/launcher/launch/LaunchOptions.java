@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
 import io.github.headlesshq.headlessmc.launcher.files.FileManager;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.Builder;
 import lombok.CustomLog;
 import lombok.Data;

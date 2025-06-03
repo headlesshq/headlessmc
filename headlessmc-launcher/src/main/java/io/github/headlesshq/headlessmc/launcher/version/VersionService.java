@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.version;
 import com.google.gson.JsonElement;
 import io.github.headlesshq.headlessmc.launcher.LazyService;
 import io.github.headlesshq.headlessmc.launcher.util.JsonUtil;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

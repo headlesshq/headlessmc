@@ -119,7 +119,7 @@ public class AssetsDownloader {
         boolean checkSize = checkHash || config.get(settings.checkSize());
         Long expectedSize = checkSize ? size : null;
         String expectedHash = checkHash ? hash : null;
-        return downloadService.download(new URL(from), expectedSize, expectedHash);
+        return downloadService.download(URI.create(from), expectedSize, expectedHash);
     }
 
     protected Path getAssetsFile(String name, Path file, @Nullable String hash, @Nullable Long size) throws IOException {
