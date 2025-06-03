@@ -1,0 +1,13 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    api libs.cdi
+    compileOnly libs.auto.service
+    annotationProcessor libs.auto.service.processor
+
+    testFixturesImplementation (libs.weld.testing) {
+        exclude module: 'spotbugs-annotations'
+    }
+}

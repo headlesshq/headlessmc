@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.command.download;
 
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.FindByCommand;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

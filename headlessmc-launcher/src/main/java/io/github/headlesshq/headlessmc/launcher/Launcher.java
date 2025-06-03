@@ -18,7 +18,7 @@ import io.github.headlesshq.headlessmc.launcher.mods.ModManager;
 import io.github.headlesshq.headlessmc.launcher.plugin.PluginManager;
 import io.github.headlesshq.headlessmc.launcher.server.ServerManager;
 import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModManager;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

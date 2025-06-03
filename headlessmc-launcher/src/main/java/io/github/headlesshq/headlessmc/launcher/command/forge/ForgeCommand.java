@@ -7,7 +7,7 @@ import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.command.download.AbstractDownloadingVersionCommand;
 import io.github.headlesshq.headlessmc.launcher.command.download.ModLauncherCommand;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;

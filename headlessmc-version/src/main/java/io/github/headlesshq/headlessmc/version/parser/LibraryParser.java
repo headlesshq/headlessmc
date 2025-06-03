@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import io.github.headlesshq.headlessmc.version.ExtractionRules;
 import io.github.headlesshq.headlessmc.version.Library;
 import io.github.headlesshq.headlessmc.version.Rule;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,7 @@ import java.util.Map;
  }</pre>
  */
 @CustomLog
+@ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 final class LibraryParser {
     private final ExtractorParser extractorParser;

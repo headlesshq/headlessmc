@@ -8,7 +8,7 @@ import io.github.headlesshq.headlessmc.launcher.command.forge.ForgeCommand;
 import io.github.headlesshq.headlessmc.launcher.command.forge.ForgeVersion;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerTypeDownloader;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;

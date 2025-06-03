@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.version.parser;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.headlesshq.headlessmc.version.Download;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import java.util.Map;
     }
 }</pre>
 */
+@ApplicationScoped
 final class DownloadsParser {
     public Download parseDownload(String name, JsonElement download) {
         String sha1 = JsonUtil.getString(download, "sha1");

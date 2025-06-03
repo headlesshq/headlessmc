@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.specifics;
 
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyUtil;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

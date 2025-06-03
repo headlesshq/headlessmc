@@ -9,7 +9,7 @@ import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
 import io.github.headlesshq.headlessmc.launcher.command.download.AbstractDownloadingVersionCommand;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchOptions;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.CustomLog;
 import org.jetbrains.annotations.Nullable;
 

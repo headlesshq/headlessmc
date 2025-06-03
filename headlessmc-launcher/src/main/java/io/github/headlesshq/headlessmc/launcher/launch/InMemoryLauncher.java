@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.launch;
 
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.CustomLog;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;

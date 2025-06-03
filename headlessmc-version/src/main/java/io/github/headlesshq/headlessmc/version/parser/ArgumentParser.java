@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.headlesshq.headlessmc.version.Argument;
 import io.github.headlesshq.headlessmc.version.Rule;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ import java.util.List;
  },</pre>
  */
 @CustomLog
+@ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 final class ArgumentParser {
     private final RuleParser ruleParser;

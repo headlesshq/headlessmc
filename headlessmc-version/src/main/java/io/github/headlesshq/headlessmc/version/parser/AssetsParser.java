@@ -2,10 +2,12 @@ package io.github.headlesshq.headlessmc.version.parser;
 
 import com.google.gson.JsonObject;
 import io.github.headlesshq.headlessmc.version.Assets;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 
+@ApplicationScoped
 final class AssetsParser {
     public @Nullable Assets parse(JsonObject json) {
         String name = JsonUtil.getString(json, "assets");

@@ -11,7 +11,7 @@ import io.github.headlesshq.headlessmc.launcher.command.download.ModLauncherComm
 import io.github.headlesshq.headlessmc.launcher.files.FileManager;
 import io.github.headlesshq.headlessmc.launcher.launch.SimpleInMemoryLauncher;
 import io.github.headlesshq.headlessmc.launcher.launch.SystemPropertyHelper;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionUtil;
 import io.github.headlesshq.headlessmc.launcher.version.family.FamilyUtil;
 import lombok.CustomLog;

@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.launch;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.LaunchAccount;
-import io.github.headlesshq.headlessmc.launcher.version.Version;
+import io.github.headlesshq.headlessmc.version.Version;
 import lombok.experimental.UtilityClass;
 import lombok.val;
 

@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.version.parser;
 
 import com.google.gson.JsonElement;
 import io.github.headlesshq.headlessmc.java.JavaVersionParser;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,10 +13,15 @@ import org.jetbrains.annotations.Nullable;
      "majorVersion": 21
  }</pre>
  */
+@ApplicationScoped
 final class JavaParser {
     public @Nullable Integer parse(@Nullable JsonElement element) {
         if (element == null || !element.isJsonObject()) {
             return null;
+        }
+
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            return element.getAsJsonPrimitive().getAsInt();
         }
 
         JsonElement version = element.getAsJsonObject().get("majorVersion");

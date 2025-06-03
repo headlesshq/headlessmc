@@ -1,0 +1,29 @@
+[versions]
+asm = "9.8"
+picocli = "4.7.7"
+auto-service = "1.1.1"
+junit = "5.11.0"
+
+[libraries]
+asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+auto-service = { group = "com.google.auto.service", name = "auto-service-annotations", version.ref = "auto-service" }
+auto-service-processor = { group = "com.google.auto.service", name = "auto-service", version.ref = "auto-service" }
+
+cdi = { group = "jakarta.enterprise", name = "jakarta.enterprise.cdi-api", version = "4.1.0" }
+
+findbugs = { group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2" }
+
+gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
+
+httpclient = { group = "net.lenni0451.commons", name = "httpclient", version = "1.6.0" }
+
+jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version = "26.0.2" }
+junit = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+
+picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
+picocli-codegen = { group = "info.picocli", name = "picocli-codegen", version.ref = "picocli" }
+
+weld = { group = "org.jboss.weld.se", name = "weld-se-core", version = "6.0.3.Final" }
+weld-testing = { group = "org.jboss.weld", name = "weld-junit5", version = "5.0.1.Final" }
