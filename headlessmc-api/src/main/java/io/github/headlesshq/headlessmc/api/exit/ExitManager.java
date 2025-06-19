@@ -29,6 +29,8 @@ public class ExitManager {
     @Getter
     private Integer exitCode;
 
+    // TODO: handler for UserInterrupt
+
     /**
      * Adds a task Thread, a Thread that keeps HeadlessMc from exiting until it is finished.
      * These Threads are stored as weak references and will be garbage collected once they are done.

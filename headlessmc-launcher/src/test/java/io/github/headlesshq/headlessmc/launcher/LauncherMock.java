@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.config.ConfigImpl;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountManager;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountStore;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountValidator;
@@ -69,7 +69,7 @@ public class LauncherMock {
         Launcher launcher = new Launcher(hmc, versions, launcherConfig,
                 new ChecksumService(), new MockDownloadService(),
                 new MockProcessFactory(downloadService, launcherConfig, os), configs,
-                javas, accounts, versionSpecificModManager, new PluginManager(), new JavaDownloaderManager(),
+                javas, accounts, versionSpecificModManager, new PluginManager(), new JavaDistributionService(),
                 ServerManager.create(hmc, fileManager), versionInfoCache,
                 ModManager.create(downloadService));
 

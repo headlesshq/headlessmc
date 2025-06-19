@@ -2,5 +2,5 @@ dependencies {
     api project(':headlessmc-os')
     api project(':headlessmc-logging')
     implementation project(':headlessmc-java')
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    implementation libs.gson
 }

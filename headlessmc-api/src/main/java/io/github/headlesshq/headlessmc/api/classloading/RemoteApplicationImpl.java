@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-class RemoteApplicationImpl implements RemoteApplication {
+final class RemoteApplicationImpl implements RemoteApplication {
     private final Application application;
 
     @Override

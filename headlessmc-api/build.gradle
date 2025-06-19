@@ -5,19 +5,17 @@ plugins {
 dependencies {
     api project(':headlessmc-cdi')
     api project(':headlessmc-logging')
-    api 'info.picocli:picocli:4.7.7'
-    compileOnly 'com.google.auto.service:auto-service-annotations:1.1.1'
-    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
-    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
+    api project(':headlessmc-progressbar')
+    api libs.picocli
+    compileOnly libs.auto.service
+    annotationProcessor libs.picocli.codegen
+    annotationProcessor libs.auto.service
 
     runtimeOnly group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     testImplementation group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
 
-    runtimeOnly 'org.jboss.weld.se:weld-se-core:6.0.3.Final'
+    runtimeOnly libs.weld
 
-    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.38'
-    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
-
-    //testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
-    //testFixturesRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0'
+    testFixturesCompileOnly libs.lombok
+    testFixturesAnnotationProcessor libs.lombok
 }

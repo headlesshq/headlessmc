@@ -1,7 +1,8 @@
 package io.github.headlesshq.headlessmc.launcher.download;
 
-import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.lenni0451.commons.httpclient.HttpResponse;
 import net.lenni0451.commons.httpclient.executor.RequestExecutor;

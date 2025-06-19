@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.graalvm;
 
 import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarProvider;
 import io.github.headlesshq.headlessmc.api.process.StdIO;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.download.JavaDownloadRequest;

@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.files;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
 
 import java.io.IOError;
@@ -10,8 +11,9 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-@Data
+@RequiredArgsConstructor
 public class FileManager implements Path {
+    @Getter
     @Delegate
     private final Path base;
 

@@ -20,11 +20,11 @@ final class JavaParser {
             return null;
         }
 
-        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+        JsonElement version = element.getAsJsonObject().get("majorVersion");
+        if (version != null && version.isJsonPrimitive() && version.getAsJsonPrimitive().isNumber()) {
             return element.getAsJsonPrimitive().getAsInt();
         }
 
-        JsonElement version = element.getAsJsonObject().get("majorVersion");
         return version != null
                 ? Integer.parseInt(JavaVersionParser.getMajorVersion(version.getAsString()))
                 : null;

@@ -1,12 +1,8 @@
 dependencies {
     api project(':headlessmc-api')
     api project(':headlessmc-commons')
+    api project(':headlessmc-version-service')
 
     implementation libs.gson
     testImplementation testFixtures(project(':headlessmc-cdi'))
-    testImplementation (libs.weld.testing) {
-        exclude module: 'spotbugs-annotations'
-    }
-    testImplementation 'org.junit.platform:junit-platform-launcher'
-
 }

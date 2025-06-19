@@ -5,8 +5,8 @@ import io.github.headlesshq.headlessmc.api.command.CommandUtil;
 import io.github.headlesshq.headlessmc.api.command.ParseUtil;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import io.github.headlesshq.headlessmc.java.Java;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloadRequest;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDownloadRequest;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import io.github.headlesshq.headlessmc.jline.JLineProperties;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import jakarta.inject.Inject;
@@ -74,7 +74,7 @@ public class JavaCommand implements Callable<@Nullable Java> {
                     .build());
         } else {
             int javaVersion = ParseUtil.parseI(args[1]);
-            String distribution = args.length > 2 ? args[2] : JavaDownloaderManager.DEFAULT_DISTRIBUTION;
+            String distribution = args.length > 2 ? args[2] : JavaDistributionService.DEFAULT_DISTRIBUTION;
             boolean jdk = args.length > 3 && args[3].equalsIgnoreCase("-jdk");
 
             try {
@@ -83,7 +83,7 @@ public class JavaCommand implements Callable<@Nullable Java> {
                     ctx.log("Downloading " + javaVersion + (jdk ? " (JDK)" : "") + " from " + distribution + ".");
                 }
 
-                ctx.getJavaDownloaderManager().download(
+                ctx.getJavaDistributionService().download(
                         ctx.getFileManager().getDir("java").toPath(),
                         new JavaDownloadRequest(
                             ctx.getDownloadService(),

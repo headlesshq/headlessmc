@@ -1,7 +1,6 @@
 package io.github.headlesshq.headlessmc.commons;
 
-import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.java.download.DownloadClient;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ import java.nio.file.Path;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
-public class DownloadService implements DownloadClient {
+public class DownloadService {
     private final HttpClientFactory httpClientFactory;
     private final ChecksumService checksumService;
 
@@ -72,7 +71,6 @@ public class DownloadService implements DownloadClient {
                 .setRetryHandler(new RetryHandler(0, 50));
     }
 
-    @Override
     public String httpGetText(String url) throws IOException {
         HttpResponse httpResponse = get(URI.create(url));
         if (httpResponse.getStatusCode() > 299 || httpResponse.getStatusCode() < 200) {
@@ -82,7 +80,6 @@ public class DownloadService implements DownloadClient {
         return httpResponse.getContentAsString();
     }
 
-    @Override
     public void downloadBigFile(String url, Path destination, String progressBarTitle, ProgressBarProvider progressBarProvider) throws IOException {
         HttpClient httpClient = httpClientFactory.create()
                 .setExecutor(hc -> new LargeFileRequestExecutor(hc, progressBarProvider, progressBarTitle, destination));

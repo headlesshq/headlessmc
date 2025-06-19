@@ -11,4 +11,12 @@ public interface Platform {
 
     boolean supportsMods();
 
+    default boolean isServerOnly() {
+        return false;
+    }
+
+    default boolean isClientOnly() {
+        return false;
+    }
+
 }

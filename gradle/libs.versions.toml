@@ -7,10 +7,12 @@ junit = "5.11.0"
 [libraries]
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
 asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+auth = { group = "net.raphimc", name = "MinecraftAuth", version = "4.1.1" }
 auto-service = { group = "com.google.auto.service", name = "auto-service-annotations", version.ref = "auto-service" }
 auto-service-processor = { group = "com.google.auto.service", name = "auto-service", version.ref = "auto-service" }
 
 cdi = { group = "jakarta.enterprise", name = "jakarta.enterprise.cdi-api", version = "4.1.0" }
+commons-compress = { group = "org.apache.commons", name = "commons-compress", version = "1.27.1" }
 
 findbugs = { group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2" }
 
@@ -19,11 +21,21 @@ gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
 httpclient = { group = "net.lenni0451.commons", name = "httpclient", version = "1.6.0" }
 
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version = "26.0.2" }
+jline = { group = "org.jline", name = "jline", version = "3.26.3" }
+jna = { group = "net.java.dev.jna", name = "jna", version = "5.17.0" }
 junit = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+junit-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version = "1.12.2" }
+
+lombok = { group = "org.projectlombok", name = "lombok", version = "1.18.38" }
 
 picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
 picocli-codegen = { group = "info.picocli", name = "picocli-codegen", version.ref = "picocli" }
+progressbar = { group = "me.tongfei", name = "progressbar", version = "0.9.5" }
+
+toml = { group = "com.electronwill.night-config", name = "toml", version = "3.8.2" }
 
 weld = { group = "org.jboss.weld.se", name = "weld-se-core", version = "6.0.3.Final" }
 weld-testing = { group = "org.jboss.weld", name = "weld-junit5", version = "5.0.1.Final" }
+
+yaml = { group = "org.yaml", name = "snakeyaml", version = "2.4" }

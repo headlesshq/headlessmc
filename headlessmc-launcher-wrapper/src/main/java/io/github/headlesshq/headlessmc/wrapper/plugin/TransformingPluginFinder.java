@@ -3,6 +3,8 @@ package io.github.headlesshq.headlessmc.wrapper.plugin;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;

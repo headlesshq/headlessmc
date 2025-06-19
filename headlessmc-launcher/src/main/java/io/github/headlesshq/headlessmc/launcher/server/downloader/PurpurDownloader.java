@@ -31,6 +31,7 @@ public class PurpurDownloader implements ServerTypeDownloader {
     private String getBuild(DownloadService downloadService, String version, @Nullable String typeVersionIn) throws IOException {
         String build = typeVersionIn;
         if (build == null) {
+            // TODO: use latest entry!!!!!
             HttpResponse response = downloadService.download(URI.create(URL + version + "/"));
             String string = response.getContentAsString();
             JsonElement element = JsonParser.parseString(string);

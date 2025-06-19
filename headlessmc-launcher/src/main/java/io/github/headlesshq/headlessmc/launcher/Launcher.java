@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.HeadlessMc;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountManager;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfo;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfoCache;
@@ -85,7 +85,7 @@ public class Launcher implements Application {
     /**
      * Manages the downloading of Java.
      */
-    private JavaDownloaderManager javaDownloaderManager;
+    private JavaDistributionService javaDistributionService;
     /**
      * Manages Servers.
      */

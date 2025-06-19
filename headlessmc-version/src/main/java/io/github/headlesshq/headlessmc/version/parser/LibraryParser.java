@@ -9,6 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import java.util.Map;
                 "path": "io/netty/netty-transport-native-epoll/...",
                 "sha1": "82f94d0a9d837f6b6a580379373310ff7288c0f8",
                 "size": 42321,
-                "url": "https://libraries.minecraft.net/..."
+                "url": "..."
              }
             "natives-linux": {
                 "path": "net/java/jinput/jinput-platform/...",
@@ -55,7 +56,7 @@ final class LibraryParser {
     private final NativesParser nativesParser;
     private final RuleParser ruleParser;
 
-    public List<Library> parseLibraries(JsonElement element) {
+    public List<Library> parseLibraries(@Nullable JsonElement element) {
         if (element == null || !element.isJsonArray()) {
             return Collections.emptyList();
         }
@@ -140,7 +141,7 @@ final class LibraryParser {
         return result;
     }
 
-    private Map.Entry<String, String> getNativeEntry(Map<String, String> map, String classifier) {
+    private @Nullable Map.Entry<String, String> getNativeEntry(Map<String, String> map, String classifier) {
         for (Map.Entry<String, String> e : map.entrySet()) {
             if (e.getValue().replace("${arch}", "32").equals(classifier)
                 || e.getValue().replace("${arch}", "64").equals(classifier)) {

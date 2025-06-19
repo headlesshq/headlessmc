@@ -1,0 +1,4 @@
+dependencies {
+    api project(':headlessmc-version')
+    api project(':headlessmc-version-id')
+}

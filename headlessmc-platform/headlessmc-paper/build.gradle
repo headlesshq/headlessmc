@@ -1,0 +1,5 @@
+dependencies {
+    api project(':headlessmc-platform')
+    implementation libs.gson
+    implementation libs.yaml
+}
