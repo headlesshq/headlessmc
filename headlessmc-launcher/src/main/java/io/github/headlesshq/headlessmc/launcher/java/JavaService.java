@@ -5,8 +5,8 @@ import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaScanner;
 import io.github.headlesshq.headlessmc.java.JavaVersionFinder;
 import io.github.headlesshq.headlessmc.java.JavaVersionParser;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloadRequest;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDownloadRequest;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LazyService;
 import io.github.headlesshq.headlessmc.launcher.util.PathUtil;
@@ -57,9 +57,11 @@ public class JavaService extends LazyService<Java> implements JavaScanner {
         JavaVersionFinder javaVersionFinder = new JavaVersionFinder();
         newVersions.addAll(javaVersionFinder.checkDirectory(javaScanner, cfg.getFileManager().getDir("java").toPath(), os));
 
-        if (System.getenv("JAVA_HOME") != null) {
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome != null) {
             try {
-                Java java = scanJava(PathUtil.stripQuotes(System.getenv("JAVA_HOME")).resolve("bin").resolve("java").toAbsolutePath().toString());
+                // TODO: java.exe on windows?!?!?!?!!
+                Java java = scanJava(PathUtil.stripQuotes(javaHome).resolve("bin").resolve("java").toAbsolutePath().toString());
                 if (java != null) {
                     newVersions.add(java);
                 }
@@ -218,13 +220,13 @@ public class JavaService extends LazyService<Java> implements JavaScanner {
                 launcher.getDownloadService(),
                 launcher.getCommandLine(),
                 version,
-                cfg.getConfig().get(LauncherProperties.JAVA_DISTRIBUTION, JavaDownloaderManager.DEFAULT_DISTRIBUTION),
+                cfg.getConfig().get(LauncherProperties.JAVA_DISTRIBUTION, JavaDistributionService.DEFAULT_DISTRIBUTION),
                 launcher.getProcessFactory().getOs(),
                 false
         );
 
         try {
-            launcher.getJavaDownloaderManager().download(launcher.getFileManager().getBase().toPath().resolve("java"), javaDownloadRequest);
+            launcher.getJavaDistributionService().download(launcher.getFileManager().getBase().toPath().resolve("java"), javaDownloadRequest);
             refreshHeadlessMcJavaVersions();
             Java java = contents.stream().filter(j -> j.getVersion() == version).findFirst().orElse(null);
             if (java == null) {

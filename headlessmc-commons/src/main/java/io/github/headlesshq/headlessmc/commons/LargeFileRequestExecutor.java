@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.commons;
 
-import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.lenni0451.commons.httpclient.HttpResponse;
 import net.lenni0451.commons.httpclient.executor.RequestExecutor;
@@ -109,6 +109,7 @@ final class LargeFileRequestExecutor extends RequestExecutor {
                  Progressbar progressbar = progressBarProvider.displayProgressBar(
                          new Progressbar.Configuration(progressBarTitle, contentLength, new Progressbar.Configuration.Unit("mb", 1_000_000))))
             {
+                // TODO: check checksum!
                 byte[] buffer = new byte[8192];
                 int bytesRead;
 

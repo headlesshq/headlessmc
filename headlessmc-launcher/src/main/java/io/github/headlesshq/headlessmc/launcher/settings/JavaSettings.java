@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.settings;
 import io.github.headlesshq.headlessmc.api.settings.SettingGroup;
 import io.github.headlesshq.headlessmc.api.settings.SettingGroupInitializer;
 import io.github.headlesshq.headlessmc.api.settings.SettingKey;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -51,7 +51,7 @@ public class JavaSettings extends SettingGroupInitializer {
             .withName("hmc.java.downloadDistribution")
             .withAlias("hmc.auto.java.distribution")
             .withDescription("The Java distribution to chose when automatically downloading Java.")
-            .withValue(JavaDownloaderManager.DEFAULT_DISTRIBUTION)
+            .withValue(JavaDistributionService.DEFAULT_DISTRIBUTION)
             .build();
 
     private final SettingKey<Boolean> alwaysAddFilePermissions = group.setting(Boolean.class)

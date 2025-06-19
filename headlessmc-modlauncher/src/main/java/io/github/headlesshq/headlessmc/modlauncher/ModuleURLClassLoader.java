@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.modlauncher;
 import dev.xdark.deencapsulation.Deencapsulation;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ModuleLayer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -13,6 +14,7 @@ import java.lang.module.ResolvedModule;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import java.security.CodeSigner;
 import java.security.CodeSource;

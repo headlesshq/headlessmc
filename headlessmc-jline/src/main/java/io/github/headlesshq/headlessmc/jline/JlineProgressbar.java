@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.jline;
 
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import me.tongfei.progressbar.ProgressBar;

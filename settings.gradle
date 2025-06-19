@@ -1,16 +1,32 @@
 rootProject.name = 'headlessmc'
 include 'headlessmc-findbugs'
-include 'headlessmc-traits'
 include 'headlessmc-commons'
 include 'headlessmc-cdi'
+include 'headlessmc-files'
 
+include 'headlessmc-splitter'
+include 'headlessmc-progressbar'
 include 'headlessmc-os'
-include 'headlessmc-java'
 include 'headlessmc-logging'
 include 'headlessmc-jline'
 
+include 'headlessmc-java'
+include 'headlessmc-java-distribution'
+project(":headlessmc-java-distribution").projectDir = file("headlessmc-java/headlessmc-java-distribution")
+include 'headlessmc-java-distribution-temurin'
+project(":headlessmc-java-distribution-temurin").projectDir = file("headlessmc-java/headlessmc-java-distribution-temurin")
+include 'headlessmc-java-service'
+project(":headlessmc-java-service").projectDir = file("headlessmc-java/headlessmc-java-service")
+include 'headlessmc-java-launcher'
+project(":headlessmc-java-launcher").projectDir = file("headlessmc-java/headlessmc-java-launcher")
+
 include 'headlessmc-version'
+include 'headlessmc-version-id'
+project(":headlessmc-version-id").projectDir = file("headlessmc-version/headlessmc-version-id")
+include 'headlessmc-version-picocli'
+project(":headlessmc-version-picocli").projectDir = file("headlessmc-version/headlessmc-version-picocli")
 include 'headlessmc-version-service'
+project(":headlessmc-version-service").projectDir = file("headlessmc-version/headlessmc-version-service")
 
 include 'headlessmc-api'
 

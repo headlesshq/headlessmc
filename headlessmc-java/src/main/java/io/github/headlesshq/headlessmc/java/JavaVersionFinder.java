@@ -55,7 +55,7 @@ public class JavaVersionFinder {
                         }
 
                         String replaced = path.replace("\\", "/");
-                        if (!alreadyIn.stream().anyMatch(java -> replaced.equals(java.getExecutable()))) {
+                        if (alreadyIn.stream().noneMatch(java -> replaced.equals(java.getExecutable()))) {
                             Java java = javaScanner.scanJava(log, path);
                             if (java != null) {
                                 result.add(java);

@@ -15,10 +15,10 @@ dependencies {
     jarLibsApi project(':headlessmc-api')
     jarLibsApi project(':headlessmc-jline')
 
-    jarLibsApi 'info.picocli:picocli:4.7.7'
-    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+    jarLibsApi libs.picocli
+    annotationProcessor libs.picocli.codegen
 
-    jarLibs 'org.jboss.weld.se:weld-se-core:6.0.3.Final'
+    jarLibs libs.weld
     jarLibs group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
     jarLibs group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
 

@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-java-distribution')
+    api project(':headlessmc-commons')
+    implementation libs.gson
+    implementation libs.commons.compress
+}

@@ -2,6 +2,8 @@ package io.github.headlesshq.headlessmc.api.command;
 
 import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.logging.StdIO;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import jakarta.inject.Qualifier;
 
 import java.io.IOError;

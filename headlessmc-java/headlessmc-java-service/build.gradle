@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-api')
+    api project(':headlessmc-commons')
+    api project(':headlessmc-java')
+    api project(':headlessmc-java-distribution')
+}

@@ -1,0 +1,7 @@
+dependencies {
+    api project(':headlessmc-platform')
+    api project(':headlessmc-version-picocli')
+    api project(':headlessmc-java-launcher')
+    api project(':headlessmc-files')
+    implementation libs.gson
+}

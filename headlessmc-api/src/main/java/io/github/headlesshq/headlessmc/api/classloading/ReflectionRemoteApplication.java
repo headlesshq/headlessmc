@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-class ReflectionRemoteApplication implements RemoteApplication {
+final class ReflectionRemoteApplication implements RemoteApplication {
     private final Object remoteApiWrapper;
 
     @Override

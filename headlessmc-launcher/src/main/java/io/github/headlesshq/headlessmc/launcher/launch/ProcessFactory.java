@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.launch;
 
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.AuthException;
 import io.github.headlesshq.headlessmc.launcher.download.AssetsDownloader;
@@ -18,6 +18,7 @@ import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModRepo
 import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificMods;
 import io.github.headlesshq.headlessmc.launcher.version.Features;
 import io.github.headlesshq.headlessmc.launcher.version.Rule;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.launcher.version.VersionExecutable;
 import io.github.headlesshq.headlessmc.os.OS;

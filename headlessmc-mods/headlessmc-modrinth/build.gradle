@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-mods')
+    api project(':headlessmc-commons')
+    implementation libs.gson
+    testImplementation testFixtures(project(':headlessmc-cdi'))
+}

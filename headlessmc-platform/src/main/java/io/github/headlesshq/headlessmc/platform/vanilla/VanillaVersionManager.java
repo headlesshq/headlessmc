@@ -9,6 +9,10 @@ public interface VanillaVersionManager {
 
     boolean isOlderThan(String version, String versionToCheck);
 
+    default boolean isOlderThan(VanillaVersion version, VanillaVersion versionToCheck) {
+        return isOlderThan(version.getName(), versionToCheck.getName());
+    }
+
     default @Nullable VanillaVersion getVersion(String version) {
         return getVersions()
                 .stream()

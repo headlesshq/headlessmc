@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-platform')
+    api project(':headlessmc-java-launcher')
+    implementation libs.gson
+    implementation libs.toml
+}

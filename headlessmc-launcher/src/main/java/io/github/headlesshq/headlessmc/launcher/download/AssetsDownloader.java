@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.download;
 
 import com.google.gson.JsonObject;
 import io.github.headlesshq.headlessmc.api.command.CommandLineReader;
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar
 import io.github.headlesshq.headlessmc.api.settings.Config;
 import io.github.headlesshq.headlessmc.launcher.cdi.Beans;
 import io.github.headlesshq.headlessmc.launcher.files.GameFiles;

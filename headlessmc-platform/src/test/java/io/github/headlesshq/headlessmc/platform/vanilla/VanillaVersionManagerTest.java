@@ -25,7 +25,7 @@ public class VanillaVersionManagerTest {
     @SneakyThrows
     public void testVanillaVersionService() {
         VanillaVersionManager manager = vanillaVersionManager;
-        VanillaVersion version = manager.getVersion("doesNotExist");
+        VanillaVersion version = manager.getVersion("1.18"); // we have excluded some versions from the version.json
         assertNull(version);
         version = manager.getVersion("1.21.5");
         assertNotNull(version);

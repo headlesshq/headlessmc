@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher;
 
 import io.github.headlesshq.headlessmc.api.Application;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import io.github.headlesshq.headlessmc.launcher.auth.AccountManager;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfo;
 import io.github.headlesshq.headlessmc.launcher.command.download.VersionInfoCache;
@@ -67,7 +67,7 @@ public interface ILauncher extends Application {
     /**
      * Manages the downloading of Java.
      */
-    JavaDownloaderManager getJavaDownloaderManager();
+    JavaDistributionService getJavaDownloaderManager();
 
     /**
      * Manages Servers.

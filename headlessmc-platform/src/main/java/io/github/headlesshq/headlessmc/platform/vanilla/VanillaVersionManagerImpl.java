@@ -17,7 +17,6 @@ public class VanillaVersionManagerImpl extends AbstractHttpCache<VanillaVersion.
     @Inject
     public VanillaVersionManagerImpl(DownloadService downloadService) {
         this(downloadService, URL);
-        System.out.println(downloadService);
     }
 
     public VanillaVersionManagerImpl(DownloadService downloadService, URI url) {

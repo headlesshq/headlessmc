@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.api.Application;
 import io.github.headlesshq.headlessmc.api.command.*;
 import io.github.headlesshq.headlessmc.api.logging.StdIO;
 import io.github.headlesshq.headlessmc.api.settings.NullableSettingKey;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.CustomLog;
@@ -97,6 +98,26 @@ public class JLineCommandLineReader implements CommandLineReader, SupportsHiding
                 }
 
                 context.execute(line);
+                System.out.println("Read line: " + line);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                System.out.println("Read line: " + line);
+
+                System.out.println("Read line: " + line);
+
+                System.out.println("Read line: " + line);
+
+                System.out.println("Read line: " + line);
+
+                System.out.println("Read line: " + line);
+                for (int i = 0; i < 1000; i++) {
+
+                    System.out.println("Read line: " + line);
+                }
             }
         } catch (UserInterruptException | IOException e) {
             // TODO: on UserInterruptException kill Mc process?

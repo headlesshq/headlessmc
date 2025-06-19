@@ -5,5 +5,4 @@ import lombok.experimental.StandardException;
 @StandardException
 public class InjectorException extends RuntimeException {
 
-
 }

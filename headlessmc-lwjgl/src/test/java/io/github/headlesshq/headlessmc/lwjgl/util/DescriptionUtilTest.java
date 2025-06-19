@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.lwjgl.util;
 
-import io.github.headlesshq.headlessmc.api.util.AbstractUtilityTest;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
 

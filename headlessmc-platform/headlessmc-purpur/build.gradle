@@ -1,0 +1,5 @@
+dependencies {
+    api project(':headlessmc-platform')
+    api project(':headlessmc-paper')
+    implementation libs.gson
+}

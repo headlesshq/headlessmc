@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.api.HeadlessMcImpl;
 import io.github.headlesshq.headlessmc.api.classloading.Deencapsulator;
 import io.github.headlesshq.headlessmc.api.command.CommandLineManager;
 import io.github.headlesshq.headlessmc.api.exit.ExitManager;
-import io.github.headlesshq.headlessmc.java.download.JavaDownloaderManager;
+import io.github.headlesshq.headlessmc.java.JavaDistributionService;
 import io.github.headlesshq.headlessmc.jline.JLineCommandLineReader;
 import io.github.headlesshq.headlessmc.jline.JLineProperties;
 import io.github.headlesshq.headlessmc.launcher.auth.*;
@@ -70,7 +70,7 @@ public class LauncherBuilder {
     private AccountManager accountManager;
     private ModManager modManager;
     private VersionSpecificModManager versionSpecificModManager;
-    private JavaDownloaderManager javaDownloaderManager;
+    private JavaDistributionService javaDistributionService;
     private ServerManager serverManager;
 
     private OS os;
@@ -155,8 +155,8 @@ public class LauncherBuilder {
     }
 
     public LauncherBuilder configureJavaDownloader() {
-        if (this.javaDownloaderManager == null) {
-            this.javaDownloaderManager = JavaDownloaderManager.getDefault();
+        if (this.javaDistributionService == null) {
+            this.javaDistributionService = JavaDistributionService.getDefault();
         }
 
         return this;
@@ -249,7 +249,7 @@ public class LauncherBuilder {
                 requireNonNull(accountManager, "AccountManager was null!"),
                 requireNonNull(versionSpecificModManager, "VersionSpecificModManager was null!"),
                 requireNonNull(pluginManager, "PluginManager was null!"),
-                requireNonNull(javaDownloaderManager, "JavaDownloaderManager was null!"),
+                requireNonNull(javaDistributionService, "JavaDownloaderManager was null!"),
                 requireNonNull(serverManager, "ServerManager was null!"),
                 requireNonNull(versionInfoCache, "VersionInfoCache was null!"),
                 requireNonNull(modManager, "ModDistributionPlatformManager was null!")

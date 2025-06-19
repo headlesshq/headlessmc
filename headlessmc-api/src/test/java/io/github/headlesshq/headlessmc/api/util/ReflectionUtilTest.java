@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.api.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class ReflectionUtilTest extends AbstractUtilityTest<ReflectionUtil> {
+public class ReflectionUtilTest {
     @Test
     public void testReflectionUtil_iterate() {
         Class<?> clazz = ReflectionUtil.iterate(SubClass.class, c -> c);

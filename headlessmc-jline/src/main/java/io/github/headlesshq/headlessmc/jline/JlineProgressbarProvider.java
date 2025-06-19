@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.jline;
 
-import io.github.headlesshq.headlessmc.api.command.ProgressBarProvider;
-import io.github.headlesshq.headlessmc.api.command.Progressbar;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarProvider;
+import io.github.headlesshq.headlessmc.progressbar.Progressbar;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import lombok.Setter;

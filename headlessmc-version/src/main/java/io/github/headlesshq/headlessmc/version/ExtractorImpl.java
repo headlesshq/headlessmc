@@ -41,7 +41,7 @@ final class ExtractorImpl implements Extractor {
                 InputStream is = jar.getInputStream(je);
                 @Cleanup
                 OutputStream os = Files.newOutputStream(to.resolve(je.getName()));
-                IOUtil.copy(is, os);
+                copy(is, os);
             }
         }
     }
@@ -55,5 +55,14 @@ final class ExtractorImpl implements Extractor {
     public boolean isExtracting() {
         return true;
     }
+
+    private static void copy(InputStream i, OutputStream o) throws IOException {
+        int length;
+        byte[] bytes = new byte[1024];
+        while ((length = i.read(bytes)) != -1) {
+            o.write(bytes, 0, length);
+        }
+    }
+
 
 }

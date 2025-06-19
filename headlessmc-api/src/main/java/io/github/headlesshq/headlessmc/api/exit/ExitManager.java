@@ -27,6 +27,8 @@ public class ExitManager {
     @Getter
     private Integer exitCode;
 
+    // TODO: handler for UserInterrupt
+
     /**
      * Calls the configured exit manager with the given exit code.
      *
