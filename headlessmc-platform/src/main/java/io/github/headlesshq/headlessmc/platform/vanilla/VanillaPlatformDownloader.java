@@ -26,7 +26,7 @@ public class VanillaPlatformDownloader extends AbstractPlatformDownloader implem
     @Override
     public Path download(PlatformDownloadOptions options) throws IOException {
         Version version = versionService.get(options.getVersionID().asVanillaVersion());
-        if (version != null) {
+        if (version != null && !options.getVersionID().isServer()) {
             return versionService.getVersionJsonFile(version);
         }
 
@@ -44,7 +44,7 @@ public class VanillaPlatformDownloader extends AbstractPlatformDownloader implem
             throw new IOException("Failed to find server download for " + version.getName());
         }
 
-        Path path = options.getPathProvider().getPath(options.getVersionID().asVanillaVersion());
+        Path path = options.getPathProvider().getPath(options.getVersionID());
         downloadService.download(download.getUrl(), path, download.getSize(), download.getSha1());
         return path;
     }

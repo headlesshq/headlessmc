@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.platform.fabric;
+package io.github.headlesshq.headlessmc.platform.forge;
 
 import io.github.headlesshq.headlessmc.platform.PlatformDownloader;
 import io.github.headlesshq.headlessmc.version.id.VersionID;
@@ -18,12 +18,12 @@ import java.util.concurrent.Callable;
 @Setter
 @Dependent
 @CommandLine.Command(
-    name = "fabric",
-    description = "Installs fabric for a version.",
+    name = "forge",
+    description = "Installs forge for a version.",
     mixinStandardHelpOptions = true
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
-public class FabricCommand implements Callable<Path> {
+public class ForgeCommand implements Callable<Path> {
     private final @Fabric PlatformDownloader platformDownloader;
 
     @CommandLine.Parameters(converter = VersionIDConverter.class, paramLabel = "<version>") // TODO
@@ -51,13 +51,6 @@ public class FabricCommand implements Callable<Path> {
     @CommandLine.Option(names = {"--url"}, description = "URL to download the installer from.")
     private @Nullable String url;
 
-    @CommandLine.Option(
-            names = {"--legacy"},
-            description = "Forces the fabric legacy installer.",
-            negatable = true
-    )
-    private @Nullable Boolean legacy;
-
     @Override
     public Path call() throws IOException {
         VersionID versionID = this.versionID;
@@ -73,7 +66,7 @@ public class FabricCommand implements Callable<Path> {
             versionID = versionID.withPlatform("fabric").withBuild(build);
         }
 
-        FabricDownloadOptions options = new FabricDownloadOptions(
+        ForgeDownloadOptions options = new ForgeDownloadOptions(
             versionID,
             inMemory,
             null, // TODO: !
@@ -81,8 +74,7 @@ public class FabricCommand implements Callable<Path> {
             java,
             new String[] { jvm }, // TODO: fix!
             dir,
-            url == null ? null : URI.create(url),
-            legacy
+            url == null ? null : URI.create(url)
         );
 
         return platformDownloader.download(options);

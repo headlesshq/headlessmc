@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.platform.Mod;
 import io.github.headlesshq.headlessmc.platform.ModFileReader;
 import io.github.headlesshq.headlessmc.platform.ModImpl;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 @Fabric
+@Named("fabric")
 @ApplicationScoped
 public class FabricModFileReader implements ModFileReader {
     private static final Gson GSON = new Gson();
@@ -54,8 +56,8 @@ public class FabricModFileReader implements ModFileReader {
         private final String description;
         @SerializedName("authors")
         private final @Nullable List<String> authors;
-        @SerializedName("depends")
-        private final Map<String, String> depends;
+        //@SerializedName("depends")
+        //private final Map<String, String> depends; // TODO: can be Map<String String[]> ?!
     }
 
 }

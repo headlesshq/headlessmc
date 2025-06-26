@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.platform.forge;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
+import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.github.headlesshq.headlessmc.platform.Mod;
@@ -9,6 +10,7 @@ import io.github.headlesshq.headlessmc.platform.ModFileReader;
 import io.github.headlesshq.headlessmc.platform.ModImpl;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.Data;
 
 import java.io.IOException;
@@ -23,6 +25,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 @Forge
+@Named("forge")
 @ApplicationScoped
 public class ForgeModFileReader implements ModFileReader {
     private final boolean mcModInfoEnabled;
@@ -98,7 +101,7 @@ public class ForgeModFileReader implements ModFileReader {
         try (InputStream is = jarFile.getInputStream(entry);
              InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             TypeToken<List<McModInfo>> type = new TypeToken<List<McModInfo>>() {};
-            List<McModInfo> mcModInfos = JsonUtil.GSON.fromJson(reader, type);
+            List<McModInfo> mcModInfos = new Gson().fromJson(reader, type);
             List<Mod> modFiles = new ArrayList<>(mcModInfos.size());
             for (McModInfo mcModInfo : mcModInfos) {
                 modFiles.add(new ModImpl(

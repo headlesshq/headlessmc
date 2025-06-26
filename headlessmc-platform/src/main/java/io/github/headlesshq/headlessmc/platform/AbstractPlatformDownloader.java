@@ -22,7 +22,7 @@ public abstract class AbstractPlatformDownloader implements PlatformDownloader {
     @Override
     public Path download(PlatformDownloadOptions options) throws IOException {
         Version version = versionService.get(options.getVersionID());
-        if (version != null) {
+        if (version != null && !options.getVersionID().isServer()) {
             return versionService.getVersionJsonFile(version);
         }
 
