@@ -7,12 +7,15 @@ import io.github.headlesshq.headlessmc.java.launcher.JavaLauncher;
 import io.github.headlesshq.headlessmc.platform.AbstractPlatformDownloader;
 import io.github.headlesshq.headlessmc.platform.PlatformDownloadOptions;
 import io.github.headlesshq.headlessmc.platform.PlatformDownloader;
+import io.github.headlesshq.headlessmc.platform.vanilla.Vanilla;
 import io.github.headlesshq.headlessmc.platform.vanilla.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.vanilla.VanillaVersionManager;
 import io.github.headlesshq.headlessmc.version.Version;
+import io.github.headlesshq.headlessmc.version.id.VersionID;
 import io.github.headlesshq.headlessmc.version.service.VersionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.CustomLog;
 
 import java.io.IOException;
@@ -22,8 +25,11 @@ import java.util.List;
 
 @Fabric
 @CustomLog
+@Named("fabric")
 @ApplicationScoped
 public class FabricDownloader extends AbstractPlatformDownloader implements PlatformDownloader {
+    private final PlatformDownloader vanilla;
+    private final LatestFabricBuildResolver latestFabricBuildResolver;
     private final JavaLauncher javaLauncher;
     private final FileManager files;
 
@@ -31,9 +37,13 @@ public class FabricDownloader extends AbstractPlatformDownloader implements Plat
     public FabricDownloader(VanillaVersionManager vanillaVersionManager,
                             DownloadService downloadService,
                             VersionService versionService,
+                            @Vanilla PlatformDownloader vanilla,
+                            LatestFabricBuildResolver latestFabricBuildResolver,
                             @HeadlessMcDir FileManager files,
                             JavaLauncher javaLauncher) { // TODO: why not proxiable?
         super(vanillaVersionManager, downloadService, versionService);
+        this.vanilla = vanilla;
+        this.latestFabricBuildResolver = latestFabricBuildResolver;
         this.files = files;
         this.javaLauncher = javaLauncher;
     }
@@ -42,11 +52,13 @@ public class FabricDownloader extends AbstractPlatformDownloader implements Plat
     protected Path download(Version vanillaV, PlatformDownloadOptions optionsIn, Path versionJson) throws IOException {
         FabricDownloadOptions options = FabricDownloadOptions.from(optionsIn);
         FabricInstaller installer = getInstaller(options);
+        VersionID resolvedId = resolve(options.getVersionID());
+        Path path = options.getPathProvider().getPath(resolvedId);
         javaLauncher.createProcess()
                 .jar(installer.getFile(files.get("fabric"), downloadService))
                 .jvmArgs(options.getJvmArgs())
                 .version(getJava(vanillaV, options))
-                .args(getArgs(options))
+                .args(getArgs(options, path))
                 .inheritIO() // TODO: configurable
                 .launch()
                 .waitForSuccess();
@@ -57,7 +69,12 @@ public class FabricDownloader extends AbstractPlatformDownloader implements Plat
             throw new IOException("Failed to find installed version " + options.getVersionID());
         }
 
-        return null;
+        if (options.getVersionID().isServer()) {
+            // we also need the vanilla server.jar for the fabric server
+            vanilla.download(options);
+        }
+
+        return path;
     }
 
     private int getJava(Version vanillaVersion, FabricDownloadOptions options) throws IOException {
@@ -91,7 +108,7 @@ public class FabricDownloader extends AbstractPlatformDownloader implements Plat
         return FabricInstaller.defaultInstaller();
     }
 
-    protected List<String> getArgs(FabricDownloadOptions options) {
+    private List<String> getArgs(FabricDownloadOptions options, Path path) {
         List<String> args = new ArrayList<>();
         if (options.getVersionID().isServer()) {
             args.add("server");
@@ -110,13 +127,16 @@ public class FabricDownloader extends AbstractPlatformDownloader implements Plat
         }
 
         args.add("-dir");
-        String dir = options.getDir();
-        if (dir == null) {
-            dir = ctx.getMcFiles().getBase().toPath().toAbsolutePath().toString();
+        args.add(path.toAbsolutePath().toString());
+        return args;
+    }
+
+    private VersionID resolve(VersionID id) throws IOException {
+        if (!id.isServer() || id.getBuild() != null) {
+            return id;
         }
 
-        args.add(dir);
-        return args;
+        return id.withBuild(latestFabricBuildResolver.getLatestBuild());
     }
 
 }
