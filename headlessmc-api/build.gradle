@@ -10,6 +10,6 @@ dependencies {
     testFixturesCompileOnly 'org.projectlombok:lombok:1.18.34'
     testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-    testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
-    testFixturesRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0'
+    testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.3'
+    testFixturesRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.3'
 }

@@ -21,7 +21,7 @@ dependencies {
     // jarLibs project(':headlessmc-logging') TODO: add logging for wrapper and modlauncher?!
 
     testPluginCompileOnly project(':headlessmc-launcher')
-    testPluginImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
+    testPluginImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.3'
 
     testPluginCompileOnly 'org.projectlombok:lombok:1.18.34'
     testPluginAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
