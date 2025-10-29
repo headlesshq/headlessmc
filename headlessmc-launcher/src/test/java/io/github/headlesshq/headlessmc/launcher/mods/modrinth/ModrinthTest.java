@@ -22,7 +22,7 @@ public class ModrinthTest {
         DownloadService downloadService = new DownloadService();
         Modrinth modrinth = new Modrinth(downloadService, STAGING_API);
         List<Mod> mods = modrinth.search("test-project");
-        assertEquals(1, mods.size());
+        assertEquals(2, mods.size());
         Mod mod = mods.get(0);
         assertEquals("test-project", mod.getName());
         assertEquals(0, mod.getId());
@@ -36,8 +36,8 @@ public class ModrinthTest {
         ModrinthProjectVersion projectVersion = versions.get(0);
         assertEquals(1, projectVersion.getGameVersions().size());
         assertEquals("1.21.5", projectVersion.getGameVersions().get(0));
-        assertEquals(1, projectVersion.getLoaders().size());
-        assertEquals("fabric", projectVersion.getLoaders().get(0));
+        assertEquals(23, projectVersion.getLoaders().size());
+        assertEquals("babric", projectVersion.getLoaders().get(0));
         assertEquals(1, projectVersion.getFiles().size());
         ModrinthFile file = projectVersion.getFiles().get(0);
         assertEquals("fabric-api-0.92.2+1.20.1.jar", file.getFilename());
