@@ -16,7 +16,7 @@
 </div>
 
 > [!NOTE]
-> We are currently working hard on HeadlessMc 3.0, which will revamp it completly (With Picocli etc.)!
+> We are currently working on HeadlessMc 3.0, which will revamp it completly (With Picocli etc.)!
 > Progress can be tracked on the [v3](https://github.com/3arthqu4ke/headlessmc/tree/v3) branch.
 
 > [!WARNING]
