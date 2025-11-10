@@ -17,6 +17,8 @@ import static io.github.headlesshq.headlessmc.lwjgl.api.Redirection.of;
 public class LwjglRedirections {
     public static final int GL_TEXTURE_WIDTH = 4096;
     public static final int GL_TEXTURE_INTERNAL_FORMAT_CONST = 4099;
+    public static final int GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT = 0x8A34;
+
     public static final int GL_TEXTURE_INTERNAL_FORMAT = Integer.parseInt(
         System.getProperty(LwjglProperties.GL_TEXTURE_INTERNAL_FORMAT, "32856")); //RGBA8
     public static final int TEXTURE_SIZE = Integer.parseInt(
@@ -33,6 +35,8 @@ public class LwjglRedirections {
         System.getProperty(LwjglProperties.BITS_PER_PIXEL, "32"));
     public static final int JNI_VERSION = Integer.parseInt(
         System.getProperty(LwjglProperties.JNI_VERSION, "24"));
+    public static final int UNIFORM_OFFSET_ALIGNMENT = Integer.parseInt(
+            System.getProperty(LwjglProperties.UNIFORM_OFFSET_ALIGNMENT, "1"));
     private static final ThreadLocal<Long> CURRENT_BUFFER_SIZE =
         ThreadLocal.withInitial(() -> 0L);
     private static final long START = System.nanoTime();
@@ -315,6 +319,19 @@ public class LwjglRedirections {
         //j  net.caffeinemc.mods.sodium.api.memory.MemoryIntrinsics.copyMemory(JJI)V+8
         //j  net.minecraft.class_287.push(Lorg/lwjgl/system/MemoryStack;JILnet/caffeinemc/mods/sodium/api/vertex/format/VertexFormatDescription;)V+47
         //j  me.jellysquid.mods.sodium.client.render.vertex.buffer.SodiumBufferBuilder.push(Lorg/lwjgl/system/MemoryStack;JILnet/caffeinemc/mods/sodium/api/vertex/format
+
+        // 1.21.6 onwards
+        // DynamicUniformStorage.<init>
+        // GlDevice this.uniformOffsetAlignment = GL11.glGetInteger(35380);
+        // division by zero, because the integer returned is 0
+        manager.redirect("Lorg/lwjgl/opengl/GL11;glGetInteger(I)I",
+                (obj, desc, type, args) -> {
+                    if ((int) args[0] == GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT) {
+                        return UNIFORM_OFFSET_ALIGNMENT;
+                    }
+
+                    return 0;
+                });
     }
 
 }
