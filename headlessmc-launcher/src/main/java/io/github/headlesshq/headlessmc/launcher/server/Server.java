@@ -37,36 +37,39 @@ public class Server implements HasName, HasId, ModdableGame {
     }
 
     public Path getExecutable(OS os) {
-        Path jar = path.resolve(DEFAULT_JAR);
-        if (!Files.exists(jar)) {
-            if ("fabric".equalsIgnoreCase(version.getServerType().getName())) {
-                jar = path.resolve("fabric-server-launch.jar");
-            } else if (version.getServerType().getName().toLowerCase(Locale.ENGLISH).contains("forge")) {
-                Path runFile = os.getType() == OS.Type.WINDOWS
-                        ? path.resolve("run.bat")
-                        : path.resolve("run.sh");
-                if (Files.exists(runFile)) {
-                    return runFile;
-                }
-
-                String name = getName(version.getServerType(), version.getVersion(), version.getTypeVersion())
-                        .substring(1); // prevents capitalization issues like Forge vs forge
-                try (Stream<Path> files = Files.list(path)) {
-                    Path path = files.filter(f -> f.toString().endsWith(".jar"))
-                            .filter(f -> f.getFileName().toString().contains(name))
-                            .findFirst()
-                            .orElse(null);
-                    if (path != null) {
-                        return path;
-                    }
-                } catch (IOException e) {
-                    log.error(e);
-                    return path.resolve(DEFAULT_JAR);
-                }
+        if ("fabric".equalsIgnoreCase(version.getServerType().getName())) {
+            Path fabricJar = path.resolve("fabric-server-launch.jar");
+            if (Files.exists(fabricJar)) {
+                return fabricJar;
             }
+
+            log.warn("Fabric server, but fabric-server-launch.jar not found!");
+        } else if (version.getServerType().getName().toLowerCase(Locale.ENGLISH).contains("forge")) {
+            Path runFile = os.getType() == OS.Type.WINDOWS
+                    ? path.resolve("run.bat")
+                    : path.resolve("run.sh");
+            if (Files.exists(runFile)) {
+                return runFile;
+            }
+
+            String name = getName(version.getServerType(), version.getVersion(), version.getTypeVersion())
+                    .substring(1); // prevents capitalization issues like Forge vs forge
+            try (Stream<Path> files = Files.list(path)) {
+                Path path = files.filter(f -> f.toString().endsWith(".jar"))
+                        .filter(f -> f.getFileName().toString().contains(name))
+                        .findFirst()
+                        .orElse(null);
+                if (path != null) {
+                    return path;
+                }
+            } catch (IOException e) {
+                log.error(e);
+            }
+
+            log.warn("Forge server but running of default Jar!");
         }
 
-        return jar;
+        return path.resolve(DEFAULT_JAR);
     }
 
     public boolean hasCustomName() {
