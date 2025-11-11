@@ -469,10 +469,10 @@ jobs:
     strategy:
       matrix:
         version:
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.6, lex: 56.0.0, neo: 1-beta, java: 21 }
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.7, lex: 57.0.0, neo: 1-beta, java: 21 }
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.8, lex: 58.0.0, neo: 1-beta, java: 21 }
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.10, lex: 60.0.0, neo: 1-beta, java: 21 }
+          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.6, lex: 56.0.0, neo: 20-beta, java: 21 }
+          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.7, lex: 57.0.0, neo: 25-beta, java: 21 }
+          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.8, lex: 58.0.0, neo: 51, java: 21 }
+          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.10, lex: 60.0.0, neo: 50-beta, java: 21 }
     uses: ./.github/workflows/build-runtime-test.yml
     with:
       branch: ${{ matrix.version.branch }}
