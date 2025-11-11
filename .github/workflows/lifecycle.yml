@@ -472,6 +472,7 @@ jobs:
           - { branch: 80-1216, dir: 1_20_5,  mc: 1.21.6, lex: 56.0.9, neo: 19-beta, java: 21 }
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Build
         uses: ./.github/workflows/build-runtime-test.yml
         with:
