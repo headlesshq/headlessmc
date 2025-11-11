@@ -469,7 +469,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - { branch: 80-1216, dir: 1_20_5,  mc: 1.21.6, lex: 56.0.9, neo: 19-beta, java: 21 }
+          - { branch: 80-1216, dir: 1_21_5,  mc: 1.21.6, lex: 56.0.9, neo: 19-beta, java: 21 }
     uses: ./.github/workflows/build-runtime-test.yml
     with:
       branch: ${{ matrix.version.branch }}
