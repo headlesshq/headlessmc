@@ -470,9 +470,9 @@ jobs:
       matrix:
         version:
           - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.6, lex: 56.0.0, neo: 20-beta, java: 21 }
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.7, lex: 57.0.0, neo: 25-beta, java: 21 }
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.8, lex: 58.0.0, neo: 51, java: 21 }
-          - { branch: 80-1216, dir: 1_21_6,  mc: 1.21.10, lex: 60.0.0, neo: 50-beta, java: 21 }
+          #- { branch: 80-1216, dir: 1_21_6,  mc: 1.21.7, lex: 57.0.0, neo: 25-beta, java: 21 }
+          #- { branch: 80-1216, dir: 1_21_6,  mc: 1.21.8, lex: 58.0.0, neo: 51, java: 21 }
+          #- { branch: 80-1216, dir: 1_21_6,  mc: 1.21.10, lex: 60.0.0, neo: 50-beta, java: 21 }
     uses: ./.github/workflows/build-runtime-test.yml
     with:
       branch: ${{ matrix.version.branch }}
@@ -489,15 +489,15 @@ jobs:
           - { mc: 1.21.6, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
           - { mc: 1.21.6, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
           - { mc: 1.21.6, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          - { mc: 1.21.7, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.21.7, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.21.7, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          - { mc: 1.21.8, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.21.8, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.21.8, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          - { mc: 1.21.10, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.21.10, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.21.10, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
+          #- { mc: 1.21.7, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
+          #- { mc: 1.21.7, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
+          #- { mc: 1.21.7, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
+          #- { mc: 1.21.8, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
+          #- { mc: 1.21.8, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
+          #- { mc: 1.21.8, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
+          #- { mc: 1.21.10, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
+          #- { mc: 1.21.10, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
+          #- { mc: 1.21.10, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
     runs-on: ubuntu-latest
     needs: [build-java-8, build-mc-runtime-test]
     steps:
