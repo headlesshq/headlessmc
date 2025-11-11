@@ -502,18 +502,28 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: launcher-wrapper-java8-jar
-          path: .
 
       - name: Display structure of downloaded files
         run: ls -R
 
+      - name: Copy mc-runtime-test jar
+        run: mkdir run run/mods; cp mc-runtime-test-${{ matrix.version.mc }}-*-${{ matrix.version.type }}-release.jar run/mods
       - name: Copy launcher jar
         # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
-        run: cp launcher-jar/headlessmc-launcher.jar headlessmc-launcher-0.0.0.jar
+        run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
 
-      # TODO: configure HeadlessMc
-      # TODO: put downloaded mc-runtime-test jar in mods
-      # TODO: run
+      - name: Run the MC client
+        uses: 3arthqu4ke/mc-runtime-test@3.1.1
+        with:
+          mc: ${{ matrix.version.mc }}
+          modloader: ${{ matrix.version.modloader }}
+          regex: ${{ matrix.version.regex }}
+          java: ${{ matrix.version.java }}
+          hmc-version: 0.0.0
+          mc-runtime-test: none
+          xvfb: false
+          headlessmc-command: --retries 2 --jvm -Djava.awt.headless=true
+          download-hmc: false
 
   server-test:
     strategy:
