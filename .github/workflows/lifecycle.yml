@@ -472,12 +472,12 @@ jobs:
           - { branch: 80-1216, dir: 1_20_5,  mc: 1.21.6, lex: 56.0.9, neo: 19-beta, java: 21 }
     uses: ./.github/workflows/build-runtime-test.yml
     with:
-      branch: ${{ matrix.branch }}
-      dir: ${{ matrix.dir }}
-      mc: ${{ matrix.mc }}
-      lex: ${{ matrix.lex }}
-      neo: ${{ matrix.neo }}
-      java: ${{ matrix.java }}
+      branch: ${{ matrix.version.branch }}
+      dir: ${{ matrix.version.dir }}
+      mc: ${{ matrix.version.mc }}
+      lex: ${{ matrix.version.lex }}
+      neo: ${{ matrix.version.neo }}
+      java: ${{ matrix.version.java }}
 
   mc-runtime-test:
     strategy:
