@@ -473,6 +473,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Display structure of downloaded files
+        run: ls -R .github/
       - name: Build
         uses: ./.github/workflows/build-runtime-test.yml
         with:
