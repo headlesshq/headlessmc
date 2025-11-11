@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
-issueTrackerURL = "https://github.com/3arthqu4ke/headlessmc"
+issueTrackerURL = "https://github.com/headlesshq/headlessmc"
 license = "MIT"
 
 [[mods]]

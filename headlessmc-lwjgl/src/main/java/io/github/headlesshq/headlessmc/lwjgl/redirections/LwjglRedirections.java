@@ -309,7 +309,7 @@ public class LwjglRedirections {
         );
 
         // Embeddium
-        // https://github.com/3arthqu4ke/headlessmc/issues/208
+        // https://github.com/headlesshq/headlessmc/issues/208
         // manager.redirect("Lorg/lwjgl/opengl/GL32C;glFenceSync(II)J", of(1L));
         // not enough, game now crashes with SIGSEGV, use xvfb for embeddium
         // v  ~StubRoutines::jlong_disjoint_arraycopy

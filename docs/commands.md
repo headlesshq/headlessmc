@@ -444,7 +444,7 @@ You can list all commands available in HeadlessMc with the `help` command.
     | `<version>`    | `arg`     | The name or id of a version of Minecraft to launch.                                                                |
     | `-lwjgl`       | `flag`    | If you want to launch the game in headless mode.                                                                   |
     | `-noout`       | `flag`    | Silences output of Minecraft.                                                                                      |
-    | `-specifics`   | `flag`    | Automatically downloads the [hmc-specifics](https://github.com/3arthqu4ke/hmc-specifics) for the version.          |
+    | `-specifics`   | `flag`    | Automatically downloads the [hmc-specifics](https://github.com/headlesshq/hmc-specifics) for the version.          |
     | `-commands`    | `flag`    | Enables the headlessmc-runtime, a weaker version of the hmc-specifics.                                             |
     | `-inmemory`    | `flag`    | Launches the game [in-memory](in-memory.md).                                                                       |
     | `-jndi`        | `flag`    | Patches JNDI lookups in Log4J (usually always on).                                                                 |
@@ -1078,8 +1078,8 @@ server mod search <mod-name> <version>
 === "Usage"
 
     Manages HeadlessMc version specific mods.
-    - [hmc-specifics](https://github.com/3arthqu4ke/hmc-specifics)
-    - [hmc-optimizations](https://github.com/3arthqu4ke/hmc-optimizations)
+    - [hmc-specifics](https://github.com/headlesshq/hmc-specifics)
+    - [hmc-optimizations](https://github.com/headlesshq/hmc-optimizations)
     - [mc-runtime-test](https://github.com/headlesshq/mc-runtime-test)
 
     ``` title="Usage"
@@ -1106,9 +1106,9 @@ server mod search <mod-name> <version>
     ```
     > specifics
     name                version   url
-    hmc-specifics       2.2.1     https://github.com/3arthqu4ke/hmc-specifics/releases/download/
+    hmc-specifics       2.2.1     https://github.com/headlesshq/hmc-specifics/releases/download/
     mc-runtime-test     3.1.1     https://github.com/headlesshq/mc-runtime-test/releases/download/
-    hmc-optimizations   0.4.0     https://github.com/3arthqu4ke/hmc-optimizations/releases/download/
+    hmc-optimizations   0.4.0     https://github.com/headlesshq/hmc-optimizations/releases/download/
 
     > specifics fabric:1.21.5 hmc-specifics
     Installed hmc-specifics-2.2.0 for fabric-loader-0.16.14-1.21.5 successfully.

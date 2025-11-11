@@ -110,7 +110,7 @@ jobs:
         # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
         run: cp launcher-jar/headlessmc-launcher.jar headlessmc-launcher-0.0.0.jar
       - name: Run the MC client
-        uses: 3arthqu4ke/mc-runtime-test@3.1.1
+        uses: headlesshq/mc-runtime-test@3.1.1
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}

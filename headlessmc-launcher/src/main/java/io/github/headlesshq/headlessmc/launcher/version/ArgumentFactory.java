@@ -56,7 +56,7 @@ class ArgumentFactory {
 
         JsonElement value = element.getAsJsonObject().get("value");
         if (value == null) {
-            // https://github.com/3arthqu4ke/headlessmc/issues/141#issuecomment-2041048918
+            // https://github.com/headlesshq/headlessmc/issues/141#issuecomment-2041048918
             value = element.getAsJsonObject().get("values");
             if (value == null) {
                 throw new VersionParseException("Failed to parse value(s) in argument of type " + type + ", element: " + element);

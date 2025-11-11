@@ -8,9 +8,9 @@ updates:
       time: "18:00"
       timezone: "Europe/Berlin"
     assignees:
-      - "3arthqu4ke"
+      - "okafke"
     reviewers:
-      - "3arthqu4ke"
+      - "okafke"
     commit-message:
       prefix: "gradle"
       include: "scope"
@@ -22,9 +22,9 @@ updates:
       time: "18:00"
       timezone: "Europe/Berlin"
     assignees:
-      - "3arthqu4ke"
+      - "okafke"
     reviewers:
-      - "3arthqu4ke"
+      - "okafke"
     commit-message:
       prefix: "github-actions"
       include: "scope"

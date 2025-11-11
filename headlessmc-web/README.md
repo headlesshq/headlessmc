@@ -3,7 +3,7 @@
 Using [CheerpJ](https://cheerpj.com/),
 a Java runtime written in web assembly,
 it is now possible to run HeadlessMc inside the browser.
-A demo has been deployed at https://3arthqu4ke.github.io/headlessmc/.
+A demo has been deployed at https://headlesshq.github.io/headlessmc/.
 There are some restrictions,
 a browser plugin to disable 
 [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)

@@ -11,7 +11,7 @@ even if it runs in headless mode without a screen.
 
 ### HMC-Specifics
 
-The [hmc-specifics](https://github.com/3arthqu4ke/hmc-specifics)
+The [hmc-specifics](https://github.com/headlesshq/hmc-specifics)
 are a set of `fabric`, `forge` and `neoforge` mods for most major versions of Minecraft.
 They add command line support from HeadlessMc to it.
 

@@ -2,22 +2,22 @@
 <h1 align="center" style="font-weight: normal;"><b>HeadlessMc</b></h1>
 <p align="center">A command line launcher for Minecraft Java Edition.</p>
 <p align="center"><img src="headlessmc-web/page/logo.png" alt="logo" style="width:200px;"></p>
-<p align="center"><a href="https://github.com/headlesshq/mc-runtime-test">Mc-Runtime-Test</a> | HMC | <a href="https://github.com/3arthqu4ke/hmc-specifics">HMC-Specifics</a> | <a href="https://github.com/3arthqu4ke/hmc-optimizations">HMC-Optimizations</a></p>
+<p align="center"><a href="https://github.com/headlesshq/mc-runtime-test">Mc-Runtime-Test</a> | HMC | <a href="https://github.com/headlesshq/hmc-specifics">HMC-Specifics</a> | <a href="https://github.com/headlesshq/hmc-optimizations">HMC-Optimizations</a></p>
 
 <div align="center">
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/6a86b3e62d3b47909de670b09737f8fd)](https://app.codacy.com/gh/3arthqu4ke/headlessmc/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![GitHub All Releases](https://img.shields.io/github/downloads/3arthqu4ke/HeadlessMc/total.svg)](https://github.com/3arthqu4ke/HeadlessMc/releases)
-![](https://github.com/3arthqu4ke/HeadlessMc/actions/workflows/gradle-publish.yml/badge.svg)
-![GitHub](https://img.shields.io/github/license/3arthqu4ke/HeadlessMc)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/6a86b3e62d3b47909de670b09737f8fd)](https://app.codacy.com/gh/headlesshq/headlessmc/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![GitHub All Releases](https://img.shields.io/github/downloads/headlesshq/HeadlessMc/total.svg)](https://github.com/headlesshq/HeadlessMc/releases)
+![](https://github.com/headlesshq/HeadlessMc/actions/workflows/gradle-publish.yml/badge.svg)
+![GitHub](https://img.shields.io/github/license/headlesshq/HeadlessMc)
 [![Docker Image Size](https://badgen.net/docker/size/3arthqu4ke/headlessmc?icon=docker&label=image%20size)](https://hub.docker.com/r/3arthqu4ke/headlessmc/)
-![Github last-commit](https://img.shields.io/github/last-commit/3arthqu4ke/HeadlessMc)
+![Github last-commit](https://img.shields.io/github/last-commit/headlesshq/HeadlessMc)
 
 </div>
 
 > [!NOTE]
 > We are currently working on HeadlessMc 3.0, which will revamp it completly (With Picocli etc.)!
-> Progress can be tracked on the [v3](https://github.com/3arthqu4ke/headlessmc/tree/v3) branch.
+> Progress can be tracked on the [v3](https://github.com/headlesshq/headlessmc/tree/v3) branch.
 
 > [!WARNING]
 > NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
@@ -32,7 +32,7 @@ It can run the client in headless mode, without a Screen, controlled by the comm
 This e.g. can allow you to test the game in your CI/CD pipeline with [mc-runtime-test](https://github.com/headlesshq/mc-runtime-test).
 
 > [!TIP]  
-> Read our new, beautiful documentation [here](https://3arthqu4ke.github.io/headlessmc).
+> Read our new, beautiful documentation [here](https://headlesshq.github.io/headlessmc).
 
 ## Quickstart
 
@@ -46,17 +46,17 @@ Login to your Minecraft account by executing the `login` command and follow the 
 4. Launch the game with `launch <modloader>:<version>`, e.g. `launch fabric:1.21.4 -lwjgl`.
 The `lwjgl` flag will make the game run in headless mode.
 
-Read [more](https://3arthqu4ke.github.io/headlessmc/getting-started/).
+Read [more](https://headlesshq.github.io/headlessmc/getting-started/).
 
 ### HeadlessMc-Specifics
 
-The [hmc-specifics](https://github.com/3arthqu4ke/hmc-specifics) are mods
+The [hmc-specifics](https://github.com/headlesshq/hmc-specifics) are mods
 that you can place inside your .minecraft/mods folder.
 Together with HeadlessMc they allow you to control the game via the command line, e.g.
 by sending chat messages and commands with `msg "<message>"`,
 visualizing the menus displayed by Minecraft via `gui` and clicking through menus via `click`.
 
-Read [more](https://3arthqu4ke.github.io/headlessmc/specifics/).
+Read [more](https://headlesshq.github.io/headlessmc/specifics/).
 
 ### Docker 
 
@@ -81,7 +81,7 @@ HeadlessMc can run inside Termux.
 HeadlessMc can run inside the browser, kinda.
 First, there is CheerpJ, a WebAssembly JVM,
 but it does not support all features we need to launch the game.
-The CheerpJ instance can be tried out [here](https://3arthqu4ke.github.io/headlessmc/).
+The CheerpJ instance can be tried out [here](https://headlesshq.github.io/headlessmc/).
 Secondly, there is [container2wasm](https://github.com/headlesshq/hmc-container2wasm),
 which can translate the HeadlessMc Docker container
 to WebAssembly and the run it inside the browser, but this is extremely slow.
@@ -135,7 +135,7 @@ It checks for a log message that ends with `For help, type "help"`,
 something all versions of the Minecraft server output upon successful launch.
 It then stops the server by sending the stop command to it.
 You can write your own test and even run it against the client instead of the server,
-provided the client has command support, e.g. via the [hmc-specifics](https://github.com/3arthqu4ke/hmc-specifics).
+provided the client has command support, e.g. via the [hmc-specifics](https://github.com/headlesshq/hmc-specifics).
 Just specify the location of your test file in the config with the key
 `hmc.test.filename`.
 An example CI workflow that tests if HeadlessMc can launch the game with the
@@ -148,7 +148,7 @@ every of its functions is rewritten to do nothing, or to return stub values
 (you can read more about this [here](headlessmc-lwjgl/README.md)).
 This has the advantage of being independent of Minecraft versions,
 but comes with some overhead.
-A Minecraft version dependent approach are the [hmc-optimizations](https://github.com/3arthqu4ke/hmc-optimizations),
+A Minecraft version dependent approach are the [hmc-optimizations](https://github.com/headlesshq/hmc-optimizations),
 another set of mods which patch Minecraft itself to skip all rendering code.
 Additionally HeadlessMc also comes with the `hmc.assets.dummy` property,
 which replaces all assets with small dummy textures and sounds,
@@ -158,7 +158,7 @@ You can also achieve headless mode without patching lwjgl by running headlessmc 
 
 ### Configuring HeadlessMc
 > [!NOTE]  
-> All configuration options are listed [here](https://3arthqu4ke.github.io/headlessmc/configuration/)
+> All configuration options are listed [here](https://headlesshq.github.io/headlessmc/configuration/)
 
 - HeadlessMc stores its configuration in `HeadlessMC/config.properties`.
 - On Windows and Linux Java versions in certain folders get detected automatically
@@ -216,7 +216,7 @@ built with any JDK &geq; 8, but language features > 8 can't be used.
 HeadlessMc uses [project lombok](https://github.com/projectlombok/lombok)
 to eliminate Java boilerplate.
 
-The (sparse) javadoc can be found [here](https://3arthqu4ke.github.io/headlessmc/javadoc/).
+The (sparse) javadoc can be found [here](https://headlesshq.github.io/headlessmc/javadoc/).
 
 Contributions are welcome!
 

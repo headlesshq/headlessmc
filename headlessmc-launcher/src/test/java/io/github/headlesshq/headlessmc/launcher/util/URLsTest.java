@@ -15,8 +15,8 @@ public class URLsTest extends AbstractUtilityTest<URLs> {
     @Test
     @SneakyThrows
     public void testUrls() {
-        val url = new URL("https://github.com/3arthqu4ke/HeadlessMc");
-        assertEquals(url, URLs.url("https://github.com/3arthqu4ke/HeadlessMc"));
+        val url = new URL("https://github.com/headlesshq/HeadlessMc");
+        assertEquals(url, URLs.url("https://github.com/headlesshq/HeadlessMc"));
         assertThrows(MalformedURLException.class, () -> URLs.url("test"));
     }
 

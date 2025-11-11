@@ -81,8 +81,8 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
-repo_name: '3arthqu4ke/headlessmc'
-repo_url: 'https://github.com/3arthqu4ke/headlessmc'
+repo_name: 'headlesshq/headlessmc'
+repo_url: 'https://github.com/headlesshq/headlessmc'
 
 extra_css: []
 

@@ -20,7 +20,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl:
     ``` sh
-    curl -L https://github.com/3arthqu4ke/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
+    curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
     ```
 
 === "Windows"
@@ -31,7 +31,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl.exe in the Command prompt:
     ```lang-powershell
-    curl.exe -L --output headlessmc-launcher.exe --url https://github.com/3arthqu4ke/headlessmc/releases/download/$VERSION/headlessmc-launcher-windows-x64.exe
+    curl.exe -L --output headlessmc-launcher.exe --url https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-windows-x64.exe
     ```
 
 === "MacOS"
@@ -45,7 +45,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl:
     ``` sh
-    curl -L https://github.com/3arthqu4ke/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
+    curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
 
 ### Java
@@ -86,7 +86,7 @@ HeadlessMc can run inside Termux.
 HeadlessMc can run inside the browser, kinda.
 First, there is [CheerpJ](https://cheerpj.com/), a WebAssembly JVM,
 but it does not support all features we need to launch the game.
-The CheerpJ instance can be tried out [here](https://3arthqu4ke.github.io/headlessmc/).
+The CheerpJ instance can be tried out [here](https://headlesshq.github.io/headlessmc/).
 Secondly, there is [container2wasm](https://github.com/headlesshq/hmc-container2wasm),
 which can translate the HeadlessMc Docker container
 to WebAssembly and the run it inside the browser, but this is extremely slow.

@@ -51,8 +51,8 @@ jobs:
 
 More examples:
 
-- [Fabric Workflow Example](https://github.com/3arthqu4ke/hmc-optimizations/blob/1.20.4/.github/workflows/run-fabric.yml)
-- [Matrix Workflow Testing Multiple Versions](https://github.com/3arthqu4ke/hmc-specifics/blob/main/.github/workflows/run-matrix.yml)
+- [Fabric Workflow Example](https://github.com/headlesshq/hmc-optimizations/blob/1.20.4/.github/workflows/run-fabric.yml)
+- [Matrix Workflow Testing Multiple Versions](https://github.com/headlesshq/hmc-specifics/blob/main/.github/workflows/run-matrix.yml)
 
 ---
 

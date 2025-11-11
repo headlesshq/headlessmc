@@ -72,7 +72,7 @@ shadowJar {
     exclude("module-info.class") // exclude asm module-info.class
 }
 
-// https://github.com/3arthqu4ke/headlessmc/issues/199
+// https://github.com/headlesshq/headlessmc/issues/199
 // fabric 0.16.2+ doesn't like multiple asm versions in the classpath
 tasks.register('noAsmJar', Copy) {
     dependsOn jar
