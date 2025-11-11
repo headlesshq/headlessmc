@@ -332,6 +332,12 @@ public class LwjglRedirections {
 
                     return 0;
                 });
+
+        // Forge 1.21.10
+        //java.lang.IllegalArgumentException: mipLevels must be at least 1
+        //        at TRANSFORMER/minecraft@1.21.10/com.mojang.blaze3d.opengl.GlDevice.createTexture(GlDevice.java:119) ~[forge-1.21.10-60.0.17-client.jar:?]
+        manager.redirect("Lorg/lwjgl/opengl/GL11C;glGenTextures()I",
+                (obj, desc, type, args) -> 1);
     }
 
 }
