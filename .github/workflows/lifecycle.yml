@@ -464,6 +464,60 @@ jobs:
           headlessmc-command: --retries 2 --jvm -Djava.awt.headless=true
           download-hmc: false
 
+  # https://github.com/headlesshq/headlessmc/issues/333
+  build-mc-runtime-test:
+    strategy:
+      matrix:
+        version:
+          - { branch: 80-1216, dir: 1_20_5,  mc: 1.21.6, lex: 56.0.9, neo: 19-beta, java: 21 }
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        uses: ./.github/workflows/build-runtime-test.yml
+        with:
+          branch: ${{ matrix.branch }}
+          dir: ${{ matrix.dir }}
+          mc: ${{ matrix.mc }}
+          lex: ${{ matrix.lex }}
+          neo: ${{ matrix.neo }}
+          java: ${{ matrix.java }}
+
+  mc-runtime-test:
+    strategy:
+      matrix:
+        version:
+          - { mc: 1.21.6, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
+          - { mc: 1.21.6, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
+          - { mc: 1.21.6, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
+    runs-on: ubuntu-latest
+    needs: [build-java-8, build-mc-runtime-test]
+    steps:
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.version.java }}
+          distribution: "temurin"
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcrt-${{ matrix.version.mc }}
+          path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-wrapper-java8-jar
+          path: .
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Copy launcher jar
+        # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
+        run: cp launcher-jar/headlessmc-launcher.jar headlessmc-launcher-0.0.0.jar
+
+      # TODO: configure HeadlessMc
+      # TODO: put downloaded mc-runtime-test jar in mods
+      # TODO: run
+
   server-test:
     strategy:
       matrix:

@@ -1,0 +1,87 @@
+name: Build mc-runtime-test
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'The branch of mc-runtime-test to check out'
+        default: 'main'
+        required: false
+        type: string
+      dir:
+        description: 'The directory of mc-runtime-test to build in'
+        default: '1_21_5'
+        required: true
+        type: string
+      java:
+        description: 'The Java version to use'
+        default: 21
+        required: true
+        type: number
+      mc:
+        description: 'The Minecraft version to build for'
+        default: '1.21.5'
+        required: true
+        type: string
+      lex:
+        description: 'The LexForge version to build for'
+        default: '55.0.3'
+        required: true
+        type: string
+      neo:
+        description: 'The NeoForge version to build for'
+        default: '24-beta'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: headlesshq/mc-runtime-test
+          ref: ${{ inputs.branch }}
+
+      - name: Get commit SHA of checked-out repo
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Cache build
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ inputs.dir }}/build
+          key: mcrt-${{ inputs.dir }}-${{ inputs.java }}-${{ inputs.mc }}-${{ steps.commit.outputs.sha }}
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java }}
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          workflow-job-context: '{}' # FIXME: avoid this cache duplication workaround
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        name: Gradle build
+        run: >
+          ./gradlew build --stacktrace
+          -Pminecraft_version=${{ inputs.mc }}
+          -Plexforge_version=${{ inputs.lex }}
+          -Pneoforge_version=${{ inputs.neo }}
+        working-directory: ${{ inputs.dir }}
+
+      - name: Display structure of built files
+        run: ls -R
+
+      # TODO: artifact for each modlauncher
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcrt-${{ inputs.mc }}
+          path: ${{ inputs.dir }}/build/libs/*.jar
