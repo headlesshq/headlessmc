@@ -69,11 +69,11 @@ allprojects {
 
         // no lombok for modlauncher cause we do bad hacks there in the java9 stub.
         if (project != project(':headlessmc-modlauncher')) {
-            compileOnly 'org.projectlombok:lombok:1.18.34'
-            annotationProcessor 'org.projectlombok:lombok:1.18.34'
+            compileOnly 'org.projectlombok:lombok:1.18.42'
+            annotationProcessor 'org.projectlombok:lombok:1.18.42'
 
-            testCompileOnly 'org.projectlombok:lombok:1.18.34'
-            testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+            testCompileOnly 'org.projectlombok:lombok:1.18.42'
+            testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
         }
 
         testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'

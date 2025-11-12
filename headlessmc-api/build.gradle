@@ -7,8 +7,8 @@ dependencies {
     runtimeOnly group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     testImplementation group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
 
-    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.34'
-    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    testFixturesCompileOnly 'org.projectlombok:lombok:1.18.42'
+    testFixturesAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
 
     testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0'
     testFixturesRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0'
