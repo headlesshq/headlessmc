@@ -714,7 +714,7 @@ jobs:
         github.ref == 'refs/heads/main'
       )
     runs-on: ubuntu-latest
-    needs: [ docker-build, build, build-natives, run, run-command-test, server-test, run-with-xvfb, deploy-pages ]
+    needs: [ docker-build, build, build-natives, run, run-command-test, server-test, run-with-xvfb]
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -752,7 +752,7 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [build, build-java-8, build-natives, docker-release, run, run-command-test, server-test, run-with-xvfb, deploy-pages]
+    needs: [build, build-java-8, build-natives, docker-release, run, run-command-test, server-test, run-with-xvfb]
     steps:
       - name: Cleanup
         uses: geekyeggo/delete-artifact@v5
