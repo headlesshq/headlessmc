@@ -193,7 +193,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: github-pages
           path: .
@@ -221,7 +221,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -273,7 +273,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -364,7 +364,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -446,7 +446,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -505,12 +505,12 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: mcrt-${{ matrix.version.mc }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
 
@@ -555,7 +555,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -602,7 +602,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -640,7 +640,7 @@ jobs:
           - linux/arm64
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -709,7 +709,7 @@ jobs:
     needs: [ docker-build, build, build-natives, run, run-command-test, server-test, run-with-xvfb]
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: /tmp/digests
           pattern: digests-*
@@ -781,7 +781,7 @@ jobs:
       contents: write
     steps:
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
       - name: Display structure of downloaded files
         run: ls -R
       - name: Release
