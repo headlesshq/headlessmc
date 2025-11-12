@@ -179,7 +179,7 @@ jobs:
         run: cp -r build/reports/jacoco/jacocoRootReport/coverage/ _site/
       - name: Upload Web page artifact
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        uses: actions/upload-pages-artifact@v3.0.1
+        uses: actions/upload-pages-artifact@v4.0.0
 
   deploy-pages:
     # startsWith(github.ref, 'refs/tags/') || we do not allow tags to deploy github pages
