@@ -141,7 +141,7 @@ jobs:
       - name: Delete Web sources jar
         run: rm headlessmc-web/build/libs/headlessmc-web-*-sources.jar
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
