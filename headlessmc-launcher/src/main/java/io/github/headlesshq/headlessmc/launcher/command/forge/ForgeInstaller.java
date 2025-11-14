@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.command.forge;
 
+import io.github.headlesshq.headlessmc.launcher.version.Version;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -32,23 +33,27 @@ public class ForgeInstaller {
     private final String forgeName;
     private final String baseUrl;
 
-    public void install(ForgeVersion version, FileManager fileManager, boolean inMemory) throws IOException {
-        install(version, fileManager, launcher.getMcFiles(), inMemory, false);
+    public void install(Version vanillaVersion, ForgeVersion version, FileManager fileManager, boolean inMemory) throws IOException {
+        install(vanillaVersion, version, fileManager, launcher.getMcFiles(), inMemory, false);
     }
 
-    public void installServer(ForgeVersion version, FileManager fileManager, @Nullable String dir, boolean inMemory) throws IOException {
+    public void installServer(Version vanillaVersion, ForgeVersion version, FileManager fileManager, @Nullable String dir, boolean inMemory) throws IOException {
         FileManager installDir = dir == null ? fileManager : new FileManager(dir);
-        install(version, fileManager, installDir, inMemory, true);
+        install(vanillaVersion, version, fileManager, installDir, inMemory, true);
     }
 
-    public void install(ForgeVersion version, FileManager fileManager, FileManager installDir, boolean inMemory, boolean server) throws IOException {
+    private void install(Version vanillaVersion, ForgeVersion version, FileManager fileManager, FileManager installDir, boolean inMemory, boolean server) throws IOException {
         String fileName = repoFormat.getFileName(version);
         File installer = fileManager.create(fileName);
         downloadInstaller(version, installer);
 
-        Java java = inMemory ? launcher.getJavaService().getCurrent() : launcher.getJavaService().findBestVersion(launcher, 8);
+        int bestJavaVersion = vanillaVersion == null ? 8 : (vanillaVersion.getJava() == null ? 21 : vanillaVersion.getJava());
+        Java java = inMemory ? launcher.getJavaService().getCurrent() : launcher.getJavaService().findBestVersion(launcher, bestJavaVersion, true);
         if (java == null) {
-            throw new IOException("No Java version found! Please configure hmc.java.versions.");
+            java = launcher.getJavaService().findBestVersion(launcher, 8);
+            if (java == null) {
+                throw new IOException("No Java version found! Please configure hmc.java.versions.");
+            }
         }
 
         if (server) {
@@ -144,6 +149,22 @@ public class ForgeInstaller {
             log.debug("Writing in " + name);
             Files.write(file.toPath(), "{\"profiles\": {}}".getBytes(StandardCharsets.UTF_8));
         }
+    }
+
+    @Deprecated
+    public void install(ForgeVersion version, FileManager fileManager, boolean inMemory) throws IOException {
+        install(null, version, fileManager, launcher.getMcFiles(), inMemory, false);
+    }
+
+    @Deprecated
+    public void installServer(ForgeVersion version, FileManager fileManager, @Nullable String dir, boolean inMemory) throws IOException {
+        FileManager installDir = dir == null ? fileManager : new FileManager(dir);
+        install(null, version, fileManager, installDir, inMemory, true);
+    }
+
+    @Deprecated
+    public void install(ForgeVersion version, FileManager fileManager, FileManager installDir, boolean inMemory, boolean server) throws IOException {
+        install(null, version, fileManager, installDir, inMemory, server);
     }
 
 }

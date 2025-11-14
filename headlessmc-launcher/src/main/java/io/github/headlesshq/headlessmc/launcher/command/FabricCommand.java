@@ -80,7 +80,7 @@ public class FabricCommand extends AbstractDownloadingVersionCommand implements 
     }
 
     private void install(Version version, File jarFile, String... args) throws CommandException {
-        int bestVersion = 17;
+        int bestVersion = version.getJava() == null ? 21 : version.getJava();
         String javaVersion = CommandUtil.getOption("--java", args);
         if (javaVersion != null) {
             bestVersion = ParseUtil.parseI(javaVersion);

@@ -98,9 +98,9 @@ public class ForgeCommand extends AbstractDownloadingVersionCommand implements M
             boolean inMemory = CommandUtil.hasFlag("-inmemory", args)
                     || ctx.getConfig().get(LauncherProperties.ALWAYS_IN_MEMORY, false);
             if (server) {
-                installer.installServer(version, fm, CommandUtil.getOption("--dir", args), inMemory);
+                installer.installServer(ver, version, fm, CommandUtil.getOption("--dir", args), inMemory);
             } else {
-                installer.install(version, fm, inMemory);
+                installer.install(ver, version, fm, inMemory);
                 ctx.getVersionService().refresh();
             }
         } catch (IOException e) {
