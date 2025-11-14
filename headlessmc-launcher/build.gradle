@@ -31,7 +31,7 @@ dependencies {
     jarLibs group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
     jarLibs group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     jarLibs 'org.semver4j:semver4j:5.7.0'
-    jarLibs 'com.electronwill.night-config:toml:3.8.2'
+    jarLibs 'com.electronwill.night-config:toml:3.8.3'
     jarLibs 'org.yaml:snakeyaml:2.4'
     jarLibs project(':headlessmc-jline')
 
