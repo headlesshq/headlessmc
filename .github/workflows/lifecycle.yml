@@ -28,8 +28,8 @@ jobs:
   build-java-8:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           java-version: 8
           distribution: adopt
@@ -47,7 +47,7 @@ jobs:
       - name: Rename launcher jar
         run: mv headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-wrapper.jar
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: launcher-wrapper-java8-jar
           path: |
@@ -58,8 +58,8 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           java-version: 21
           distribution: adopt
@@ -122,7 +122,7 @@ jobs:
         run: rm headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*-sources.jar
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: HeadlessMc Launcher files
           path: |
@@ -141,7 +141,7 @@ jobs:
       - name: Delete Web sources jar
         run: rm headlessmc-web/build/libs/headlessmc-web-*-sources.jar
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
@@ -179,7 +179,7 @@ jobs:
         run: cp -r build/reports/jacoco/jacocoRootReport/coverage/ _site/
       - name: Upload Web page artifact
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        uses: actions/upload-pages-artifact@v3.0.1
+        uses: actions/upload-pages-artifact@v4.0.0
 
   deploy-pages:
     # startsWith(github.ref, 'refs/tags/') || we do not allow tags to deploy github pages
@@ -193,7 +193,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: github-pages
           path: .
@@ -213,7 +213,7 @@ jobs:
           - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: '23'
@@ -221,7 +221,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -265,7 +265,7 @@ jobs:
           - { os: macos-latest, name: headlessmc-launcher-macos-arm64 }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: '23'
@@ -273,7 +273,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -298,7 +298,7 @@ jobs:
         run: ls headlessmc-graalvm/build/native/nativeCompile
 
       - name: Publish Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: HeadlessMc Native Image ${{ matrix.os.name }}
           path: |
@@ -360,11 +360,11 @@ jobs:
           - { mc: 1.7.10, type: lexforge, modloader: forge, regex: .*orge.*, java: 8 }
     steps:
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -442,11 +442,11 @@ jobs:
     needs: build-java-8
     steps:
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -501,16 +501,16 @@ jobs:
     needs: [build-java-8, build-mc-runtime-test]
     steps:
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: mcrt-${{ matrix.version.mc }}
           path: .
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
 
@@ -551,11 +551,11 @@ jobs:
     needs: build-java-8
     steps:
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -596,13 +596,13 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     needs: build-java-8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -639,8 +639,8 @@ jobs:
           - linux/amd64
           - linux/arm64
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -691,7 +691,7 @@ jobs:
             startsWith(github.ref, 'refs/tags/') ||
             github.ref == 'refs/heads/main'
           )
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -709,7 +709,7 @@ jobs:
     needs: [ docker-build, build, build-natives, run, run-command-test, server-test, run-with-xvfb]
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: /tmp/digests
           pattern: digests-*
@@ -769,7 +769,7 @@ jobs:
           name: mcrt-*
           failOnError: false
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v5
         with:
           delete-merged: true
 
@@ -781,7 +781,7 @@ jobs:
       contents: write
     steps:
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
       - name: Display structure of downloaded files
         run: ls -R
       - name: Release

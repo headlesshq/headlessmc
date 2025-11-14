@@ -14,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           java-version: 8
           distribution: temurin
@@ -37,7 +37,7 @@ jobs:
         run: cp headlessmc-launcher-wrapper/build/libs/headlessmc-launcher.jar .
 
       - name: Upload Launcher Jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: launcher-jar
           path: ./headlessmc-launcher.jar
@@ -99,11 +99,11 @@ jobs:
     needs: build
     steps:
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
       - name: Display structure of downloaded files
         run: ls -R
       - name: Copy launcher jar
