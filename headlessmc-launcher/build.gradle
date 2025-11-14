@@ -28,7 +28,7 @@ dependencies {
 
     jarLibs group: 'org.ow2.asm', name: 'asm', version: '9.9'
     jarLibs group: 'org.ow2.asm', name: 'asm-tree', version: '9.9'
-    jarLibs group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    jarLibs group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
     jarLibs group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     jarLibs 'org.semver4j:semver4j:5.7.0'
     jarLibs 'com.electronwill.night-config:toml:3.8.2'
