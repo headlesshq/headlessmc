@@ -32,7 +32,7 @@ dependencies {
     jarLibs group: 'dev.xdark', name: 'deencapsulation', version: '1.0'
     jarLibs 'org.semver4j:semver4j:5.7.0'
     jarLibs 'com.electronwill.night-config:toml:3.8.3'
-    jarLibs 'org.yaml:snakeyaml:2.4'
+    jarLibs 'org.yaml:snakeyaml:2.5'
     jarLibs project(':headlessmc-jline')
 
     includeJarInResources ('net.kunmc.lab:forgecli:1.2.0:all') {
