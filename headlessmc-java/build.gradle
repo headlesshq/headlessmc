@@ -1,6 +1,6 @@
 dependencies {
     api project(':headlessmc-api')
     api project(':headlessmc-os')
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
     implementation 'org.apache.commons:commons-compress:1.28.0'
 }

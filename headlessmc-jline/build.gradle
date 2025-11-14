@@ -1,9 +1,9 @@
 dependencies {
     api project(':headlessmc-api')
-    api 'org.jline:jline:3.26.3'
-    api ('me.tongfei:progressbar:0.9.5') {
+    api 'org.jline:jline:3.30.6'
+    api ('me.tongfei:progressbar:0.10.1') {
         exclude module: 'jline'
     }
-    implementation 'net.java.dev.jna:jna:5.17.0'
+    implementation 'net.java.dev.jna:jna:5.18.1'
     // TODO: maybe also package jansi for testing?
 }
