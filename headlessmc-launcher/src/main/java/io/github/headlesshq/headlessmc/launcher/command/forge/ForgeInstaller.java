@@ -50,7 +50,7 @@ public class ForgeInstaller {
         int bestJavaVersion = vanillaVersion == null ? 8 : (vanillaVersion.getJava() == null ? 21 : vanillaVersion.getJava());
         Java java = inMemory ? launcher.getJavaService().getCurrent() : launcher.getJavaService().findBestVersion(launcher, bestJavaVersion, true);
         if (java == null) {
-            java = launcher.getJavaService().findBestVersion(launcher, 8);
+            java = launcher.getJavaService().findBestVersion(launcher, bestJavaVersion);
             if (java == null) {
                 throw new IOException("No Java version found! Please configure hmc.java.versions.");
             }
