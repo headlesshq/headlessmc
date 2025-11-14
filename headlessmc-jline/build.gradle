@@ -4,6 +4,6 @@ dependencies {
     api ('me.tongfei:progressbar:0.9.5') {
         exclude module: 'jline'
     }
-    implementation 'net.java.dev.jna:jna:5.17.0'
+    implementation 'net.java.dev.jna:jna:5.18.1'
     // TODO: maybe also package jansi for testing?
 }
