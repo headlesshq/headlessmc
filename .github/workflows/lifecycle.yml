@@ -795,15 +795,15 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            ./merged-artifacts/headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar
-            ./merged-artifacts/headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
-            ./merged-artifacts/headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
-            ./merged-artifacts/headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
-            ./merged-artifacts/headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*.jar
-            ./merged-artifacts/headlessmc-scripts/hmc
-            ./merged-artifacts/headlessmc-scripts/hmc.bat
-            ./merged-artifacts/headlessmc-launcher-linux-x64
-            ./merged-artifacts/headlessmc-launcher-windows-x64.exe
-            ./merged-artifacts/headlessmc-launcher-macos-x64
-            ./merged-artifacts/headlessmc-launcher-linux-arm64
-            ./merged-artifacts/headlessmc-launcher-macos-arm64
+            ./headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar
+            ./headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
+            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
+            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
+            ./headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*.jar
+            ./headlessmc-scripts/hmc
+            ./headlessmc-scripts/hmc.bat
+            ./headlessmc-launcher-linux-x64
+            ./headlessmc-launcher-windows-x64.exe
+            ./headlessmc-launcher-macos-x64
+            ./headlessmc-launcher-linux-arm64
+            ./headlessmc-launcher-macos-arm64
