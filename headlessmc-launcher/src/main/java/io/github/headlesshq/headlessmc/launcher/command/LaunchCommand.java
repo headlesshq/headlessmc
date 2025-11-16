@@ -88,12 +88,17 @@ public class LaunchCommand extends AbstractDownloadingVersionCommand {
                 throw new AuthException("You can't play the game without an account! Please use the login command.");
             } else {
                 if (ctx.getConfig().get(LauncherProperties.REFRESH_ON_GAME_LAUNCH, true)) {
-                    account = ctx.getAccountManager().refreshAccount(account);
+                    try {
+                        account = ctx.getAccountManager().refreshAccount(account, ctx.getConfig());
+                    } catch (AuthException e) {
+                        if (ctx.getConfig().get(LauncherProperties.FAIL_LAUNCH_ON_REFRESH_FAILURE, false)) {
+                            throw e;
+                        }
+                    }
                 }
 
                 return toLaunchAccount(account);
             }
-
         } catch (AuthException e) {
             throw new CommandException(e.getMessage());
         }
