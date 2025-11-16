@@ -46,7 +46,7 @@ public class AccountManager {
     }
 
     @Synchronized
-    public ValidatedAccount refreshAccount(ValidatedAccount account) throws AuthException {
+    public ValidatedAccount refreshAccount(ValidatedAccount account, @Nullable Config config) throws AuthException {
         try {
             log.debug("Refreshing account " + account);
             HttpClient httpClient = MinecraftAuth.createHttpClient();
@@ -57,9 +57,18 @@ public class AccountManager {
             addAccount(refreshedAccount);
             return refreshedAccount;
         } catch (Exception e) {
-            removeAccount(account);
+            if (config != null && config.get(LauncherProperties.REFRESH_FAILURE_DELETE, false)) {
+                removeAccount(account);
+            }
+
             throw new AuthException(e.getMessage(), e);
         }
+    }
+
+    @Deprecated
+    @Synchronized
+    public ValidatedAccount refreshAccount(ValidatedAccount account) throws AuthException {
+        return refreshAccount(account, null);
     }
 
     @Synchronized
@@ -72,8 +81,8 @@ public class AccountManager {
             throw new AuthException(e.getMessage());
         }
 
-        val email = config.get(LauncherProperties.EMAIL);
-        val password = config.get(LauncherProperties.PASSWORD);
+        String email = config.get(LauncherProperties.EMAIL);
+        String password = config.get(LauncherProperties.PASSWORD);
         if (email != null && password != null) {
             log.info("Logging in with Email and password...");
             try {
@@ -91,7 +100,7 @@ public class AccountManager {
             ValidatedAccount primary = getPrimaryAccount();
             if (primary != null) {
                 try {
-                    refreshAccount(primary);
+                    refreshAccount(primary, config);
                 } catch (AuthException e) {
                     log.error("Failed to refresh account " + primary.getName(), e);
                 }
