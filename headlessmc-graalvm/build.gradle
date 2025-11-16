@@ -47,6 +47,7 @@ graalvmNative {
             sharedLibrary = false
             buildArgs.add('--enable-url-protocols=https')
             buildArgs.add('-O4')
+            buildArgs.add('-H:+AddAllCharsets')
             javaLauncher
         }
     }
