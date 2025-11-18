@@ -2,7 +2,15 @@
 <h1 align="center" style="font-weight: normal;"><b>HeadlessMc</b></h1>
 <p align="center">A command line launcher for Minecraft Java Edition.</p>
 <p align="center"><img src="headlessmc-web/page/logo.png" alt="logo" style="width:200px;"></p>
-<p align="center"><a href="https://github.com/headlesshq/mc-runtime-test">Mc-Runtime-Test</a> | HMC | <a href="https://github.com/headlesshq/hmc-specifics">HMC-Specifics</a> | <a href="https://github.com/headlesshq/hmc-optimizations">HMC-Optimizations</a></p>
+<p align="center">
+  <a href="https://github.com/headlesshq/mc-runtime-test"><strong>Mc-Runtime-Test</strong></a>
+  &middot;
+  <strong>HeadlessMc</strong>
+  &middot;
+  <a href="https://github.com/headlesshq/hmc-specifics"><strong>Hmc-Specifics</strong></a>
+  &middot;
+  <a href="https://github.com/headlesshq/hmc-optimizations"><strong>Hmc-Optimizations</strong></a>
+</p>
 
 <div align="center">
 
