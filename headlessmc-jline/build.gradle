@@ -1,6 +1,6 @@
 dependencies {
     api project(':headlessmc-api')
-    api 'org.jline:jline:3.26.3'
+    api 'org.jline:jline:3.30.6'
     api ('me.tongfei:progressbar:0.9.5') {
         exclude module: 'jline'
     }
