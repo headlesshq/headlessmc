@@ -1,4 +1,8 @@
 <!--suppress HtmlDeprecatedAttribute -->
+<div align="right">
+  <a href="README_CN.md">中文</a> | <a href="README.md">English</a>
+</div>
+
 <h1 align="center" style="font-weight: normal;"><b>HeadlessMc</b></h1>
 <p align="center">A command line launcher for Minecraft Java Edition.</p>
 <p align="center"><img src="headlessmc-web/page/logo.png" alt="logo" style="width:200px;"></p>
