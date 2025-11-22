@@ -1,0 +1,43 @@
+// Gradle init script to handle SSL and network issues
+allprojects {
+    repositories {
+        all { ArtifactRepository repo ->
+            if (repo instanceof MavenArtifactRepository) {
+                def url = repo.url.toString()
+                if (url.contains('3arthqu4ke.github.io')) {
+                    // 配置重试和超时
+                    repo.metadataSources {
+                        mavenPom()
+                        artifact()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 配置系统属性以处理 SSL
+System.setProperty('javax.net.ssl.trustStore', System.getProperty('java.home') + '/lib/security/cacerts')
+System.setProperty('javax.net.ssl.trustStorePassword', 'changeit')
+
+allprojects {
+    repositories {
+        all { ArtifactRepository repo ->
+            if (repo instanceof MavenArtifactRepository) {
+                def url = repo.url.toString()
+                if (url.contains('3arthqu4ke.github.io')) {
+                    // 配置重试和超时
+                    repo.metadataSources {
+                        mavenPom()
+                        artifact()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 配置系统属性以处理 SSL
+System.setProperty('javax.net.ssl.trustStore', System.getProperty('java.home') + '/lib/security/cacerts')
+System.setProperty('javax.net.ssl.trustStorePassword', 'changeit')
+

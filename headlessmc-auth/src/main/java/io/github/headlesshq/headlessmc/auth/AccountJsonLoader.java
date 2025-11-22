@@ -13,13 +13,25 @@ import java.util.List;
 @CustomLog
 public class AccountJsonLoader {
     public void save(Path location, List<ValidatedAccount> accounts) throws IOException {
+        saveMixed(location, accounts, new ArrayList<>());
+    }
+
+    public void saveMixed(Path location, List<ValidatedAccount> msaAccounts, List<YggdrasilAccount> yggdrasilAccounts) throws IOException {
         JsonArray array = new JsonArray();
-        for (ValidatedAccount account : accounts) {
+        for (ValidatedAccount account : msaAccounts) {
             try {
                 JsonObject object = account.toJson();
                 array.add(object);
             } catch (Exception e) {
                 log.error("Failed to serialize JavaSession " + account + ": " + e.getMessage(), e);
+            }
+        }
+        for (YggdrasilAccount account : yggdrasilAccounts) {
+            try {
+                JsonObject object = account.toJson();
+                array.add(object);
+            } catch (Exception e) {
+                log.error("Failed to serialize YggdrasilAccount " + account + ": " + e.getMessage(), e);
             }
         }
 
@@ -32,6 +44,11 @@ public class AccountJsonLoader {
     }
 
     public List<ValidatedAccount> load(Path location) throws IOException {
+        AccountLoadResult result = loadMixed(location);
+        return result.msaAccounts;
+    }
+
+    public AccountLoadResult loadMixed(Path location) throws IOException {
         JsonElement je;
         try (InputStream is = Files.newInputStream(location);
              InputStreamReader ir = new InputStreamReader(is, StandardCharsets.UTF_8)) {
@@ -39,7 +56,7 @@ public class AccountJsonLoader {
         }
 
         if (je == null || je.isJsonNull()) {
-            return new ArrayList<>(0);
+            return new AccountLoadResult(new ArrayList<>(), new ArrayList<>());
         }
 
         if (!je.isJsonObject()) {
@@ -48,22 +65,42 @@ public class AccountJsonLoader {
 
         JsonElement accountsArray = je.getAsJsonObject().get("accounts");
         if (accountsArray == null || !accountsArray.isJsonArray()) {
-            return new ArrayList<>(0);
+            return new AccountLoadResult(new ArrayList<>(), new ArrayList<>());
         }
 
-        List<ValidatedAccount> accounts = new ArrayList<>(accountsArray.getAsJsonArray().size());
+        List<ValidatedAccount> msaAccounts = new ArrayList<>();
+        List<YggdrasilAccount> yggdrasilAccounts = new ArrayList<>();
+        
         for (JsonElement element : accountsArray.getAsJsonArray()) {
             if (element instanceof JsonObject) {
+                JsonObject obj = element.getAsJsonObject();
                 try {
-                    ValidatedAccount loadedSession = ValidatedAccount.fromJson(element.getAsJsonObject());
-                    accounts.add(loadedSession);
+                    // 检查账户类型
+                    if (obj.has("type") && "yggdrasil".equals(obj.get("type").getAsString())) {
+                        YggdrasilAccount account = YggdrasilAccount.fromJson(obj);
+                        yggdrasilAccounts.add(account);
+                    } else {
+                        // 默认是 Microsoft 账户
+                        ValidatedAccount account = ValidatedAccount.fromJson(obj);
+                        msaAccounts.add(account);
+                    }
                 } catch (Exception e) {
                     log.error("Couldn't read account in .accounts.json " + e.getMessage(), e);
                 }
             }
         }
 
-        return accounts;
+        return new AccountLoadResult(msaAccounts, yggdrasilAccounts);
+    }
+
+    public static class AccountLoadResult {
+        public final List<ValidatedAccount> msaAccounts;
+        public final List<YggdrasilAccount> yggdrasilAccounts;
+
+        public AccountLoadResult(List<ValidatedAccount> msaAccounts, List<YggdrasilAccount> yggdrasilAccounts) {
+            this.msaAccounts = msaAccounts;
+            this.yggdrasilAccounts = yggdrasilAccounts;
+        }
     }
 
 }

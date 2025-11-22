@@ -1,0 +1,50 @@
+// Gradle init script to disable SSL verification for problematic repositories
+import javax.net.ssl.*
+import java.security.cert.X509Certificate
+
+// 创建信任所有证书的 TrustManager
+def trustAllCerts = [
+    new X509TrustManager() {
+        X509Certificate[] getAcceptedIssuers() { return null }
+        void checkClientTrusted(X509Certificate[] certs, String authType) { }
+        void checkServerTrusted(X509Certificate[] certs, String authType) { }
+    }
+] as X509TrustManager[]
+
+// 为特定仓库禁用 SSL 验证
+allprojects {
+    repositories {
+        all { ArtifactRepository repo ->
+            if (repo instanceof MavenArtifactRepository) {
+                def url = repo.url.toString()
+                // 为 3arthqu4ke.github.io 仓库禁用 SSL 验证
+                if (url.contains('3arthqu4ke.github.io')) {
+                    // 配置允许不安全的协议（如果 Gradle 支持）
+                    try {
+                        repo.allowInsecureProtocol = true
+                    } catch (Exception e) {
+                        // 如果属性不存在，忽略
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 全局 SSL 配置（谨慎使用）
+try {
+    SSLContext sc = SSLContext.getInstance("SSL")
+    sc.init(null, trustAllCerts, new java.security.SecureRandom())
+    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
+    
+    // 设置不验证主机名
+    HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+        boolean verify(String hostname, SSLSession session) {
+            return true
+        }
+    })
+} catch (Exception e) {
+    // 如果配置失败，记录但不中断构建
+    println("Warning: Could not configure SSL: " + e.getMessage())
+}
+

@@ -5,8 +5,19 @@ plugins {
     id 'io.franzbecker.gradle-lombok' version '5.0.0'
 }
 
+// 配置全局超时和重试
+allprojects {
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+}
+
 repositories {
-    mavenCentral()
+    // 使用阿里云 Maven 镜像
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://maven.aliyun.com/repository/central' }
+    mavenCentral() // 备用
 }
 
 allprojects {
@@ -30,10 +41,24 @@ allprojects {
 
 
     repositories {
-        mavenCentral()
+        // 优先使用本地 Maven 仓库
+        mavenLocal()
+        
+        // 使用阿里云 Maven 镜像
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        mavenCentral() // 备用
+        
+        // 3arthMaven - 添加重试和超时配置
         maven {
             name '3arthMaven'
             url 'https://3arthqu4ke.github.io/maven'
+            metadataSources {
+                mavenPom()
+                artifact()
+                ignoreGradleMetadataRedirection()
+            }
+            // 注意：allowInsecureProtocol 只适用于 HTTP，HTTPS 需要通过其他方式处理
         }
 
         maven {

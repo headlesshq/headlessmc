@@ -1,4 +1,8 @@
 <!--suppress HtmlDeprecatedAttribute -->
+<div align="right">
+  <a href="README_CN.md">中文</a> | <a href="README.md">English</a>
+</div>
+
 <h1 align="center" style="font-weight: normal;"><b>HeadlessMc</b></h1>
 <p align="center">A command line launcher for Minecraft Java Edition.</p>
 <p align="center"><img src="headlessmc-web/page/logo.png" alt="logo" style="width:200px;"></p>
@@ -43,10 +47,66 @@ This e.g. can allow you to test the game in your CI/CD pipeline with [mc-runtime
     - Or e.g. `./headlessmc-launcher-linux` if you use a GraalVM executable.
 3. HeadlessMc will generally not allow you to start the game without an account. 
 Login to your Minecraft account by executing the `login` command and follow the instructions.
+   - For Microsoft accounts, use the `login` command.
+   - For third-party authentication servers (Yggdrasil), use the `yggdrasil login` command (see [Yggdrasil Authentication](#yggdrasil-authentication) below).
 4. Launch the game with `launch <modloader>:<version>`, e.g. `launch fabric:1.21.4 -lwjgl`.
 The `lwjgl` flag will make the game run in headless mode.
 
 Read [more](https://headlesshq.github.io/headlessmc/getting-started/).
+
+### Yggdrasil Authentication
+
+HeadlessMc supports Yggdrasil authentication protocol, allowing you to use third-party authentication servers such as [LittleSkin](https://littleskin.cn).
+
+**Features:**
+- Login with username and password to Yggdrasil-compatible servers
+- Support for accounts with multiple characters (interactive character selection)
+- Automatic token validation before game launch
+- Comprehensive logging for all login operations
+- Secure token masking in logs
+
+**Usage:**
+
+```bash
+# Login with default LittleSkin server
+> yggdrasil login <username> <password>
+
+# Login with custom Yggdrasil server
+> yggdrasil login <username> <password> --server <server_url>
+
+# Interactive password input (password will be hidden)
+> yggdrasil login <username>
+Enter your password or type 'abort' to cancel the login process.
+```
+
+**Example with multiple characters:**
+
+```
+> yggdrasil login myuser mypass
+========================================
+开始手动登录
+登录服务器: https://littleskin.cn/api/yggdrasil
+用户名: myuser
+正在验证用户名和密码...
+用户名密码验证正确
+在外置服务器找到 2 个角色:
+  1. Character1 (UUID: ...) [当前默认]
+  2. Character2 (UUID: ...)
+请输入要使用的角色编号 (1-2, 或按 Enter 使用当前角色, 输入 'abort' 取消):
+> 2
+玩家已选择: Character2
+请求到的 accessToken: abc123def4********************xyz789uvw0
+登录成功！账户: Character2
+========================================
+```
+
+**Token Validation:**
+
+Before launching the game, HeadlessMc automatically validates the Yggdrasil token. If the token is invalid or expired, you will be prompted to choose whether to continue (which may result in an "Invalid session" error) or cancel and re-login.
+
+**Account Storage:**
+
+Yggdrasil accounts are stored in `HeadlessMC/auth/.accounts.json` along with Microsoft accounts. The token is securely stored and will be automatically validated before each game launch.
 
 ### HeadlessMc-Specifics
 
