@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.auth;
 
 import lombok.*;
 import io.github.headlesshq.headlessmc.api.config.Config;
+import io.github.headlesshq.headlessmc.auth.AccountJsonLoader;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import io.github.headlesshq.headlessmc.launcher.LauncherProperties;
 import net.lenni0451.commons.httpclient.HttpClient;
@@ -22,6 +23,7 @@ public class AccountManager {
     private static final String OFFLINE_UUID = "22689332a7fd41919600b0fe1135ee34";
 
     private final List<ValidatedAccount> accounts = new ArrayList<>();
+    private final List<io.github.headlesshq.headlessmc.auth.YggdrasilAccount> yggdrasilAccounts = new ArrayList<>();
     private final AccountValidator accountValidator;
     private final OfflineChecker offlineChecker;
     private final AccountStore accountStore;
@@ -39,9 +41,25 @@ public class AccountManager {
     }
 
     @Synchronized
+    public void addYggdrasilAccount(io.github.headlesshq.headlessmc.auth.YggdrasilAccount account) {
+        log.info("添加 Yggdrasil 账户到账户管理器: " + account.getName());
+        removeYggdrasilAccount(account);
+        yggdrasilAccounts.add(0, account);
+        save();
+        log.info("Yggdrasil 账户已保存: " + account.getName());
+    }
+
+    @Synchronized
     public void removeAccount(ValidatedAccount account) {
         accounts.remove(account);
         accounts.removeIf(s -> Objects.equals(account.getName(), s.getName()));
+        save();
+    }
+
+    @Synchronized
+    public void removeYggdrasilAccount(io.github.headlesshq.headlessmc.auth.YggdrasilAccount account) {
+        yggdrasilAccounts.remove(account);
+        yggdrasilAccounts.removeIf(s -> Objects.equals(account.getName(), s.getName()));
         save();
     }
 
@@ -74,9 +92,11 @@ public class AccountManager {
     @Synchronized
     public void load(Config config) throws AuthException {
         try {
-            List<ValidatedAccount> accounts = accountStore.load();
+            AccountJsonLoader.AccountLoadResult result = accountStore.loadMixed();
             this.accounts.clear();
-            this.accounts.addAll(accounts);
+            this.accounts.addAll(result.msaAccounts);
+            this.yggdrasilAccounts.clear();
+            this.yggdrasilAccounts.addAll(result.yggdrasilAccounts);
         } catch (IOException e) {
             throw new AuthException(e.getMessage());
         }
@@ -110,9 +130,53 @@ public class AccountManager {
 
     private void save() {
         try {
-            accountStore.save(accounts);
+            accountStore.saveMixed(accounts, yggdrasilAccounts);
         } catch (IOException e) {
             log.error(e);
+        }
+    }
+
+    @Synchronized
+    public @Nullable io.github.headlesshq.headlessmc.auth.YggdrasilAccount getPrimaryYggdrasilAccount() {
+        return yggdrasilAccounts.isEmpty() ? null : yggdrasilAccounts.get(0);
+    }
+
+    /**
+     * 验证 Yggdrasil 账户的 token 是否有效
+     * @param account Yggdrasil 账户
+     * @return true 如果 token 有效，false 如果失效
+     */
+    public boolean validateYggdrasilToken(io.github.headlesshq.headlessmc.auth.YggdrasilAccount account) {
+        log.info("正在验证 Yggdrasil 账户 token: " + account.getName());
+        log.info("验证服务器: " + account.getServerUrl());
+        log.info("验证方法: 向 " + account.getServerUrl() + "/authserver/validate 发送 POST 请求");
+        log.info("请求参数: accessToken=" + (account.getAccessToken() != null ? account.getAccessToken().substring(0, Math.min(10, account.getAccessToken().length())) + "..." : "null"));
+        
+        try {
+            io.github.headlesshq.headlessmc.auth.YggdrasilClient client = 
+                new io.github.headlesshq.headlessmc.auth.YggdrasilClient(account.getServerUrl());
+            boolean isValid = client.validate(account.getAccessToken(), account.getClientToken());
+            
+            if (isValid) {
+                log.info("Token 验证成功: 服务器返回 204 No Content，表示 token 有效");
+            } else {
+                log.warn("Token 验证失败: 服务器返回非 204 状态码，表示 token 已失效或无效");
+                log.warn("失效原因: 服务器拒绝了验证请求，可能的原因包括：");
+                log.warn("  1. Token 已过期");
+                log.warn("  2. Token 已被撤销");
+                log.warn("  3. Token 格式不正确");
+                log.warn("  4. 服务器连接失败");
+            }
+            
+            return isValid;
+        } catch (Exception e) {
+            log.error("Token 验证过程发生异常: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            log.error("验证失败原因: " + e.getMessage());
+            if (e.getCause() != null) {
+                log.error("根本原因: " + e.getCause().getMessage());
+            }
+            log.warn("由于验证过程异常，判定 token 失效");
+            return false;
         }
     }
 

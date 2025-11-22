@@ -38,6 +38,7 @@ public class LaunchContext extends CommandContextImpl {
         add(ModCommand.forClientVersions(ctx));
         if (addLoginCommand) {
             add(new LoginCommand(ctx));
+            add(new io.github.headlesshq.headlessmc.launcher.command.login.YggdrasilLoginCommand(ctx));
         }
 
         add(new AccountsCommand(ctx));
