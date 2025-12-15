@@ -54,16 +54,17 @@ public class Server implements HasName, HasId, ModdableGame {
 
             String name = getName(version.getServerType(), version.getVersion(), version.getTypeVersion())
                     .substring(1); // prevents capitalization issues like Forge vs forge
-            try (Stream<Path> files = Files.list(path)) {
-                Path path = files.filter(f -> f.toString().endsWith(".jar"))
-                        .filter(f -> f.getFileName().toString().contains(name))
-                        .findFirst()
-                        .orElse(null);
-                if (path != null) {
-                    return path;
-                }
-            } catch (IOException e) {
-                log.error(e);
+
+            Path path = findServerJar(name);
+            if (path != null) {
+                return path;
+            }
+
+            name = getName(version.getServerType(), version.getVersion(), null);
+            path = findServerJar(name);
+            if (path != null) {
+                log.info("Falling back to jar without type: " + path.getFileName());
+                return path;
             }
 
             log.warn("Forge server but running of default Jar!");
@@ -107,6 +108,22 @@ public class Server implements HasName, HasId, ModdableGame {
     @Override
     public boolean isServer() {
         return true;
+    }
+
+    private @Nullable Path findServerJar(String name) {
+        try (Stream<Path> files = Files.list(path)) {
+            Path path = files.filter(f -> f.toString().endsWith(".jar"))
+                    .filter(f -> f.getFileName().toString().contains(name))
+                    .findFirst()
+                    .orElse(null);
+            if (path != null) {
+                return path;
+            }
+        } catch (IOException e) {
+            log.error(e);
+        }
+
+        return null;
     }
 
 }
