@@ -292,7 +292,7 @@ public class ProcessFactory {
 
             VersionSpecificModRepository repo = VersionSpecificMods.HMC_SPECIFICS;
             VersionSpecificModManager modManager = options.getLauncher().getVersionSpecificModManager();
-            log.info("Automatically downloading Hmc-Specifics " + repo.getVersion());
+            log.info("Automatically downloading Hmc-Specifics " + repo.getVersion(downloadService));
             try {
                 modManager.download(version, repo);
                 modManager.deleteSpecificsOfOtherVersions(version, repo, gameDir.resolve("mods"));

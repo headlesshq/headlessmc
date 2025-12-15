@@ -1,14 +1,16 @@
 package io.github.headlesshq.headlessmc.launcher.command;
 
-import lombok.CustomLog;
 import io.github.headlesshq.headlessmc.api.HasName;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.util.Table;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.specifics.VersionSpecificModRepository;
 import io.github.headlesshq.headlessmc.launcher.version.Version;
+import lombok.CustomLog;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @CustomLog
@@ -20,12 +22,13 @@ public class SpecificsCommand extends AbstractVersionCommand {
     @Override
     public void execute(String line, String... args) throws CommandException {
         if (args.length < 2) {
+            Map<VersionSpecificModRepository, String> versions = fetchVersions();
             ctx.log(new Table<VersionSpecificModRepository>()
-                        .withColumn("name", VersionSpecificModRepository::getName)
-                        .withColumn("version", VersionSpecificModRepository::getVersion)
-                        .withColumn("url", v -> v.getUrl().toString())
-                        .addAll(ctx.getVersionSpecificModManager().getSpecificMods())
-                        .build());
+                    .withColumn("name", VersionSpecificModRepository::getName)
+                    .withColumn("version", repo -> versions.getOrDefault(repo, "-"))
+                    .withColumn("url", v -> v.getUrl().toString())
+                    .addAll(ctx.getVersionSpecificModManager().getSpecificMods())
+                    .build());
             return;
         }
 
@@ -45,11 +48,26 @@ public class SpecificsCommand extends AbstractVersionCommand {
             ctx.getVersionSpecificModManager().download(version, repository);
             ctx.getVersionSpecificModManager().deleteSpecificsOfOtherVersions(version, repository, ctx.getGameDir(version).getDir("mods").toPath());
             ctx.getVersionSpecificModManager().install(version, repository, ctx.getGameDir(version).getDir("mods").toPath());
-            ctx.log("Installed " + repository.getName() + "-" + repository.getVersion() + " for " + version.getName() + " successfully.");
+            ctx.log("Installed " + repository.getName() + "-" + repository.getVersion(ctx.getDownloadService()) + " for " + version.getName() + " successfully.");
         } catch (IOException e) {
             log.debug("Failed to install " + repository.getName() + " for version " + version.getName(), e);
             throw new CommandException("Failed to install " + repository.getName() + " for version " + version.getName() + ": " + e.getMessage());
         }
+    }
+
+    private Map<VersionSpecificModRepository, String> fetchVersions() {
+        Map<VersionSpecificModRepository, String> versions = new HashMap<>();
+        for (VersionSpecificModRepository repository : ctx.getVersionSpecificModManager().getSpecificMods()) {
+            try {
+                String version = repository.getVersion(ctx.getDownloadService());
+                versions.put(repository, version);
+            } catch (IOException e) {
+                log.error("Failed to get latest release for " + repository.getName() + "/" + repository.getOwner());
+                versions.put(repository, "-");
+            }
+        }
+
+        return versions;
     }
 
 }

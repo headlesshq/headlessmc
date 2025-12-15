@@ -1,8 +1,10 @@
 package io.github.headlesshq.headlessmc.launcher.specifics;
 
-import lombok.Data;
 import io.github.headlesshq.headlessmc.api.HasName;
+import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
+import lombok.Data;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
@@ -10,6 +12,7 @@ import java.util.regex.Pattern;
 
 /**
  * Represents a repository that provides downloads for a version specific mod, e.g. the hmc-specifics.
+ *
  * @see VersionSpecificMods
  * @see <a href=https://github.com/headlesshq/hmc-specifics>https://github.com/headlesshq/hmc-specifics</a>
  * @see <a href=https://github.com/headlesshq/mc-runtime-test>https://github.com/headlesshq/mc-runtime-test</a>
@@ -17,6 +20,9 @@ import java.util.regex.Pattern;
  */
 @Data
 public class VersionSpecificModRepository implements HasName {
+    private volatile GithubReleaseService.GithubRelease latestRelease;
+    private final Object lock = new Object();
+
     /**
      * The URL to download this version specific mod from.
      * This could be some a maven URL that points to the package the mod is in, or a github release url.
@@ -25,15 +31,18 @@ public class VersionSpecificModRepository implements HasName {
      */
     private final URL url;
     /**
+     * The owner of this Github repository.
+     */
+    private final String owner;
+    /**
      * The name of the version specific mod.
      * <p>E.g. hmc-specifics
      */
     private final String name;
     /**
-     * The release version of the mod (not the mc version).
-     * <p>E.g. 2.0.0
+     * A fallback version if GithubReleases cannot be fetched.
      */
-    private final String version;
+    private final String fallbackVersion;
     /**
      * An appendix for the jar files.
      * <p>E.g. -release
@@ -48,24 +57,24 @@ public class VersionSpecificModRepository implements HasName {
      * @param versionInfo the versionInfo containing the version and modlauncher.
      * @return the filename for the version specific mod release for the specified version and modlauncher.
      */
-    public String getFileName(VersionInfo versionInfo) {
+    public String getFileName(String version, VersionInfo versionInfo) {
         return name + "-" + versionInfo.getVersion() + "-" + version + "-"
-            + Objects.requireNonNull(versionInfo.getModlauncher(), "modlauncher was null").getHmcName()
-            + appendix + ".jar";
+                + Objects.requireNonNull(versionInfo.getModlauncher(), "modlauncher was null").getHmcName()
+                + appendix + ".jar";
     }
 
     /**
      * Returns the download URL for a release of the version specific mod.
      * This is done by concatenating the url, version number and getFileName.
      * <p>E.g. <a href=https://github.com/headlesshq/hmc-specifics/releases/download/2.0.0/hmc-specifics-1.12.2-2.0.0-fabric-release.jar>
-     *     https://github.com/headlesshq/hmc-specifics/releases/download/2.0.0/hmc-specifics-1.12.2-2.0.0-fabric-release.jar</a>
+     * https://github.com/headlesshq/hmc-specifics/releases/download/2.0.0/hmc-specifics-1.12.2-2.0.0-fabric-release.jar</a>
      *
      * @param versionInfo the versionInfo containing the version and modlauncher.
      * @return the download URL for the version specific mod release for the specified version and modlauncher.
      * @throws MalformedURLException if the resulting URL would be malformed.
      */
-    public URL getDownloadURL(VersionInfo versionInfo) throws MalformedURLException {
-        return new URL(url + version + "/" + getFileName(versionInfo));
+    public URL getDownloadURL(String version, VersionInfo versionInfo) throws MalformedURLException {
+        return new URL(url + version + "/" + getFileName(version, versionInfo));
     }
 
     /**
@@ -75,6 +84,19 @@ public class VersionSpecificModRepository implements HasName {
      */
     public Pattern getFileNamePattern() {
         return Pattern.compile(name + "-.*-.*-.*" + appendix + ".jar");
+    }
+
+    public String getVersion(DownloadService downloadService) throws IOException {
+        if (latestRelease == null) {
+            synchronized (lock) {
+                if (latestRelease == null) {
+                    GithubReleaseService releaseService = new GithubReleaseService(downloadService);
+                    latestRelease = releaseService.getGithubRelease(owner, name);
+                }
+            }
+        }
+
+        return latestRelease == null ? fallbackVersion : latestRelease.tag_name;
     }
 
 }

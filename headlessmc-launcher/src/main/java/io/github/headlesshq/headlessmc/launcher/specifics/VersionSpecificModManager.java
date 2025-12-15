@@ -49,24 +49,24 @@ public class VersionSpecificModManager {
 
     public void download(Version version, VersionSpecificModRepository repository) throws VersionSpecificException, IOException {
         VersionInfo info = VersionInfo.requireModLauncher(version);
-        File file = getFileManager().createRelative(repository.getName()).get(false, false, repository.getFileName(info));
+        File file = getFileManager().createRelative(repository.getName()).get(false, false, repository.getFileName(repository.getVersion(downloadService), info));
         if (file.exists()) {
             return;
         }
 
-        URL url = repository.getDownloadURL(info);
+        URL url = repository.getDownloadURL(repository.getVersion(downloadService), info);
         log.info("Downloading " + file.getName() + " from " + url);
         downloadService.download(url.toString(), file.toPath());
     }
 
     public void install(Version version, VersionSpecificModRepository repository, Path modsFolder) throws VersionSpecificException, IOException {
         VersionInfo info = VersionInfo.requireModLauncher(version);
-        File file = getFileManager().createRelative(repository.getName()).get(false, false, repository.getFileName(info));
+        File file = getFileManager().createRelative(repository.getName()).get(false, false, repository.getFileName(repository.getVersion(downloadService), info));
         if (!file.exists()) {
             throw new VersionSpecificException("Failed to find " + repository.getName() + " for version " + info.getDescription());
         }
 
-        Path outputFile = modsFolder.resolve(repository.getFileName(info));
+        Path outputFile = modsFolder.resolve(repository.getFileName(repository.getVersion(downloadService), info));
         if (!Files.exists(outputFile)) {
             Files.createDirectories(outputFile.getParent());
             try (InputStream is = Files.newInputStream(file.toPath()); OutputStream os = Files.newOutputStream(outputFile)) {
@@ -77,7 +77,7 @@ public class VersionSpecificModManager {
 
     public void deleteSpecificsOfOtherVersions(Version version, VersionSpecificModRepository repository, Path modsFolder) throws VersionSpecificException, IOException {
         VersionInfo info = VersionInfo.requireModLauncher(version);
-        String expectedFileName = repository.getFileName(info);
+        String expectedFileName = repository.getFileName(repository.getVersion(downloadService), info);
         Pattern pattern = repository.getFileNamePattern();
         if (Files.exists(modsFolder)) {
             try (Stream<Path> stream = Files.list(modsFolder)) {
