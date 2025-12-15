@@ -37,7 +37,7 @@ jobs:
         run: cp headlessmc-launcher-wrapper/build/libs/headlessmc-launcher.jar .
 
       - name: Upload Launcher Jar
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: launcher-jar
           path: ./headlessmc-launcher.jar
@@ -103,7 +103,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
       - name: Display structure of downloaded files
         run: ls -R
       - name: Copy launcher jar

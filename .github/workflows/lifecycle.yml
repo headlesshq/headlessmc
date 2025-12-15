@@ -47,7 +47,7 @@ jobs:
       - name: Rename launcher jar
         run: mv headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-wrapper.jar
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: launcher-wrapper-java8-jar
           path: |
@@ -122,7 +122,7 @@ jobs:
         run: rm headlessmc-launcher-jfx/build/libs/headlessmc-launcher-jfx-*-sources.jar
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: HeadlessMc Launcher files
           path: |
@@ -145,7 +145,7 @@ jobs:
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
@@ -193,7 +193,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: github-pages
           path: .
@@ -221,7 +221,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -273,7 +273,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -303,7 +303,7 @@ jobs:
         run: ls headlessmc-graalvm/build/native/nativeCompile
 
       - name: Publish Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: HeadlessMc Native Image ${{ matrix.os.name }}
           path: |
@@ -369,7 +369,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -451,7 +451,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -510,12 +510,12 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: mcrt-${{ matrix.version.mc }}
           path: .
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
 
@@ -560,7 +560,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -607,7 +607,7 @@ jobs:
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -645,7 +645,7 @@ jobs:
           - linux/arm64
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: launcher-wrapper-java8-jar
       - name: Display structure of downloaded files
@@ -696,7 +696,7 @@ jobs:
             startsWith(github.ref, 'refs/tags/') ||
             github.ref == 'refs/heads/main'
           )
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -714,7 +714,7 @@ jobs:
     needs: [ docker-build, build, build-natives, run, run-command-test, server-test, run-with-xvfb]
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests
           pattern: digests-*
@@ -774,7 +774,7 @@ jobs:
           name: mcrt-*
           failOnError: false
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v5
+        uses: actions/upload-artifact/merge@v6
         with:
           delete-merged: true
 
@@ -786,7 +786,7 @@ jobs:
       contents: write
     steps:
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
       - name: Display structure of downloaded files
         run: ls -R
       - name: Release
