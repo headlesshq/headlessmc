@@ -260,6 +260,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
 
         ctx.log("Starting login process " + threadId + ", enter 'login -cancel " + threadId + "' to cancel the login process.");
         thread.start();
+        ctx.getExitManager().addTaskThread(thread);
     }
 
     protected ILogger getLogger(String... args) {

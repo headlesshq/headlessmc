@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -11,6 +12,7 @@ import java.util.function.Consumer;
  */
 @Setter
 public class ExitManager {
+    private final Set<Thread> tasks = Collections.newSetFromMap(new WeakHashMap<>());
     /**
      * Called by {@link #exit(int)}.
      */
@@ -24,6 +26,18 @@ public class ExitManager {
      */
     @Getter
     private Integer exitCode;
+
+    /**
+     * Adds a task Thread, a Thread that keeps HeadlessMc from exiting until it is finished.
+     * These Threads are stored as weak references and will be garbage collected once they are done.
+     * 
+     * @param thread the task Thread to add.
+     */
+    public void addTaskThread(Thread thread) {
+        synchronized (tasks) {
+            tasks.add(thread);
+        }
+    }
 
     /**
      * Calls the configured exit manager with the given exit code.
@@ -41,6 +55,18 @@ public class ExitManager {
      * @param throwable the Throwable thrown at the end of the main thread.
      */
     public void onMainThreadEnd(@Nullable Throwable throwable) {
+        if (throwable == null) {
+            synchronized (tasks) {
+                tasks.forEach(thread -> {
+                    try {
+                        thread.join();
+                    } catch (InterruptedException ignored) {
+
+                    }
+                });
+            }
+        }
+
         mainThreadEndHook.accept(throwable);
     }
 
