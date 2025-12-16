@@ -2,10 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.specifics;
 
 import io.github.headlesshq.headlessmc.api.HasName;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -90,6 +87,18 @@ public class VersionSpecificModRepository implements HasName {
      */
     public Pattern getFileNamePattern() {
         return Pattern.compile(name + "-.*-.*-.*" + appendix + ".jar");
+    }
+
+    /**
+     * Legacy {@link #getVersion(DownloadService)}.
+     *
+     * @return the tag name of the latest GitHub release version of this repository.
+     * @deprecated use {@link #getVersion(DownloadService)} instead.
+     */
+    @Deprecated
+    @SneakyThrows
+    public String getVersion() {
+        return getVersion(new DownloadService());
     }
 
     /**
