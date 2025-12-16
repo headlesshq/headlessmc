@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.specifics;
 
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
 import io.github.headlesshq.headlessmc.launcher.modlauncher.Modlauncher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class VersionSpecificModRepositoryTest {
     @Test
+    @Disabled("Requests the GitHub API")
     public void testVersionSpecificModRepository() throws IOException {
         URL url = new URL("https://github.com/headlesshq/hmc-test-repo/releases/download/");
         VersionSpecificModRepository hmcTestRepo = new VersionSpecificModRepository(url, "headlesshq", "hmc-test-repo", "0.2.0", "-release");
