@@ -9,8 +9,9 @@ import io.github.headlesshq.headlessmc.launcher.version.Version;
 import lombok.CustomLog;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @CustomLog
@@ -22,11 +23,13 @@ public class SpecificsCommand extends AbstractVersionCommand {
     @Override
     public void execute(String line, String... args) throws CommandException {
         if (args.length < 2) {
+            // would be better to fetch versions one by one and print them one by one
+            // so that the user gets immediate feedback
             Map<VersionSpecificModRepository, String> versions = fetchVersions();
             ctx.log(new Table<VersionSpecificModRepository>()
                     .withColumn("name", VersionSpecificModRepository::getName)
                     .withColumn("version", repo -> versions.getOrDefault(repo, "-"))
-                    .withColumn("url", v -> v.getUrl().toString())
+                    .withColumn("url", v -> cleanUrl(v.getUrl()))
                     .addAll(ctx.getVersionSpecificModManager().getSpecificMods())
                     .build());
             return;
@@ -56,8 +59,8 @@ public class SpecificsCommand extends AbstractVersionCommand {
     }
 
     private Map<VersionSpecificModRepository, String> fetchVersions() {
-        Map<VersionSpecificModRepository, String> versions = new HashMap<>();
-        for (VersionSpecificModRepository repository : ctx.getVersionSpecificModManager().getSpecificMods()) {
+        Map<VersionSpecificModRepository, String> versions = new ConcurrentHashMap<>();
+        ctx.getVersionSpecificModManager().getSpecificMods().stream().parallel().forEach(repository -> {
             try {
                 String version = repository.getVersion(ctx.getDownloadService());
                 versions.put(repository, version);
@@ -65,9 +68,18 @@ public class SpecificsCommand extends AbstractVersionCommand {
                 log.error("Failed to get latest release for " + repository.getName() + "/" + repository.getOwner());
                 versions.put(repository, "-");
             }
-        }
+        });
 
         return versions;
+    }
+
+    private String cleanUrl(URL url) {
+        String result = url.toString();
+        if (result.endsWith("/releases/download/")) {
+            result = result.substring(0, result.length() - "/releases/download/".length());
+        }
+
+        return result;
     }
 
 }

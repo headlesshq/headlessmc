@@ -2,7 +2,10 @@ package io.github.headlesshq.headlessmc.launcher.specifics;
 
 import io.github.headlesshq.headlessmc.api.HasName;
 import io.github.headlesshq.headlessmc.launcher.download.DownloadService;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -20,7 +23,9 @@ import java.util.regex.Pattern;
  */
 @Data
 public class VersionSpecificModRepository implements HasName {
+    @Getter(AccessLevel.NONE)
     private volatile GithubReleaseService.GithubRelease latestRelease;
+    @Getter(AccessLevel.NONE)
     private final Object lock = new Object();
 
     /**
@@ -29,6 +34,7 @@ public class VersionSpecificModRepository implements HasName {
      * <p>E.g. <a href=https://github.com/headlesshq/hmc-specifics/releases/download/>
      * https://github.com/headlesshq/hmc-specifics/releases/download/</a>
      */
+    @EqualsAndHashCode.Exclude
     private final URL url;
     /**
      * The owner of this Github repository.
@@ -86,6 +92,13 @@ public class VersionSpecificModRepository implements HasName {
         return Pattern.compile(name + "-.*-.*-.*" + appendix + ".jar");
     }
 
+    /**
+     * Caches and downloads the current latest release for this VersionSpecificModRepository.
+     *
+     * @param downloadService the service to use to GET the latest release
+     * @return the tag_name of the latest GitHub Release of this repository
+     * @throws IOException if something goes wrong while fetching the latest GitHub Release.
+     */
     public String getVersion(DownloadService downloadService) throws IOException {
         if (latestRelease == null) {
             synchronized (lock) {
