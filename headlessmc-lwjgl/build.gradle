@@ -45,8 +45,8 @@ dependencies {
 
     // TODO: the RedirectionApi should be in a separate module, since it
     //  does not need ASM and ASM might not be available at runtime
-    jarLibsApi group: 'org.ow2.asm', name: 'asm', version: '9.9'
-    jarLibsApi group: 'org.ow2.asm', name: 'asm-tree', version: '9.9'
+    jarLibsApi group: 'org.ow2.asm', name: 'asm', version: '9.9.1'
+    jarLibsApi group: 'org.ow2.asm', name: 'asm-tree', version: '9.9.1'
 
     testImplementation(testFixtures(project(':headlessmc-api')))
     // Only for the LaunchWrapperTest, which is skipped on Java > 8
