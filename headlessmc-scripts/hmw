@@ -1,3 +1,3 @@
 #!/bin/bash
 # when running in docker on windows bash seems to be at /bin/bash TODO: can we make this one script?
-java -jar headlessmc-launcher-wrapper-2.7.1.jar --command $@
+java -jar headlessmc-launcher-wrapper-2.8.0.jar --command $@

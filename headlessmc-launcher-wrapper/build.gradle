@@ -117,6 +117,8 @@ tasks.withType(Test).configureEach {
     dependsOn testPluginJar
     project.logger.info("Enabling integration test: ${hmc_integration_test_enabled}")
     systemProperties["hmc.integration.test.enabled"] = "${hmc_integration_test_enabled}"
+
+    // This seems to have been necessary in JDKs before 21.0.9, but with 21.0.9 it is no longer needed.
     //if (JavaVersion.current() >= JavaVersion.VERSION_21
     //    && "${hmc_integration_test_enabled}".toBoolean()) {
     //      systemProperties["java.security.manager"] = "allow"
