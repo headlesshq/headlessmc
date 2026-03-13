@@ -15,28 +15,6 @@ import static io.github.headlesshq.headlessmc.lwjgl.api.Redirection.of;
 // TODO: redirect Keyboard and Mouse?
 @UtilityClass
 public class LwjglRedirections {
-    public static final int GL_TEXTURE_WIDTH = 4096;
-    public static final int GL_TEXTURE_INTERNAL_FORMAT_CONST = 4099;
-    public static final int GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT = 0x8A34;
-
-    public static final int GL_TEXTURE_INTERNAL_FORMAT = Integer.parseInt(
-        System.getProperty(LwjglProperties.GL_TEXTURE_INTERNAL_FORMAT, "32856")); //RGBA8
-    public static final int TEXTURE_SIZE = Integer.parseInt(
-        System.getProperty(LwjglProperties.TEXTURE_SIZE, "1024"));
-    public static final boolean FULLSCREEN = Boolean.parseBoolean(
-        System.getProperty(LwjglProperties.FULLSCREEN, "true"));
-    public static final int SCREEN_WIDTH = Integer.parseInt(
-        System.getProperty(LwjglProperties.SCREEN_WIDTH, "1920"));
-    public static final int SCREEN_HEIGHT = Integer.parseInt(
-        System.getProperty(LwjglProperties.SCREEN_HEIGHT, "1080"));
-    public static final int REFRESH_RATE = Integer.parseInt(
-        System.getProperty(LwjglProperties.REFRESH_RATE, "100"));
-    public static final int BITS_PER_PIXEL = Integer.parseInt(
-        System.getProperty(LwjglProperties.BITS_PER_PIXEL, "32"));
-    public static final int JNI_VERSION = Integer.parseInt(
-        System.getProperty(LwjglProperties.JNI_VERSION, "24"));
-    public static final int UNIFORM_OFFSET_ALIGNMENT = Integer.parseInt(
-            System.getProperty(LwjglProperties.UNIFORM_OFFSET_ALIGNMENT, "1"));
     private static final ThreadLocal<Long> CURRENT_BUFFER_SIZE =
         ThreadLocal.withInitial(() -> 0L);
     private static final long START = System.nanoTime();
@@ -77,35 +55,35 @@ public class LwjglRedirections {
         manager.redirect("Lorg/lwjgl/glfw/GLFW;glfwGetFramebufferSize(J[I[I)V",
                          (obj, desc, type, args) -> {
                              int[] width = (int[]) args[1];
-                             width[0] = SCREEN_WIDTH;
+                             width[0] = LwjglConfig.SCREEN_WIDTH;
                              int[] height = (int[]) args[2];
-                             height[0] = SCREEN_HEIGHT;
+                             height[0] = LwjglConfig.SCREEN_HEIGHT;
                              return null;
                          });
 
         manager.redirect("Lorg/lwjgl/opengl/Display;getWidth()I",
-                         of(SCREEN_WIDTH));
+                         of(LwjglConfig.SCREEN_WIDTH));
         manager.redirect("Lorg/lwjgl/opengl/Display;getHeight()I",
-                         of(SCREEN_HEIGHT));
+                         of(LwjglConfig.SCREEN_HEIGHT));
         manager.redirect("Lorg/lwjgl/opengl/Display;isFullscreen()Z",
-                         of(FULLSCREEN));
+                         of(LwjglConfig.FULLSCREEN));
 
         manager.redirect("Lorg/lwjgl/DefaultSysImplementation;getJNIVersion()I",
-                         of(JNI_VERSION));
+                         of(LwjglConfig.JNI_VERSION));
 
         // TODO: make this configurable?
         manager.redirect("Lorg/lwjgl/opengl/Display;isActive()Z", of(true));
 
         manager.redirect("Lorg/lwjgl/opengl/DisplayMode;isFullscreenCapable()Z",
-                         of(FULLSCREEN));
+                         of(LwjglConfig.FULLSCREEN));
         manager.redirect("Lorg/lwjgl/opengl/DisplayMode;getWidth()I",
-                         of(SCREEN_WIDTH));
+                         of(LwjglConfig.SCREEN_WIDTH));
         manager.redirect("Lorg/lwjgl/opengl/DisplayMode;getHeight()I",
-                         of(SCREEN_HEIGHT));
+                         of(LwjglConfig.SCREEN_HEIGHT));
         manager.redirect("Lorg/lwjgl/opengl/DisplayMode;getFrequency()I",
-                         of(REFRESH_RATE));
+                         of(LwjglConfig.REFRESH_RATE));
         manager.redirect("Lorg/lwjgl/opengl/DisplayMode;getBitsPerPixel()I",
-                         of(BITS_PER_PIXEL));
+                         of(LwjglConfig.BITS_PER_PIXEL));
 
         manager.redirect("Lorg/lwjgl/glfw/GLFW;glfwInit()Z",
                          of(true));
@@ -119,16 +97,16 @@ public class LwjglRedirections {
 
         manager.redirect("Lorg/lwjgl/opengl/GL11;glGetTexLevelParameteri(III)I",
                 (obj, desc, type, args) -> {
-                    if ((int) args[2] == GL_TEXTURE_INTERNAL_FORMAT_CONST) {
+                    if ((int) args[2] == LwjglConfig.GL_TEXTURE_INTERNAL_FORMAT_CONST) {
                         // Neoforge 1.21.5
                         // Couldn't find a matching vanilla TextureFormat for OpenGL internal format id
                         // com.mojang.blaze3d.opengl.GlDevice
-                        return GL_TEXTURE_INTERNAL_FORMAT;
-                    } else if ((int) args[2] == GL_TEXTURE_WIDTH && (int) args[1]/*level*/ > 0) {
+                        return LwjglConfig.GL_TEXTURE_INTERNAL_FORMAT;
+                    } else if ((int) args[2] == LwjglConfig.GL_TEXTURE_WIDTH && (int) args[1]/*level*/ > 0) {
                         return 0; // otherwise Neoforge 1.21.5 gets caught in an endless loop of checking width != 0; for higher levels
                     }
 
-                    return TEXTURE_SIZE;
+                    return LwjglConfig.TEXTURE_SIZE;
                 });
         manager.redirect("Lorg/lwjgl/opengl/GL11;glGenLists(I)I", of(-1));
 
@@ -326,8 +304,8 @@ public class LwjglRedirections {
         // division by zero, because the integer returned is 0
         manager.redirect("Lorg/lwjgl/opengl/GL11;glGetInteger(I)I",
                 (obj, desc, type, args) -> {
-                    if ((int) args[0] == GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT) {
-                        return UNIFORM_OFFSET_ALIGNMENT;
+                    if ((int) args[0] == LwjglConfig.GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT) {
+                        return LwjglConfig.UNIFORM_OFFSET_ALIGNMENT;
                     }
 
                     return 0;

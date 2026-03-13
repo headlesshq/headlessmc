@@ -48,9 +48,7 @@ public class ConfigCommand extends AbstractLauncherCommand implements FindByComm
             return;
         }
 
-        if (CommandUtil.hasFlag("-refresh", args)) {
-            ctx.getConfigService().refresh();
-        }
+        handleRefresh(ctx.getConfigService(), args);
 
         if (args.length == 1) {
             ctx.log(new Table<Config>()

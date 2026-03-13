@@ -35,25 +35,17 @@ public class OSFactory {
             return OS.Type.valueOf(type.toUpperCase(Locale.ENGLISH));
         }
 
-        OS.Type result;
-        String os = osIn;
-        if ((os = os.toLowerCase(Locale.ENGLISH)).contains("nux")
-            || os.contains("solaris")
-            || os.contains("nix")
-            || os.contains("sunos")) {
-            result = OS.Type.LINUX;
-        } else if (os.contains("darwin") || os.contains("mac")) {
-            result = OS.Type.OSX;
-        } else if (os.contains("win")) {
-            result = OS.Type.WINDOWS;
-        } else {
-            throw new IllegalStateException(
-                "Couldn't detect your Operating System Type from '" + os
-                    + "' please provide one of WINDOWS, OSX or LINUX with the "
-                    + OsProperties.OS_TYPE + " property!");
+        String os = osIn.toLowerCase(Locale.ENGLISH);
+        for (OS.Type osType : OS.Type.values()) {
+            if (osType.matches(os)) {
+                return osType;
+            }
         }
 
-        return result;
+        throw new IllegalStateException(
+            "Couldn't detect your Operating System Type from '" + osIn
+                + "' please provide one of WINDOWS, OSX or LINUX with the "
+                + OsProperties.OS_TYPE + " property!");
     }
 
     private static String getArchitecture(Config config, OS.Type type) {

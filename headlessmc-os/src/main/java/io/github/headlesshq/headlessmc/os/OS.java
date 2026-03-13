@@ -32,14 +32,28 @@ public class OS implements HasName {
     }
 
     @Getter
-    @RequiredArgsConstructor
     public enum Type implements HasName {
-        WINDOWS("windows"),
-        LINUX("linux"),
-        OSX("osx"),
+        WINDOWS("windows", "win"),
+        LINUX("linux", "nux", "solaris", "nix", "sunos"),
+        OSX("osx", "darwin", "mac"),
         UNKNOWN("unknown");
 
         private final String name;
+        private final String[] patterns;
+
+        Type(String name, String... patterns) {
+            this.name = name;
+            this.patterns = patterns;
+        }
+
+        public boolean matches(String osName) {
+            for (String pattern : patterns) {
+                if (osName.contains(pattern)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
 }
