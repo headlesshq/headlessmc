@@ -60,13 +60,13 @@ public class OSFactory {
         String architecture = config.get(OsProperties.OS_ARCHITECTURE);
         if (architecture == null) {
             if (type == OS.Type.WINDOWS) {
-                String p_arch = System.getenv("PROCESSOR_ARCHITECTURE");
+                String processorArch = System.getenv("PROCESSOR_ARCHITECTURE");
                 String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
-                return p_arch == null
+                return processorArch == null
                         ? (wow64Arch == null
                             ? Objects.requireNonNull(System.getProperty("os.arch"), "Couldn't detect OS architecture")
                             : wow64Arch)
-                        : p_arch;
+                        : processorArch;
             } else {
                 architecture = Objects.requireNonNull(System.getProperty("os.arch"), "Couldn't detect OS architecture");
             }
@@ -79,10 +79,10 @@ public class OSFactory {
         Boolean arch = config.get(OsProperties.OS_ARCH);
         if (arch == null) {
             if (type == OS.Type.WINDOWS) {
-                String p_arch = System.getenv("PROCESSOR_ARCHITECTURE");
+                String processorArch = System.getenv("PROCESSOR_ARCHITECTURE");
                 String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
 
-                arch = p_arch != null && p_arch.endsWith("64")
+                arch = processorArch != null && processorArch.endsWith("64")
                     || wow64Arch != null && wow64Arch.endsWith("64");
             } else {
                 arch = Objects.requireNonNull(

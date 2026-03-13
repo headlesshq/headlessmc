@@ -24,7 +24,8 @@ public class ValidatedAccount implements HasName {
     }
 
     public static ValidatedAccount fromJson(JsonObject jsonObject) {
-        StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.fromJson(jsonObject.get("session").getAsJsonObject());
+        JsonObject sessionJson = jsonObject.get("session").getAsJsonObject();
+        StepFullJavaSession.FullJavaSession session = MinecraftAuth.JAVA_DEVICE_CODE_LOGIN.fromJson(sessionJson);
         return new ValidatedAccount(session, jsonObject.get("xuid").getAsString());
     }
 

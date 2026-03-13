@@ -32,7 +32,7 @@ public class DebugTransformer extends AbstractClassTransformer {
         }
 
         for (MethodNode mn : cn.methods) {
-            if (Modifier.isAbstract(mn.access) || Modifier.isNative(mn.access) || "<init>".equals(mn.name) || "<clinit>".equals(mn.name)) {
+            if (shouldSkipMethod(mn)) {
                 continue;
             }
 
@@ -75,6 +75,13 @@ public class DebugTransformer extends AbstractClassTransformer {
             mn.instructions.insert(debug);
             //mn.visitMaxs(0, 0);
         }
+    }
+
+    private boolean shouldSkipMethod(MethodNode mn) {
+        return Modifier.isAbstract(mn.access)
+            || Modifier.isNative(mn.access)
+            || "<init>".equals(mn.name)
+            || "<clinit>".equals(mn.name);
     }
 
     @Override
