@@ -81,7 +81,7 @@ jobs:
 
       # TODO: artifact for each modlauncher
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: mcrt-${{ inputs.mc }}
           path: ${{ inputs.dir }}/build/libs/*.jar
