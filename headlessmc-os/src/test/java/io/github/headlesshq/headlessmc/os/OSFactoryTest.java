@@ -28,4 +28,14 @@ public class OSFactoryTest {
         assertTrue(os.is64bit());
     }
 
+    @Test
+    public void testDarwinDetection() {
+        Properties properties = new Properties();
+        properties.put(OsProperties.OS_NAME.getName(), "darwin");
+        Config config = new ConfigImpl(properties, "test", 0);
+
+        OS os = OSFactory.detect(config);
+        assertEquals(OS.Type.OSX, os.getType());
+    }
+
 }
