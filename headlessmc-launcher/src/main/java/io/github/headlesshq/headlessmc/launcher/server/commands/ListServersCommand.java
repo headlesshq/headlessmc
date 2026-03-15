@@ -15,19 +15,16 @@ public class ListServersCommand extends AbstractLauncherCommand {
 
     @Override
     public void execute(String line, String... args) throws CommandException {
-        if (CommandUtil.hasFlag("-refresh", args)) {
-            ctx.getServerManager().refresh();
-        }
+        handleRefresh(ctx.getServerManager(), args);
 
         ctx.log(
-            new Table<Server>()
-                    .withColumn("id", server -> String.valueOf(server.getId()))
-                    .withColumn("type", server -> server.getVersion().getServerType().getName())
-                    .withColumn("version", server -> server.getVersion().getVersion())
-                    .withColumn("name", HasName::getName)
-                    .addAll(ctx.getServerManager().getContents())
-                    .build()
-        );
+                new Table<Server>()
+                        .withColumn("id", server -> String.valueOf(server.getId()))
+                        .withColumn("type", server -> server.getVersion().getServerType().getName())
+                        .withColumn("version", server -> server.getVersion().getVersion())
+                        .withColumn("name", HasName::getName)
+                        .addAll(ctx.getServerManager().getContents())
+                        .build());
     }
 
 }

@@ -33,9 +33,9 @@ public class OS implements HasName {
 
     @Getter
     public enum Type implements HasName {
+        OSX("osx", "darwin", "mac"),
         WINDOWS("windows", "win"),
         LINUX("linux", "nux", "solaris", "nix", "sunos"),
-        OSX("osx", "darwin", "mac"),
         UNKNOWN("unknown");
 
         private final String name;
