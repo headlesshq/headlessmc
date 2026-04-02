@@ -228,36 +228,28 @@ public class LwjglRedirections {
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memSlice(" +
                              "Ljava/nio/ByteBuffer;II)Ljava/nio/ByteBuffer;",
                          (obj, desc, type, args) -> {
-                             // TODO: redirected for now to prevent console
-                             //  spam, but this should be done properly at some
-                             //  point. It looks as if the returned buffer is
-                             //  never used except for other redirected lwjgl
-                             //  methods, so null is fairly safe rn.
-                             /*
                              ByteBuffer buffer = (ByteBuffer) args[0];
-                             if (buffer == null) {
-                                return null;
-                             }
-
                              int offset = (int) args[1];
                              int capacity = (int) args[2];
+                             if (buffer == null) {
+                                return ByteBuffer.wrap(new byte[capacity]).order(ByteOrder.nativeOrder());
+                             }
 
-                             int position = buffer.position() + offset;
-                             if (offset < 0 || buffer.limit() < position) {
+                             int basePosition = buffer.position();
+                             int start = basePosition + offset;
+
+                             if (offset < 0 || buffer.limit() < start) {
+                                 throw new IllegalArgumentException();
+                             }
+                             if (capacity < 0 || buffer.capacity() - start < capacity) {
                                  throw new IllegalArgumentException();
                              }
 
-                             if (capacity < 0 || buffer.capacity()
-                                 - position < capacity) {
-                                 throw new IllegalArgumentException();
-                             }
+                             ByteBuffer dup = buffer.duplicate().order(buffer.order());
+                             dup.position(start);
+                             dup.limit(start + capacity);
 
-                             // TODO: allocate new bytebuffer of size and
-                             //       copy bytes to that buffer
-
-                             */
-
-                             return null;
+                             return dup.slice().order(buffer.order());
                          });
 
         // 1.20
