@@ -316,6 +316,8 @@ public class LwjglRedirections {
         //        at TRANSFORMER/minecraft@1.21.10/com.mojang.blaze3d.opengl.GlDevice.createTexture(GlDevice.java:119) ~[forge-1.21.10-60.0.17-client.jar:?]
         manager.redirect("Lorg/lwjgl/opengl/GL11C;glGenTextures()I",
                 (obj, desc, type, args) -> 1);
+
+        ByteBufferRedirections.redirect(manager);
     }
 
 }
