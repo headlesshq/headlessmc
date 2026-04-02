@@ -52,7 +52,7 @@ public class AssetsDownloader {
         }
 
         ParallelIOService ioService = new ParallelIOService(
-                config.getConfig().get(LauncherProperties.ASSETS_DELAY, 0L),
+                config.getConfig().get(LauncherProperties.ASSETS_DELAY, 2L),
                 Math.max(1, config.getConfig().get(LauncherProperties.ASSETS_RETRIES, 3L).intValue()),
                 config.getConfig().get(LauncherProperties.ASSETS_PARALLEL, true),
                 config.getConfig().get(LauncherProperties.ASSETS_BACKOFF, true)
