@@ -98,8 +98,9 @@ public class LaunchTest {
         @Cleanup
         val is = ResourceUtil.getResource("launch.json");
         @Cleanup
-        val os = new FileOutputStream(versionFile);
-        IOUtil.copy(is, os);
+        try (val os = new FileOutputStream(versionFile)) {
+            IOUtil.copy(is, os);
+        }
     }
 
 }
