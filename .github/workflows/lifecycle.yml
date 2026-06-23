@@ -28,7 +28,7 @@ jobs:
   build-java-8:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v5
         with:
           java-version: 8
@@ -58,7 +58,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v5
         with:
           java-version: 21
@@ -72,7 +72,7 @@ jobs:
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
         id: jacoco
-        uses: madrapps/jacoco-report@v1.7.2
+        uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: |
             ${{ github.workspace }}/**/build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
@@ -145,7 +145,7 @@ jobs:
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
@@ -179,7 +179,7 @@ jobs:
         run: cp -r build/reports/jacoco/jacocoRootReport/coverage/ _site/
       - name: Upload Web page artifact
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        uses: actions/upload-pages-artifact@v4.0.0
+        uses: actions/upload-pages-artifact@v5.0.0
 
   deploy-pages:
     # startsWith(github.ref, 'refs/tags/') || we do not allow tags to deploy github pages
@@ -201,7 +201,7 @@ jobs:
         run: ls -R
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   test-build-natives:
     runs-on: ${{ matrix.os.os }}
@@ -213,7 +213,7 @@ jobs:
           - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: '23'
@@ -265,7 +265,7 @@ jobs:
           - { os: macos-latest, name: headlessmc-launcher-macos-arm64 }
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: '23'
@@ -378,7 +378,7 @@ jobs:
         # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
         run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
@@ -463,7 +463,7 @@ jobs:
         # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
         run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
@@ -533,7 +533,7 @@ jobs:
         run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
 
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
@@ -605,7 +605,7 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     needs: build-java-8
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install Java
         uses: actions/setup-java@v5
         with:
@@ -648,7 +648,7 @@ jobs:
           - linux/amd64
           - linux/arm64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           name: launcher-wrapper-java8-jar
@@ -800,7 +800,7 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           #draft: true
