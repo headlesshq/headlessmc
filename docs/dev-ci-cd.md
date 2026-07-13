@@ -40,7 +40,7 @@ jobs:
           cp build/libs/&lt;your-mod&gt;.jar run/mods
 
       - name: Run MC test client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: 1.21.4
           modloader: fabric

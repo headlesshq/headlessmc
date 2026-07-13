@@ -378,7 +378,7 @@ jobs:
         # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
         run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
@@ -463,7 +463,7 @@ jobs:
         # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
         run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
@@ -533,7 +533,7 @@ jobs:
         run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
 
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.1.0
+        uses: headlesshq/mc-runtime-test@4.4.0
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
