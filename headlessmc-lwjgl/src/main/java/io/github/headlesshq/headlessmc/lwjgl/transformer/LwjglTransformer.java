@@ -27,8 +27,27 @@ import static org.objectweb.asm.Opcodes.*;
  * their body transformed as described above.
  */
 public class LwjglTransformer implements Transformer {
+    /**
+     * {@code org.lwjgl.system.Configuration} is a pure configuration registry:
+     * its {@code public static final Configuration<?>} option fields are
+     * assigned in the static initializer and it makes no native calls. If we
+     * transform it like every other lwjgl class its static initializer gets
+     * gutted, leaving those fields {@code null}. Minecraft 26.2's {@code
+     * com.mojang.blaze3d.platform.NativeLibrariesBootstrap} reads {@code
+     * Configuration.SHARED_LIBRARY_EXTRACT_PATH} while loading native libraries,
+     * which then throws a {@link NullPointerException} and crashes the game
+     * before it starts. Leaving the class untouched lets it behave exactly as it
+     * does without the agent (i.e. as it already does in a real, non-headless
+     * launch), while every actual native/GL class stays stubbed.
+     */
+    private static final String CONFIGURATION = "org/lwjgl/system/Configuration";
+
     @Override
     public void transform(ClassNode cn) {
+        if (CONFIGURATION.equals(cn.name)) {
+            return;
+        }
+
         try {
             transformModule(cn);
         } catch (NoSuchFieldError ignored) {
