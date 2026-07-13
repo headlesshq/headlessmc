@@ -84,6 +84,17 @@ jobs:
         if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
         run: ./gradlew build --stacktrace
 
+      - name: Upload Test Reports
+        if: failure()
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+
       - name: Publish with gradle
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         env:
