@@ -103,6 +103,20 @@ public class LwjglInstrumentationTest {
 
     @Test
     @SneakyThrows
+    public void testConfigurationStaticInitializerPreserved() {
+        // org.lwjgl.system.Configuration must be left untouched so its static
+        // option fields keep their values; otherwise Minecraft 26.2's
+        // NativeLibrariesBootstrap NPEs reading SHARED_LIBRARY_EXTRACT_PATH.
+        val configuration = load(org.lwjgl.system.Configuration.class);
+        val field = configuration.getField("SHARED_LIBRARY_EXTRACT_PATH");
+        assertNotNull(
+            field.get(null),
+            "Configuration's static initializer must be preserved so its "
+                + "static option fields are non-null");
+    }
+
+    @Test
+    @SneakyThrows
     public void testArrayReturnValue() {
         val lwjgl = new Lwjgl("test");
         assertNull(lwjgl.returnsByteArray("test"));
