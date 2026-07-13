@@ -11,7 +11,10 @@ public interface LwjglProperties {
     String BITS_PER_PIXEL = "hmc.lwjgl.bitsperpixel";
     String JNI_VERSION = "hmc.lwjgl.nativejniversion";
     String UNIFORM_OFFSET_ALIGNMENT = "hmc.lwjgl.uniformoffsetalignment";
+    String MAX_DRAW_BUFFERS = "hmc.lwjgl.maxdrawbuffers";
+    String MAX_TEXTURE_SIZE = "hmc.lwjgl.maxtexturesize";
     String NO_AWT = "hmc.lwjgl.no.awt";
+    String IGNORE_CLASSES = "hmc.lwjgl.ignore.classes";
 
     String TWEAKER_MAIN_CLASS = "hmc.tweaker.main.class";
 

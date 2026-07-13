@@ -294,14 +294,7 @@ public class LwjglRedirections {
         // DynamicUniformStorage.<init>
         // GlDevice this.uniformOffsetAlignment = GL11.glGetInteger(35380);
         // division by zero, because the integer returned is 0
-        manager.redirect("Lorg/lwjgl/opengl/GL11;glGetInteger(I)I",
-                (obj, desc, type, args) -> {
-                    if ((int) args[0] == LwjglConfig.GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT) {
-                        return LwjglConfig.UNIFORM_OFFSET_ALIGNMENT;
-                    }
-
-                    return 0;
-                });
+        manager.redirect("Lorg/lwjgl/opengl/GL11;glGetInteger(I)I", LwjglRedirections::glGetInteger);
 
         // Forge 1.21.10
         //java.lang.IllegalArgumentException: mipLevels must be at least 1
@@ -310,6 +303,55 @@ public class LwjglRedirections {
                 (obj, desc, type, args) -> 1);
 
         ByteBufferRedirections.redirect(manager);
+
+        // 26.2 com.mojang.blaze3d.platform.NativeLibrariesBootstrap is now very annoying
+        manager.redirect("Lorg/lwjgl/stb/STBImage;stbi_failure_reason()Ljava/lang/String;",
+                         (obj, desc, type, args) -> null);
+
+        // 26.2 introduces GPUDevice.getDeviceInfo.limits:
+        // on my laptop this reports:
+        // DeviceLimits[maxAnisotropy=16, minUniformOffsetAlignment=4, maxTextureSize=16384, maxMemoryAllocationSize=Long.MAX_VALUE, maxMultiDrawDirectInterleavedDrawCount=0, maxColorAttachments=8]
+        // TODO: maxAnisotropy
+        // TODO: maxTextureSize=16384
+
+        // 26.2 onwards
+        // DynamicUniformStorage.<init>
+        // For GPUDevice DeviceLimits
+        // division by zero, because the integer returned is 0
+        manager.redirect("Lorg/lwjgl/opengl/GL11C;glGetInteger(I)I", LwjglRedirections::glGetInteger);
+
+        manager.redirect("Lorg/lwjgl/vulkan/VkPhysicalDeviceLimits;minUniformBufferOffsetAlignment()J",
+                         (obj, desc, type, args) -> (long) LwjglConfig.UNIFORM_OFFSET_ALIGNMENT
+        );
+
+        manager.redirect("Lorg/lwjgl/vulkan/VkPhysicalDeviceLimits;maxImageDimension2D()I",
+                         (obj, desc, type, args) -> LwjglConfig.MAX_TEXTURE_SIZE
+        );
+
+        manager.redirect("Lorg/lwjgl/vulkan/VkPhysicalDeviceVulkan11Properties;maxMemoryAllocationSize()J",
+                         (obj, desc, type, args) -> Long.MAX_VALUE
+        );
+
+        manager.redirect("Lorg/lwjgl/vulkan/VkPhysicalDeviceLimits;maxColorAttachments()I",
+                         (obj, desc, type, args) -> LwjglConfig.MAX_DRAW_BUFFERS
+        );
+
+        manager.redirect(
+            "Lorg/lwjgl/opengl/GL20C;glCreateProgram()I",
+            (obj, desc, type, args) -> 1
+        );
+    }
+
+    private static int glGetInteger(Object obj, String desc, Class<?> type, Object... args) {
+        if ((int) args[0] == LwjglConfig.GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT) {
+            return LwjglConfig.UNIFORM_OFFSET_ALIGNMENT;
+        } else if ((int) args[0] == LwjglConfig.GL_MAX_DRAW_BUFFERS) {
+            return LwjglConfig.MAX_DRAW_BUFFERS;
+        } else if ((int) args[0] == LwjglConfig.GL_MAX_TEXTURE_SIZE) {
+            return LwjglConfig.MAX_TEXTURE_SIZE;
+        }
+
+        return 0;
     }
 
 }

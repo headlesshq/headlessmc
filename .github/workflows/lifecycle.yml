@@ -484,7 +484,7 @@ jobs:
           # regardless if mc-runtime-test already supports this version or not
           # to test if this step works
           #- { branch: main, dir: 26_1,  mc: 26.1.1, lex: 63.0.1, neo: 3-beta, java: 25 }
-          - { branch: main, dir: 1_21_10,  mc: 1.21.10, lex: 60.0.0, neo: 50-beta, java: 21 }
+          - { branch: claude/github-issue-137-05c8df, dir: 26_2,  mc: 26.2, lex: 65.0.3, neo: 8-beta, java: 25 }
     uses: ./.github/workflows/build-runtime-test.yml
     if: '!cancelled()' # run always cause we want to see how each version is doing
     #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version
@@ -503,7 +503,9 @@ jobs:
           # the following line should always be here,
           # regardless if mc-runtime-test already supports this version or not
           # to test if this step works
-          - { mc: 1.21.10, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
+          - { mc: 26.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 25 }
+          - { mc: 26.2, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 25 }
+          - { mc: 26.2, type: lexforge, modloader: lexforge, regex: .*forge.*, java: 25 }
     runs-on: ubuntu-latest
     if: '!cancelled()' # run always cause we want to see how each version is doing
     #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version

@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.lwjgl.transformer;
 
+import io.github.headlesshq.headlessmc.lwjgl.LwjglProperties;
 import io.github.headlesshq.headlessmc.lwjgl.api.Redirection;
 import io.github.headlesshq.headlessmc.lwjgl.api.RedirectionApi;
 import io.github.headlesshq.headlessmc.lwjgl.api.Transformer;
@@ -7,8 +8,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Locale;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -27,8 +28,21 @@ import static org.objectweb.asm.Opcodes.*;
  * their body transformed as described above.
  */
 public class LwjglTransformer implements Transformer {
+    public static final String DEFAULT_IGNORED = "org/lwjgl/system/Configuration,org/lwjgl/system/Platform";
+    private static final Set<String> IGNORE_CLASSES = Arrays.stream(
+        System.getProperty(LwjglProperties.IGNORE_CLASSES, DEFAULT_IGNORED).split(","))
+        .filter(string -> !string.trim().isEmpty())
+        .collect(Collectors.toSet());
+    private static final List<String> SUB_CLASSES = IGNORE_CLASSES.stream()
+        .map(string -> string + "$")
+        .collect(Collectors.toList());
+
     @Override
     public void transform(ClassNode cn) {
+        if (cn.name != null && (IGNORE_CLASSES.contains(cn.name) || isIgnoredSubClass(cn.name))) {
+            return;
+        }
+
         try {
             transformModule(cn);
         } catch (NoSuchFieldError ignored) {
@@ -196,4 +210,20 @@ public class LwjglTransformer implements Transformer {
             il.add(new InsnNode(AASTORE));
         }
     }
+
+
+    private boolean isIgnoredSubClass(String className) {
+        if (!className.contains("$")) {
+            return false;
+        }
+
+        for (String subclassPrefix : SUB_CLASSES) {
+            if (className.startsWith(subclassPrefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }
