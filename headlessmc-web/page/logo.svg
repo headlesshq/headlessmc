@@ -12,7 +12,7 @@
    enable-background="new 0 0 972.612 789.32"
    xml:space="preserve"
    id="svg3265"
-   sodipodi:docname="safari-pinned-tab.svg"
+   sodipodi:docname="logo.svg"
    width="512"
    height="512"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
@@ -453,8 +453,7 @@ f//Z</xmpGImg:image>
 	</metadata>
 <switch
    id="switch3263"
-   transform="translate(-229.3059,-139.65972)"
-   style="fill:#000000;fill-opacity:1">
+   transform="translate(-229.3059,-139.65972)">
 	<foreignObject
    requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/"
    x="0"
@@ -467,1832 +466,1529 @@ f//Z</xmpGImg:image>
 	</foreignObject>
 	<g
    ns0:extraneous="self"
-   id="g3261"
-   style="fill:#000000;fill-opacity:1">
+   id="g3261">
 		<g
    id="Layer_1"
    ns0:layer="yes"
    ns0:dimmedPercent="50"
-   ns0:rgbTrio="#4F008000FFFF"
-   style="fill:#000000;fill-opacity:1">
+   ns0:rgbTrio="#4F008000FFFF">
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 512.281,430.378 25.948,-8.931 -2.141,-6.215 c -4.453,2.807 -8.914,5.629 -13.368,8.467 -3.546,2.256 -7.014,4.48 -10.439,6.679"
-   id="path2654"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2654" />
 			<path
    ns0:knockout="Off"
    fill="#945e3d"
    d="m 507.228,433.632 10.342,30.041 31.465,-10.829 -10.805,-31.397 -25.948,8.931 c -1.7,1.094 -3.384,2.177 -5.054,3.254"
-   id="path2656"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2656" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="381.82,580.783 413.291,569.952 402.483,538.555 371.014,549.383      381.82,580.783    "
-   id="polyline2658"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2658" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="413.291,569.952 444.757,559.124 433.951,527.724 402.483,538.555      413.291,569.952    "
-   id="polyline2660"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2660" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="444.757,559.124 476.225,548.295 465.419,516.892 433.951,527.724      444.757,559.124    "
-   id="polyline2662"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2662" />
 			<polyline
    ns0:knockout="Off"
    fill="#945e3d"
    points="528.421,495.212 559.889,484.381 549.035,452.844 517.57,463.673      528.421,495.212    "
-   id="polyline2664"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2664" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="476.225,548.295 507.762,537.437 496.956,506.04 465.419,516.892      476.225,548.295    "
-   id="polyline2666"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2666" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 371.014,549.383 31.469,-10.828 -8.903,-25.869 c -10.703,8.287 -19.79,15.724 -27.493,22.381 l 4.927,14.316"
-   id="path2668"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2668" />
 			<polyline
    ns0:knockout="Off"
    fill="#636161"
    points="465.419,516.892 496.956,506.04 486.101,474.504 454.565,485.359      465.419,516.892    "
-   id="polyline2670"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2670" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 486.101,474.504 31.469,-10.831 -10.342,-30.041 c -10.119,6.532 -19.676,12.795 -28.721,18.808 l 7.594,22.064"
-   id="path2672"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2672" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 454.565,485.359 31.536,-10.855 -7.594,-22.064 c -10.185,6.771 -19.71,13.216 -28.609,19.355 l 4.667,13.564"
-   id="path2674"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2674" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 423.096,496.187 31.469,-10.828 -4.667,-13.564 c -10.234,7.055 -19.669,13.718 -28.322,19.975 l 1.52,4.417"
-   id="path2676"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2676" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="433.951,527.724 465.419,516.892 454.565,485.359 423.096,496.187      433.951,527.724    "
-   id="polyline2678"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2678" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 423.096,496.187 -1.521,-4.417 c -4.431,3.208 -8.641,6.3 -12.684,9.307 l 14.205,-4.89"
-   id="path2680"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2680" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 402.483,538.555 31.468,-10.831 -10.855,-31.537 -14.205,4.89 c -5.44,4.046 -10.538,7.913 -15.311,11.609 l 8.903,25.869"
-   id="path2682"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2682" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="507.762,537.437 539.226,526.609 528.421,495.212 496.956,506.04      507.762,537.437    "
-   id="polyline2684"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2684" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="496.956,506.04 528.421,495.212 517.57,463.673 486.101,474.504      496.956,506.04    "
-   id="polyline2686"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2686" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="486.13,577.07 517.667,566.216 507.762,537.437 476.225,548.295      486.13,577.07    "
-   id="polyline2688"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2688" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="454.662,587.899 486.13,577.07 476.225,548.295 444.757,559.124      454.662,587.899    "
-   id="polyline2690"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2690" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="423.194,598.73 454.662,587.899 444.757,559.124 413.291,569.952      423.194,598.73    "
-   id="polyline2692"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2692" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="517.667,566.216 549.132,555.388 539.226,526.609 507.762,537.437      517.667,566.216    "
-   id="polyline2694"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2694" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="391.725,609.562 423.194,598.73 413.291,569.952 381.82,580.783      391.725,609.562    "
-   id="polyline2696"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2696" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 342.308,559.266 28.706,-9.883 -4.926,-14.316 c -10.387,8.979 -18.266,16.556 -24.216,22.927 l 0.436,1.272"
-   id="path2698"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2698" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="353.113,590.663 381.82,580.783 371.014,549.383 342.308,559.266      353.113,590.663    "
-   id="polyline2700"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2700" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 360.169,611.163 c 1.573,4.571 6.554,7.004 11.128,5.429 l 20.429,-7.03 -9.905,-28.778 -28.707,9.88 7.055,20.499"
-   id="path2702"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2702" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 320.647,496.329 0.191,0.553 c 0.573,-0.405 1.128,-0.798 1.707,-1.203 l -1.898,0.65"
-   id="path2704"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2704" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="549.129,555.384 612.068,533.728 602.163,504.949 539.226,526.609      549.129,555.384    "
-   id="polyline2706"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2706" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 612.068,533.728 20.429,-7.033 c 4.573,-1.573 7.001,-6.554 5.429,-11.125 l -7.056,-20.5 -28.707,9.879 9.905,28.779"
-   id="path2708"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2708" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="602.163,504.949 630.87,495.07 620.064,463.673 591.357,473.549      602.163,504.949    "
-   id="polyline2710"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2710" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="591.357,473.549 620.064,463.673 609.21,432.133 580.503,442.016      591.357,473.549    "
-   id="polyline2712"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2712" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 565.067,397.166 4.631,13.453 28.707,-9.883 -6.814,-19.799 c -8.703,5.282 -17.568,10.702 -26.524,16.229"
-   id="path2714"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2714" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="580.503,442.016 609.21,432.133 598.404,400.736 569.697,410.619      580.503,442.016    "
-   id="polyline2716"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2716" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="559.889,484.381 591.357,473.549 580.503,442.016 549.035,452.844      559.889,484.381    "
-   id="polyline2718"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2718" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="570.695,515.781 602.163,504.949 591.357,473.549 559.889,484.381      570.695,515.781    "
-   id="polyline2720"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2720" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 536.089,415.232 2.141,6.215 31.468,-10.828 -4.631,-13.453 c -9.586,5.919 -19.275,11.954 -28.978,18.066"
-   id="path2722"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2722" />
 			<polyline
    ns0:knockout="Off"
    fill="#636161"
    points="549.035,452.844 580.503,442.016 569.697,410.619 538.229,421.447      549.035,452.844    "
-   id="polyline2724"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2724" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="410.319,331.727 394.213,302.687 365.047,318.862 381.151,347.902      410.319,331.727    "
-   id="polyline2726"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2726" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 423.316,286.547 394.213,302.687 410.319,331.727      439.422,315.586    "
-   id="polyline2728"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2728" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 410.319,331.727 426.493,360.894 455.597,344.753      439.422,315.586    "
-   id="polyline2730"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2730" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="352.05,364.042 335.945,335.004 306.842,351.142 322.948,380.183      352.05,364.042    "
-   id="polyline2732"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2732" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="381.151,347.902 365.047,318.862 335.945,335.004 352.05,364.042      381.151,347.902    "
-   id="polyline2734"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2734" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="306.842,351.142 277.736,367.285 293.841,396.323 322.948,380.183      306.842,351.142    "
-   id="polyline2736"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2736" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 484.699,328.615 -29.102,16.138 11.022,19.871 c 8.646,-7.104 17.403,-14.217 26.23,-21.312 l -8.15,-14.697"
-   id="path2738"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2738" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="468.525,299.447 439.422,315.586 455.597,344.753 484.699,328.615      468.525,299.447    "
-   id="polyline2740"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2740" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="322.948,380.183 293.841,396.323 310.016,425.491 339.122,409.348      322.948,380.183    "
-   id="polyline2742"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2742" />
 			<polyline
    ns0:knockout="Off"
    fill="#784d2e"
    points="339.122,409.348 310.016,425.491 326.121,454.528 355.228,438.388      339.122,409.348    "
-   id="polyline2744"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2744" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 363.62,453.523 -8.391,-15.135 -29.107,16.14 12.416,22.389 c 6.209,-5.927 12.8,-12.114 19.842,-18.608 1.709,-1.575 3.498,-3.193 5.24,-4.786"
-   id="path2746"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2746" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 455.597,344.753 -29.103,16.14 14.066,25.36 c 8.543,-7.177 17.257,-14.401 26.059,-21.63 l -11.022,-19.87"
-   id="path2748"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2748" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 413.434,406.108 1.217,2.192 c 3.132,-2.696 6.275,-5.397 9.458,-8.11 l -10.675,5.918"
-   id="path2750"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2750" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="397.328,377.068 368.222,393.209 384.328,422.248 413.434,406.108      397.328,377.068    "
-   id="polyline2752"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2752" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 426.493,360.894 -29.166,16.174 16.106,29.04 10.674,-5.918 c 5.42,-4.627 10.897,-9.27 16.451,-13.936 l -14.065,-25.36"
-   id="path2754"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2754" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 413.434,406.108 -29.105,16.14 4.679,8.438 c 8.314,-7.36 16.861,-14.823 25.643,-22.386 l -1.217,-2.192"
-   id="path2756"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2756" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="352.05,364.042 322.948,380.183 339.122,409.348 368.222,393.209      352.05,364.042    "
-   id="polyline2758"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2758" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="368.222,393.209 339.122,409.348 355.228,438.388 384.328,422.248      368.222,393.209    "
-   id="polyline2760"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2760" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 384.328,422.248 -29.1,16.14 8.391,15.135 c 8.147,-7.454 16.619,-15.077 25.388,-22.837 l -4.679,-8.438"
-   id="path2762"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2762" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="381.151,347.902 352.05,364.042 368.222,393.209 397.328,377.068      381.151,347.902    "
-   id="polyline2764"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2764" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="410.319,331.727 381.151,347.902 397.328,377.068 426.493,360.894      410.319,331.727    "
-   id="polyline2766"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2766" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="452.419,270.407 481.522,254.267 466.762,227.651 437.658,243.792      452.419,270.407    "
-   id="polyline2768"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2768" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 540.352,297.749 -26.55,14.724 5.448,9.822 c 8.056,-6.344 16.146,-12.642 24.239,-18.889 l -3.137,-5.657"
-   id="path2770"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2770" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="497.625,283.307 524.178,268.582 508.072,239.542 481.522,254.267      497.625,283.307    "
-   id="polyline2772"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2772" />
 			<path
    ns0:knockout="Off"
    fill="#a3d447"
    d="m 508.072,239.542 -10.515,-18.958 c -2.346,-4.228 -7.671,-5.755 -11.9,-3.411 l -18.896,10.479 14.76,26.615 26.551,-14.725"
-   id="path2774"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2774" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="524.178,268.582 497.625,283.307 513.802,312.473 540.352,297.749      524.178,268.582    "
-   id="polyline2776"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2776" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="306.842,351.142 292.084,324.528 262.977,340.668 277.736,367.285      306.842,351.142    "
-   id="polyline2778"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2778" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="497.625,283.307 468.525,299.447 484.699,328.615 513.802,312.473      497.625,283.307    "
-   id="polyline2780"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2780" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="497.625,283.307 481.522,254.267 452.419,270.407 468.525,299.447      497.625,283.307    "
-   id="polyline2782"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2782" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="452.419,270.407 437.658,243.792 408.555,259.932 423.316,286.547      452.419,270.407    "
-   id="polyline2784"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2784" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 468.525,299.447 452.419,270.407 423.316,286.547      439.422,315.586    "
-   id="polyline2786"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2786" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 513.802,312.473 -29.103,16.142 8.15,14.697 c 8.745,-7.034 17.548,-14.048 26.402,-21.016 l -5.449,-9.823"
-   id="path2788"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2788" />
 			<path
    ns0:knockout="Off"
    fill="#a3d447"
    d="m 262.977,340.668 -18.893,10.48 c -4.231,2.346 -5.756,7.673 -3.41,11.899 l 10.514,18.96 26.547,-14.722 -14.758,-26.617"
-   id="path2790"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2790" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="293.841,396.323 267.292,411.047 283.469,440.215 310.016,425.491      293.841,396.323    "
-   id="polyline2792"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2792" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="310.016,425.491 283.469,440.215 299.575,469.253 326.121,454.528      310.016,425.491    "
-   id="polyline2794"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2794" />
 			<path
    ns0:knockout="Off"
    fill="#784d2e"
    d="m 326.121,454.528 -26.546,14.724 16.172,29.169 1.755,-0.975 c 6.434,-6.44 13.444,-13.285 21.036,-20.529 l -12.417,-22.389"
-   id="path2796"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2796" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="277.736,367.285 251.188,382.007 267.292,411.047 293.841,396.323      277.736,367.285    "
-   id="polyline2798"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2798" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="365.047,318.862 350.286,292.248 321.184,308.388 335.945,335.004      365.047,318.862    "
-   id="polyline2800"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2800" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="394.213,302.687 379.455,276.07 350.286,292.248 365.047,318.862      394.213,302.687    "
-   id="polyline2802"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2802" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="335.945,335.004 321.184,308.388 292.084,324.528 306.842,351.142      335.945,335.004    "
-   id="polyline2804"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2804" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="539.226,526.609 570.695,515.781 559.889,484.381 528.421,495.212      539.226,526.609    "
-   id="polyline2806"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2806" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 731.039,291.811 c -336.741,162.39 -480.389,267.84 -460.368,305.964 14.288,27.203 76.977,5.42 76.977,5.42 -162.209,-8.184 383.391,-311.384 383.391,-311.384"
-   id="path2808"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2808" />
 			<path
    ns0:knockout="Off"
    fill="#479438"
    d="m 263.584,599.981 c 0,0 -91.923,-21.816 376.843,-280.024 -197.691,98.088 -484.954,271.475 -376.843,280.024"
-   id="path2810"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2810" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="521.662,325.338 505,341.196 520.895,357.894 537.557,342.035      521.662,325.338    "
-   id="polyline2812"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2812" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="518.051,365.051 507.938,366.258 509.149,376.393 519.26,375.186      518.051,365.051    "
-   id="polyline2814"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2814" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="642.516,354.312 628.562,355.976 630.232,369.961 644.186,368.296      642.516,354.312    "
-   id="polyline2816"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2816" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="650.817,372.91 645.029,373.603 645.725,379.403 651.509,378.712      650.817,372.91    "
-   id="polyline2818"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2818" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="657.944,346.542 652.156,347.232 652.849,353.034 658.637,352.342      657.944,346.542    "
-   id="polyline2820"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2820" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="480.003,386.47 472.092,387.414 473.039,395.342 480.949,394.399      480.003,386.47    "
-   id="polyline2822"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2822" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="433.056,379.86 423.114,381.048 424.305,391.005 434.241,389.822      433.056,379.86    "
-   id="polyline2824"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2824" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="520.456,447.76 510.517,448.946 511.708,458.903 521.642,457.72      520.456,447.76    "
-   id="polyline2826"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2826" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="461.988,358.775 456.038,359.486 456.75,365.447 462.7,364.737      461.988,358.775    "
-   id="polyline2828"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2828" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="573.89,409.878 569.851,405.449 565.415,409.493 569.449,413.924      573.89,409.878    "
-   id="polyline2830"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2830" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="544.564,421.781 531.9,423.294 533.419,435.98 546.077,434.47      544.564,421.781    "
-   id="polyline2832"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2832" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="395.897,408.043 392.494,408.451 392.902,411.861 396.308,411.457      395.897,408.043    "
-   id="polyline2834"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2834" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="488.877,456.281 485.472,456.685 485.882,460.1 489.285,459.692      488.877,456.281    "
-   id="polyline2836"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2836" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="413.519,404.002 407.569,404.715 408.281,410.673 414.232,409.963      413.519,404.002    "
-   id="polyline2838"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2838" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="489.92,358.878 473.885,360.791 475.803,376.866 491.841,374.951      489.92,358.878    "
-   id="polyline2840"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2840" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="571.153,322.908 546.619,325.836 549.559,350.427 574.095,347.496      571.153,322.908    "
-   id="polyline2842"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2842" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="625.06,289.889 611.125,291.553 612.795,305.519 626.729,303.854      625.06,289.889    "
-   id="polyline2844"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2844" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="621.378,373.064 602.679,375.295 604.919,394.034 623.614,391.802      621.378,373.064    "
-   id="polyline2846"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2846" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="569.31,273.382 549.693,298.313 574.684,317.969 594.298,293.036      569.31,273.382    "
-   id="polyline2848"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2848" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="618.366,221.118 578.554,238.305 595.788,278.198 635.597,261.006      618.366,221.118    "
-   id="polyline2850"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2850" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="551.383,226.604 540.959,242.989 557.385,253.432 567.808,237.044      551.383,226.604    "
-   id="polyline2852"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2852" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="611.885,174.248 587.439,191.656 604.896,216.153 629.342,198.743      611.885,174.248    "
-   id="polyline2854"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2854" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 512.281,430.378 25.948,-8.931 -2.141,-6.215 c -4.453,2.807 -8.914,5.629 -13.368,8.467 -3.546,2.256 -7.014,4.48 -10.439,6.679"
-   id="path2856"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2856" />
 			<path
    ns0:knockout="Off"
    fill="#945e3d"
    d="m 507.228,433.632 10.342,30.041 31.465,-10.829 -10.805,-31.397 -25.948,8.931 c -1.7,1.094 -3.384,2.177 -5.054,3.254"
-   id="path2858"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2858" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="381.82,580.783 413.291,569.952 402.483,538.555 371.014,549.383      381.82,580.783    "
-   id="polyline2860"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2860" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="413.291,569.952 444.757,559.124 433.951,527.724 402.483,538.555      413.291,569.952    "
-   id="polyline2862"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2862" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="444.757,559.124 476.225,548.295 465.419,516.892 433.951,527.724      444.757,559.124    "
-   id="polyline2864"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2864" />
 			<polyline
    ns0:knockout="Off"
    fill="#945e3d"
    points="528.421,495.212 559.889,484.381 549.035,452.844 517.57,463.673      528.421,495.212    "
-   id="polyline2866"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2866" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="476.225,548.295 507.762,537.437 496.956,506.04 465.419,516.892      476.225,548.295    "
-   id="polyline2868"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2868" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 371.014,549.383 31.469,-10.828 -8.903,-25.869 c -10.703,8.287 -19.79,15.724 -27.493,22.381 l 4.927,14.316"
-   id="path2870"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2870" />
 			<polyline
    ns0:knockout="Off"
    fill="#636161"
    points="465.419,516.892 496.956,506.04 486.101,474.504 454.565,485.359      465.419,516.892    "
-   id="polyline2872"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2872" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 486.101,474.504 31.469,-10.831 -10.342,-30.041 c -10.119,6.532 -19.676,12.795 -28.721,18.808 l 7.594,22.064"
-   id="path2874"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2874" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 454.565,485.359 31.536,-10.855 -7.594,-22.064 c -10.185,6.771 -19.71,13.216 -28.609,19.355 l 4.667,13.564"
-   id="path2876"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2876" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 423.096,496.187 31.469,-10.828 -4.667,-13.564 c -10.234,7.055 -19.669,13.718 -28.322,19.975 l 1.52,4.417"
-   id="path2878"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2878" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="433.951,527.724 465.419,516.892 454.565,485.359 423.096,496.187      433.951,527.724    "
-   id="polyline2880"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2880" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 423.096,496.187 -1.521,-4.417 c -4.431,3.208 -8.641,6.3 -12.684,9.307 l 14.205,-4.89"
-   id="path2882"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2882" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 402.483,538.555 31.468,-10.831 -10.855,-31.537 -14.205,4.89 c -5.44,4.046 -10.538,7.913 -15.311,11.609 l 8.903,25.869"
-   id="path2884"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2884" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="507.762,537.437 539.226,526.609 528.421,495.212 496.956,506.04      507.762,537.437    "
-   id="polyline2886"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2886" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="496.956,506.04 528.421,495.212 517.57,463.673 486.101,474.504      496.956,506.04    "
-   id="polyline2888"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2888" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="486.13,577.07 517.667,566.216 507.762,537.437 476.225,548.295      486.13,577.07    "
-   id="polyline2890"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2890" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="454.662,587.899 486.13,577.07 476.225,548.295 444.757,559.124      454.662,587.899    "
-   id="polyline2892"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2892" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="423.194,598.73 454.662,587.899 444.757,559.124 413.291,569.952      423.194,598.73    "
-   id="polyline2894"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2894" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="517.667,566.216 549.132,555.388 539.226,526.609 507.762,537.437      517.667,566.216    "
-   id="polyline2896"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2896" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="391.725,609.562 423.194,598.73 413.291,569.952 381.82,580.783      391.725,609.562    "
-   id="polyline2898"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2898" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 342.308,559.266 28.706,-9.883 -4.926,-14.316 c -10.387,8.979 -18.266,16.556 -24.216,22.927 l 0.436,1.272"
-   id="path2900"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2900" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="353.113,590.663 381.82,580.783 371.014,549.383 342.308,559.266      353.113,590.663    "
-   id="polyline2902"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2902" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 360.169,611.163 c 1.573,4.571 6.554,7.004 11.128,5.429 l 20.429,-7.03 -9.905,-28.778 -28.707,9.88 7.055,20.499"
-   id="path2904"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2904" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 320.647,496.329 0.191,0.553 c 0.573,-0.405 1.128,-0.798 1.707,-1.203 l -1.898,0.65"
-   id="path2906"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2906" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="549.129,555.384 612.068,533.728 602.163,504.949 539.226,526.609      549.129,555.384    "
-   id="polyline2908"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2908" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 612.068,533.728 20.429,-7.033 c 4.573,-1.573 7.001,-6.554 5.429,-11.125 l -7.056,-20.5 -28.707,9.879 9.905,28.779"
-   id="path2910"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2910" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="602.163,504.949 630.87,495.07 620.064,463.673 591.357,473.549      602.163,504.949    "
-   id="polyline2912"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2912" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="591.357,473.549 620.064,463.673 609.21,432.133 580.503,442.016      591.357,473.549    "
-   id="polyline2914"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2914" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 565.067,397.166 4.631,13.453 28.707,-9.883 -6.814,-19.799 c -8.703,5.282 -17.568,10.702 -26.524,16.229"
-   id="path2916"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2916" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="580.503,442.016 609.21,432.133 598.404,400.736 569.697,410.619      580.503,442.016    "
-   id="polyline2918"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2918" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="559.889,484.381 591.357,473.549 580.503,442.016 549.035,452.844      559.889,484.381    "
-   id="polyline2920"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2920" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="570.695,515.781 602.163,504.949 591.357,473.549 559.889,484.381      570.695,515.781    "
-   id="polyline2922"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2922" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 536.089,415.232 2.141,6.215 31.468,-10.828 -4.631,-13.453 c -9.586,5.919 -19.275,11.954 -28.978,18.066"
-   id="path2924"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2924" />
 			<polyline
    ns0:knockout="Off"
    fill="#636161"
    points="549.035,452.844 580.503,442.016 569.697,410.619 538.229,421.447      549.035,452.844    "
-   id="polyline2926"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2926" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="410.319,331.727 394.213,302.687 365.047,318.862 381.151,347.902      410.319,331.727    "
-   id="polyline2928"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2928" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 423.316,286.547 394.213,302.687 410.319,331.727      439.422,315.586    "
-   id="polyline2930"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2930" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 410.319,331.727 426.493,360.894 455.597,344.753      439.422,315.586    "
-   id="polyline2932"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2932" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="352.05,364.042 335.945,335.004 306.842,351.142 322.948,380.183      352.05,364.042    "
-   id="polyline2934"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2934" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="381.151,347.902 365.047,318.862 335.945,335.004 352.05,364.042      381.151,347.902    "
-   id="polyline2936"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2936" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="306.842,351.142 277.736,367.285 293.841,396.323 322.948,380.183      306.842,351.142    "
-   id="polyline2938"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2938" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 484.699,328.615 -29.102,16.138 11.022,19.871 c 8.646,-7.104 17.403,-14.217 26.23,-21.312 l -8.15,-14.697"
-   id="path2940"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2940" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="468.525,299.447 439.422,315.586 455.597,344.753 484.699,328.615      468.525,299.447    "
-   id="polyline2942"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2942" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="322.948,380.183 293.841,396.323 310.016,425.491 339.122,409.348      322.948,380.183    "
-   id="polyline2944"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2944" />
 			<polyline
    ns0:knockout="Off"
    fill="#784d2e"
    points="339.122,409.348 310.016,425.491 326.121,454.528 355.228,438.388      339.122,409.348    "
-   id="polyline2946"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2946" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 363.62,453.523 -8.391,-15.135 -29.107,16.14 12.416,22.389 c 6.209,-5.927 12.8,-12.114 19.842,-18.608 1.709,-1.575 3.498,-3.193 5.24,-4.786"
-   id="path2948"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2948" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 455.597,344.753 -29.103,16.14 14.066,25.36 c 8.543,-7.177 17.257,-14.401 26.059,-21.63 l -11.022,-19.87"
-   id="path2950"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2950" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 413.434,406.108 1.217,2.192 c 3.132,-2.696 6.275,-5.397 9.458,-8.11 l -10.675,5.918"
-   id="path2952"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2952" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="397.328,377.068 368.222,393.209 384.328,422.248 413.434,406.108      397.328,377.068    "
-   id="polyline2954"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2954" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 426.493,360.894 -29.166,16.174 16.106,29.04 10.674,-5.918 c 5.42,-4.627 10.897,-9.27 16.451,-13.936 l -14.065,-25.36"
-   id="path2956"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2956" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 413.434,406.108 -29.105,16.14 4.679,8.438 c 8.314,-7.36 16.861,-14.823 25.643,-22.386 l -1.217,-2.192"
-   id="path2958"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2958" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="352.05,364.042 322.948,380.183 339.122,409.348 368.222,393.209      352.05,364.042    "
-   id="polyline2960"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2960" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="368.222,393.209 339.122,409.348 355.228,438.388 384.328,422.248      368.222,393.209    "
-   id="polyline2962"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2962" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 384.328,422.248 -29.1,16.14 8.391,15.135 c 8.147,-7.454 16.619,-15.077 25.388,-22.837 l -4.679,-8.438"
-   id="path2964"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2964" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="381.151,347.902 352.05,364.042 368.222,393.209 397.328,377.068      381.151,347.902    "
-   id="polyline2966"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2966" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="410.319,331.727 381.151,347.902 397.328,377.068 426.493,360.894      410.319,331.727    "
-   id="polyline2968"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2968" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="452.419,270.407 481.522,254.267 466.762,227.651 437.658,243.792      452.419,270.407    "
-   id="polyline2970"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2970" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 540.352,297.749 -26.55,14.724 5.448,9.822 c 8.056,-6.344 16.146,-12.642 24.239,-18.889 l -3.137,-5.657"
-   id="path2972"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2972" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="497.625,283.307 524.178,268.582 508.072,239.542 481.522,254.267      497.625,283.307    "
-   id="polyline2974"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2974" />
 			<path
    ns0:knockout="Off"
    fill="#a3d447"
    d="m 508.072,239.542 -10.515,-18.958 c -2.346,-4.228 -7.671,-5.755 -11.9,-3.411 l -18.896,10.479 14.76,26.615 26.551,-14.725"
-   id="path2976"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2976" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="524.178,268.582 497.625,283.307 513.802,312.473 540.352,297.749      524.178,268.582    "
-   id="polyline2978"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2978" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="306.842,351.142 292.084,324.528 262.977,340.668 277.736,367.285      306.842,351.142    "
-   id="polyline2980"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2980" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="497.625,283.307 468.525,299.447 484.699,328.615 513.802,312.473      497.625,283.307    "
-   id="polyline2982"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2982" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="497.625,283.307 481.522,254.267 452.419,270.407 468.525,299.447      497.625,283.307    "
-   id="polyline2984"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2984" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="452.419,270.407 437.658,243.792 408.555,259.932 423.316,286.547      452.419,270.407    "
-   id="polyline2986"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2986" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 468.525,299.447 452.419,270.407 423.316,286.547      439.422,315.586    "
-   id="polyline2988"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2988" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 513.802,312.473 -29.103,16.142 8.15,14.697 c 8.745,-7.034 17.548,-14.048 26.402,-21.016 l -5.449,-9.823"
-   id="path2990"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2990" />
 			<path
    ns0:knockout="Off"
    fill="#a3d447"
    d="m 262.977,340.668 -18.893,10.48 c -4.231,2.346 -5.756,7.673 -3.41,11.899 l 10.514,18.96 26.547,-14.722 -14.758,-26.617"
-   id="path2992"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2992" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="293.841,396.323 267.292,411.047 283.469,440.215 310.016,425.491      293.841,396.323    "
-   id="polyline2994"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2994" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="310.016,425.491 283.469,440.215 299.575,469.253 326.121,454.528      310.016,425.491    "
-   id="polyline2996"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline2996" />
 			<path
    ns0:knockout="Off"
    fill="#784d2e"
    d="m 326.121,454.528 -26.546,14.724 16.172,29.169 1.755,-0.975 c 6.434,-6.44 13.444,-13.285 21.036,-20.529 l -12.417,-22.389"
-   id="path2998"
-   style="fill:#000000;fill-opacity:1" />
+   id="path2998" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="277.736,367.285 251.188,382.007 267.292,411.047 293.841,396.323      277.736,367.285    "
-   id="polyline3000"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3000" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="365.047,318.862 350.286,292.248 321.184,308.388 335.945,335.004      365.047,318.862    "
-   id="polyline3002"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3002" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="394.213,302.687 379.455,276.07 350.286,292.248 365.047,318.862      394.213,302.687    "
-   id="polyline3004"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3004" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="335.945,335.004 321.184,308.388 292.084,324.528 306.842,351.142      335.945,335.004    "
-   id="polyline3006"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3006" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="539.226,526.609 570.695,515.781 559.889,484.381 528.421,495.212      539.226,526.609    "
-   id="polyline3008"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3008" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 731.039,291.811 c -336.741,162.39 -480.389,267.84 -460.368,305.964 14.288,27.203 76.977,5.42 76.977,5.42 -162.209,-8.184 383.391,-311.384 383.391,-311.384"
-   id="path3010"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3010" />
 			<path
    ns0:knockout="Off"
    fill="#479438"
    d="m 263.584,599.981 c 0,0 -91.923,-21.816 376.843,-280.024 -197.691,98.088 -484.954,271.475 -376.843,280.024"
-   id="path3012"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3012" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="521.662,325.338 505,341.196 520.895,357.894 537.557,342.035      521.662,325.338    "
-   id="polyline3014"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3014" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="518.051,365.051 507.938,366.258 509.149,376.393 519.26,375.186      518.051,365.051    "
-   id="polyline3016"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3016" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="642.516,354.312 628.562,355.976 630.232,369.961 644.186,368.296      642.516,354.312    "
-   id="polyline3018"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3018" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="650.817,372.91 645.029,373.603 645.725,379.403 651.509,378.712      650.817,372.91    "
-   id="polyline3020"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3020" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="657.944,346.542 652.156,347.232 652.849,353.034 658.637,352.342      657.944,346.542    "
-   id="polyline3022"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3022" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="480.003,386.47 472.092,387.414 473.039,395.342 480.949,394.399      480.003,386.47    "
-   id="polyline3024"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3024" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="433.056,379.86 423.114,381.048 424.305,391.005 434.241,389.822      433.056,379.86    "
-   id="polyline3026"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3026" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="520.456,447.76 510.517,448.946 511.708,458.903 521.642,457.72      520.456,447.76    "
-   id="polyline3028"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3028" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="461.988,358.775 456.038,359.486 456.75,365.447 462.7,364.737      461.988,358.775    "
-   id="polyline3030"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3030" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="573.89,409.878 569.851,405.449 565.415,409.493 569.449,413.924      573.89,409.878    "
-   id="polyline3032"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3032" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="544.564,421.781 531.9,423.294 533.419,435.98 546.077,434.47      544.564,421.781    "
-   id="polyline3034"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3034" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="395.897,408.043 392.494,408.451 392.902,411.861 396.308,411.457      395.897,408.043    "
-   id="polyline3036"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3036" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="488.877,456.281 485.472,456.685 485.882,460.1 489.285,459.692      488.877,456.281    "
-   id="polyline3038"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3038" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="413.519,404.002 407.569,404.715 408.281,410.673 414.232,409.963      413.519,404.002    "
-   id="polyline3040"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3040" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="489.92,358.878 473.885,360.791 475.803,376.866 491.841,374.951      489.92,358.878    "
-   id="polyline3042"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3042" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="571.153,322.908 546.619,325.836 549.559,350.427 574.095,347.496      571.153,322.908    "
-   id="polyline3044"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3044" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="625.06,289.889 611.125,291.553 612.795,305.519 626.729,303.854      625.06,289.889    "
-   id="polyline3046"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3046" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="621.378,373.064 602.679,375.295 604.919,394.034 623.614,391.802      621.378,373.064    "
-   id="polyline3048"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3048" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="569.31,273.382 549.693,298.313 574.684,317.969 594.298,293.036      569.31,273.382    "
-   id="polyline3050"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3050" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="618.366,221.118 578.554,238.305 595.788,278.198 635.597,261.006      618.366,221.118    "
-   id="polyline3052"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3052" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="551.383,226.604 540.959,242.989 557.385,253.432 567.808,237.044      551.383,226.604    "
-   id="polyline3054"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3054" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="611.885,174.248 587.439,191.656 604.896,216.153 629.342,198.743      611.885,174.248    "
-   id="polyline3056"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3056" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 512.281,430.378 25.948,-8.931 -2.141,-6.215 c -4.453,2.807 -8.914,5.629 -13.368,8.467 -3.546,2.256 -7.014,4.48 -10.439,6.679"
-   id="path3058"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3058" />
 			<path
    ns0:knockout="Off"
    fill="#945e3d"
    d="m 507.228,433.632 10.342,30.041 31.465,-10.829 -10.805,-31.397 -25.948,8.931 c -1.7,1.094 -3.384,2.177 -5.054,3.254"
-   id="path3060"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3060" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="381.82,580.783 413.291,569.952 402.483,538.555 371.014,549.383      381.82,580.783    "
-   id="polyline3062"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3062" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="413.291,569.952 444.757,559.124 433.951,527.724 402.483,538.555      413.291,569.952    "
-   id="polyline3064"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3064" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="444.757,559.124 476.225,548.295 465.419,516.892 433.951,527.724      444.757,559.124    "
-   id="polyline3066"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3066" />
 			<polyline
    ns0:knockout="Off"
    fill="#945e3d"
    points="528.421,495.212 559.889,484.381 549.035,452.844 517.57,463.673      528.421,495.212    "
-   id="polyline3068"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3068" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="476.225,548.295 507.762,537.437 496.956,506.04 465.419,516.892      476.225,548.295    "
-   id="polyline3070"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3070" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 371.014,549.383 31.469,-10.828 -8.903,-25.869 c -10.703,8.287 -19.79,15.724 -27.493,22.381 l 4.927,14.316"
-   id="path3072"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3072" />
 			<polyline
    ns0:knockout="Off"
    fill="#636161"
    points="465.419,516.892 496.956,506.04 486.101,474.504 454.565,485.359      465.419,516.892    "
-   id="polyline3074"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3074" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 486.101,474.504 31.469,-10.831 -10.342,-30.041 c -10.119,6.532 -19.676,12.795 -28.721,18.808 l 7.594,22.064"
-   id="path3076"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3076" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 454.565,485.359 31.536,-10.855 -7.594,-22.064 c -10.185,6.771 -19.71,13.216 -28.609,19.355 l 4.667,13.564"
-   id="path3078"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3078" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 423.096,496.187 31.469,-10.828 -4.667,-13.564 c -10.234,7.055 -19.669,13.718 -28.322,19.975 l 1.52,4.417"
-   id="path3080"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3080" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="433.951,527.724 465.419,516.892 454.565,485.359 423.096,496.187      433.951,527.724    "
-   id="polyline3082"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3082" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 423.096,496.187 -1.521,-4.417 c -4.431,3.208 -8.641,6.3 -12.684,9.307 l 14.205,-4.89"
-   id="path3084"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3084" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 402.483,538.555 31.468,-10.831 -10.855,-31.537 -14.205,4.89 c -5.44,4.046 -10.538,7.913 -15.311,11.609 l 8.903,25.869"
-   id="path3086"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3086" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="507.762,537.437 539.226,526.609 528.421,495.212 496.956,506.04      507.762,537.437    "
-   id="polyline3088"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3088" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="496.956,506.04 528.421,495.212 517.57,463.673 486.101,474.504      496.956,506.04    "
-   id="polyline3090"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3090" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="486.13,577.07 517.667,566.216 507.762,537.437 476.225,548.295      486.13,577.07    "
-   id="polyline3092"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3092" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="454.662,587.899 486.13,577.07 476.225,548.295 444.757,559.124      454.662,587.899    "
-   id="polyline3094"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3094" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="423.194,598.73 454.662,587.899 444.757,559.124 413.291,569.952      423.194,598.73    "
-   id="polyline3096"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3096" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="517.667,566.216 549.132,555.388 539.226,526.609 507.762,537.437      517.667,566.216    "
-   id="polyline3098"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3098" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="391.725,609.562 423.194,598.73 413.291,569.952 381.82,580.783      391.725,609.562    "
-   id="polyline3100"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3100" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 342.308,559.266 28.706,-9.883 -4.926,-14.316 c -10.387,8.979 -18.266,16.556 -24.216,22.927 l 0.436,1.272"
-   id="path3102"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3102" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="353.113,590.663 381.82,580.783 371.014,549.383 342.308,559.266      353.113,590.663    "
-   id="polyline3104"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3104" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 360.169,611.163 c 1.573,4.571 6.554,7.004 11.128,5.429 l 20.429,-7.03 -9.905,-28.778 -28.707,9.88 7.055,20.499"
-   id="path3106"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3106" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 320.647,496.329 0.191,0.553 c 0.573,-0.405 1.128,-0.798 1.707,-1.203 l -1.898,0.65"
-   id="path3108"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3108" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="549.129,555.384 612.068,533.728 602.163,504.949 539.226,526.609      549.129,555.384    "
-   id="polyline3110"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3110" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 612.068,533.728 20.429,-7.033 c 4.573,-1.573 7.001,-6.554 5.429,-11.125 l -7.056,-20.5 -28.707,9.879 9.905,28.779"
-   id="path3112"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3112" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="602.163,504.949 630.87,495.07 620.064,463.673 591.357,473.549      602.163,504.949    "
-   id="polyline3114"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3114" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="591.357,473.549 620.064,463.673 609.21,432.133 580.503,442.016      591.357,473.549    "
-   id="polyline3116"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3116" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 565.067,397.166 4.631,13.453 28.707,-9.883 -6.814,-19.799 c -8.703,5.282 -17.568,10.702 -26.524,16.229"
-   id="path3118"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3118" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="580.503,442.016 609.21,432.133 598.404,400.736 569.697,410.619      580.503,442.016    "
-   id="polyline3120"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3120" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="559.889,484.381 591.357,473.549 580.503,442.016 549.035,452.844      559.889,484.381    "
-   id="polyline3122"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3122" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="570.695,515.781 602.163,504.949 591.357,473.549 559.889,484.381      570.695,515.781    "
-   id="polyline3124"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3124" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 536.089,415.232 2.141,6.215 31.468,-10.828 -4.631,-13.453 c -9.586,5.919 -19.275,11.954 -28.978,18.066"
-   id="path3126"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3126" />
 			<polyline
    ns0:knockout="Off"
    fill="#636161"
    points="549.035,452.844 580.503,442.016 569.697,410.619 538.229,421.447      549.035,452.844    "
-   id="polyline3128"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3128" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="410.319,331.727 394.213,302.687 365.047,318.862 381.151,347.902      410.319,331.727    "
-   id="polyline3130"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3130" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 423.316,286.547 394.213,302.687 410.319,331.727      439.422,315.586    "
-   id="polyline3132"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3132" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 410.319,331.727 426.493,360.894 455.597,344.753      439.422,315.586    "
-   id="polyline3134"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3134" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="352.05,364.042 335.945,335.004 306.842,351.142 322.948,380.183      352.05,364.042    "
-   id="polyline3136"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3136" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="381.151,347.902 365.047,318.862 335.945,335.004 352.05,364.042      381.151,347.902    "
-   id="polyline3138"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3138" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="306.842,351.142 277.736,367.285 293.841,396.323 322.948,380.183      306.842,351.142    "
-   id="polyline3140"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3140" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 484.699,328.615 -29.102,16.138 11.022,19.871 c 8.646,-7.104 17.403,-14.217 26.23,-21.312 l -8.15,-14.697"
-   id="path3142"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3142" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="468.525,299.447 439.422,315.586 455.597,344.753 484.699,328.615      468.525,299.447    "
-   id="polyline3144"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3144" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="322.948,380.183 293.841,396.323 310.016,425.491 339.122,409.348      322.948,380.183    "
-   id="polyline3146"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3146" />
 			<polyline
    ns0:knockout="Off"
    fill="#784d2e"
    points="339.122,409.348 310.016,425.491 326.121,454.528 355.228,438.388      339.122,409.348    "
-   id="polyline3148"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3148" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 363.62,453.523 -8.391,-15.135 -29.107,16.14 12.416,22.389 c 6.209,-5.927 12.8,-12.114 19.842,-18.608 1.709,-1.575 3.498,-3.193 5.24,-4.786"
-   id="path3150"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3150" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 455.597,344.753 -29.103,16.14 14.066,25.36 c 8.543,-7.177 17.257,-14.401 26.059,-21.63 l -11.022,-19.87"
-   id="path3152"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3152" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 413.434,406.108 1.217,2.192 c 3.132,-2.696 6.275,-5.397 9.458,-8.11 l -10.675,5.918"
-   id="path3154"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3154" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="397.328,377.068 368.222,393.209 384.328,422.248 413.434,406.108      397.328,377.068    "
-   id="polyline3156"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3156" />
 			<path
    ns0:knockout="Off"
    fill="#754a2e"
    d="m 426.493,360.894 -29.166,16.174 16.106,29.04 10.674,-5.918 c 5.42,-4.627 10.897,-9.27 16.451,-13.936 l -14.065,-25.36"
-   id="path3158"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3158" />
 			<path
    ns0:knockout="Off"
    fill="#a36b45"
    d="m 413.434,406.108 -29.105,16.14 4.679,8.438 c 8.314,-7.36 16.861,-14.823 25.643,-22.386 l -1.217,-2.192"
-   id="path3160"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3160" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="352.05,364.042 322.948,380.183 339.122,409.348 368.222,393.209      352.05,364.042    "
-   id="polyline3162"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3162" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="368.222,393.209 339.122,409.348 355.228,438.388 384.328,422.248      368.222,393.209    "
-   id="polyline3164"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3164" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 384.328,422.248 -29.1,16.14 8.391,15.135 c 8.147,-7.454 16.619,-15.077 25.388,-22.837 l -4.679,-8.438"
-   id="path3166"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3166" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="381.151,347.902 352.05,364.042 368.222,393.209 397.328,377.068      381.151,347.902    "
-   id="polyline3168"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3168" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="410.319,331.727 381.151,347.902 397.328,377.068 426.493,360.894      410.319,331.727    "
-   id="polyline3170"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3170" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="452.419,270.407 481.522,254.267 466.762,227.651 437.658,243.792      452.419,270.407    "
-   id="polyline3172"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3172" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 540.352,297.749 -26.55,14.724 5.448,9.822 c 8.056,-6.344 16.146,-12.642 24.239,-18.889 l -3.137,-5.657"
-   id="path3174"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3174" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="497.625,283.307 524.178,268.582 508.072,239.542 481.522,254.267      497.625,283.307    "
-   id="polyline3176"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3176" />
 			<path
    ns0:knockout="Off"
    fill="#a3d447"
    d="m 508.072,239.542 -10.515,-18.958 c -2.346,-4.228 -7.671,-5.755 -11.9,-3.411 l -18.896,10.479 14.76,26.615 26.551,-14.725"
-   id="path3178"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3178" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="524.178,268.582 497.625,283.307 513.802,312.473 540.352,297.749      524.178,268.582    "
-   id="polyline3180"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3180" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="306.842,351.142 292.084,324.528 262.977,340.668 277.736,367.285      306.842,351.142    "
-   id="polyline3182"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3182" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="497.625,283.307 468.525,299.447 484.699,328.615 513.802,312.473      497.625,283.307    "
-   id="polyline3184"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3184" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="497.625,283.307 481.522,254.267 452.419,270.407 468.525,299.447      497.625,283.307    "
-   id="polyline3186"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3186" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="452.419,270.407 437.658,243.792 408.555,259.932 423.316,286.547      452.419,270.407    "
-   id="polyline3188"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3188" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="439.422,315.586 468.525,299.447 452.419,270.407 423.316,286.547      439.422,315.586    "
-   id="polyline3190"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3190" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 513.802,312.473 -29.103,16.142 8.15,14.697 c 8.745,-7.034 17.548,-14.048 26.402,-21.016 l -5.449,-9.823"
-   id="path3192"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3192" />
 			<path
    ns0:knockout="Off"
    fill="#a3d447"
    d="m 262.977,340.668 -18.893,10.48 c -4.231,2.346 -5.756,7.673 -3.41,11.899 l 10.514,18.96 26.547,-14.722 -14.758,-26.617"
-   id="path3194"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3194" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="293.841,396.323 267.292,411.047 283.469,440.215 310.016,425.491      293.841,396.323    "
-   id="polyline3196"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3196" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="310.016,425.491 283.469,440.215 299.575,469.253 326.121,454.528      310.016,425.491    "
-   id="polyline3198"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3198" />
 			<path
    ns0:knockout="Off"
    fill="#784d2e"
    d="m 326.121,454.528 -26.546,14.724 16.172,29.169 1.755,-0.975 c 6.434,-6.44 13.444,-13.285 21.036,-20.529 l -12.417,-22.389"
-   id="path3200"
-   style="fill:#000000;fill-opacity:1" />
+   id="path3200" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="277.736,367.285 251.188,382.007 267.292,411.047 293.841,396.323      277.736,367.285    "
-   id="polyline3202"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3202" />
 			<polyline
    ns0:knockout="Off"
    fill="#a3d447"
    points="365.047,318.862 350.286,292.248 321.184,308.388 335.945,335.004      365.047,318.862    "
-   id="polyline3204"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3204" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="394.213,302.687 379.455,276.07 350.286,292.248 365.047,318.862      394.213,302.687    "
-   id="polyline3206"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3206" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="335.945,335.004 321.184,308.388 292.084,324.528 306.842,351.142      335.945,335.004    "
-   id="polyline3208"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3208" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="539.226,526.609 570.695,515.781 559.889,484.381 528.421,495.212      539.226,526.609    "
-   id="polyline3210"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3210" />
 			<path
    ns0:knockout="Off"
    fill="#4f301f"
    d="m 731.039,291.811 c -336.741,162.39 -480.389,267.84 -460.368,305.964 14.288,27.203 76.977,5.42 76.977,5.42 -162.209,-8.184 383.391,-311.384 383.391,-311.384"
    id="path3212"
-   style="fill:#000000;fill-opacity:1" />
+   style="fill:#ff2a2a" />
 			<path
    ns0:knockout="Off"
    fill="#479438"
    d="m 263.584,599.981 c 0,0 -91.923,-21.816 376.843,-280.024 -197.691,98.088 -484.954,271.475 -376.843,280.024"
    id="path3214"
-   style="fill:#000000;fill-opacity:1" />
+   style="fill:#aa0000;fill-opacity:1" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="521.662,325.338 505,341.196 520.895,357.894 537.557,342.035      521.662,325.338    "
-   id="polyline3216"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3216" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="518.051,365.051 507.938,366.258 509.149,376.393 519.26,375.186      518.051,365.051    "
-   id="polyline3218"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3218" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="642.516,354.312 628.562,355.976 630.232,369.961 644.186,368.296      642.516,354.312    "
-   id="polyline3220"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3220" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="650.817,372.91 645.029,373.603 645.725,379.403 651.509,378.712      650.817,372.91    "
-   id="polyline3222"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3222" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="657.944,346.542 652.156,347.232 652.849,353.034 658.637,352.342      657.944,346.542    "
-   id="polyline3224"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3224" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="480.003,386.47 472.092,387.414 473.039,395.342 480.949,394.399      480.003,386.47    "
-   id="polyline3226"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3226" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="433.056,379.86 423.114,381.048 424.305,391.005 434.241,389.822      433.056,379.86    "
-   id="polyline3228"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3228" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="520.456,447.76 510.517,448.946 511.708,458.903 521.642,457.72      520.456,447.76    "
-   id="polyline3230"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3230" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="461.988,358.775 456.038,359.486 456.75,365.447 462.7,364.737      461.988,358.775    "
-   id="polyline3232"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3232" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="573.89,409.878 569.851,405.449 565.415,409.493 569.449,413.924      573.89,409.878    "
-   id="polyline3234"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3234" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="544.564,421.781 531.9,423.294 533.419,435.98 546.077,434.47      544.564,421.781    "
-   id="polyline3236"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3236" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="395.897,408.043 392.494,408.451 392.902,411.861 396.308,411.457      395.897,408.043    "
-   id="polyline3238"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3238" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="488.877,456.281 485.472,456.685 485.882,460.1 489.285,459.692      488.877,456.281    "
-   id="polyline3240"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3240" />
 			<polyline
    ns0:knockout="Off"
    fill="#ffffff"
    points="413.519,404.002 407.569,404.715 408.281,410.673 414.232,409.963      413.519,404.002    "
-   id="polyline3242"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3242" />
 			<polyline
    ns0:knockout="Off"
    fill="#754a2e"
    points="489.92,358.878 473.885,360.791 475.803,376.866 491.841,374.951      489.92,358.878    "
-   id="polyline3244"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3244" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="571.153,322.908 546.619,325.836 549.559,350.427 574.095,347.496      571.153,322.908    "
-   id="polyline3246"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3246" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="625.06,289.889 611.125,291.553 612.795,305.519 626.729,303.854      625.06,289.889    "
-   id="polyline3248"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3248" />
 			<polyline
    ns0:knockout="Off"
    fill="#a36b45"
    points="621.378,373.064 602.679,375.295 604.919,394.034 623.614,391.802      621.378,373.064    "
-   id="polyline3250"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3250" />
 			<polyline
    ns0:knockout="Off"
    fill="#4f301f"
    points="569.31,273.382 549.693,298.313 574.684,317.969 594.298,293.036      569.31,273.382    "
-   id="polyline3252"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3252" />
 			<polyline
    ns0:knockout="Off"
    fill="#479438"
    points="618.366,221.118 578.554,238.305 595.788,278.198 635.597,261.006      618.366,221.118    "
-   id="polyline3254"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3254" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="551.383,226.604 540.959,242.989 557.385,253.432 567.808,237.044      551.383,226.604    "
-   id="polyline3256"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3256" />
 			<polyline
    ns0:knockout="Off"
    fill="#70ba47"
    points="611.885,174.248 587.439,191.656 604.896,216.153 629.342,198.743      611.885,174.248    "
-   id="polyline3258"
-   style="fill:#000000;fill-opacity:1" />
+   id="polyline3258" />
 		</g>
 	</g>
 </switch>
