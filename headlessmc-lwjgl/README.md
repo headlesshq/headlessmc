@@ -37,6 +37,14 @@ E.g. for all methods returning Buffers,
 as those classes cannot be instantiated easily.
 All redirections can be found in the
 [redirections package](src/main/java/io/github/headlesshq/headlessmc/lwjgl/redirections).
+
+Minecraft 26.3 uses SDL for windowing and RenderPearl for rendering. The headless
+redirections use OpenGL and report Vulkan unavailable. Shaderc results and SPVC
+reflection are stubbed along with drawing; these are not native shader modules.
+This path has been tested with a vanilla 26.3 client on Linux/Java 25, including
+a short connection to a Paper server. Mod loaders and other platforms still
+need testing.
+
 An example:
 
 ```java
