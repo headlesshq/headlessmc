@@ -45,9 +45,11 @@ dependencies {
 }
 
 processResources {
+    dependsOn ':headlessmc-lwjgl:macosMenuAgentJar'
     into('headlessmc') {
         from project(':headlessmc-runtime')['shadowJar']
         from project(':headlessmc-lwjgl')['jar']
+        from { project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile }
         // TODO: this does not actually include, I think the excludes on the shadow task might cause it?
         from configurations.includeJarInResources
         rename 'ForgeCLI(.*).jar', 'forge-cli.jar'
@@ -82,6 +84,7 @@ tasks.register('shadowBugWorkaround', Jar) {
     dependsOn jar
     dependsOn project(':headlessmc-runtime')['shadowJar']
     dependsOn project(':headlessmc-lwjgl')['jar']
+    dependsOn ':headlessmc-lwjgl:macosMenuAgentJar'
 
     destinationDirectory.set(layout.buildDirectory.dir('shadow-bug-workaround'))
     archiveBaseName.set('headlessmc-launcher-shadow-bug')
@@ -90,6 +93,7 @@ tasks.register('shadowBugWorkaround', Jar) {
         from configurations.includeJarInResources
         from project(':headlessmc-runtime')['shadowJar']
         from project(':headlessmc-lwjgl')['jar']
+        from { project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile }
 
         rename 'ForgeCLI(.*).jar', 'forge-cli.jar'
         rename 'forgecli(.*).jar', 'forge-cli.jar'
@@ -118,4 +122,11 @@ shadowJar {
     exclude("net/kunmc/lab/**")
     exclude("module-info.class")
     exclude("LICENSE")
+}
+
+// The agent contains relocated copies; coverage uses the original source classes.
+jacocoTestReport {
+    classDirectories.setFrom(sourceSets.main.output.asFileTree.matching {
+        exclude 'headlessmc/headlessmc-macos-menu-agent.jar'
+    })
 }

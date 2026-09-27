@@ -41,9 +41,32 @@ All redirections can be found in the
 Minecraft 26.3 uses SDL for windowing and RenderPearl for rendering. The headless
 redirections use OpenGL and report Vulkan unavailable. Shaderc results and SPVC
 reflection are stubbed along with drawing; these are not native shader modules.
-This path has been tested with a vanilla 26.3 client on Linux/Java 25, including
-a short connection to a Paper server. Mod loaders and other platforms still
-need testing.
+Shader syntax and compilation errors are not checked in this mode. A successful
+headless launch must not be treated as shader validation. The client logs this
+limitation once when shader bytes are first requested.
+The SDL swap call uses the existing `hmc.lwjgl.update_sleep` setting. Display
+enumeration reports the same display ID as the primary-display query. Buffer
+allocations and graphics-provider proxies are shared redirections rather than
+SDL-specific behavior.
+
+For macOS clients launched in a separate JVM, a small Java agent skips
+Minecraft's native window-menu setup in no-render mode. SDL has not created a
+Cocoa window or menu in that mode. The hook runs as the class loads, keeping
+signed game files intact and covering NeoForge's separate game jar. The
+ordinary rendering path keeps the menu setup. The experimental `-inmemory`
+launcher receives the same hook when started through the executable launcher
+wrapper on Java 9 or later. Its agent checks that the game class loader can see
+the SDL redirections before skipping the menu setup; graphical clients retain
+the original method. Custom same-process hosts must install the menu agent at
+JVM startup themselves.
+
+On Linux with Java 25, Fabric, NeoForge and Forge have passed the
+`mc-runtime-test` fresh-world smoke test: create a world, load the player and
+chunks, wait 100 player ticks, then save and exit. This does not validate native
+rendering, screenshots, gameplay mods or other operating systems. Separate
+Linux runs without LWJGL redirection also completed a GameTest on all three
+loaders using SDL offscreen and Mesa llvmpipe OpenGL, exercising the ordinary
+shader and rendering path.
 
 An example:
 

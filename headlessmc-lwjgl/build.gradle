@@ -85,6 +85,23 @@ tasks.register('noAsmJar', Copy) {
 
 build.dependsOn(noAsmJar)
 
+// The menu hook also runs with vanilla, which provides no ASM. Keep its ASM
+// private so Fabric does not see a second copy of the loader's ASM packages.
+tasks.register('macosMenuAgentJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveFileName = 'headlessmc-macos-menu-agent.jar'
+    from(sourceSets.main.output) {
+        include 'io/github/headlesshq/headlessmc/lwjgl/agent/MacosMenuAgent.class'
+        include 'io/github/headlesshq/headlessmc/lwjgl/transformer/MacosMenuTransformer.class'
+    }
+    configurations = [project.configurations.jarLibsApi]
+    relocate 'org.objectweb.asm', 'io.github.headlesshq.headlessmc.lwjgl.agent.asm'
+    relocate 'io.github.headlesshq.headlessmc.lwjgl.agent.MacosMenuAgent', 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
+    relocate 'io.github.headlesshq.headlessmc.lwjgl.transformer', 'io.github.headlesshq.headlessmc.lwjgl.agent.macos'
+    manifest {
+        attributes 'Premain-Class': 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
+    }
+}
+
 tasks.register('testAgent', Test) {
     dependsOn jar
     group = 'verification'

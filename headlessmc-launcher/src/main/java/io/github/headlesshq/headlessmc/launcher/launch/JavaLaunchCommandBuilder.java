@@ -106,6 +106,15 @@ public class JavaLaunchCommandBuilder {
             result.add("-Djoml.nounsafe=true");
         }
 
+        if (lwjgl && os.getType() == OS.Type.OSX && !inMemory) {
+            // Minecraft 26.3 assumes SDL has created a native window menu.
+            // A class-loading hook also covers NeoForge's separate game jar.
+            String agent = classpath.stream()
+                .filter(path -> new File(path).getName().equals(InstrumentationHelper.MACOS_MENU_AGENT_JAR))
+                .findFirst().orElseThrow(() -> new IllegalStateException("Missing macOS menu agent"));
+            result.add("-javaagent:" + agent);
+        }
+
         if (inMemory) {
             result.add(SystemPropertyHelper.toSystemProperty(LauncherProperties.IN_MEMORY.getName(), "true"));
         }

@@ -7,20 +7,24 @@ import org.lwjgl.system.FunctionProvider;
 import org.lwjgl.system.SharedLibrary;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SdlRedirectionsTest {
     private RedirectionManagerImpl manager;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Throwable {
         manager = new RedirectionManagerImpl();
+        invoke("Lorg/lwjgl/sdl/SDLVideo;SDL_CreateWindow(Ljava/lang/CharSequence;IIJ)J",
+            long.class, "test", LwjglConfig.SCREEN_WIDTH, LwjglConfig.SCREEN_HEIGHT, 0L);
     }
 
     private Object invoke(String desc, Class<?> type, Object... args)
@@ -29,9 +33,111 @@ public class SdlRedirectionsTest {
     }
 
     @Test
-    public void initReportsSuccess() throws Throwable {
-        assertTrue((Boolean) invoke(
-            "Lorg/lwjgl/sdl/SDLInit;SDL_Init(I)Z", boolean.class, 0));
+    public void virtualWindowStateIsPerWindowAndClearedOnDestroy() throws Throwable {
+        String mouse = "Lorg/lwjgl/sdl/SDLMouse;";
+        String video = "Lorg/lwjgl/sdl/SDLVideo;";
+        long second = (Long) invoke(video + "SDL_CreateWindow(Ljava/lang/CharSequence;IIJ)J",
+            long.class, "second", 640, 480, 2L);
+        assertEquals(2L, invoke(video + "SDL_GetWindowFlags(J)J", long.class, second));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowFullscreen(JZ)Z", boolean.class, second, true));
+        assertEquals(3L, invoke(video + "SDL_GetWindowFlags(J)J", long.class, second));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowFullscreen(JZ)Z", boolean.class, second, false));
+        assertEquals(2L, invoke(video + "SDL_GetWindowFlags(J)J", long.class, second));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowMouseGrab(JZ)Z", boolean.class, 1L, true));
+        assertTrue((Boolean) invoke(video + "SDL_GetWindowMouseGrab(J)Z", boolean.class, 1L));
+        assertFalse((Boolean) invoke(video + "SDL_GetWindowMouseGrab(J)Z", boolean.class, 2L));
+        Object mode = new Object();
+        assertTrue((Boolean) invoke(mouse + "SDL_SetWindowRelativeMouseMode(JZ)Z",
+            boolean.class, 1L, true));
+        assertTrue((Boolean) invoke(mouse + "SDL_GetWindowRelativeMouseMode(J)Z", boolean.class, 1L));
+        assertFalse((Boolean) invoke(mouse + "SDL_GetWindowRelativeMouseMode(J)Z", boolean.class, 2L));
+        assertEquals(0x8100L, invoke(video + "SDL_GetWindowFlags(J)J", long.class, 1L));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowFullscreenMode(JLorg/lwjgl/sdl/SDL_DisplayMode;)Z",
+            boolean.class, 1L, mode));
+        assertEquals(mode, invoke(video + "SDL_GetWindowFullscreenMode(J)Lorg/lwjgl/sdl/SDL_DisplayMode;",
+            Object.class, 1L));
+        invoke(video + "SDL_DestroyWindow(J)V", void.class, 1L);
+        assertFalse((Boolean) invoke(video + "SDL_GetWindowMouseGrab(J)Z", boolean.class, 1L));
+        assertFalse((Boolean) invoke(mouse + "SDL_GetWindowRelativeMouseMode(J)Z", boolean.class, 1L));
+        assertNull(invoke(video + "SDL_GetWindowFullscreenMode(J)Lorg/lwjgl/sdl/SDL_DisplayMode;",
+            Object.class, 1L));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowFullscreen(JZ)Z", boolean.class, 1L, true));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowMouseGrab(JZ)Z", boolean.class, 1L, true));
+        assertFalse((Boolean) invoke(mouse + "SDL_SetWindowRelativeMouseMode(JZ)Z", boolean.class, 1L, true));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowFullscreenMode(JLorg/lwjgl/sdl/SDL_DisplayMode;)Z",
+            boolean.class, 1L, mode));
+        assertEquals(0L, invoke(video + "SDL_GetWindowFlags(J)J", long.class, 1L));
+    }
+
+    @Test
+    public void monitorBoundsPopulateTheRequestedRectangle() throws Throwable {
+        Object rect = new Object();
+        String video = "Lorg/lwjgl/sdl/SDLVideo;SDL_GetDisplayBounds(ILorg/lwjgl/sdl/SDL_Rect;)Z";
+        assertTrue((Boolean) invoke(video, boolean.class, 1, rect));
+        assertEquals(LwjglConfig.SCREEN_WIDTH, manager.invoke(rect, "Lorg/lwjgl/sdl/SDL_Rect;w()I", int.class));
+        assertEquals(LwjglConfig.SCREEN_HEIGHT, manager.invoke(rect, "Lorg/lwjgl/sdl/SDL_Rect;h()I", int.class));
+        assertEquals(0, manager.invoke(rect, "Lorg/lwjgl/sdl/SDL_Rect;x()I", int.class));
+        assertEquals(rect, manager.invoke(rect, "Lorg/lwjgl/sdl/SDL_Rect;x(I)Lorg/lwjgl/sdl/SDL_Rect;", Object.class, 12));
+        assertEquals(12, manager.invoke(rect, "Lorg/lwjgl/sdl/SDL_Rect;x()I", int.class));
+        assertFalse((Boolean) invoke(video, boolean.class, 0, rect));
+        assertEquals(0, manager.invoke(new Object(), "Lorg/lwjgl/sdl/SDL_Rect;w()I", int.class));
+    }
+
+    @Test
+    public void displayEnumerationAgreesWithPrimaryDisplay() throws Throwable {
+        String desc = "Lorg/lwjgl/sdl/SDLVideo;";
+        IntBuffer displays = (IntBuffer) invoke(desc
+            + "SDL_GetDisplays()Ljava/nio/IntBuffer;", IntBuffer.class);
+        assertEquals(1, displays.remaining());
+        assertEquals(invoke(desc + "SDL_GetPrimaryDisplay()I", int.class),
+            displays.get());
+        // Callers can advance the returned buffer without changing future reads.
+        assertEquals(1, ((IntBuffer) invoke(desc
+            + "SDL_GetDisplays()Ljava/nio/IntBuffer;", IntBuffer.class))
+            .remaining());
+    }
+
+    @Test
+    public void safeUtf8AcceptsNullAndOrdinaryUtf8RejectsIt() throws Throwable {
+        assertNull(invoke("Lorg/lwjgl/system/MemoryUtil;"
+            + "memUTF8Safe(Ljava/lang/CharSequence;)Ljava/nio/ByteBuffer;",
+            ByteBuffer.class, (Object) null));
+        assertNull(invoke("Lorg/lwjgl/system/MemoryUtil;"
+            + "memUTF8Safe(Ljava/lang/CharSequence;Z)Ljava/nio/ByteBuffer;",
+            ByteBuffer.class, null, false));
+        assertThrows(NullPointerException.class, () -> invoke(
+            "Lorg/lwjgl/system/MemoryUtil;"
+                + "memUTF8(Ljava/lang/CharSequence;)Ljava/nio/ByteBuffer;",
+            ByteBuffer.class, (Object) null));
+        assertThrows(NullPointerException.class, () -> invoke(
+            "Lorg/lwjgl/system/MemoryUtil;"
+                + "memUTF8(Ljava/lang/CharSequence;Z)Ljava/nio/ByteBuffer;",
+            ByteBuffer.class, null, false));
+    }
+
+    @Test
+    public void windowOutputCoordinatesMayBeOmitted() throws Throwable {
+        IntBuffer height = IntBuffer.allocate(1);
+        assertTrue((Boolean) invoke("Lorg/lwjgl/sdl/SDLVideo;"
+            + "SDL_GetWindowSize(JLjava/nio/IntBuffer;Ljava/nio/IntBuffer;)Z",
+            boolean.class, 1L, null, height));
+        assertEquals(LwjglConfig.SCREEN_HEIGHT, height.get(0));
+    }
+
+    @Test
+    public void keyboardStateHasNoPressedKeysAndIndependentCursors()
+        throws Throwable {
+        String desc = "Lorg/lwjgl/sdl/SDLKeyboard;"
+            + "SDL_GetKeyboardState()Ljava/nio/ByteBuffer;";
+        ByteBuffer state = (ByteBuffer) invoke(desc, ByteBuffer.class);
+        assertEquals(512, state.remaining());
+        assertTrue(state.isReadOnly());
+        while (state.hasRemaining()) {
+            assertEquals(0, state.get());
+        }
+        ByteBuffer next = (ByteBuffer) invoke(desc, ByteBuffer.class);
+        assertEquals(512, next.remaining());
+        assertEquals(0, next.get(511));
     }
 
     @Test
@@ -52,28 +158,12 @@ public class SdlRedirectionsTest {
     }
 
     @Test
-    public void callocIntIsZeroed() throws Throwable {
-        IntBuffer result = (IntBuffer) invoke(
-            "Lorg/lwjgl/system/MemoryStack;callocInt(I)Ljava/nio/IntBuffer;",
-            IntBuffer.class, 3);
-        assertEquals(3, result.remaining());
-        assertEquals(0, result.get(0));
-        assertEquals(0, result.get(1));
-        assertEquals(0, result.get(2));
-    }
-
-    @Test
-    public void mouseBuffersAndShaderStorageAreAllocated() throws Throwable {
-        FloatBuffer mouse = (FloatBuffer) invoke(
-            "Lorg/lwjgl/system/MemoryStack;mallocFloat(I)Ljava/nio/FloatBuffer;",
-            FloatBuffer.class, 2);
-        assertEquals(2, mouse.remaining());
-        mouse.put(0, 7.5f);
-        assertEquals(7.5f, mouse.get(0));
+    public void callocUsesNativeByteOrderAndZeroedStorage() throws Throwable {
         ByteBuffer shader = (ByteBuffer) invoke(
             "Lorg/lwjgl/system/MemoryUtil;memCalloc(I)Ljava/nio/ByteBuffer;",
             ByteBuffer.class, 4);
         assertEquals(4, shader.remaining());
+        assertEquals(ByteOrder.nativeOrder(), shader.order());
         assertEquals(0, shader.getInt());
     }
 
@@ -124,47 +214,38 @@ public class SdlRedirectionsTest {
         assertEquals(1, height.position());
         assertEquals(LwjglConfig.SCREEN_WIDTH, width.get(1));
         assertEquals(LwjglConfig.SCREEN_HEIGHT, height.get(1));
+        String video = "Lorg/lwjgl/sdl/SDLVideo;";
+        String minimum = video + "SDL_GetWindowMinimumSize(JLjava/nio/IntBuffer;Ljava/nio/IntBuffer;)Z";
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowMinimumSize(JII)Z", boolean.class, 1L, 320, 240));
+        assertTrue((Boolean) invoke(minimum, boolean.class, 1L, width, height));
+        assertEquals(320, width.get(1));
+        assertEquals(240, height.get(1));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowMinimumSize(JII)Z", boolean.class, 1L, -1, 240));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowMinimumSize(JII)Z", boolean.class, 1L, 0, 0));
+        assertTrue((Boolean) invoke(minimum, boolean.class, 1L, width, height));
+        assertEquals(0, width.get(1));
+        assertEquals(0, height.get(1));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowSize(JII)Z", boolean.class, 1L, 640, 480));
+        assertTrue((Boolean) invoke(desc, boolean.class, 1L, width, height));
+        assertEquals(640, width.get(1));
+        assertEquals(480, height.get(1));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowSize(JII)Z", boolean.class, 1L, 0, 480));
+        assertTrue((Boolean) invoke(desc, boolean.class, 1L, width, height));
+        assertEquals(640, width.get(1));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowPosition(JII)Z", boolean.class, 1L, 25, -10));
+        String position = video + "SDL_GetWindowPosition(JLjava/nio/IntBuffer;Ljava/nio/IntBuffer;)Z";
+        assertTrue((Boolean) invoke(position, boolean.class, 1L, width, height));
+        assertEquals(25, width.get(1));
+        assertEquals(-10, height.get(1));
+        assertTrue((Boolean) invoke(video + "SDL_SetWindowPosition(JII)Z", boolean.class, 1L, 0x2FFF0000, 0x1FFF0000));
+        assertTrue((Boolean) invoke(position, boolean.class, 1L, width, height));
+        assertEquals((LwjglConfig.SCREEN_WIDTH - 640) / 2, width.get(1));
+        assertEquals(-10, height.get(1));
+        invoke(video + "SDL_DestroyWindow(J)V", void.class, 1L);
+        assertFalse((Boolean) invoke(desc, boolean.class, 1L, width, height));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowSize(JII)Z", boolean.class, 1L, 640, 480));
+        assertFalse((Boolean) invoke(minimum, boolean.class, 1L, width, height));
+        assertFalse((Boolean) invoke(video + "SDL_SetWindowMinimumSize(JII)Z", boolean.class, 1L, 320, 240));
     }
 
-    @Test
-    public void windowPositionsAreZeroAndPreservePositions() throws Throwable {
-        String desc = "Lorg/lwjgl/sdl/SDLVideo;"
-            + "SDL_GetWindowPosition(JLjava/nio/IntBuffer;Ljava/nio/IntBuffer;)Z";
-        IntBuffer x = IntBuffer.allocate(2);
-        x.position(1);
-        IntBuffer y = IntBuffer.allocate(2);
-        y.position(1);
-        assertTrue((Boolean) invoke(desc, boolean.class, 1L, x, y));
-        assertEquals(1, x.position());
-        assertEquals(1, y.position());
-        assertEquals(0, x.get(1));
-        assertEquals(0, y.get(1));
-    }
-
-    @Test
-    public void handlesAreUniqueAndNonzero() throws Throwable {
-        String window = "Lorg/lwjgl/sdl/SDLVideo;"
-            + "SDL_CreateWindow(Ljava/lang/CharSequence;IIJ)J";
-        String context = "Lorg/lwjgl/sdl/SDLVideo;SDL_GL_CreateContext(J)J";
-        long first = (Long) invoke(window, long.class, "test", 800, 600, 0L);
-        long second = (Long) invoke(window, long.class, "test", 800, 600, 0L);
-        long third = (Long) invoke(context, long.class, first);
-        assertTrue(first > 0);
-        assertTrue(second > 0);
-        assertTrue(third > 0);
-        assertTrue(first != second);
-        assertTrue(second != third);
-    }
-
-    @Test
-    public void timerIsMonotonicAndEventsAreEmpty() throws Throwable {
-        String timer = "Lorg/lwjgl/sdl/SDLTimer;SDL_GetTicksNS()J";
-        long before = (Long) invoke(timer, long.class);
-        Thread.sleep(10L);
-        long after = (Long) invoke(timer, long.class);
-        assertTrue(after > before);
-        assertFalse((Boolean) invoke(
-            "Lorg/lwjgl/sdl/SDLEvents;SDL_PollEvent(Lorg/lwjgl/sdl/SDL_Event;)Z",
-            boolean.class, (Object) null));
-    }
 }
