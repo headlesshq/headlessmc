@@ -51,7 +51,7 @@ public class AggregateSuperClassResolverTest {
     }
 
     private static PatchContext context(Path root) {
-        return new FakePatchContext(root, new Classpath(new LinkedHashSet<>()), List.of());
+        return new FakePatchContext(root, new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of());
     }
 
     @Test

@@ -109,7 +109,7 @@ public class PatchServiceImplTest {
     private Classpath classpath(Path root) throws IOException {
         return new Classpath(new LinkedHashSet<>(
             List.of(TestPatchers.writeJar(root.resolve("mc.jar"), "a.class", "content"))
-        ));
+        ), new LinkedHashSet<>());
     }
 
     @Test

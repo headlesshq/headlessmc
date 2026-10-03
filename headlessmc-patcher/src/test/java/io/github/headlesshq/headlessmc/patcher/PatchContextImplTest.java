@@ -48,7 +48,7 @@ public class PatchContextImplTest {
 
     @Test
     public void addPutsNewFileOnClasspathOnClose(@TempDir Path root) throws IOException {
-        PatchContextImpl context = context(root, new Classpath(new LinkedHashSet<>()), List.of());
+        PatchContextImpl context = context(root, new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of());
         Patcher patcher = TestPatchers.patcher("adder", 1L);
 
         try (OutputStream out = context.add("extra", patcher)) {
@@ -67,7 +67,7 @@ public class PatchContextImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(
             mcFiles.getLibraryDir().resolve("org").resolve("lib.jar"), "a.txt", "original");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
         PatchContextImpl context = context(root, classpath, List.of());
         Patcher patcher = TestPatchers.patcher("patcher", 1L);
 
@@ -93,7 +93,7 @@ public class PatchContextImplTest {
     public void abandonedPatchLeavesClasspathUntouched(@TempDir Path root) throws IOException {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "original");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
         PatchContextImpl context = context(root, classpath, List.of());
 
         context.patch(library, TestPatchers.patcher("patcher", 1L), (source, destination) -> false);
@@ -107,7 +107,7 @@ public class PatchContextImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(
             mcFiles.getLibraryDir().resolve("org").resolve("lib.jar"), "a.txt", "original");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
         PatchContextImpl context = context(root, classpath, List.of());
 
         context.patch(library, TestPatchers.patcher("first", 1L), (source, destination) -> {
@@ -130,7 +130,7 @@ public class PatchContextImplTest {
     @Test
     public void patchWrapsIoExceptions(@TempDir Path root) throws IOException {
         Path notAJar = Files.writeString(root.resolve("not-a-jar.jar"), "garbage");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(notAJar)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(notAJar)), new LinkedHashSet<>());
         PatchContextImpl context = context(root, classpath, List.of());
 
         assertThrows(PatchException.class,
@@ -143,7 +143,7 @@ public class PatchContextImplTest {
         };
         SecondService second = new SecondService() {
         };
-        PatchContextImpl context = context(root, new Classpath(new LinkedHashSet<>()), List.of(first, second));
+        PatchContextImpl context = context(root, new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of(first, second));
 
         assertEquals(List.of(first), context.services(FirstService.class).toList());
         assertEquals(List.of(second), context.services(SecondService.class).toList());

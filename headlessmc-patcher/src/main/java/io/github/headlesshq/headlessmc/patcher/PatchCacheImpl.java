@@ -41,7 +41,7 @@ public class PatchCacheImpl implements PatchCache {
             CacheInfo info = jsonService.parse(cacheInfo, CacheInfo.class);
             try {
                 SequencedSet<Path> classpath = resolve(context, cacheDir, info);
-                return Optional.of(new Classpath(classpath));
+                return Optional.of(new Classpath(classpath, new LinkedHashSet<>()));
             } catch (PatchException e) {
                 try {
                     fileService.deleteFileAndEmptyParentDirs(cacheDir);

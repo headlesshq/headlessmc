@@ -48,7 +48,7 @@ public class ClassLoaderSuperClassStrategyTest {
             "test/A.class", TestClasses.classBytes("test/A", "test/Base"),
             "test/B.class", TestClasses.classBytes("test/B", "test/Base")
         ));
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)), new LinkedHashSet<>());
 
         try (SuperClassResolver resolver = strategy.apply(context(root, classpath))) {
             assertEquals("test/Base", resolver.getCommonSuperClass("test/A", "test/B"));
@@ -72,7 +72,7 @@ public class ClassLoaderSuperClassStrategyTest {
     }
 
     private static Classpath emptyClasspath() {
-        return new Classpath(new LinkedHashSet<>());
+        return new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>());
     }
 
 }

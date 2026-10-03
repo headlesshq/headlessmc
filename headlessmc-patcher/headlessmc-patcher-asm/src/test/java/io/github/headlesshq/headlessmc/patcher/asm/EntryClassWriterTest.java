@@ -30,7 +30,7 @@ public class EntryClassWriterTest {
     private static PatchContext context(Path root, List<SuperClassStrategy> strategies) {
         return new FakePatchContext(
             root.resolve("base"),
-            new Classpath(new LinkedHashSet<>()),
+            new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()),
             List.of(service(strategies))
         );
     }

@@ -55,6 +55,11 @@ class ClassSourceFactoryTest {
         }
 
         @Override
+        public OutputStream addAgent(String library, Patcher patcher) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void patch(Path library, Patcher patcher, PatchAction action) {
             throw new UnsupportedOperationException();
         }
@@ -171,7 +176,7 @@ class ClassSourceFactoryTest {
     }
 
     private PatchContext context(Path... classpath) {
-        return new TestContext(new Classpath(new LinkedHashSet<>(List.of(classpath))), 21);
+        return new TestContext(new Classpath(new LinkedHashSet<>(List.of(classpath)), new LinkedHashSet<>()), 21);
     }
 
     @Test

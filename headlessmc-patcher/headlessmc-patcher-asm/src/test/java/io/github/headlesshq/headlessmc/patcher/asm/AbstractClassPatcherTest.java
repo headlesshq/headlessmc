@@ -53,7 +53,7 @@ public class AbstractClassPatcherTest {
             "module-info.class", TestClasses.classBytes("module-info", "java/lang/Object"),
             "resource.txt", "resource".getBytes(StandardCharsets.UTF_8)
         ));
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)), new LinkedHashSet<>());
         FakePatchContext context = new FakePatchContext(root.resolve("base"), classpath, List.of());
         MarkerPatcher patcher = new MarkerPatcher();
 
@@ -86,7 +86,7 @@ public class AbstractClassPatcherTest {
         Path jar = TestClasses.writeJar(root.resolve("leave-me.jar"), Map.of(
             "test/A.class", TestClasses.classBytes("test/A", "java/lang/Object")
         ));
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)));
+        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)), new LinkedHashSet<>());
         FakePatchContext context = new FakePatchContext(root.resolve("base"), classpath, List.of());
 
         new MarkerPatcher().patch(context);

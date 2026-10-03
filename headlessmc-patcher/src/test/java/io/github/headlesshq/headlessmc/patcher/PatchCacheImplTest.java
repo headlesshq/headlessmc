@@ -58,7 +58,7 @@ public class PatchCacheImplTest {
     }
 
     private Classpath classpath(Path... files) {
-        return new Classpath(new LinkedHashSet<>(List.of(files)));
+        return new Classpath(new LinkedHashSet<>(List.of(files)), new LinkedHashSet<>());
     }
 
     @Test

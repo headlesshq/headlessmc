@@ -55,6 +55,14 @@ final class FakePatchContext implements PatchContext {
     }
 
     @Override
+    public OutputStream addAgent(String library, Patcher patcher) throws IOException {
+        Path file = baseDir.resolve(patcher.name()).resolve(library + ".jar");
+        Files.createDirectories(file.getParent());
+        currentClasspath = currentClasspath.withAgent(file);
+        return Files.newOutputStream(file);
+    }
+
+    @Override
     public void patch(Path library, Patcher patcher, PatchAction action) {
         try {
             Path out = baseDir.resolve(patcher.name()).resolve(library.getFileName().toString());
@@ -69,7 +77,7 @@ final class FakePatchContext implements PatchContext {
                 SequencedSet<Path> files = new LinkedHashSet<>(currentClasspath.files());
                 files.remove(library);
                 files.add(out);
-                currentClasspath = new Classpath(files);
+                currentClasspath = new Classpath(files, currentClasspath.javaAgents());
             } else {
                 Files.deleteIfExists(out);
             }
