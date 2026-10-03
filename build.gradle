@@ -1,111 +1,118 @@
-import io.franzbecker.gradle.lombok.task.DelombokTask
-
 plugins {
-    id 'com.gradleup.shadow' version '8.3.9'
-    id 'io.franzbecker.gradle-lombok' version '5.0.0'
+    id 'java'
+    alias(libs.plugins.quarkus)
 }
 
-repositories {
-    mavenCentral()
+def generateVersionSource = tasks.register('generateVersionSource', Sync) {
+    inputs.property('version', project.version)
+    from('src/main/templates') {
+        expand(version: project.version)
+    }
+    into(layout.buildDirectory.dir('generated/sources/templates/java/main'))
 }
+
+sourceSets.main.java.srcDir(generateVersionSource.map { it.destinationDir })
 
 allprojects {
     apply plugin: 'java'
-    apply plugin: 'jacoco'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
-    apply plugin: 'com.gradleup.shadow'
+    apply plugin: 'jacoco'
+    apply plugin: 'jacoco-report-aggregation'
+    apply plugin: 'io.quarkus'
 
-    // no lombok for that project, cause its doing naughty things with stubing java.lang classes
-    if (project != project(':headlessmc-modlauncher')) {
-        // Consider switching to https://github.com/freefair/gradle-plugins/tree/main/lombok-plugin looks more maintained?
-        apply plugin: 'io.franzbecker.gradle-lombok'
-        lombok {
-            version '1.18.38'
-        }
-    }
-
-    group 'io.github.headlesshq.headlessmc'
-    version rootProject.project_version
-
+    group = 'io.github.headlesshq'
+    version = '3.0.0-RC1'
 
     repositories {
         mavenCentral()
-        maven {
-            name '3arthMaven'
-            url 'https://3arthqu4ke.github.io/maven'
-        }
-
-        maven {
-            name 'JitPackMaven'
-            url 'https://jitpack.io'
-        }
-    }
-
-    if (hmc_graal_build.toBoolean()) {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    } else {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-
-        compileJava {
-            if (JavaVersion.current().isJava9Compatible()) {
-                options.compilerArgs.addAll(['--release', '8'])
-            }
-        }
-    }
-
-    configurations {
-        jarLibs
-        implementation.extendsFrom jarLibs
-        jarLibsRuntimeOnly
-        runtimeOnly.extendsFrom jarLibsRuntimeOnly
-        jarLibsApi
-        api.extendsFrom jarLibsApi
     }
 
     dependencies {
-        compileOnly libs.jetbrains.annotations
-        testCompileOnly libs.jetbrains.annotations
-
-        api libs.cdi
-        api libs.findbugs
-
-        if (project != project(':headlessmc-findbugs')) {
-            implementation project(':headlessmc-findbugs')
+        if (project.name != 'headlessmc-lwjgl') {
+            implementation libs.jspecify
+            compileOnly libs.jetbrains.annotations
         }
 
-        if (project != project(':headlessmc-findbugs') && project != project(':headlessmc-cdi')) {
-            implementation project(':headlessmc-cdi')
-            compileOnly libs.auto.service
-            annotationProcessor libs.auto.service.processor
+        compileOnly libs.lombok
+        annotationProcessor libs.lombok
+        testCompileOnly libs.lombok
+        testAnnotationProcessor libs.lombok
+
+        Set<String> baseProjects = new HashSet<>()
+        baseProjects.add('headlessmc')
+        baseProjects.add('headlessmc-exceptions')
+        baseProjects.add('headlessmc-forge-installer')
+        baseProjects.add('headlessmc-lwjgl')
+        baseProjects.add('headlessmc-lwjgl-transformer')
+        baseProjects.add('headlessmc-patcher-probe')
+        if (!baseProjects.contains(project.name)) {
+            api project(':headlessmc-exceptions')
         }
 
-        // no lombok for modlauncher cause we do bad hacks there in the java9 stub.
-        if (project != project(':headlessmc-modlauncher')) {
-            compileOnly libs.lombok
-            annotationProcessor libs.lombok
+        testImplementation platform(libs.quarkus)
+        testImplementation libs.quarkus.junit
 
-            testCompileOnly libs.lombok
-            testAnnotationProcessor libs.lombok
+        // maybe just add to project.ext?
+        Set<String> java8Projects = new HashSet<>(baseProjects)
+        java8Projects.add('headlessmc-console')
+        java8Projects.add('headlessmc-console-format')
+        java8Projects.add('headlessmc-auth')
+        java8Projects.add('headlessmc-auth-all')
+        java8Projects.add('headlessmc-auth-impl')
+        java8Projects.add('headlessmc-auth-offline')
+        java8Projects.add('headlessmc-auth-store-gson')
+        java8Projects.add('headlessmc-auth-yggdrasil')
+        java8Projects.add('headlessmc-commands-auth')
+        if (!java8Projects.contains(project.name)) {
+            implementation platform(libs.quarkus)
+            implementation libs.inject
+            implementation libs.cdi
+            implementation libs.slf4j
+            runtimeOnly libs.slf4j.jboss
+
+            testImplementation enforcedPlatform(libs.quarkus)
+            testImplementation libs.quarkus.arc
+            testImplementation libs.quarkus.core
+            testImplementation libs.quarkus.junit.component
+            testImplementation libs.quarkus.jacoco
+
+            // TODO: check quarkus jackson-reflection-free-serializers
+            // for @RegisterForReflection, could also use graalvm reflect-config for improved compatibility
+            compileOnly libs.quarkus.core
         }
+    }
 
-        testImplementation (libs.weld.testing) {
-            exclude module: 'spotbugs-annotations'
-        }
+    java {
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
 
-        //testImplementation 'org.junit.platform:junit-platform-launcher'
-        testImplementation libs.junit.launcher
+    compileJava {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-parameters'
+    }
+
+    compileTestJava {
+        options.encoding = 'UTF-8'
+        options.release = 25
     }
 
     test {
         useJUnitPlatform()
-        testLogging {
-            events "failed"
-            exceptionFormat "full"
+        if (providers.gradleProperty('hmc.files.location').present) {
+            systemProperty 'hmc.files.location', providers.gradleProperty('hmc.files.location').get()
         }
 
+        // Classes loaded by the QuarkusClassLoader are transformed, so the plain jacoco
+        // agent records them under mismatched class ids; quarkus-jacoco records them
+        // instead, writing into the same exec file (see the Quarkus JaCoCo guide).
+        jacoco {
+            excludeClassLoaders = ["*QuarkusClassLoader"]
+        }
+
+        systemProperty 'quarkus.jacoco.data-file', layout.buildDirectory.file('jacoco/test.exec').get().asFile.absolutePath
+        systemProperty 'quarkus.jacoco.report', 'false'
         finalizedBy jacocoTestReport
     }
 
@@ -113,235 +120,49 @@ allprojects {
         dependsOn test
     }
 
-    jar {
-        archivesBaseName = project.name
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
-
-    java {
-        withSourcesJar()
-        withJavadocJar()
-    }
-
-    // TODO: even though we are doing all of this Intellij
-    //  still complains about bytecode not matching the source...
-    if (sourceSets.main.java.srcDirs.stream().anyMatch { it.exists()}
-            && project != project(':headlessmc-modlauncher')
-            && (!hmc_graal_build.toBoolean() || project != project(':headlessmc-graalvm'))) {
-        tasks.register('delombok', DelombokTask) {
-            dependsOn compileJava
-            ext.outputDir = file(layout.buildDirectory.dir('delombok'))
-            outputs.dir(ext.outputDir)
-            sourceSets.main.java.srcDirs.each {
-                if (it.exists()) {
-                    inputs.dir(it)
-                    args(it, '-f', 'suppressWarnings:skip',
-                            '-f', 'generated:skip',
-                            '-f', 'danceAroundIdeChecks:skip',
-                            '-f', 'generateDelombokComment:skip',
-                            '-f', 'javaLangAsFQN:skip',
-                            '-d', ext.outputDir)
-                }
-            }
-        }
-
-        javadoc {
-            dependsOn delombok
-            source = delombok.outputDir
-        }
-
-        sourcesJar {
-            dependsOn delombok
-            from delombok.outputDir
-            // I tried every single exclude/include pattern but I could not get any to work
-            exclude (fileTreeElement -> {
-                return !((FileTreeElement) fileTreeElement)
-                        .getFile()
-                        .toPath()
-                        .toAbsolutePath()
-                        .startsWith(delombok.outputDir.toPath().toAbsolutePath())
-            })
-        }
-
-        javadoc {
-            options.addStringOption('Xdoclint:none', '-quiet')
-            options.linkSource true
-        }
-    }
-
-    jar {
-        archiveClassifier.set('dev')
-        manifest {
-            attributes(
-                "Implementation-Title": project.name,
-                "Implementation-Version": version,
-            )
-        }
-
-        if (project != project(':headlessmc-lwjgl')) {
-            manifest {
-                attributes(
-                    "Automatic-Module-Name": "io.github.headlesshq.${project.name.replace("launcher-", "").replace('-', '.')}"
-                )
-            }
-        }
-    }
-
-    compileJava {
-        options.compilerArgs += ["-Aproject=${project.group.toString().replace('.', '/')}/${project.name.replace("launcher-", "").replace('-', '.')}"]
-    }
-
-    shadowJar {
-        configurations = [project.configurations.jarLibs, project.configurations.jarLibsApi]
-        archiveClassifier.set('')
-    }
-
-    jar.finalizedBy(shadowJar)
-    def pubSuffix = System.getenv('IS_MAVEN_PUB') != null
-            ? ''
-            : System.getenv('GITHUB_RUN_NUMBER') != null && System.getenv('GITHUB_SHA') != null
-                ? "-${System.getenv('GITHUB_RUN_NUMBER')}-${System.getenv('GITHUB_SHA').substring(0, 7)}"
-                : project.version.endsWith('-SNAPSHOT')
-                    ? ''
-                    : ''
 
     publishing {
         publications {
-            "${project.name.toLowerCase(Locale.ENGLISH)}"(MavenPublication) {
-                ((MavenPublication) it).groupId "${project.group}"
-                ((MavenPublication) it).artifactId "${project.archivesBaseName.toLowerCase(Locale.ENGLISH)}"
-                ((MavenPublication) it).version "${project.version}${pubSuffix}"
-                // TODO: testFixtures are part of commons artifact?
-                // Exclude shadowJars from publication
-                components.withType(AdhocComponentWithVariants).forEach { c ->
-                    c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-                        skip()
-                    }
-                }
-
+            mavenJava(MavenPublication) {
                 from components.java
             }
         }
-
         repositories {
-            // mavenLocal()
-            if (System.getenv('DEPLOY_TO_GITHUB_PACKAGES_URL') != null) {
-                maven {
-                    name = 'GithubPagesMaven'
-                    url = System.getenv('DEPLOY_TO_GITHUB_PACKAGES_URL')
-                    credentials {
-                        username = System.getenv('GITHUB_USER')
-                        password = System.getenv('GITHUB_TOKEN')
-                    }
-                }
-            } else {
-                maven {
-                    name = 'BuildDirMaven'
-                    url = rootProject.layout.buildDirectory.dir('maven')
-                }
-            }
-        }
-    }
-
-    publish {
-        dependsOn(build)
-    }
-
-    tasks.withType(Test).tap {
-        configureEach {
-            jacoco {
-                // our classloader potentially includes no ProtectionDomains?
-                includeNoLocationClasses true
-                jacoco.excludes = ['jdk.internal.*', 'io.github.headlesshq.headlessmc.lwjgl.agent.*']
+            maven {
+                url = uri("${project.rootProject.getLayout().buildDirectory.get()}/maven")
             }
         }
     }
 }
 
-javadoc {
-    source subprojects.collect { it.sourceSets.main.allJava }
-    classpath = files(subprojects.collect { it.sourceSets.main.compileClasspath })
+publish {
+    subprojects.each { dependsOn("${it.name}:publish") }
 }
 
-dependencies {
-    // create maven publication that contains all modules
-    api project(':headlessmc-api')
-    api project(':headlessmc-auth')
-    api project(':headlessmc-jline')
-    api project(':headlessmc-logging')
-    api project(':headlessmc-launcher')
-    api project(':headlessmc-launcher-wrapper')
-    api project(':headlessmc-modlauncher')
-    api project(':headlessmc-lwjgl')
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks.register('jacocoRootReport', JacocoReport) {
-    description = 'Generates an aggregate report from all subprojects'
-    group = 'verification'
-    dependsOn(subprojects.test)
+    group 'verification'
+    def coveredProjects = subprojects.findAll { it.plugins.hasPlugin('jacoco') }
+    dependsOn coveredProjects.collect { "${it.path}:test" }
 
-    additionalSourceDirs.from = files(subprojects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
-    classDirectories.from = files(subprojects.sourceSets.main.output)
-    executionData.from = files(subprojects.jacocoTestReport.executionData)
-
-    reports {
-        xml.required.set(true)
-    }
-}
-
-tasks.register('copyJars', Copy) {
-    dependsOn subprojects.shadowJar
-    subprojects.each { subproject ->
-        from(subproject.shadowJar)
-    }
-
-    into project.file(System.getProperty('hmc.jar.dir', 'build/libs'))
-}
-
-build {
-    dependsOn(subprojects.shadowJar)
-    finalizedBy(copyJars)
-}
-
-// the launchers report will otherwise contain coverage data about some of the
-// libraries we use in those two jars, e.g. xdarks Deencapsulation
-//noinspection ConfigurationAvoidance (idk does not seem to work with it)
-tasks.withType(JacocoReport) {
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            def tree = fileTree(dir: it, exclude: [
-                    '**/headlessmc/headlessmc-launcher.jar',
-                    '**/headlessmc-launcher-wrapper.jar',
-                    '**/headlessmc/headlessmc-lwjgl.jar',
-                    '**/headlessmc/headlessmc-macos-menu-agent.jar',
-                    '**/headlessmc/forge-cli.jar',
-                    '**/org/objectweb/asm/**',
-                    'io/github/headlesshq/headlessmc/lwjgl/agent/**',
-            ])
-        }))
-    }
+    executionData.setFrom(files({
+        coveredProjects.collect {
+            it.layout.buildDirectory.file('jacoco/test.exec').get().asFile
+        }.findAll { it.exists() }
+    }))
+    sourceDirectories.setFrom(files(coveredProjects.collect { it.sourceSets.main.allSource.srcDirs }))
+    classDirectories.setFrom(files(coveredProjects.collect {
+        it.fileTree(dir: it.layout.buildDirectory.dir('classes/java/main').get().asFile, exclude: [])
+    }))
 
     reports {
-        xml.required.set(true)
+        xml.required = true
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/root')
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/root/jacoco.xml')
     }
 }
-
-allprojects {
-    afterEvaluate {
-        tasks.withType(GenerateMavenPom).configureEach {
-            if (it.pom == null) {
-                return
-            }
-            it.pom.withXml {
-                asNode().dependencies.dependency.each { dependency ->
-                    if (dependency.artifactId.last().value().last() in ['junit-jupiter-api', 'junit-jupiter-engine', 'forgecli']) {
-                        assert dependency.parent().remove(dependency)
-                    }
-                }
-            }
-        }
-    }
-}
-
-generateMetadataFileForHeadlessmcPublication.mustRunAfter(copyJars)

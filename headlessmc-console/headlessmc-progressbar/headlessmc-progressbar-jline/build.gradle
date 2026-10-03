@@ -1,0 +1,7 @@
+dependencies {
+    implementation project(':headlessmc-console:headlessmc-progressbar')
+    implementation(libs.progressbar) {
+        // hmm, is this needed on windows?
+        // exclude group: "org.jline", module: "jline-native"
+    }
+}

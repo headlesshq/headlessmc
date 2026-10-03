@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-commands:headlessmc-commands-auth')
+    testImplementation libs.quarkus.picocli
+    testImplementation project(':headlessmc-auth:headlessmc-auth-cdi')
+    testImplementation project(':headlessmc-console:headlessmc-console-cdi')
+}

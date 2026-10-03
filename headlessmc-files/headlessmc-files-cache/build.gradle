@@ -1,0 +1,14 @@
+dependencies {
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-net')
+    runtimeOnly project(':headlessmc-net:headlessmc-net-java')
+    compileOnly libs.jetbrains.annotations
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+    implementation libs.slugify
+}
+
+dependencies {
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+    testImplementation testFixtures(project(':headlessmc-net'))
+}

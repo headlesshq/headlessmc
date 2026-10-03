@@ -1,6 +1,9 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
 dependencies {
-    api project(':headlessmc-os')
-    api project(':headlessmc-logging')
-    implementation project(':headlessmc-java')
-    implementation libs.gson
+    api project(':headlessmc-util:headlessmc-util-maven')
+
+    testFixturesImplementation libs.jspecify
 }

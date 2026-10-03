@@ -1,0 +1,14 @@
+// TODO: as a fallback if foojay.io is down, have temurin API
+
+dependencies {
+    implementation project(':headlessmc-java:headlessmc-java-distribution')
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-net')
+    runtimeOnly project(':headlessmc-net:headlessmc-net-java')
+    implementation libs.cdi
+
+    implementation libs.commons.compress
+    implementation libs.jdktools
+    implementation project(':headlessmc-net:headlessmc-net-rest')
+    implementation libs.quarkus.rest.client.jackson
+}

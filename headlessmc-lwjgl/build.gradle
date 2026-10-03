@@ -1,75 +1,103 @@
-apply plugin: 'headlessmc-modules'
+// TODO: shadowJar with ASM, and jar without ASM!
+plugins {
+    id("com.gradleup.shadow") version "9.6.1"
+}
 
-repositories {
-    mavenCentral()
-    maven {
-        name 'MinecraftMaven'
-        url 'https://libraries.minecraft.net/'
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+sourceSets {
+    mock
+    java9 {
+        java {
+            srcDirs = ['src/java9/java']
+        }
     }
 }
 
-module {
-    name = 'io.github.headlesshq.headlessmc.lwjgl'
-    access = ACC_OPEN
-    directory = project.layout.buildDirectory.dir('resources/main/META-INF/versions/9')
+sourceSets.java9.compileClasspath += sourceSets.main.output
+sourceSets.java9.compileClasspath += sourceSets.main.compileClasspath
 
-    exports 'io/github/headlesshq/headlessmc/lwjgl'
-    exports 'io/github/headlesshq/headlessmc/lwjgl/api'
-    exports 'io/github/headlesshq/headlessmc/lwjgl/transformer'
-    exports 'io/github/headlesshq/headlessmc/lwjgl/redirections'
-    exports 'io/github/headlesshq/headlessmc/lwjgl/redirections/stb'
-    exports 'io/github/headlesshq/headlessmc/lwjgl/util'
-    exports 'io/github/headlesshq/headlessmc/lwjgl/agent'
-
-    requires 'java.desktop'
-    requires 'java.instrument', ACC_STATIC
-    requires 'org.objectweb.asm.tree', ACC_STATIC
-    requires 'org.objectweb.asm', ACC_STATIC
-}
-
-configurations {
-    // make launchwrapper available to tests
-    testImplementation.extendsFrom compileOnly
-}
+sourceSets.main.compileClasspath += sourceSets.mock.output
 
 dependencies {
-    compileOnly(group: 'net.minecraft', name: 'launchwrapper', version: '1.12') {
-        exclude module: 'asm-debug-all'
-        // exclude unsafe log4j 2.0.9
-        exclude module: 'log4j-api'
-        exclude module: 'log4j-core'
-        // We don't exclude the LWJGL dependency because even though it's
-        // outdated, it can be nice to get an idea of what some Lwjgl classes
-        // look like when debugging the LWJGL instrumentation.
-    }
+    api libs.asm
+    api libs.asm.tree
+    // the root build excludes jspecify from this module so it stays out of the shaded jar,
+    // tests are still @NullMarked though.
+    testImplementation libs.jspecify
+}
 
-    // TODO: the RedirectionApi should be in a separate module, since it
-    //  does not need ASM and ASM might not be available at runtime
-    jarLibsApi libs.asm
-    jarLibsApi libs.asm.tree
-
-    testImplementation(testFixtures(project(':headlessmc-api')))
-    // Only for the LaunchWrapperTest, which is skipped on Java > 8
-    if (JavaVersion.current() <= JavaVersion.VERSION_1_8) {
-        testRuntimeOnly 'org.apache.logging.log4j:log4j-api:2.25.3'
-        testRuntimeOnly 'org.apache.logging.log4j:log4j-core:2.25.3'
+def compileModuleInfo = tasks.named('compileJava9Java', JavaCompile) {
+    dependsOn compileJava
+    destinationDirectory = layout.buildDirectory.dir('classes/module-info-java9')
+    options.release = 9
+    modularity.inferModulePath = false
+    classpath = files()
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', configurations.compileClasspath.asPath,
+                '--patch-module', "io.github.headlesshq.headlessmc.lwjgl=${sourceSets.main.output.asPath}",
+        ]
     }
 }
 
 jar {
-    //noinspection GroovyAssignabilityCheck
     manifest {
         attributes 'TweakClass': 'io.github.headlesshq.headlessmc.lwjgl.launchwrapper.LwjglTweaker'
         attributes 'Premain-Class': 'io.github.headlesshq.headlessmc.lwjgl.agent.LwjglAgent'
         attributes 'Agent-Class': 'io.github.headlesshq.headlessmc.lwjgl.agent.LwjglAgent'
         attributes 'Can-Redefine-Classes': true
         attributes 'Can-Retransform-Classes': true
+        attributes 'Multi-Release': true
+        attributes 'Implementation-Title': 'headlessmc-lwjgl'
+        attributes 'Implementation-Version': project.version
+        attributes 'Implementation-Vendor': 'HeadlessHQ'
+    }
+
+    into('META-INF/versions/9') {
+        from(compileModuleInfo.map { it.destinationDirectory }) {
+            include 'module-info.class'
+        }
     }
 }
 
 shadowJar {
-    include("META-INF/versions/9/module-info.class")
-    exclude("module-info.class") // exclude asm module-info.class
+    dependsOn compileModuleInfo
+    exclude { it.relativePath.pathString == 'module-info.class' }
+    doLast {
+        // TODO: don't use Ant for this...
+        ant.zip(destfile: archiveFile.get().asFile, update: true) {
+            zipfileset(
+                    dir: compileModuleInfo.get().destinationDirectory.get().asFile,
+                    prefix: 'META-INF/versions/9', includes: 'module-info.class'
+            )
+        }
+    }
+}
+
+// The menu hook also runs with vanilla, which provides no ASM. Keep its ASM
+// private so Fabric does not see a second copy of the loader's ASM packages.
+tasks.register('macosMenuAgentJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveFileName = 'headlessmc-macos-menu-agent.jar'
+
+    configurations = [project.configurations.runtimeClasspath]
+
+    from(sourceSets.main.output) {
+        include 'io/github/headlesshq/headlessmc/lwjgl/agent/MacosMenuAgent.class'
+        include 'io/github/headlesshq/headlessmc/lwjgl/transformer/MacosMenuTransformer.class'
+    }
+
+    relocate 'org.objectweb.asm', 'io.github.headlesshq.headlessmc.lwjgl.agent.asm'
+    relocate 'io.github.headlesshq.headlessmc.lwjgl.agent.MacosMenuAgent', 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
+    relocate 'io.github.headlesshq.headlessmc.lwjgl.transformer', 'io.github.headlesshq.headlessmc.lwjgl.agent.macos'
+    manifest {
+        attributes 'Premain-Class': 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
+    }
+
+    exclude { it.relativePath.pathString == 'module-info.class' }
 }
 
 // https://github.com/headlesshq/headlessmc/issues/199
@@ -79,28 +107,11 @@ tasks.register('noAsmJar', Copy) {
     from jar.archiveFile
     into layout.buildDirectory.dir('noasm')
     rename { fileName ->
-        fileName.replace("-${version}-dev.jar", "-${version}-no-asm.jar")
+        fileName.replace("-${version}.jar", "-${version}-no-asm.jar")
     }
 }
 
 build.dependsOn(noAsmJar)
-
-// The menu hook also runs with vanilla, which provides no ASM. Keep its ASM
-// private so Fabric does not see a second copy of the loader's ASM packages.
-tasks.register('macosMenuAgentJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-    archiveFileName = 'headlessmc-macos-menu-agent.jar'
-    from(sourceSets.main.output) {
-        include 'io/github/headlesshq/headlessmc/lwjgl/agent/MacosMenuAgent.class'
-        include 'io/github/headlesshq/headlessmc/lwjgl/transformer/MacosMenuTransformer.class'
-    }
-    configurations = [project.configurations.jarLibsApi]
-    relocate 'org.objectweb.asm', 'io.github.headlesshq.headlessmc.lwjgl.agent.asm'
-    relocate 'io.github.headlesshq.headlessmc.lwjgl.agent.MacosMenuAgent', 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
-    relocate 'io.github.headlesshq.headlessmc.lwjgl.transformer', 'io.github.headlesshq.headlessmc.lwjgl.agent.macos'
-    manifest {
-        attributes 'Premain-Class': 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
-    }
-}
 
 tasks.register('testAgent', Test) {
     dependsOn jar
@@ -112,17 +123,13 @@ tasks.register('testAgent', Test) {
     }
 
     jvmArgs = [
-        "-javaagent:$projectDir/build/libs/headlessmc-lwjgl-${rootProject.version}.jar",
-        '-Dhmc.lwjgl.agenttest=true'
+            "-javaagent:$projectDir/build/libs/headlessmc-lwjgl-${rootProject.version}.jar",
+            "-Dhmc.lwjgl.agenttest=true"
     ]
 
     filter {
-        includeTestsMatching 'io.github.headlesshq.headlessmc.lwjgl.agent.AgentTest'
+        includeTestsMatching "io.github.headlesshq.headlessmc.lwjgl.agent.AgentTest"
     }
-}
-
-shadowJar {
-    excludes.remove("module-info.class")
 }
 
 test.finalizedBy(testAgent)

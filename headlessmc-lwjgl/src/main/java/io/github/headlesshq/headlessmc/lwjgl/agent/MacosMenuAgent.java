@@ -36,7 +36,7 @@ public class MacosMenuAgent implements ClassFileTransformer {
         if (virtualWindowsOnly
             && "com/mojang/blaze3d/platform/MacosUtil".equals(name)
             && (loader == null || loader.getResource(
-                "io/github/headlesshq/headlessmc/lwjgl/redirections/SdlRedirections.class") == null)) {
+            "io/github/headlesshq/headlessmc/lwjgl/redirections/SdlRedirections.class") == null)) {
             return null;
         }
 

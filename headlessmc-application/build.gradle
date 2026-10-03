@@ -1,0 +1,27 @@
+plugins {
+    alias libs.plugins.quarkus
+}
+
+// quarkusDev is not that great, especially if we want to debug from the shell
+// quarkusRun is not a JavaExec, so IntelliJ cannot attach a debugger
+// the gradle application plugin run task somehow also runs quarkusDev
+// so we created this task which runs the quarkus-run.jar
+tasks.register("runApp", JavaExec) {
+    dependsOn quarkusBuild
+    group = "other"
+    classpath = files(project.layout.buildDirectory.file("quarkus-app/quarkus-run.jar"))
+    // Add-Opens: java.base/java.lang java.base/java.nio java.base/jdk.internal.misc
+    jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
+    mainClass = "io.quarkus.bootstrap.runner.QuarkusEntryPoint"
+    standardInput = System.in
+}
+
+dependencies {
+    implementation platform(libs.quarkus)
+    implementation libs.quarkus.arc
+    implementation libs.quarkus.picocli
+    //implementation libs.slf4j.jboss
+    api project(':headlessmc-bom')
+
+    testImplementation project(':headlessmc-console:headlessmc-console-completions')
+}

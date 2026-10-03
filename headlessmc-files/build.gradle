@@ -1,0 +1,12 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    implementation libs.cdi
+    implementation project(':headlessmc-os')
+    implementation project(':headlessmc-config')
+    runtimeOnly project(':headlessmc-os:headlessmc-os-apache')
+
+    testFixturesImplementation libs.jspecify
+}

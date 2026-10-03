@@ -8,4 +8,5 @@ public class MacosUtil {
     public static int unrelatedMethod() {
         return 42;
     }
+
 }

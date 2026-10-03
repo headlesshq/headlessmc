@@ -1,4 +1,14 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
 dependencies {
-    api project(':headlessmc-version')
-    api project(':headlessmc-version-id')
+    implementation project(':headlessmc-version')
+
+    testFixturesApi project(':headlessmc-version')
+    testFixturesImplementation libs.jspecify
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-version'))
 }

@@ -1,0 +1,20 @@
+dependencies {
+    implementation project(':headlessmc-patcher:headlessmc-patcher-asm')
+    implementation project(':headlessmc-lwjgl')
+    implementation project(':headlessmc-os')
+}
+
+tasks.named("processResources") {
+    dependsOn(":headlessmc-lwjgl:macosMenuAgentJar")
+    dependsOn(":headlessmc-lwjgl:jar")
+
+    from(project("::headlessmc-lwjgl").tasks.named("jar")) {
+        rename { "headlessmc-lwjgl.jar" }
+        into("patcher/lwjgl")
+    }
+
+    from(project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile) {
+        rename { "headlessmc-macos-menu-agent.jar" }
+        into("patcher/lwjgl")
+    }
+}

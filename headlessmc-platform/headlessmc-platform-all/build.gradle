@@ -1,0 +1,13 @@
+dependencies {
+    api project(':headlessmc-platform')
+    api project(':headlessmc-platform:headlessmc-platform-vanilla')
+    api project(':headlessmc-platform:headlessmc-platform-fabric')
+    api project(':headlessmc-platform:headlessmc-platform-forge')
+    api project(':headlessmc-platform:headlessmc-platform-neoforge')
+    api project(':headlessmc-platform:headlessmc-platform-paper')
+    api project(':headlessmc-platform:headlessmc-platform-purpur')
+    api project(':headlessmc-platform:headlessmc-platform-util')
+
+    testImplementation project(':headlessmc-version:headlessmc-version-jackson')
+    testImplementation project(':headlessmc-version:headlessmc-version-service')
+}

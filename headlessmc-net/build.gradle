@@ -1,0 +1,30 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    api project(':headlessmc-config')
+    implementation project(':headlessmc-util:headlessmc-util-reflection')
+    implementation rootProject
+
+    testFixturesImplementation platform(libs.quarkus)
+    testFixturesImplementation libs.inject
+    testFixturesImplementation libs.cdi
+    testFixturesImplementation libs.slf4j
+    testFixturesRuntimeOnly libs.slf4j.jboss
+
+    testFixturesImplementation libs.quarkus.arc
+    testFixturesImplementation libs.quarkus.core
+    testFixturesImplementation libs.quarkus.junit
+    testFixturesImplementation libs.quarkus.junit.component
+
+    testFixturesImplementation project(':headlessmc-util:headlessmc-util-reflection')
+    testFixturesImplementation rootProject
+
+
+    implementation libs.jspecify
+    compileOnly libs.jetbrains.annotations
+
+    testFixturesCompileOnly libs.lombok
+    testFixturesAnnotationProcessor libs.lombok
+}

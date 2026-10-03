@@ -1,0 +1,12 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    testFixturesImplementation libs.jspecify
+}

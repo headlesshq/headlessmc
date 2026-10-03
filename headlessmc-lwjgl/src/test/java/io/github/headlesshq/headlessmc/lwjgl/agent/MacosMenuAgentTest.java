@@ -26,7 +26,7 @@ public class MacosMenuAgentTest {
         }
 
         byte[] transformed = new MacosMenuAgent().transform(null,
-            MacosUtil.class.getName().replace('.', '/'), null, null, original);
+                                                            MacosUtil.class.getName().replace('.', '/'), null, null, original);
         assertNotNull(transformed);
         Class<?> type = new ClassLoader(null) {
             Class<?> define() {
@@ -54,12 +54,12 @@ public class MacosMenuAgentTest {
     public void testOlderClassAndOtherLibrariesAreUnchanged() {
         ClassWriter writer = new ClassWriter(0);
         writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC,
-            "com/mojang/blaze3d/platform/MacosUtil", null, "java/lang/Object", null);
+                     "com/mojang/blaze3d/platform/MacosUtil", null, "java/lang/Object", null);
         writer.visitEnd();
         MacosMenuAgent agent = new MacosMenuAgent();
         assertNull(agent.transform(null, "com/mojang/blaze3d/platform/MacosUtil",
-            null, null, writer.toByteArray()));
+                                   null, null, writer.toByteArray()));
         assertNull(agent.transform(null, "org/lwjgl/system/MemoryUtil",
-            null, null, new byte[0]));
+                                   null, null, new byte[0]));
     }
 }

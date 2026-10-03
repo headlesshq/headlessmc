@@ -1,3 +1,0 @@
-- invert/always properties are being replaced
-- fabric.url property to be replaced with command arg
-- 

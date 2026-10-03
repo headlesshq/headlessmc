@@ -3,40 +3,51 @@ package io.github.headlesshq.headlessmc.platform;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
-import jakarta.enterprise.inject.literal.NamedLiteral;
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Optional;
 
+/**
+ * Default {@link PlatformService} implementation.
+ */
 @ApplicationScoped
 public class PlatformServiceImpl implements PlatformService {
     private final Instance<Platform> platforms;
+    private final VanillaPlatform vanillaPlatform;
 
     @Inject
-    public PlatformServiceImpl(@Any Instance<Platform> platforms) {
+    public PlatformServiceImpl(
+        @Any Instance<Platform> platforms,
+        // requires a dependency on headlessmc-platform-vanilla
+        VanillaPlatform vanillaPlatform
+    ) {
         this.platforms = platforms;
+        this.vanillaPlatform = vanillaPlatform;
     }
 
     @Override
-    public @Nullable Platform getPlatform(String name) {
-        Instance<Platform> platform = platforms.select(NamedLiteral.of(name));
-        if (platform.isResolvable()) {
-            return platform.get();
-        }
-
-        return null;
+    public List<Platform> getPlatformsWithoutVanilla() {
+        return platforms.stream()
+                .filter(platform -> !(platform instanceof VanillaPlatform)) // use @Vanilla qualifier?
+                .toList();
     }
 
     @Override
-    public Stream<Platform> stream() {
-        return platforms.stream();
+    public List<Platform> getPlatforms() {
+        return platforms.stream().toList();
     }
 
     @Override
-    public Iterator<Platform> iterator() {
-        return platforms.iterator();
+    public Optional<Platform> getPlatform(String name) {
+        return platforms.stream()
+                .filter(platform -> name.equalsIgnoreCase(platform.getName()))
+                .findFirst();
+    }
+
+    @Override
+    public VanillaPlatform getVanillaPlatform() {
+        return vanillaPlatform;
     }
 
 }

@@ -1,13 +1,7 @@
 # Getting Started
 
-There are many ways to run the launcher.
-Which one to choose depends on what you want to achieve and where you are running HeadlessMc.
-If you simply want to use it to play the game,
-the [native](#native) approach might be a good place to start.
-
-### Native
-No setup is required for the native HeadlessMc executables.
-They will download a suitable version of Java and run HeadlessMc with it.
+Download the executable for your Operating System from the latest 
+[GitHub Release](https://github.com/headlesshq/headlessmc/releases).
 
 === "Linux"
     
@@ -20,7 +14,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl:
     ``` sh
-    curl -L https://github.com/3arthqu4ke/headlessmc/releases/latest/download/headlessmc-launcher-linux-x64 -o headlessmc-launcher
+    curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
     ```
 
 === "Windows"
@@ -31,7 +25,7 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl.exe in the Command prompt:
     ```lang-powershell
-    curl.exe -L --output headlessmc-launcher.exe --url https://github.com/3arthqu4ke/headlessmc/releases/latest/download/headlessmc-launcher-windows-x64.exe
+    curl.exe -L --output headlessmc-launcher.exe --url https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-windows-x64.exe
     ```
 
 === "MacOS"
@@ -45,30 +39,25 @@ They will download a suitable version of Java and run HeadlessMc with it.
     ```
     You can download the file e.g. via curl:
     ``` sh
-    curl -L https://github.com/3arthqu4ke/headlessmc/releases/latest/download/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
+    curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
 
 ### Java
 
-HeadlessMc has been written in Java and run on any version &geq; Java 8.
-The `headlessmc-launcher-wrapper.jar` has slightly more overhead compared to the
-normal launcher jar, but enables [plugins](plugins.md) and [in-memory launching](in-memory.md).
-
-Simply run:
+HeadlessMc has been written in Java with the Quarkus Framework and runs on Java 25.
+You can also download the `headlessmc.jar` from GitHub, which will run on any operating system.
 ```shell
-java -jar headlessmc-launcher.jar
+java -jar headlessmc.jar
 ```
 
 ### Docker
 
-A preconfigured [docker image](https://hub.docker.com/r/3arthqu4ke/headlessmc/) exists,
-which comes with Java 8, 17 and 21 installed.
+A preconfigured [docker image](https://hub.docker.com/r/3arthqu4ke/headlessmc/) exists:
 ```shell
 docker pull 3arthqu4ke/headlessmc:latest
 docker run -it 3arthqu4ke/headlessmc:latest
 ```
-Inside the container you can use the `hmc` command anywhere,
-or start the jar using `java -jar`.
+Inside the container you can use the `headlessmc`.
 
 ### Android
 
@@ -76,12 +65,19 @@ HeadlessMc can run inside Termux.
 
 - Download Termux from F-Droid, **NOT** from the PlayStore.
 - Install Java: `apt update && apt upgrade $ apt install openjdk-<version>`
-- Download the headlessmc-launcher-wrapper.jar into Termux.
+- Download the headlessmc.jar into Termux.
 - Disable JLine, as we could not get it to work on Termux for now,
-  by adding `hmc.jline.enabled=false` to the HeadlessMC/config.properties.
+  by adding `hmc.jline.enabled=false` to the user/.config/headlessmc/config.properties,
+  or starting with `-Dhmc.jline.enabled=false`.
 - Now you can use HeadlessMc as you would on Desktop or Docker.
 
 ### Web
+
+!!! warning "HeadlessMc v2"
+
+    This is a legacy HeadlessMc v2 feature that will eventually come back.
+    Maybe even better as it could be possible to compile HeadlessMc to webassembly with GraalVM.
+    However, it is currently not supported.
 
 HeadlessMc can run inside the browser, kinda.
 First, there is [CheerpJ](https://cheerpj.com/), a WebAssembly JVM,

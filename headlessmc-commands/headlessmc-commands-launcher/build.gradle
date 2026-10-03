@@ -1,0 +1,39 @@
+dependencies {
+    implementation project(':headlessmc-launcher')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-args')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-client')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-server')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
+
+    implementation project(':headlessmc-commands:headlessmc-commands-server')
+    implementation project(':headlessmc-commands:headlessmc-commands-profile')
+
+    implementation project(':headlessmc-commands:headlessmc-commands-util')
+
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-format')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
+
+    implementation project(':headlessmc-auth')
+    implementation project(':headlessmc-auth:headlessmc-auth-cdi')
+
+    implementation rootProject
+    implementation libs.picocli
+}
+
+dependencies {
+    testImplementation project(':headlessmc-platform')
+    testImplementation project(':headlessmc-auth')
+    testImplementation project(':headlessmc-patcher')
+    testImplementation project(':headlessmc-java:headlessmc-java-launcher')
+    testImplementation project(':headlessmc-version:headlessmc-version-service')
+    testImplementation project(':headlessmc-launcher:headlessmc-launcher-libraries')
+    testImplementation project(':headlessmc-launcher:headlessmc-launcher-assets')
+    testImplementation project(':headlessmc-launcher:headlessmc-launcher-logging')
+    testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+}

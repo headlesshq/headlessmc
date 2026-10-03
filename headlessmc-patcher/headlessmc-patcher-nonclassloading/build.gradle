@@ -1,0 +1,12 @@
+dependencies {
+    api project(':headlessmc-patcher:headlessmc-patcher-asm')
+    implementation project(':headlessmc-java')
+    implementation project(':headlessmc-java:headlessmc-java-launcher')
+}
+
+dependencies {
+    testImplementation project(':headlessmc-java:headlessmc-java-distribution')
+    testImplementation project(':headlessmc-files')
+    testImplementation project(':headlessmc-config')
+    testImplementation project(':headlessmc-os')
+}

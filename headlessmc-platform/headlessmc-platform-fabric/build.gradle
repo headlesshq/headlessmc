@@ -1,0 +1,125 @@
+repositories {
+    maven {
+        name "fabric"
+        url "https://maven.fabricmc.net"
+        content {
+            includeGroup "net.fabricmc"
+        }
+    }
+
+
+    maven {
+        name "fabric-legacy"
+        url "https://maven.legacyfabric.net"
+        content {
+            includeGroup "net.legacyfabric"
+        }
+    }
+}
+
+configurations {
+    fabric
+}
+
+dependencies {
+    // these configurations are here because they can be updated by dependabot
+    fabric "net.fabricmc:fabric-installer:1.1.1"
+    fabric "net.legacyfabric:fabric-installer:1.1.1"
+
+    implementation project(':headlessmc-platform')
+    implementation project(':headlessmc-platform:headlessmc-platform-util')
+    runtimeOnly project(':headlessmc-platform:headlessmc-platform-vanilla')
+    implementation project(':headlessmc-net')
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-java:headlessmc-java-all')
+    implementation project(':headlessmc-util:headlessmc-util-maven')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+    implementation libs.jackson
+
+    runtimeOnly project(':headlessmc-version:headlessmc-version-jackson')
+
+    //testImplementation libs.fabric
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+}
+
+
+import groovy.json.JsonOutput
+
+import java.security.MessageDigest
+
+static def hash(File file, String algorithm) {
+    MessageDigest digest = MessageDigest.getInstance(algorithm)
+
+    file.withInputStream { input ->
+        byte[] buffer = new byte[8192]
+        int read
+
+        while ((read = input.read(buffer)) != -1) {
+            digest.update(buffer, 0, read)
+        }
+    }
+
+    digest.digest().collect { String.format("%02x", it) }.join()
+}
+
+tasks.register('generateFabricArtifactMetadata') {
+    outputs.file(layout.buildDirectory.file("fabric-artifacts.json"))
+
+    doLast {
+        def repositoryUrls = repositories
+                .withType(MavenArtifactRepository)
+                .collectEntries {
+                    [(it.name): it.url.toString()]
+                }
+
+        def result = [:]
+        configurations.fabric.resolvedConfiguration.resolvedArtifacts.forEach { artifact ->
+            File file = artifact.file
+            def componentId = artifact.moduleVersion.id
+            def resolvedComponent = configurations.fabric.incoming.resolutionResult.allComponents.find {
+                it.moduleVersion
+                        && it.moduleVersion.group == componentId.group
+                        && it.moduleVersion.name == componentId.name
+                        && it.moduleVersion.version == componentId.version
+            }
+
+            def repoUrl = Objects.requireNonNull(repositoryUrls[resolvedComponent.getRepositoryName()])
+            def key = "$componentId.group:$componentId.name"
+            if (result.containsKey(key)) {
+                throw new IllegalStateException("$key already in installer map")
+            }
+
+            result[key] = [
+                group     : componentId.group,
+                name      : componentId.name,
+                version   : componentId.version,
+                fileName  : file.name,
+                size      : file.length(),
+                sha256    : hash(file, "SHA-256"),
+                repository: repoUrl,
+            ]
+        }
+
+        File output = layout.buildDirectory.file("fabric-artifacts.json").get().asFile
+        output.parentFile.mkdirs()
+        output.text = JsonOutput.prettyPrint(JsonOutput.toJson(result))
+    }
+}
+
+tasks.named("processResources") {
+    dependsOn("generateFabricArtifactMetadata")
+
+    from(generateFabricArtifactMetadata) {
+        into("fabric")
+        rename { "fabric-artifacts.json" }
+    }
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-net'))
+}

@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':headlessmc-config')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    implementation project(':headlessmc-util:headlessmc-util-json-jackson')
+}

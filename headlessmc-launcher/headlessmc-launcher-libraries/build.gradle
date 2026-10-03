@@ -1,0 +1,18 @@
+dependencies {
+    implementation project(':headlessmc-os')
+
+    implementation project(':headlessmc-version')
+    implementation project(':headlessmc-version:headlessmc-version-util')
+
+    implementation project(':headlessmc-util:headlessmc-util-maven')
+
+    implementation project(':headlessmc-net:headlessmc-net-all')
+    runtimeOnly project(':headlessmc-net:headlessmc-net-java')
+
+    implementation project(':headlessmc-console:headlessmc-progressbar')
+    implementation project(':headlessmc-config')
+    implementation project(':headlessmc-files')
+
+    testImplementation testFixtures(project(':headlessmc-net'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+}

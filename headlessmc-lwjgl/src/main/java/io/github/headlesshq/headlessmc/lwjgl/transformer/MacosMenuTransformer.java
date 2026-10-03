@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.lwjgl.transformer;
 
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;

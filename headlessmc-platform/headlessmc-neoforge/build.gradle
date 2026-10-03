@@ -1,4 +1,0 @@
-dependencies {
-    api project(':headlessmc-platform')
-    api project(':headlessmc-forge')
-}

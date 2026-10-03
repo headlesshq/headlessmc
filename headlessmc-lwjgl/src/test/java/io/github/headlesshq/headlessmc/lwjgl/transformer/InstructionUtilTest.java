@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.*;
 
-public class InstructionUtilTest extends AbstractUtilityTest<InstructionUtil> {
+public class InstructionUtilTest {
 
     @Test
     @DisplayName("Test for loadType() with primitive types")

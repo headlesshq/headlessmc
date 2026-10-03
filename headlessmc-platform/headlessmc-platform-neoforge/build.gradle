@@ -1,0 +1,27 @@
+dependencies {
+    implementation project(':headlessmc-platform')
+    implementation project(':headlessmc-platform:headlessmc-platform-util')
+    implementation project(':headlessmc-platform:headlessmc-platform-forge')
+    runtimeOnly project(':headlessmc-platform:headlessmc-platform-vanilla')
+
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-java:headlessmc-java-all')
+    implementation project(':headlessmc-util:headlessmc-util-maven')
+
+    implementation project(':headlessmc-net')
+    runtimeOnly project(':headlessmc-net:headlessmc-net-java')
+
+    implementation project(':headlessmc-os')
+    runtimeOnly project(':headlessmc-os:headlessmc-os-apache')
+    runtimeOnly project(':headlessmc-os:headlessmc-os-config')
+
+    implementation libs.jackson
+    implementation libs.jackson.toml
+
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+}
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
+}

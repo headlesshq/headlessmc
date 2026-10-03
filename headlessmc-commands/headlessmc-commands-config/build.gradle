@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-format')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
+
+    implementation project(':headlessmc-config')
+    implementation libs.picocli
+
+    testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+}

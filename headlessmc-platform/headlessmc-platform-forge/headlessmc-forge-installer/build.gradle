@@ -1,0 +1,28 @@
+plugins {
+    id 'application'
+}
+
+sourceSets {
+    mock
+}
+
+sourceSets.main.compileClasspath += sourceSets.mock.output
+sourceSets.test.compileClasspath += sourceSets.mock.output
+sourceSets.test.runtimeClasspath += sourceSets.mock.output
+
+application {
+    mainClass.set("io.github.headlesshq.headlessmc.forge.installer.Main")
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+jar {
+    manifest {
+        attributes(
+            "Main-Class": "io.github.headlesshq.headlessmc.forge.installer.Main"
+        )
+    }
+}

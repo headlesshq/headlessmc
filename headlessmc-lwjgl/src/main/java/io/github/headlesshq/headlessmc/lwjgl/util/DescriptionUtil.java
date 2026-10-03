@@ -1,7 +1,6 @@
 package io.github.headlesshq.headlessmc.lwjgl.util;
 
 import lombok.experimental.UtilityClass;
-import lombok.val;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
@@ -29,7 +28,7 @@ public class DescriptionUtil {
     }
 
     public static String getDesc(Method method) {
-        val desc = new StringBuilder(method.getName()).append("(");
+        StringBuilder desc = new StringBuilder(method.getName()).append("(");
         for (Class<?> parameter : method.getParameterTypes()) {
             putDesc(parameter, desc);
         }
@@ -39,7 +38,7 @@ public class DescriptionUtil {
     }
 
     public static String getDesc(Class<?> type) {
-        val result = new StringBuilder();
+        StringBuilder result = new StringBuilder();
         putDesc(type, result);
         return result.toString();
     }
@@ -50,7 +49,7 @@ public class DescriptionUtil {
             type = type.getComponentType();
         }
 
-        val primitive = PRIMITIVES.get(type);
+        String primitive = PRIMITIVES.get(type);
         if (primitive == null) {
             builder.append("L");
             String name = type.getName();

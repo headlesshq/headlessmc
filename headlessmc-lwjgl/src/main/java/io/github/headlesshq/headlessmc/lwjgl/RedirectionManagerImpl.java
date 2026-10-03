@@ -26,14 +26,12 @@ public class RedirectionManagerImpl implements RedirectionManager {
     }
 
     @Override
-    public Object invoke(Object obj, String desc, Class<?> type, Object... args)
-        throws Throwable {
+    public Object invoke(Object obj, String desc, Class<?> type, Object... args) throws Throwable {
         return invoke(desc, type, obj, () -> getFallback(desc, type), args);
     }
 
     @Override
-    public Object invoke(String desc, Class<?> type, Object obj,
-                         Supplier<Redirection> fb, Object... args)
+    public Object invoke(String desc, Class<?> type, Object obj, Supplier<Redirection> fb, Object... args)
         throws Throwable {
         Redirection redirection = redirects.get(desc);
         if (redirection == null) {

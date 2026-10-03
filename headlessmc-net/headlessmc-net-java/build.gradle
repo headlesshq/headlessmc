@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':headlessmc-net')
+    implementation project(':headlessmc-net:headlessmc-net-hash')
+
+    implementation project(':headlessmc-console:headlessmc-progressbar')
+
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+
+    implementation libs.resilience4j.retry
+}

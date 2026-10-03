@@ -1,0 +1,10 @@
+dependencies {
+    api project(':headlessmc-auth')
+    implementation project(':headlessmc-auth:headlessmc-auth-all')
+    implementation project(':headlessmc-auth:headlessmc-auth-impl')
+    implementation project(':headlessmc-auth:headlessmc-auth-offline')
+    implementation project(':headlessmc-auth:headlessmc-auth-store-gson')
+    implementation project(':headlessmc-net')
+    implementation project(':headlessmc-files')
+    implementation libs.gson
+}

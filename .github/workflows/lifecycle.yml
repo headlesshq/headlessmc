@@ -25,54 +25,26 @@ env:
   REGISTRY_IMAGE: 3arthqu4ke/headlessmc
 
 jobs:
-  build-java-8:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          java-version: 8
-          distribution: adopt
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      # Could be faster with ./gradlew :headlessmc-launcher-wrapper:shadowJar --stacktrace
-      - name: Build
-        run: ./gradlew build --stacktrace
-      - name: Delete launcher-wrapper dev jar
-        run: rm headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*-dev.jar
-      - name: Delete launcher-wrapper javadoc jar
-        run: rm headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*-javadoc.jar
-      - name: Delete launcher-wrapper sources jar
-        run: rm headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*-sources.jar
-      - name: Rename launcher jar
-        run: mv headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-wrapper.jar
-      - name: Publish Artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: launcher-wrapper-java8-jar
-          path: |
-            ./headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-wrapper.jar
-
   build:
     runs-on: ubuntu-latest
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
-          java-version: 21
+          java-version: 25
           distribution: adopt
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Run Coverage
-        run: ./gradlew -Phmc_integration_test_enabled=true jacocoRootReport --stacktrace
+        run: ./gradlew jacocoRootReport --stacktrace
 
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
         id: jacoco
-        uses: madrapps/jacoco-report@v1.7.2
+        uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: |
             ${{ github.workspace }}/**/build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
@@ -95,53 +67,35 @@ jobs:
             **/build/test-results/**
           if-no-files-found: ignore
 
-      - name: Publish with gradle
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        env:
-          IS_MAVEN_PUB: true
-          DEPLOY_TO_GITHUB_PACKAGES_URL: https://maven.pkg.github.com/headlesshq/headlessmc
-          GITHUB_USER: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew publish
+      #- name: Publish with gradle
+      #  if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      #  env:
+      #    IS_MAVEN_PUB: true
+      #    DEPLOY_TO_GITHUB_PACKAGES_URL: https://maven.pkg.github.com/headlesshq/headlessmc
+      #    GITHUB_USER: ${{ github.actor }}
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  run: ./gradlew publish
 
-      - name: Delete launcher dev jar
-        run: rm headlessmc-launcher/build/libs/headlessmc-launcher-*-dev.jar
-      - name: Delete launcher javadoc jar
-        run: rm headlessmc-launcher/build/libs/headlessmc-launcher-*-javadoc.jar
-      - name: Delete launcher sources jar
-        run: rm headlessmc-launcher/build/libs/headlessmc-launcher-*-sources.jar
+      - name: Build uber jar
+        run: ./gradlew :headlessmc-application:quarkusBuild -Dquarkus.package.jar.type=uber-jar
 
-      - name: Delete launcher-wrapper dev jar
-        run: rm headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*-dev.jar
-      - name: Delete launcher-wrapper javadoc jar
-        run: rm headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*-javadoc.jar
-      - name: Delete launcher-wrapper sources jar
-        run: rm headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*-sources.jar
-
-      - name: Delete lwjgl dev jar
-        run: rm headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-dev.jar
-      - name: Delete lwjgl javadoc jar
-        run: rm headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-javadoc.jar
-      - name: Delete lwjgl sources jar
-        run: rm headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-sources.jar
+      - name: Rename uber jar
+        run: mv headlessmc-application/build/quarkus-build/gen/headlessmc-application-*.jar headlessmc-application/build/quarkus-build/gen/headlessmc.jar
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v7
         with:
           name: HeadlessMc Launcher files
           path: |
-            ./headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar
-            ./headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
-            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
+            ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar
+            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
             ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
-            ./headlessmc-scripts/hmc
-            ./headlessmc-scripts/hmc.bat
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
@@ -152,12 +106,9 @@ jobs:
         run: mkdocs build -d _site
 
       # Prepare Site deployment
-      - name: Create site dir
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: mkdir _site
-      - name: Copy javadoc
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: cp -r build/docs/javadoc/ _site/
+      #- name: Copy javadoc
+      #  if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+      #  run: cp -r build/docs/javadoc/ _site/
       - name: Rename report dir
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
         run: mv build/reports/jacoco/jacocoRootReport/html build/reports/jacoco/jacocoRootReport/coverage
@@ -166,7 +117,7 @@ jobs:
         run: cp -r build/reports/jacoco/jacocoRootReport/coverage/ _site/
       - name: Upload Web page artifact
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        uses: actions/upload-pages-artifact@v4.0.0
+        uses: actions/upload-pages-artifact@v5.0.0
 
   deploy-pages:
     # startsWith(github.ref, 'refs/tags/') || we do not allow tags to deploy github pages
@@ -188,49 +139,7 @@ jobs:
         run: ls -R
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
-
-  test-build-natives:
-    runs-on: ${{ matrix.os.os }}
-    if: ${{ !(github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')) }}
-    needs: build-java-8
-    strategy:
-      matrix:
-        os:
-          - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '23'
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
-
-      - name: Output Graal Info
-        run: |
-          echo "GRAALVM_HOME: $GRAALVM_HOME"
-          echo "JAVA_HOME: $JAVA_HOME"
-          java --version
-          native-image --version
-
-      - name: Grant execute permission for gradlew
-        if: runner.os != 'Windows'
-        run: chmod +x gradlew
-
-      - name: Build with Gradle
-        run: |
-          ./gradlew -Phmc_graal_executable=${{ matrix.os.name }} -Phmc_graal_build=true headlessmc-graalvm:nativeCompile
-
-      - name: List files
-        run: ls headlessmc-graalvm/build/native/nativeCompile
+        uses: actions/deploy-pages@v5
 
   build-natives:
     runs-on: ${{ matrix.os.os }}
@@ -240,11 +149,10 @@ jobs:
         startsWith(github.ref, 'refs/tags/') ||
         github.ref == 'refs/heads/main'
       )
-    needs: build-java-8
     strategy:
       matrix:
         os:
-          - { os: windows-latest, name: headlessmc-launcher-windows-x64 }
+          - { os: windows-latest, name: headlessmc-launcher-windows-x64}
           - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
           - { os: macos-15-intel, name: headlessmc-launcher-macos-x64 }
           #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
@@ -252,19 +160,12 @@ jobs:
           - { os: macos-latest, name: headlessmc-launcher-macos-arm64 }
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '23'
+          java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
 
       - name: Output Graal Info
         run: |
@@ -277,495 +178,52 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Grant execute permission for script
+        if: runner.os != 'Windows'
+        run: chmod +x scripts/build-native.sh
+
+      - name: Build with Script
         env:
           # Needed for Windows; to resolve issue with temp folder during native image build, due to relativization
           # problem when different drives are used, such as in GHA runners.
           # https://github.com/graalvm/native-build-tools/issues/754
           GRADLE_OPTS: -Djava.io.tmpdir=${{ runner.temp }}
         run: |
-          ./gradlew -Phmc_graal_executable=${{ matrix.os.name }} -Phmc_graal_build=true headlessmc-graalvm:nativeCompile
+          ./scripts/build-native.sh
 
       - name: List files
-        run: ls headlessmc-graalvm/build/native/nativeCompile
+        run: ls headlessmc-application/build
+
+      - name: Rename executable
+        if: runner.os != 'Windows'
+        run: mv headlessmc-application/build/headlessmc-application-*-runner headlessmc-application/build/${{ matrix.os.name }}
+
+      - name: Rename executable
+        if: runner.os == 'Windows'
+        run: Move-Item "headlessmc-application/build/headlessmc-application-*-runner.exe" "headlessmc-application/build/${{ matrix.os.name }}.exe"
 
       - name: Publish Artifact
         uses: actions/upload-artifact@v7
         with:
           name: HeadlessMc Native Image ${{ matrix.os.name }}
           path: |
-            ./headlessmc-graalvm/build/native/nativeCompile/*
-
-  run:
-    runs-on: ubuntu-latest
-    needs: build-java-8
-    strategy:
-      matrix:
-        version:
-          - { mc: 1.21.5, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.21.5, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.21.5, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21.4, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21.4, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21.4, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21.3, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21.1, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          - { mc: 1.20.6, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.20.6, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.20.6, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.20.4, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.4, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 17 }
-          #- { mc: 1.20.4, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.20.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.3, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 17 }
-          #- { mc: 1.20.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.20.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.2, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 17 }
-          #- { mc: 1.20.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.20.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          - { mc: 1.19.4, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          - { mc: 1.19.4, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          - { mc: 1.18.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          - { mc: 1.18.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          - { mc: 1.17.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 16 }
-          - { mc: 1.17.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 16 }
-          - { mc: 1.16.5, type: fabric, modloader: fabric, regex: .*fabric.*, java: 8 }
-          - { mc: 1.16.5, type: lexforge, modloader: forge, regex: .*forge.*, java: 8 }
-          - { mc: 1.12.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 8 }
-          - { mc: 1.8.9, type: lexforge, modloader: forge, regex: .*orge.*, java: 8 }
-          - { mc: 1.7.10, type: lexforge, modloader: forge, regex: .*orge.*, java: 8 }
-    steps:
-      - name: Install Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ matrix.version.java }}
-          distribution: "temurin"
-      - uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Copy launcher jar
-        # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
-        run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
-      - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.4.0
-        with:
-          mc: ${{ matrix.version.mc }}
-          modloader: ${{ matrix.version.modloader }}
-          regex: ${{ matrix.version.regex }}
-          java: ${{ matrix.version.java }}
-          mc-runtime-test: ${{ matrix.version.type }}
-          hmc-version: 0.0.0
-          xvfb: false
-          headlessmc-command: -lwjgl --retries 2 --jvm -Djava.awt.headless=true
-          download-hmc: false
-
-  run-with-xvfb:
-    strategy:
-      matrix:
-        version:
-          - { mc: 26.1.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 25 }
-          - { mc: 26.1.1, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 25 }
-          - { mc: 26.1.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 25 }
-          - { mc: 1.21.11, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.21.11, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.21.11, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21.4, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21.4, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21.4, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21.3, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21.1, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.21, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          #- { mc: 1.21, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          #- { mc: 1.21, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          - { mc: 1.20.6, type: lexforge, modloader: forge, regex: .*forge.*, java: 21 }
-          - { mc: 1.20.6, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 21 }
-          - { mc: 1.20.6, type: fabric, modloader: fabric, regex: .*fabric.*, java: 21 }
-          #- { mc: 1.20.4, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.4, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 17 }
-          #- { mc: 1.20.4, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.20.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.3, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 17 }
-          #- { mc: 1.20.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.20.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.2, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 17 }
-          #- { mc: 1.20.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.20.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.20.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          - { mc: 1.19.4, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          - { mc: 1.19.4, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          # - { mc: 1.19.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          #- { mc: 1.19, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          #- { mc: 1.19, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          - { mc: 1.18.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 17 }
-          - { mc: 1.18.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 17 }
-          - { mc: 1.17.1, type: fabric, modloader: fabric, regex: .*fabric.*, java: 16 }
-          - { mc: 1.17.1, type: lexforge, modloader: forge, regex: .*forge.*, java: 16 }
-          - { mc: 1.16.5, type: fabric, modloader: fabric, regex: .*fabric.*, java: 8 }
-          - { mc: 1.16.5, type: lexforge, modloader: forge, regex: .*forge.*, java: 8 }
-          - { mc: 1.12.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 8 }
-          - { mc: 1.8.9, type: lexforge, modloader: forge, regex: .*orge.*, java: 8 }
-          - { mc: 1.7.10, type: lexforge, modloader: forge, regex: .*orge.*, java: 8 }
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-    needs: build-java-8
-    steps:
-      - name: Install Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ matrix.version.java }}
-          distribution: "temurin"
-      - uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Copy launcher jar
-        # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
-        run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
-      - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.4.0
-        with:
-          mc: ${{ matrix.version.mc }}
-          modloader: ${{ matrix.version.modloader }}
-          regex: ${{ matrix.version.regex }}
-          java: ${{ matrix.version.java }}
-          hmc-version: 0.0.0
-          mc-runtime-test: ${{ matrix.version.type }}
-          xvfb: true
-          headlessmc-command: --retries 2 --jvm -Djava.awt.headless=true
-          download-hmc: false
-
-  # https://github.com/headlesshq/headlessmc/issues/333
-  build-mc-runtime-test:
-    strategy:
-      matrix:
-        version:
-          # the following line should always be here,
-          # regardless if mc-runtime-test already supports this version or not
-          # to test if this step works
-          - { branch: main, dir: 26_3,  mc: 26.3, lex: 66.0.2, neo: 6-beta, java: 25 }
-          - { branch: main, dir: 26_2,  mc: 26.2, lex: 65.0.3, neo: 8-beta, java: 25 }
-    uses: ./.github/workflows/build-runtime-test.yml
-    if: '!cancelled()' # run always cause we want to see how each version is doing
-    #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version
-    with:
-      branch: ${{ matrix.version.branch }}
-      dir: ${{ matrix.version.dir }}
-      mc: ${{ matrix.version.mc }}
-      lex: ${{ matrix.version.lex }}
-      neo: ${{ matrix.version.neo }}
-      java: ${{ matrix.version.java }}
-
-  mc-runtime-test:
-    strategy:
-      matrix:
-        version:
-          # the following line should always be here,
-          # regardless if mc-runtime-test already supports this version or not
-          # to test if this step works
-          - { mc: 26.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 25 }
-          - { mc: 26.3, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 25 }
-          - { mc: 26.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 25 }
-          - { mc: 26.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 25 }
-          - { mc: 26.2, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 25 }
-          - { mc: 26.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 25 }
-    runs-on: ubuntu-latest
-    if: '!cancelled()' # run always cause we want to see how each version is doing
-    #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version
-    needs: [build-java-8, build-mc-runtime-test]
-    steps:
-      - name: Install Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ matrix.version.java }}
-          distribution: "temurin"
-      - uses: actions/download-artifact@v8
-        with:
-          name: mcrt-${{ matrix.version.mc }}
-          path: .
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-
-      - name: Display structure of downloaded files
-        run: ls -R
-
-      - name: Copy mc-runtime-test jar
-        run: mkdir run run/mods; cp mc-runtime-test-${{ matrix.version.mc }}-*-${{ matrix.version.type }}-release.jar run/mods
-      - name: Copy launcher jar
-        # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
-        run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
-
-      - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@4.4.0
-        with:
-          mc: ${{ matrix.version.mc }}
-          modloader: ${{ matrix.version.modloader }}
-          regex: ${{ matrix.version.regex }}
-          java: ${{ matrix.version.java }}
-          hmc-version: 0.0.0
-          mc-runtime-test: none
-          xvfb: false
-          headlessmc-command: >-
-            -lwjgl --retries 2 --jvm '"-Djava.awt.headless=true${{ matrix.version.mc == '26.3' && ' -DMcRuntimeGameTestInstance=minecraft:always_pass -DMcRuntimeGameTestMinExpectedGameTests=1' || '' }}"'
-          download-hmc: false
-
-  server-test:
-    strategy:
-      matrix:
-        version:
-          - { mc: 1.21.5, type: vanilla, java: 21 }
-          - { mc: 1.21.5, type: paper, java: 21 }
-          - { mc: 1.21.5, type: forge, java: 21 }
-          - { mc: 1.21.5, type: purpur, java: 21 }
-          - { mc: 1.21.5, type: neoforge, java: 21 }
-          - { mc: 1.21.5, type: fabric, java: 21 }
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-    needs: build-java-8
-    steps:
-      - name: Install Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ matrix.version.java }}
-          distribution: "temurin"
-      - uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Copy launcher jar
-        # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
-        run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
-      - name: Bootstrap HeadlessMC
-        run: |
-          mkdir -p HeadlessMC run/mods
-          cat <<EOF >> HeadlessMC/config.properties
-          hmc.java.versions=$JAVA_HOME/bin/java
-          hmc.gamedir=$PWD/run
-          hmc.offline=true
-          hmc.rethrow.launch.exceptions=true
-          hmc.exit.on.failed.command=true
-          hmc.server.launch.for.eula=true
-          hmc.server.accept.eula=true
-          hmc.server.test=true
-          EOF
-        shell: bash
-      - name: Download server
-        run: java -jar headlessmc-launcher-0.0.0.jar --command server add ${{ matrix.version.type }} ${{ matrix.version.mc }}
-        shell: bash
-      - name: List servers
-        run: java -jar headlessmc-launcher-0.0.0.jar --command server list
-        shell: bash
-      - name: Launch server
-        run: java -jar headlessmc-launcher-0.0.0.jar --command server launch 0 -id
-        shell: bash
-
-  run-command-test:
-    strategy:
-      matrix:
-        version:
-          - { mc: 1.21.5, modloader: fabric, java: 21 }
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-    needs: build-java-8
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: ${{ matrix.version.java }}
-          distribution: "temurin"
-      - uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Copy launcher jar
-        # rename because mc-runtime-test matches a jar with headlessmc-launcher-<version>.jar
-        run: cp headlessmc-launcher-wrapper.jar headlessmc-launcher-0.0.0.jar
-      - name: Bootstrap HeadlessMC
-        run: |
-          mkdir -p HeadlessMC run/mods
-          cat <<EOF >> HeadlessMC/config.properties
-          hmc.java.versions=$JAVA_HOME/bin/java
-          hmc.gamedir=$PWD/run
-          hmc.offline=true
-          hmc.assets.dummy=true
-          hmc.jline.enabled=false
-          hmc.rethrow.launch.exceptions=true
-          hmc.exit.on.failed.command=true
-          hmc.test.filename=./headlessmc-test/hmc-specifics-test.json
-          hmc.loglevel=INFO
-          EOF
-        shell: bash
-      - name: Launch Minecraft
-        run: java -jar headlessmc-launcher-0.0.0.jar --command launch ${{ matrix.version.modloader }}:${{ matrix.version.mc }} -specifics --jvm "-Djava.awt.headless=true"
-        shell: bash
-
-  docker-build:
-    runs-on: ubuntu-latest
-    needs: build-java-8
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v8
-        with:
-          name: launcher-wrapper-java8-jar
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Prepare
-        run: |
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV          
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY_IMAGE }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Login to Docker Hub
-        if: |
-          github.event_name == 'push' &&
-          (
-            startsWith(github.ref, 'refs/tags/') ||
-            github.ref == 'refs/heads/main'
-          )
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push by digest
-        id: build
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./Fast.Dockerfile
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push−by−digest=true,name−canonical=true,push=${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main') }}
-
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"          
-
-      - name: Upload digest
-        if: |
-          github.event_name == 'push' &&
-          (
-            startsWith(github.ref, 'refs/tags/') ||
-            github.ref == 'refs/heads/main'
-          )
-        uses: actions/upload-artifact@v7
-        with:
-          name: digests-${{ env.PLATFORM_PAIR }}
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
-  docker-release:
-    if: |
-      github.event_name == 'push' &&
-      (
-        startsWith(github.ref, 'refs/tags/') ||
-        github.ref == 'refs/heads/main'
-      )
-    runs-on: ubuntu-latest
-    needs: [ docker-build, build, build-natives, run, run-command-test, server-test, run-with-xvfb]
-    steps:
-      - name: Download digests
-        uses: actions/download-artifact@v8
-        with:
-          path: /tmp/digests
-          pattern: digests-*
-          merge-multiple: true
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY_IMAGE }}
-          tags: type=raw,value=${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
-        run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
-
-      - name: Inspect image
-        run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}       
+            ./headlessmc-application/build/${{ matrix.os.name }}*
 
   merge:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [build, build-java-8, build-natives, docker-release, run, run-command-test, server-test, run-with-xvfb]
+    needs: [build, build-natives]
     steps:
-      - name: Cleanup
-        uses: geekyeggo/delete-artifact@v6
-        with:
-          name: launcher-wrapper-java8-jar
       - name: Cleanup Docker
         uses: geekyeggo/delete-artifact@v6
         with:
           name: digests-*
+          failOnError: false
       - name: Cleanup Docker 2
         uses: geekyeggo/delete-artifact@v6
         with:
           name: "*.dockerbuild"
+          failOnError: false
       - name: Cleanup Pages
         uses: geekyeggo/delete-artifact@v6
         with:
@@ -793,20 +251,17 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           #draft: true
           generate_release_notes: true
           files: |
-            ./merged-artifacts/headlessmc-launcher-wrapper/build/libs/headlessmc-launcher-*.jar
-            ./merged-artifacts/headlessmc-launcher/build/libs/headlessmc-launcher-*.jar
-            ./merged-artifacts/headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*.jar
-            ./merged-artifacts/headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
-            ./merged-artifacts/headlessmc-scripts/hmc
-            ./merged-artifacts/headlessmc-scripts/hmc.bat
-            ./merged-artifacts/headlessmc-launcher-linux-x64
-            ./merged-artifacts/headlessmc-launcher-windows-x64.exe
-            ./merged-artifacts/headlessmc-launcher-macos-x64
-            ./merged-artifacts/headlessmc-launcher-linux-arm64
-            ./merged-artifacts/headlessmc-launcher-macos-arm64
+            ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar
+            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
+            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
+            ./headlessmc-launcher-linux-x64
+            ./headlessmc-launcher-windows-x64.exe
+            ./headlessmc-launcher-macos-x64
+            ./headlessmc-launcher-linux-arm64
+            ./headlessmc-launcher-macos-arm64

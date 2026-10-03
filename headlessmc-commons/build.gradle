@@ -1,5 +1,0 @@
-dependencies {
-    api project(':headlessmc-api')
-    api project(':headlessmc-java')
-    api libs.httpclient
-}
