@@ -60,6 +60,7 @@ tasks.withType(JacocoReport) {
                     '**/headlessmc/headlessmc-launcher.jar',
                     '**/headlessmc/headlessmc-runtime.jar',
                     '**/headlessmc/headlessmc-lwjgl.jar',
+                    '**/headlessmc/headlessmc-macos-menu-agent.jar',
                     '**/headlessmc/forge-cli.jar',
                     '**/org/objectweb/**',
                     'io/github/headlesshq/headlessmc/lwjgl/agent/**',

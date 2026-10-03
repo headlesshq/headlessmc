@@ -20,6 +20,8 @@ public class LwjglRedirections {
     private static final long START = System.nanoTime();
 
     public static void register(RedirectionManager manager) {
+        SdlRedirections.register(manager);
+        GraphicsProviderRedirections.register(manager);
         manager.redirect(DisplayUpdater.DESC, new DisplayUpdater());
         manager.redirect("Lorg/lwjgl/glfw/GLFW;glfwWaitEventsTimeout(D)V",
                          (obj, desc, type, args) -> {

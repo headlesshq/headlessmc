@@ -44,16 +44,19 @@ In order to launch the game in headless mode, add the `-lwjgl` flag:
 launch <version> -lwjgl
 ```
 
-Generally there are two Minecraft settings that you might want to turn off for running the client headlessly.
-They are not problematic,
-but turning them off solves a lot of potential issues when debugging etc.
-These are the accessibility screen, 
-which is shown the first time you launch a fresh Minecraft instance and the hidden setting `pauseOnLostFocus`, 
-which makes SinglePlayer worlds pause when you tab out.
+For a fresh headless instance, put these settings in `options.txt` inside the
+Minecraft game directory (`hmc.gamedir`):
 ```
 pauseOnLostFocus:false
 onboardAccessibility:false
+narrator:0
 ```
+`pauseOnLostFocus` keeps singleplayer worlds ticking without window focus.
+`onboardAccessibility` skips the first-run accessibility screen. That screen can
+speak its introduction even when `narrator` is off: it uses Minecraft's
+text-to-speech library directly. This also happens in 26.2; `-lwjgl` redirects
+LWJGL rendering and does not mute that separate library.
+
 
 #### Managing Versions
 You can get a list of all currently downloaded client versions with the `versions`

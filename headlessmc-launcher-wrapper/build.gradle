@@ -52,10 +52,19 @@ tasks.register('shadowBugWorkaround', Jar) {
 shadowJar {
     dependsOn shadowBugWorkaround
     dependsOn project(':headlessmc-modlauncher')['shadowJar']
+    dependsOn ':headlessmc-lwjgl:macosMenuAgentJar'
 
     from shadowBugWorkaround
     from layout.buildDirectory.dir('shadow-bug-workaround')
     from project(':headlessmc-modlauncher')['shadowJar']
+    // Java 9+ starts this agent before main; Java 8 ignores the attribute.
+    // Its loader check limits the hook to clients using virtual SDL windows.
+    from({ zipTree(project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile.get().asFile) }) {
+        include 'io/github/headlesshq/headlessmc/lwjgl/agent/**'
+    }
+    manifest {
+        attributes 'Launcher-Agent-Class': 'io.github.headlesshq.headlessmc.lwjgl.agent.macos.MacosMenuAgent'
+    }
 
     // honestly not exactly sure whats going on here its all a bit fishy
     // https://github.com/GradleUp/shadow/issues/299#issuecomment-310663737
@@ -68,6 +77,7 @@ shadowJar {
     include 'io/github/headlesshq/headlessmc/modlauncher/**/*'
     include 'io/github/headlesshq/headlessmc/logging/**'
     include 'io/github/headlesshq/headlessmc/logging/**/*'
+    include 'io/github/headlesshq/headlessmc/lwjgl/agent/**'
     // include "headlessmc/headlessmc-launcher.jar" TODO: idk why this does not work?
     include '**/headlessmc-launcher*.jar'
     include 'META-INF/MANIFEST.MF'
@@ -80,6 +90,7 @@ tasks.withType(JacocoReport) {
                     '**/headlessmc/headlessmc-launcher.jar',
                     '**/headlessmc/headlessmc-runtime.jar',
                     '**/headlessmc/headlessmc-lwjgl.jar',
+                    '**/headlessmc/headlessmc-macos-menu-agent.jar',
                     '**/headlessmc/forge-cli.jar',
                     'io/github/headlesshq/headlessmc/lwjgl/agent/**',
                     'io/github/headlesshq/headlessmc/web/**',

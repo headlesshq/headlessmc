@@ -494,6 +494,7 @@ jobs:
           # the following line should always be here,
           # regardless if mc-runtime-test already supports this version or not
           # to test if this step works
+          - { branch: main, dir: 26_3,  mc: 26.3, lex: 66.0.2, neo: 6-beta, java: 25 }
           - { branch: main, dir: 26_2,  mc: 26.2, lex: 65.0.3, neo: 8-beta, java: 25 }
     uses: ./.github/workflows/build-runtime-test.yml
     if: '!cancelled()' # run always cause we want to see how each version is doing
@@ -513,6 +514,9 @@ jobs:
           # the following line should always be here,
           # regardless if mc-runtime-test already supports this version or not
           # to test if this step works
+          - { mc: 26.3, type: fabric, modloader: fabric, regex: .*fabric.*, java: 25 }
+          - { mc: 26.3, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 25 }
+          - { mc: 26.3, type: lexforge, modloader: forge, regex: .*forge.*, java: 25 }
           - { mc: 26.2, type: fabric, modloader: fabric, regex: .*fabric.*, java: 25 }
           - { mc: 26.2, type: neoforge, modloader: neoforge, regex: .*neoforge.*, java: 25 }
           - { mc: 26.2, type: lexforge, modloader: forge, regex: .*forge.*, java: 25 }
@@ -554,7 +558,8 @@ jobs:
           hmc-version: 0.0.0
           mc-runtime-test: none
           xvfb: false
-          headlessmc-command: --retries 2 --jvm -Djava.awt.headless=true
+          headlessmc-command: >-
+            -lwjgl --retries 2 --jvm '"-Djava.awt.headless=true${{ matrix.version.mc == '26.3' && ' -DMcRuntimeGameTestInstance=minecraft:always_pass -DMcRuntimeGameTestMinExpectedGameTests=1' || '' }}"'
           download-hmc: false
 
   server-test:

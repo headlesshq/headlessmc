@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.launcher.instrumentation.lwjgl.HmcLwjglTr
 import io.github.headlesshq.headlessmc.launcher.instrumentation.modlauncher.BootstrapLauncherTransformer;
 import io.github.headlesshq.headlessmc.launcher.instrumentation.paulscode.PaulscodeTransformer;
 import io.github.headlesshq.headlessmc.launcher.launch.LaunchOptions;
+import io.github.headlesshq.headlessmc.os.OS;
 
 import java.util.ArrayList;
 
@@ -16,12 +17,17 @@ import java.util.ArrayList;
 public class InstrumentationHelper {
     public static final String RUNTIME_JAR = "headlessmc-runtime.jar";
     public static final String LWJGL_JAR = "headlessmc-lwjgl.jar";
+    public static final String MACOS_MENU_AGENT_JAR = "headlessmc-macos-menu-agent.jar";
 
     public static Instrumentation create(LaunchOptions options) {
         val transformers = new ArrayList<Transformer>(7);
         if (options.isLwjgl()) {
             transformers.add(new HmcLwjglTransformer());
             transformers.add(new ResourceExtractor(options.getFiles(), LWJGL_JAR));
+            if (options.getLauncher().getProcessFactory().getOs().getType() == OS.Type.OSX
+                && !options.isInMemory()) {
+                transformers.add(new ResourceExtractor(options.getFiles(), MACOS_MENU_AGENT_JAR));
+            }
         }
 
         if (options.isPaulscode()) {
