@@ -1,7 +1,16 @@
 package io.github.headlesshq.headlessmc.patcher.lwjgl;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 // TODO: port HmcLwjglTransformerTest
 public class LwjglPatcherTest {
+    @Test
+    @Disabled
+    public void dummy() {
+
+    }
+
     /*
     @Test
     public void testJava27MultiReleaseClass() throws IOException {

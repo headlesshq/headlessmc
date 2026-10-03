@@ -50,7 +50,7 @@ class ModrinthPlatformTest {
 
         @Override
         public ModrinthProject getProject(String project) {
-            throw new UnsupportedOperationException();
+            return new ModrinthProject(project, project, "");
         }
 
         @Override
