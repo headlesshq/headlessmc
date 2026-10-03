@@ -9,6 +9,7 @@ import io.github.headlesshq.headlessmc.version.service.VersionJsonService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class VersionMatcherTest {
     VersionParser parser;
 
     @Test
-    //@Disabled("Requires mc-versions to be cloned next to the HeadlessMc project")
+    @Disabled("Requires mc-versions to be cloned next to the HeadlessMc project")
     public void testAllVersions() throws HeadlessMcException, IOException {
         Path path = Paths.get("").toAbsolutePath();
         Path mcVersions = path // /headlessmc/headlessmc-platform/headlessmc-platform-all
