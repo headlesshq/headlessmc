@@ -257,9 +257,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: temurin
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
       # TODO: actually we could just include the uber-jar from the build job
       # TODO: even better, we could just build a native Docker image?
       - name: Build quick
