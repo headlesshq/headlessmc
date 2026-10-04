@@ -184,8 +184,7 @@ jobs:
           # problem when different drives are used, such as in GHA runners.
           # https://github.com/graalvm/native-build-tools/issues/754
           GRADLE_OPTS: -Djava.io.tmpdir=${{ runner.temp }}
-        run: |
-          ./scripts/build-native.sh
+        run: bash scripts/build-native.sh
 
       - name: List files
         if: runner.os != 'Windows'
