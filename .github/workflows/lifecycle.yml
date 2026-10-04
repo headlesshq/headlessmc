@@ -49,7 +49,7 @@ jobs:
         uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: |
-            ${{ github.workspace }}/**/build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
+            ${{ github.workspace }}/build/reports/jacoco/root/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 40
           min-coverage-changed-files: 60
@@ -113,7 +113,7 @@ jobs:
       #  run: cp -r build/docs/javadoc/ _site/
       - name: Rename report dir
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-        run: mv build/reports/jacoco/jacocoRootReport/html build/reports/jacoco/jacocoRootReport/coverage
+        run: mv build/reports/jacoco/root build/reports/jacoco/root/coverage
       - name: Copy coverage
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
         run: cp -r build/reports/jacoco/jacocoRootReport/coverage/ _site/
