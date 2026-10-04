@@ -28,6 +28,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
+      pull-requests: write
       packages: write
     steps:
       - uses: actions/checkout@v7
