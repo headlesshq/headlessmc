@@ -1,0 +1,8 @@
+dependencies {
+    implementation project(':headlessmc-version')
+    implementation libs.jackson
+
+    // TODO: check quarkus jackson-reflection-free-serializers
+    // for @RegisterForReflection, could also use graalvm reflect-config for improved compatibility
+    compileOnly libs.quarkus.core
+}

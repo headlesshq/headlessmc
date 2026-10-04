@@ -96,7 +96,6 @@ nav:
   - 'Commands': 'commands.md'
   - 'Configuration': 'configuration.md'
   - 'Plugins': 'plugins.md'
-  - 'In-Memory': 'in-memory.md'
   - 'Developer Guide':
     - 'Getting Started': 'dev-getting-started.md'
     - 'CI/CD': 'dev-ci-cd.md'

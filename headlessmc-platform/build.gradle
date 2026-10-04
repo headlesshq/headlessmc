@@ -1,0 +1,26 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    api project(':headlessmc-files')
+    api project(':headlessmc-files:headlessmc-files-cache')
+
+    api project(':headlessmc-util:headlessmc-util-maven')
+    api project(':headlessmc-util:headlessmc-util-typemap')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+
+    api project(':headlessmc-version')
+    api project(':headlessmc-version:headlessmc-version-arg')
+    api project(':headlessmc-version:headlessmc-version-service')
+
+    api project(':headlessmc-mods')
+
+    testFixturesApi testFixtures(project(':headlessmc-version'))
+    testFixturesImplementation libs.jspecify
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
+}

@@ -1,0 +1,4 @@
+dependencies {
+    api project(':headlessmc-util:headlessmc-util-json')
+    implementation libs.jackson
+}

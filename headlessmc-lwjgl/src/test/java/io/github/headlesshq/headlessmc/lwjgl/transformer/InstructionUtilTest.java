@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.lwjgl.transformer;
 
-import io.github.headlesshq.headlessmc.api.util.AbstractUtilityTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
@@ -9,7 +8,7 @@ import org.objectweb.asm.tree.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.*;
 
-public class InstructionUtilTest extends AbstractUtilityTest<InstructionUtil> {
+public class InstructionUtilTest {
 
     @Test
     @DisplayName("Test for loadType() with primitive types")

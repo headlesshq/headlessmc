@@ -1,0 +1,7 @@
+dependencies {
+    api project(':headlessmc-java:headlessmc-java-args')
+    implementation project(':headlessmc-os')
+    implementation project(':headlessmc-version')
+    implementation project(':headlessmc-version:headlessmc-version-util')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
+}

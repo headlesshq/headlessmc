@@ -1,0 +1,22 @@
+dependencies {
+    implementation project(':headlessmc-platform')
+    implementation project(':headlessmc-platform:headlessmc-platform-util')
+    implementation project(':headlessmc-net')
+
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-files:headlessmc-files-cache')
+
+    implementation project(':headlessmc-util:headlessmc-util-maven')
+
+    runtimeOnly project(':headlessmc-version:headlessmc-version-jackson')
+    implementation libs.quarkus.cache
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-net'))
+    testImplementation project(':headlessmc-version:headlessmc-version-service')
+    testImplementation project(':headlessmc-util:headlessmc-util-typemap')
+}

@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-mods')
+    api project(':headlessmc-version:headlessmc-version-arg')
+
+    implementation project(':headlessmc-util:headlessmc-util-reflection')
+}

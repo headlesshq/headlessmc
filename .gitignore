@@ -1,52 +1,52 @@
-# eclipse
-bin
-*.launch
-.settings
-.metadata
-.classpath
+# Gradle
+.gradle/
+build/
+
+# Eclipse
 .project
+.libraryClasspath
+.settings/
+bin/
 
-# idea
-out
-*.ipr
-*.iws
-*.iml
+# IntelliJ
 .idea
+*.ipr
+*.iml
+*.iws
 
-# gradle
-build
-.gradle
+# NetBeans
+nb-configuration.xml
 
-# other
-eclipse
-run
+# Visual Studio Code
+.vscode
+.factorypath
 
-# HeadlessMC
-/HeadlessMC/
-/headlessmc-launcher/HeadlessMC/
-/headlessmc-launcher-jfx/HeadlessMC/
-/headlessmc-launcher-wrapper/HeadlessMC/
-/headlessmc-test/HeadlessMC/
+# OSX
+.DS_Store
 
-# Created by some launcher tests
-/headlessmc-launcher/test/
-/test/
+# Vim
+*.swp
+*.swo
 
-# Created by LaunchWrapper tests
-/headlessmc-lwjgl/logs/
-/logs/
-/headlessmc-launcher-*.jar
-/libs/
-/headlessmc-launcher/libs/
-/fabricloader.log
-/.mixin.out/
-/headlessmc-runtime/HeadlessMC/
-/headlessmc-launcher-wrapper/logs/
-/headlessmc-logging/HeadlessMC/
-/headlessmc-jline/HeadlessMC/
-/headlessmc-api/HeadlessMC/
+# patch
+*.orig
+*.rej
 
-*.jar
-!*gradle-wrapper.jar
-/mc/
-/launcher-wrapper-java8-jar/
+# Local environment
+.env
+
+# Plugin directory
+/.quarkus/cli/plugins/
+# TLS Certificates
+.certs/
+
+discoclient.properties
+*.tar.gz
+
+HeadlessMC
+HeadlessMc
+*.hprof
+*.log
+.claude
+.venv
+_site

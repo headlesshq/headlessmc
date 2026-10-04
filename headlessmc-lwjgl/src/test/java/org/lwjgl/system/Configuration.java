@@ -7,7 +7,7 @@ package org.lwjgl.system;
  * initializer (as it does for every other lwjgl class) this field would be
  * {@code null} after loading.
  *
- * @see LwjglInstrumentationTest#testConfigurationStaticInitializerPreserved()
+ * @see io.github.headlesshq.headlessmc.lwjgl.LwjglInstrumentationTest#testConfigurationStaticInitializerPreserved()
  */
 @SuppressWarnings("unused")
 public final class Configuration {

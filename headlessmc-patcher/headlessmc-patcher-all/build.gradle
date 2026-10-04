@@ -1,0 +1,10 @@
+dependencies {
+    api project(':headlessmc-patcher')
+    api project(':headlessmc-patcher:headlessmc-patcher-asm')
+    api project(':headlessmc-patcher:headlessmc-patcher-log4j')
+    api project(':headlessmc-patcher:headlessmc-patcher-lwjgl')
+    api project(':headlessmc-patcher:headlessmc-patcher-nonclassloading')
+    api project(':headlessmc-patcher:headlessmc-patcher-paulscode')
+    api project(':headlessmc-patcher:headlessmc-patcher-probe')
+    api project(':headlessmc-patcher:headlessmc-patcher-probe-strategy')
+}

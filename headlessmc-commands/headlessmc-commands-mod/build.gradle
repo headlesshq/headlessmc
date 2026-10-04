@@ -1,0 +1,29 @@
+dependencies {
+    implementation project(':headlessmc-platform')
+
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-format')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
+
+    implementation project(':headlessmc-launcher')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
+
+    implementation project(':headlessmc-commands:headlessmc-commands-util')
+
+    implementation project(':headlessmc-version')
+    implementation project(':headlessmc-version:headlessmc-version-arg')
+    implementation project(':headlessmc-version:headlessmc-version-service')
+
+    implementation project(':headlessmc-mods')
+    implementation project(':headlessmc-mods:headlessmc-mods-distribution')
+    implementation project(':headlessmc-mods:headlessmc-mods-distribution-modrinth')
+
+    implementation libs.picocli
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+    testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+}

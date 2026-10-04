@@ -1,0 +1,218 @@
+{
+	"id": "1.5.2-Forge7.8.0.684",
+	"time": "2013-08-06T04:00:00-07:00",
+	"releaseTime": "2013-04-25T08:45:00-07:00",
+	"type": "release",
+	"minecraftArguments": "${auth_player_name} ${auth_session} --gameDir ${game_directory} --assetsDir ${game_assets} --tweakClass net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker",
+	"libraries": [
+		{
+			"name": "net.minecraftforge:minecraftforge:7.8.0.684",
+			"url": "https://maven.minecraftforge.net/"
+		},
+		{
+			"name": "org.scala-lang:scala-library:2.10.0-custom",
+			"url": "https://maven.minecraftforge.net/",
+			"clientreq": true,
+			"serverreq": true,
+			"checksums": [
+				"458d046151ad179c85429ed7420ffb1eaf6ddf85",
+				"3bebc9dda993024c88344a044f23059e27f73ed7"
+			]
+		},
+		{
+			"name": "net.sourceforge.argo:argo:3.2-small",
+			"url": "https://maven.minecraftforge.net/",
+			"clientreq": true,
+			"serverreq": true,
+			"checksums": [
+				"58912ea2858d168c50781f956fa5b59f0f7c6b51",
+				"4e90cc8e5f04fc25b62dffc5e650a4e2ec1b885b"
+			]
+		},
+		{
+			"name": "org.ow2.asm:asm-all:4.1",
+			"url": "https://maven.minecraftforge.net/",
+			"clientreq": true,
+			"serverreq": true,
+			"checksums": [
+				"054986e962b88d8660ae4566475658469595ef58",
+				"1f9316fc050cf30b2f420da58989b1dcf97255f6"
+			]
+		},
+		{
+			"name": "org.bouncycastle:bcprov-jdk15on:148",
+			"url": "https://maven.minecraftforge.net/",
+			"clientreq": true,
+			"serverreq": true,
+			"checksums": [
+				"960dea7c9181ba0b17e8bab0c06a43f0a5f04e65",
+				"1d822e603bfb378f60d375b9d8c41dfc1db44528"
+			]
+		},
+		{
+			"name": "com.google.guava:guava:14.0-rc3",
+			"url": "https://maven.minecraftforge.net/",
+			"clientreq": true,
+			"serverreq": true,
+			"checksums": [
+				"931ae21fa8014c3ce686aaa621eae565fefb1a6a",
+				"1dbf69b9c1c637bb7830c8a80c5ec4c2d7e67d59"
+			]
+		},
+		{
+			"name": "net.minecraftforge:legacyfixer:1.0",
+			"url": "https://maven.minecraftforge.net/",
+			"clientreq": true,
+			"serverreq": true,
+			"checksums": [
+				"bdc363939e13ba54874825232f4dfe042ebc82af",
+				"26615aa3cbe7adacf778ef4aea6eebe0f4e4029d"
+			]
+		},
+		{
+			"name": "net.minecraft:launchwrapper:1.5"
+		},
+		{
+			"name": "net.sf.jopt-simple:jopt-simple:4.5"
+		},
+		{
+			"name": "org.ow2.asm:asm-all:4.1"
+		},
+		{
+			"name": "net.java.jinput:jinput:2.0.5"
+		},
+		{
+			"name": "net.java.jutils:jutils:1.0.0"
+		},
+		{
+			"name": "org.lwjgl.lwjgl:lwjgl:2.9.0",
+			"rules": [
+				{
+					"action": "allow"
+				},
+				{
+					"action": "disallow",
+					"os": {
+						"name": "osx",
+						"version": "^10\\.5\\.\\d$"
+					}
+				}
+			]
+		},
+		{
+			"name": "org.lwjgl.lwjgl:lwjgl_util:2.9.0",
+			"rules": [
+				{
+					"action": "allow"
+				},
+				{
+					"action": "disallow",
+					"os": {
+						"name": "osx",
+						"version": "^10\\.5\\.\\d$"
+					}
+				}
+			]
+		},
+		{
+			"name": "org.lwjgl.lwjgl:lwjgl-platform:2.9.0",
+			"rules": [
+				{
+					"action": "allow"
+				},
+				{
+					"action": "disallow",
+					"os": {
+						"name": "osx",
+						"version": "^10\\.5\\.\\d$"
+					}
+				}
+			],
+			"natives": {
+				"linux": "natives-linux",
+				"windows": "natives-windows",
+				"osx": "natives-osx"
+			},
+			"extract": {
+				"exclude": [
+					"META-INF/"
+				]
+			}
+		},
+		{
+			"name": "org.lwjgl.lwjgl:lwjgl:2.9.1-nightly-20130708-debug3",
+			"rules": [
+				{
+					"action": "allow",
+					"os": {
+						"name": "osx",
+						"version": "^10\\.5\\.\\d$"
+					}
+				}
+			]
+		},
+		{
+			"name": "org.lwjgl.lwjgl:lwjgl_util:2.9.1-nightly-20130708-debug3",
+			"rules": [
+				{
+					"action": "allow",
+					"os": {
+						"name": "osx",
+						"version": "^10\\.5\\.\\d$"
+					}
+				}
+			]
+		},
+		{
+			"name": "org.lwjgl.lwjgl:lwjgl-platform:2.9.1-nightly-20130708-debug3",
+			"rules": [
+				{
+					"action": "allow",
+					"os": {
+						"name": "osx",
+						"version": "^10\\.5\\.\\d$"
+					}
+				}
+			],
+			"natives": {
+				"linux": "natives-linux",
+				"windows": "natives-windows",
+				"osx": "natives-osx"
+			},
+			"extract": {
+				"exclude": [
+					"META-INF/"
+				]
+			}
+		},
+		{
+			"name": "net.java.jinput:jinput-platform:2.0.5",
+			"natives": {
+				"linux": "natives-linux",
+				"windows": "natives-windows",
+				"osx": "natives-osx"
+			},
+			"extract": {
+				"exclude": [
+					"META-INF/"
+				]
+			}
+		},
+		{
+			"name": "net.java.jinput:jinput-platform:2.0.5",
+			"natives": {
+				"linux": "natives-linux",
+				"windows": "natives-windows",
+				"osx": "natives-osx"
+			},
+			"extract": {
+				"exclude": [
+					"META-INF/"
+				]
+			}
+		}
+	],
+	"mainClass": "net.minecraft.launchwrapper.Launch",
+	"minimumLauncherVersion": 4,
+	"synced": false
+}

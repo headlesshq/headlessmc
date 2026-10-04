@@ -4,81 +4,85 @@ HeadlessMc can manage mods for both the client and server.
 For this the `mod` and the `server mod` command are used.
 Currently, HeadlessMc only supports [Modrinth](https://modrinth.com/) for finding mods.
 
-=== "Client"
+``` title="Searching for mods"
+> mod search fabric-api
+id                                     name                                                          description
+fabric-api                             Fabric API                                                    Lightweight and modular API providing common hooks and intercompatibility measures utilized by mods using the Fabric toolchain.
+forgified-fabric-api                   Forgified Fabric API                                          Fabric API implemented on top of NeoForge
+qsl                                    Quilted Fabric API (QFAPI) / Quilt Standard Libraries (QSL)   The standard libraries of the Quilt ecosystem. Essential for your modding experience on Quilt!
+fabric-permissions-api                 fabric-permissions-api                                        A simple permissions API for Fabric.
+legacy-fabric-api                      Legacy Fabric API                                             The legacy fabric version of the fabric api.
+reforged-fabric-api                    Reforged Fabric API                                           Core API Library for Forge
+fabric-key-binding-api-v1-for-1.14.2   Fabric Key Binding API for 1.14.2                             Ports the fabric-key-binding-api-v1 to 1.14.2 as it is missing in that version of the Fabric API.
+legacy-fabric-api-fixes-btw            Legacy Fabric API fixes for BTW                               Make Legacy Fabric API usable with BetterThanWolves CE 3.0.
+fake-fabric-api                        Fake Fabric API                                               Provides a fake fabric-api mod id
+chunk-storage-api-fabric               Chunk Storage Api Fabric                                      Library mod for Fabric
+...
+```
 
-    ``` title="Searching for mods"
-    > mod search FabricApi
-    name                      description                                                                                                                                                              authors
-    fabric-api                Lightweight and modular API providing common hooks and intercompatibility measures utilized by mods using the Fabric toolchain.                                          modmuss50
-    forgified-fabric-api      Fabric API implemented on top of NeoForge                                                                                                                                Su5eD
-    fabric-polyfill           Backport of Fabric API events            
-    ...
-    ```
+Starting with HeadlessMc 3 you can also search for resourcepacks, datapacks, modpacks, etc.:
+``` title="Searching for resourcepacks"
+> mod search --type resourcepack faithful
+id                                                    name                                                    description
+faithful-64x                                          Faithful 64x                                            An even more detailed experience with quadruple-resolution textures!
+faithful-32x                                          Faithful 32x                                            The original Minecraft texture feel, with double the resolution and double the fun!
+...
+```
 
-    The name column contains the identifier that is used for adding a mod.
-    To add a mod, use the `mod add` command and specify which version to
-    add the mod for, e.g. by using the versions id:  
-    `mod add <version> <mod-name>`
+The id column contains the identifier that is used for adding a modification.
+To add a mod, use the `mod add` command and specify which version to
+add the mod for, e.g. by using the versions id.
+You also need to specify what type of modification you are adding, e.g. mod/resourcepack, etc.
+`mod add <type> <mod-id> <version>`
 
-    ``` title="Adding a mod"
-    > versions
-    id   name                           parent 
-    0    1.21.5                         
-    1    fabric-loader-0.16.14-1.21.5   1.21.5
+``` title="Adding a mod"
+> mod add mod fabric-api fabric 26.1
+Downloaded /home/me/.minecraft/fabric-26.1/mods/fabric-api-0.155.3+26.1.2.jar successfully.
+```
 
-    > mod add 1 fabric-api
-    Downloaded mod fabric-api from Modrinth successfully.
-    ```
+``` title="Adding a resourcepack"
+> mod add resourcepack faithful-32x fabric 26.1
+Downloading mod faithful-32x 100% │██████│ 12/12mb (0:00:01 / 0:00:00) 12.0mb/s
+Downloaded /home/me/.minecraft/fabric-26.1/resourcepacks/Faithful 32x - 26.1.zip successfully.
+```
 
-    ``` title="List mods of a version"
-    > mod list 1
-    id   name         description                                                            authors
-    0    fabric-api   Core API module providing key hooks and intercompatibility features.   FabricMC
-    ```
+``` title="Adding a shaderpack"
+> mod add shader complementary-reimagined fabric 26.1
+Downloaded /home/okfk/.minecraft/fabric-26.1/shaderpacks/ComplementaryReimagined_r5.9.3.zip successfully.
+```
 
-    ``` title="Uninstall mod"
-    > mod remove 1 fabric-api
-    Mod 'fabric-api' deleted successfully.
-    ```
+``` title="Uninstall mod"
+> mod rm fabric-api fabric 26.1
+Deleted mod successfully.
+```
 
-=== "Server"
+## Server Side
+For servers like Paper mods are  called plugins:
+``` title="Searching for server plugins"
+> mod search --type plugin test server-paper-1.21.5 
+id                           name                         description
+stresstestbots               StressTestBots               A simple plugin that adds fake players to help stress test your server.
+pulsetest                    PulseTest                    PulseTest is a lightweight Paper plugin that generates controlled CPU and RAM load to quickly stress-test and benchmark your Minecraft server.
+```
 
-    For servers, the `server mod` command is used.
+## Datapacks
 
-    ``` title="Searching for mods"
-    > server mod search simple-voice-chat
-    name                               description                                                                                                                                                              authors
-    simple-voice-chat                  A working voice chat in Minecraft!                                                                                                         henkelmax
-    enhanced-groups                    A server side Fabric mod providing useful features to Simple Voice Chat groups.                                                            henkelmax
-    simple-voice-chat-discord-bridge   A mod and plugin to make a bridge between Simple Voice Chat and Discord to allow for players without the mod to hear and speak.   
-    ...
-    ```
+Datapacks require you to specify a world to install them on.
+You can list the worlds of your version using the worlds command:
+``` title="Listing worlds"
+> mod worlds fabric 26.1
+world       path
+New World   /home/me/.minecraft/fabric-26.1/saves/New World
+```
 
-    The name column contains the identifier that is used for adding a mod.
-    To add a mod, use the `server mod add` command and specify which version to
-    add the mod for, e.g. by using the versions id:  
-    `server mod add <version> <mod-name>`
+``` title="Searching for a datapack"
+> mod search --type datapack veinminer fabric-26.1
+id                         name                               description
+veinminer                  VeinMiner                          Mine the whole vein on mining a single ore/block. Make the tedious mining experience to something satisfying and fun!
+...
+```
 
-    ``` title="Adding a mod"
-    > server list
-    id   type    version   name
-    0    paper   1.21.5    paper-1.21.5-76
-
-    > server mod add 0 simple-voice-chat
-    Downloaded mod simple-voice-chat from Modrinth successfully.
-    ```
-    
-    Sometimes the name from the search on Modrinth is different
-    from the name of the mod file on your computer.
-    Make sure by listing the mods.
-
-    ``` title="List mods of a server"
-    > server mod list 0
-    id   name         description                                                            authors
-    0    voicechat   A working voice chat in Minecraft   Max Henkel, Matthew Wells
-    ```
-
-    ``` title="Uninstall mod"
-    > server mod remove 0 voicechat
-    Mod 'voicechat' deleted successfully.
-    ```
+``` title="Adding a datapack"
+> mod add --world "New World" datapack veinminer fabric 26.1
+Downloaded /home/me/.minecraft/fabric-26.1/saves/New World/datapacks/veinminer-1.3.4.zip successfully.
+```

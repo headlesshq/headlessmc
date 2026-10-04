@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.lwjgl.util;
 
-import io.github.headlesshq.headlessmc.api.util.AbstractUtilityTest;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
 
@@ -8,7 +7,7 @@ import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class DescriptionUtilTest extends AbstractUtilityTest<DescriptionUtil> {
+public class DescriptionUtilTest {
     @Test
     public void testGetDescMethod() throws NoSuchMethodException {
         Method method = DescriptionUtilTest.class.getDeclaredMethod(

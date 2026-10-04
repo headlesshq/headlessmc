@@ -1,0 +1,15 @@
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    api project(':headlessmc-console:headlessmc-console-format')
+    api project(':headlessmc-auth:headlessmc-auth-all')
+    api libs.picocli
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+}

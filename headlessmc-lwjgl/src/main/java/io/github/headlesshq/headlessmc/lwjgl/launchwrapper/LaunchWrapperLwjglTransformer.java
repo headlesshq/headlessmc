@@ -9,6 +9,11 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Locale;
 
+/**
+ * Added to {@link net.minecraft.launchwrapper.LaunchClassLoader}
+ * in {@link LwjglTweaker}.
+ */
+@SuppressWarnings("unused")
 public class LaunchWrapperLwjglTransformer implements IClassTransformer {
     private final Transformer transformer = new LwjglTransformer();
 

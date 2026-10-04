@@ -1,0 +1,25 @@
+plugins {
+    id "application"
+}
+
+application {
+    mainClass = "io.github.headlesshq.headlessmc.patcher.probe.Main"
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'io.github.headlesshq.headlessmc.patcher.probe.Main'
+        attributes 'Implementation-Title': 'headlessmc-patcher-probe'
+        attributes 'Implementation-Version': project.version
+        attributes 'Implementation-Vendor': 'HeadlessHQ'
+    }
+}
+
+dependencies {
+
+}

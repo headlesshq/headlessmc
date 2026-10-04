@@ -1,0 +1,8 @@
+dependencies {
+    api project(':headlessmc-java')
+    api project(':headlessmc-java:headlessmc-java-launcher')
+    api project(':headlessmc-java:headlessmc-java-distribution')
+    api project(':headlessmc-java:headlessmc-java-version')
+    implementation project(':headlessmc-java:headlessmc-java-sources')
+    implementation project(':headlessmc-java:headlessmc-java-distribution:headlessmc-java-distribution-foojay')
+}

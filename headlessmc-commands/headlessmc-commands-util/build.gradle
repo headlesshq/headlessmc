@@ -1,0 +1,19 @@
+dependencies {
+    implementation project(':headlessmc-platform')
+
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-completions')
+
+    implementation project(':headlessmc-version')
+    implementation project(':headlessmc-version:headlessmc-version-arg')
+    implementation project(':headlessmc-version:headlessmc-version-service')
+    runtimeOnly project(':headlessmc-version:headlessmc-version-jackson')
+
+    implementation project(':headlessmc-launcher')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+}

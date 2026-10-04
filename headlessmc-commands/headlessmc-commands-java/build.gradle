@@ -1,0 +1,19 @@
+dependencies {
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-format')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
+
+    implementation project(':headlessmc-files')
+
+    implementation project(':headlessmc-java')
+    implementation project(':headlessmc-java:headlessmc-java-distribution')
+    runtimeOnly project(':headlessmc-java:headlessmc-java-sources')
+
+    implementation libs.picocli
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+}

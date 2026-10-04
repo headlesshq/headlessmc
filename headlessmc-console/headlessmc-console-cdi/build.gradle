@@ -1,0 +1,5 @@
+dependencies {
+    api project(':headlessmc-console')
+    api project(':headlessmc-console:headlessmc-console-format')
+    implementation project(':headlessmc-console:headlessmc-console-jline')
+}

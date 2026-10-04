@@ -1,4 +1,8 @@
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 dependencies {
-    api project(':headlessmc-api')
-    api 'net.raphimc:MinecraftAuth:4.1.2'
+    api project(':headlessmc-console')
 }

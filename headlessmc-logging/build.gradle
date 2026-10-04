@@ -1,0 +1,8 @@
+dependencies {
+    implementation libs.cdi
+    implementation libs.jboss.logmanager
+    api project(':headlessmc-config')
+    api project(':headlessmc-files')
+
+    testImplementation testFixtures(project(':headlessmc-files'))
+}

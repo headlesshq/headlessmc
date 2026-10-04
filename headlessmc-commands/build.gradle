@@ -1,0 +1,17 @@
+dependencies {
+    api libs.picocli
+    implementation libs.cdi
+    implementation rootProject
+
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
+    implementation project(':headlessmc-console:headlessmc-console-completions')
+    implementation project(':headlessmc-commands:headlessmc-commands-auth-cdi')
+    implementation project(':headlessmc-commands:headlessmc-commands-version')
+    implementation project(':headlessmc-commands:headlessmc-commands-config')
+    implementation project(':headlessmc-commands:headlessmc-commands-java')
+    implementation project(':headlessmc-commands:headlessmc-commands-launcher')
+    implementation project(':headlessmc-commands:headlessmc-commands-profile')
+    implementation project(':headlessmc-commands:headlessmc-commands-server')
+    implementation project(':headlessmc-commands:headlessmc-commands-mod')
+}

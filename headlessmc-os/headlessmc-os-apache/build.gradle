@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':headlessmc-os')
+    implementation libs.commons.lang3
+    implementation libs.cdi
+}

@@ -15,7 +15,7 @@ import static org.objectweb.asm.Opcodes.*;
 
 /**
  * A given {@link ClassNode} will be transformed in the following ways:
- * <p>-if it's a module a {@code requires headlessmc.lwjgl} will be added.
+ * <p>-if it's a module a {@code requires io.github.headlesshq.headlessmc.lwjgl} will be added.
  * <p>-the no-args constructor will be made public or created if necessary
  * <p>-Every method body will have its code removed and will call
  * {@link RedirectionApi#invoke(Object, String, Class, Object...)}.
@@ -63,7 +63,7 @@ public class LwjglTransformer implements Transformer {
 
     private void transformModule(ClassNode cn) {
         if (cn.module != null) {
-            cn.module.visitRequire("headlessmc.lwjgl", ACC_MANDATED, null);
+            cn.module.visitRequire("io.github.headlesshq.headlessmc.lwjgl", ACC_MANDATED, null);
             cn.module.access |= ACC_OPEN;
             cn.module.opens = null; // Forge: InvalidModuleDescriptorException: The opens table for an open module must be 0 length
         }

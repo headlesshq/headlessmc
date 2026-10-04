@@ -1,21 +1,125 @@
-rootProject.name = 'headlessmc'
-include 'headlessmc-api'
-include 'headlessmc-os'
-include 'headlessmc-java'
-include 'headlessmc-logging'
-include 'headlessmc-jline'
-include 'headlessmc-modlauncher'
-include 'headlessmc-auth'
-include 'headlessmc-runtime'
-include 'headlessmc-lwjgl'
-include 'headlessmc-launcher'
-include 'headlessmc-launcher-jfx'
-include 'headlessmc-launcher-wrapper'
-include 'headlessmc-web'
-
-include 'headlessmc-web-plugin'
-project(':headlessmc-web-plugin').projectDir = file('headlessmc-web/plugin')
-
-if (hmc_graal_build.toBoolean()) {
-    include 'headlessmc-graalvm'
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
 }
+
+rootProject.name = 'headlessmc'
+
+include 'headlessmc-exceptions'
+include 'headlessmc-application'
+include 'headlessmc-bom'
+include 'headlessmc-docs'
+include 'headlessmc-plugins'
+include 'headlessmc-secrets'
+include 'headlessmc-lwjgl'
+include 'headlessmc-config'
+
+include 'headlessmc-os'
+include 'headlessmc-os:headlessmc-os-apache'
+include 'headlessmc-os:headlessmc-os-config'
+include 'headlessmc-os:headlessmc-os-all'
+
+include 'headlessmc-auth'
+include 'headlessmc-auth:headlessmc-auth-store-gson'
+include 'headlessmc-auth:headlessmc-auth-offline'
+include 'headlessmc-auth:headlessmc-auth-impl'
+include 'headlessmc-auth:headlessmc-auth-yggdrasil'
+include 'headlessmc-auth:headlessmc-auth-all'
+include 'headlessmc-auth:headlessmc-auth-webview'
+include 'headlessmc-auth:headlessmc-auth-cdi'
+
+include 'headlessmc-java'
+include 'headlessmc-java:headlessmc-java-args'
+include 'headlessmc-java:headlessmc-java-sources'
+include 'headlessmc-java:headlessmc-java-all'
+include 'headlessmc-java:headlessmc-java-version'
+include 'headlessmc-java:headlessmc-java-distribution'
+include 'headlessmc-java:headlessmc-java-distribution:headlessmc-java-distribution-foojay'
+// TODO: include 'headlessmc-java:headlessmc-java-distribution:headlessmc-java-distribution-temurin'
+include 'headlessmc-java:headlessmc-java-launcher'
+
+include 'headlessmc-files'
+include 'headlessmc-files:headlessmc-files-cache'
+
+include 'headlessmc-logging'
+
+include 'headlessmc-console'
+include 'headlessmc-console:headlessmc-progressbar'
+include 'headlessmc-console:headlessmc-progressbar:headlessmc-progressbar-jline'
+include 'headlessmc-console:headlessmc-console-jline'
+include 'headlessmc-console:headlessmc-console-cdi'
+include 'headlessmc-console:headlessmc-console-format'
+include 'headlessmc-console:headlessmc-console-completions'
+
+include 'headlessmc-net'
+include 'headlessmc-net:headlessmc-net-java'
+include 'headlessmc-net:headlessmc-net-hash'
+include 'headlessmc-net:headlessmc-net-parallel'
+include 'headlessmc-net:headlessmc-net-all'
+include 'headlessmc-net:headlessmc-net-rest'
+
+include 'headlessmc-version'
+include 'headlessmc-version:headlessmc-version-arg'
+include 'headlessmc-version:headlessmc-version-jackson'
+include 'headlessmc-version:headlessmc-version-service'
+include 'headlessmc-version:headlessmc-version-util'
+
+include 'headlessmc-platform'
+include 'headlessmc-platform:headlessmc-platform-vanilla'
+include 'headlessmc-platform:headlessmc-platform-neoforge'
+include 'headlessmc-platform:headlessmc-platform-fabric'
+include 'headlessmc-platform:headlessmc-platform-paper'
+include 'headlessmc-platform:headlessmc-platform-purpur'
+include 'headlessmc-platform:headlessmc-platform-util'
+include 'headlessmc-platform:headlessmc-platform-forge'
+include 'headlessmc-platform:headlessmc-platform-forge:headlessmc-forge-installer'
+include 'headlessmc-platform:headlessmc-platform-all'
+
+include 'headlessmc-mods'
+include 'headlessmc-mods:headlessmc-mods-distribution'
+include 'headlessmc-mods:headlessmc-mods-distribution-modrinth'
+
+include 'headlessmc-util'
+include 'headlessmc-util:headlessmc-util-maven'
+include 'headlessmc-util:headlessmc-util-typemap'
+include 'headlessmc-util:headlessmc-util-json'
+include 'headlessmc-util:headlessmc-util-json-jackson'
+include 'headlessmc-util:headlessmc-util-reflection'
+
+include 'headlessmc-launcher'
+include 'headlessmc-launcher:headlessmc-launcher-assets'
+include 'headlessmc-launcher:headlessmc-launcher-libraries'
+include 'headlessmc-launcher:headlessmc-launcher-args'
+include 'headlessmc-launcher:headlessmc-launcher-logging'
+include 'headlessmc-launcher:headlessmc-launcher-profile'
+include 'headlessmc-launcher:headlessmc-launcher-client'
+include 'headlessmc-launcher:headlessmc-launcher-server'
+include 'headlessmc-launcher:headlessmc-launcher-process'
+
+include 'headlessmc-commands'
+include 'headlessmc-commands:headlessmc-commands-auth'
+include 'headlessmc-commands:headlessmc-commands-auth-cdi'
+include 'headlessmc-commands:headlessmc-commands-version'
+include 'headlessmc-commands:headlessmc-commands-java'
+include 'headlessmc-commands:headlessmc-commands-config'
+include 'headlessmc-commands:headlessmc-commands-profile'
+include 'headlessmc-commands:headlessmc-commands-server'
+include 'headlessmc-commands:headlessmc-commands-mod'
+include 'headlessmc-commands:headlessmc-commands-util'
+include 'headlessmc-commands:headlessmc-commands-launcher'
+
+include 'headlessmc-test'
+include 'headlessmc-test:headlessmc-introspection'
+
+include 'headlessmc-patcher'
+include 'headlessmc-patcher:headlessmc-patcher-asm'
+include 'headlessmc-patcher:headlessmc-patcher-log4j'
+include 'headlessmc-patcher:headlessmc-patcher-paulscode'
+include 'headlessmc-patcher:headlessmc-patcher-lwjgl'
+include 'headlessmc-patcher:headlessmc-patcher-probe'
+include 'headlessmc-patcher:headlessmc-patcher-probe-strategy'
+include 'headlessmc-patcher:headlessmc-patcher-nonclassloading'
+include 'headlessmc-patcher:headlessmc-patcher-all'

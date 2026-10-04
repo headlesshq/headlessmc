@@ -14,21 +14,9 @@ even if it runs in headless mode without a screen.
 The [hmc-specifics](https://github.com/headlesshq/hmc-specifics)
 are a set of `fabric`, `forge` and `neoforge` mods for most major versions of Minecraft.
 They add command line support from HeadlessMc to it.
-
-You can download the correct hmc-specifics version from Github,
-or use the `specifics` command in HeadlessMc:
-```
-> versions
-id   name                          parent                       
-0    1.21.5                         
-1   neoforge-21.5.66-beta          1.21.5
-
-> specifics 1 hmc-specifics
-Installed hmc-specifics-2.2.0 for neoforge-21.5.66-beta successfully.
-
-> launch 1
-...
-```
+Download the mod for your version from GitHub and place it in your mods folder
+(TODO: we are working on getting hmc-specifics released on modrinth).
+    
 Once Minecraft has loaded, you can use `help` to get a list of commands you can use:
 ```
 command      description                                
@@ -234,7 +222,9 @@ Hmc-specifics support the following versions of Minecraft:
 
 |    Version    |        Forge        |       Fabric       |      NeoForge      |
 |:-------------:|:-------------------:|:------------------:|:------------------:|
-|  1.21-1.21.5  | :white_check_mark:  | :white_check_mark: | :white_check_mark: |
+|     26.2      | :white_check_mark:  | :white_check_mark: | :white_check_mark: |
+|  26.1-26.1.2  | :white_check_mark:  | :white_check_mark: | :white_check_mark: |
+| 1.21-1.21.11  | :white_check_mark:  | :white_check_mark: | :white_check_mark: |
 |    1.20.6     | :white_check_mark:  | :white_check_mark: | :white_check_mark: |
 | 1.20.1-1.20.4 |         :x:         |        :x:         |       :x:          |
 |    1.19.4     | :white_check_mark:  | :white_check_mark: |         -          |

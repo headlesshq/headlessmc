@@ -1,0 +1,5 @@
+dependencies {
+    api project(':headlessmc-patcher')
+    api libs.asm
+    api libs.asm.tree
+}

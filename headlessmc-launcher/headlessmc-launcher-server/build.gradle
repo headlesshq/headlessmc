@@ -1,0 +1,29 @@
+dependencies {
+    api project(':headlessmc-platform')
+    api project(':headlessmc-launcher:headlessmc-launcher-process')
+    runtimeOnly project(':headlessmc-platform:headlessmc-platform-vanilla')
+
+    api project(':headlessmc-java:headlessmc-java-all')
+    api project(':headlessmc-version:headlessmc-version-arg')
+
+    implementation rootProject
+    implementation project(':headlessmc-os')
+    implementation project(':headlessmc-util:headlessmc-util-maven')
+
+    api project(':headlessmc-launcher:headlessmc-launcher-profile')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-logging')
+}
+
+plugins.apply('java-test-fixtures')
+
+dependencies {
+    testFixturesApi project(':headlessmc-launcher:headlessmc-launcher-profile')
+    testFixturesApi project(':headlessmc-platform')
+    testFixturesImplementation libs.jspecify
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+}

@@ -11,52 +11,52 @@ public class ByteBufferRedirections {
 
     public static void redirect(RedirectionManager manager) {
         manager.redirect("Lorg/lwjgl/system/MemoryStack;" +
-            "callocInt(I)Ljava/nio/IntBuffer;",
-            (obj, desc, type, args) -> IntBuffer.allocate((int) args[0]));
+                             "callocInt(I)Ljava/nio/IntBuffer;",
+                         (obj, desc, type, args) -> IntBuffer.allocate((int) args[0]));
         manager.redirect("Lorg/lwjgl/system/MemoryStack;" +
-            "callocFloat(I)Ljava/nio/FloatBuffer;",
-            (obj, desc, type, args) -> FloatBuffer.allocate((int) args[0]));
+                             "callocFloat(I)Ljava/nio/FloatBuffer;",
+                         (obj, desc, type, args) -> FloatBuffer.allocate((int) args[0]));
         manager.redirect("Lorg/lwjgl/system/MemoryStack;" +
-            "mallocFloat(I)Ljava/nio/FloatBuffer;",
-            (obj, desc, type, args) -> FloatBuffer.allocate((int) args[0]));
+                             "mallocFloat(I)Ljava/nio/FloatBuffer;",
+                         (obj, desc, type, args) -> FloatBuffer.allocate((int) args[0]));
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;" +
-            "memCalloc(I)Ljava/nio/ByteBuffer;",
-            (obj, desc, type, args) -> ByteBuffer.allocate((int) args[0]).order(NATIVE_ORDER));
+                             "memCalloc(I)Ljava/nio/ByteBuffer;",
+                         (obj, desc, type, args) -> ByteBuffer.allocate((int) args[0]).order(NATIVE_ORDER));
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;" +
-            "memUTF8(Ljava/lang/CharSequence;Z)Ljava/nio/ByteBuffer;",
-            (obj, desc, type, args) -> utf8(Objects.requireNonNull(args[0]), (boolean) args[1]));
+                             "memUTF8(Ljava/lang/CharSequence;Z)Ljava/nio/ByteBuffer;",
+                         (obj, desc, type, args) -> utf8(Objects.requireNonNull(args[0]), (boolean) args[1]));
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;" +
-            "memUTF8(Ljava/lang/CharSequence;)Ljava/nio/ByteBuffer;",
-            (obj, desc, type, args) -> utf8(Objects.requireNonNull(args[0]), true));
+                             "memUTF8(Ljava/lang/CharSequence;)Ljava/nio/ByteBuffer;",
+                         (obj, desc, type, args) -> utf8(Objects.requireNonNull(args[0]), true));
 
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;" +
-            "memUTF8Safe(Ljava/lang/CharSequence;Z)Ljava/nio/ByteBuffer;",
-            (obj, desc, type, args) -> utf8(args[0], (boolean) args[1]));
+                             "memUTF8Safe(Ljava/lang/CharSequence;Z)Ljava/nio/ByteBuffer;",
+                         (obj, desc, type, args) -> utf8(args[0], (boolean) args[1]));
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;" +
-            "memUTF8Safe(Ljava/lang/CharSequence;)Ljava/nio/ByteBuffer;",
-            (obj, desc, type, args) -> utf8(args[0], true));
+                             "memUTF8Safe(Ljava/lang/CharSequence;)Ljava/nio/ByteBuffer;",
+                         (obj, desc, type, args) -> utf8(args[0], true));
 
         // this is not that great, but the entire idea of LWJGL redirection is not, so whatever
 
         // 1.21.10
         // Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/IntBuffer;)Ljava/nio/ByteBuffer;
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/IntBuffer;)Ljava/nio/ByteBuffer;",
-                (obj, desc, type, args) -> memByteBuffer((IntBuffer) args[0]));
+                         (obj, desc, type, args) -> memByteBuffer((IntBuffer) args[0]));
 
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/ShortBuffer;)Ljava/nio/ByteBuffer;",
-                (obj, desc, type, args) -> memByteBuffer((ShortBuffer) args[0]));
+                         (obj, desc, type, args) -> memByteBuffer((ShortBuffer) args[0]));
 
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/CharBuffer;)Ljava/nio/ByteBuffer;",
-                (obj, desc, type, args) -> memByteBuffer((CharBuffer) args[0]));
+                         (obj, desc, type, args) -> memByteBuffer((CharBuffer) args[0]));
 
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/LongBuffer;)Ljava/nio/ByteBuffer;",
-                (obj, desc, type, args) -> memByteBuffer((LongBuffer) args[0]));
+                         (obj, desc, type, args) -> memByteBuffer((LongBuffer) args[0]));
 
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/FloatBuffer;)Ljava/nio/ByteBuffer;",
-                (obj, desc, type, args) -> memByteBuffer((FloatBuffer) args[0]));
+                         (obj, desc, type, args) -> memByteBuffer((FloatBuffer) args[0]));
 
         manager.redirect("Lorg/lwjgl/system/MemoryUtil;memByteBuffer(Ljava/nio/DoubleBuffer;)Ljava/nio/ByteBuffer;",
-                (obj, desc, type, args) -> memByteBuffer((DoubleBuffer) args[0]));
+                         (obj, desc, type, args) -> memByteBuffer((DoubleBuffer) args[0]));
     }
 
     private static ByteBuffer utf8(Object input, boolean terminated) {

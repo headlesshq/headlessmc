@@ -1,0 +1,13 @@
+dependencies {
+    implementation project(':headlessmc-java:headlessmc-java-launcher')
+    implementation project(':headlessmc-files')
+    api project(':headlessmc-patcher:headlessmc-patcher-asm')
+}
+
+tasks.named("processResources") {
+    dependsOn(":headlessmc-patcher:headlessmc-patcher-probe:jar")
+    from(project("::headlessmc-patcher:headlessmc-patcher-probe").tasks.named("jar")) {
+        rename { "probe.jar" }
+        into("patcher/probe")
+    }
+}

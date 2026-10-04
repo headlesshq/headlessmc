@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':headlessmc-commands')
+    implementation project(':headlessmc-config')
+}

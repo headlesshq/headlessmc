@@ -1,0 +1,5 @@
+dependencies {
+    api project(':headlessmc-os')
+    api project(':headlessmc-os:headlessmc-os-apache')
+    api project(':headlessmc-os:headlessmc-os-config')
+}

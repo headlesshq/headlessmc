@@ -1,0 +1,17 @@
+[
+  {
+    "id": "test2",
+    "name": "Test2"
+  },
+  {
+    "id": "test3",
+    "name": "Test3",
+    "description": "test3",
+    "authors": [
+      "Test3Author1",
+      {
+        "name": "Test3Author2"
+      }
+    ]
+  }
+]

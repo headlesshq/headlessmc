@@ -1,0 +1,26 @@
+dependencies {
+    api project(':headlessmc-auth')
+    api project(':headlessmc-commands')
+
+    api project(':headlessmc-os:headlessmc-os-all')
+
+    api project(':headlessmc-java')
+    api project(':headlessmc-java:headlessmc-java-distribution')
+    api project(':headlessmc-java:headlessmc-java-distribution:headlessmc-java-distribution-foojay')
+    implementation project(':headlessmc-java:headlessmc-java-sources')
+
+    api project(':headlessmc-platform:headlessmc-platform-all')
+
+    api project(':headlessmc-launcher')
+
+    api project(':headlessmc-logging')
+
+    api project(':headlessmc-java:headlessmc-java-args')
+    
+    // implementation?
+    api project(':headlessmc-auth:headlessmc-auth-cdi')
+    api project(':headlessmc-console:headlessmc-console-cdi')
+    api project(':headlessmc-console:headlessmc-progressbar')
+    implementation project(':headlessmc-console:headlessmc-progressbar:headlessmc-progressbar-jline')
+    implementation project(':headlessmc-commands:headlessmc-commands-auth-cdi')
+}

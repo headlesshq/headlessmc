@@ -1,0 +1,10 @@
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation project(':headlessmc-auth')
+    // TODO: should we write headlessmc-util-json-gson?
+    implementation libs.gson
+}

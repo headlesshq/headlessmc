@@ -1,0 +1,8 @@
+dependencies {
+    implementation project(':headlessmc-java:headlessmc-java-version')
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-os')
+    testImplementation project(':headlessmc-os:headlessmc-os-all')
+    testImplementation testFixtures(project(':headlessmc-files'))
+    implementation libs.commons.lang3
+}

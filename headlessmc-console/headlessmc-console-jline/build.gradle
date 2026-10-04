@@ -1,0 +1,11 @@
+dependencies {
+    api project(':headlessmc-console')
+    api project(':headlessmc-console:headlessmc-console-format')
+    api project(':headlessmc-config')
+
+    implementation rootProject
+
+    implementation libs.jline
+    implementation libs.jline.picocli
+    runtimeOnly libs.juniversalchardet
+}

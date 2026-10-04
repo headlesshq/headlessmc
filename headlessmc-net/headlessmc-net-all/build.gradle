@@ -1,0 +1,6 @@
+dependencies {
+    api project(':headlessmc-net')
+    api project(':headlessmc-net:headlessmc-net-hash')
+    api project(':headlessmc-net:headlessmc-net-java')
+    api project(':headlessmc-net:headlessmc-net-parallel')
+}

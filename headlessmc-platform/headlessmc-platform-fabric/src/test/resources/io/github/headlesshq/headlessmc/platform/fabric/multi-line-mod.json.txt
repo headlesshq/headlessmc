@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "entity_model_features",
+  "version": "3.2.6",
+  "name": "Entity Model Features",
+  "description": "This is an expansion of the ETF mod, it adds support for OptiFine format Custom Entity Model (CEM) resource packs.
+  While still allowing you to disable this to use a different model mod :)",
+  "authors": [
+    {
+      "name": "Traben",
+      "contact": {
+        "homepage": "https://www.curseforge.com/members/traben_0/projects",
+        "discord": "https://discord.gg/rURmwrzUcz"
+      }
+    }
+  ]
+}

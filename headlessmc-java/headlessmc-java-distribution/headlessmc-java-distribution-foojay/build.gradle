@@ -1,0 +1,23 @@
+dependencies {
+    implementation project(':headlessmc-java:headlessmc-java-distribution')
+    implementation project(':headlessmc-java:headlessmc-java-sources')
+    implementation project(':headlessmc-net')
+    runtimeOnly project(':headlessmc-net:headlessmc-net-java')
+    implementation libs.cdi
+    implementation(libs.disco.client) {
+       transitive = false
+    }
+
+    implementation project(':headlessmc-files')
+
+    implementation libs.commons.compress
+    implementation libs.jdktools
+    implementation project(':headlessmc-net:headlessmc-net-rest')
+    implementation libs.quarkus.rest.client.jackson
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-net'))
+    testImplementation project(':headlessmc-os')
+    testImplementation project(':headlessmc-java')
+}

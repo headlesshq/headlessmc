@@ -1,0 +1,9 @@
+dependencies {
+    api project(':headlessmc-java')
+    implementation project(':headlessmc-java:headlessmc-java-distribution')
+    implementation project(':headlessmc-files')
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-files'))
+}

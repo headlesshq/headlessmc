@@ -1,0 +1,18 @@
+dependencies {
+    implementation project(':headlessmc-platform')
+    runtimeOnly project(':headlessmc-platform:headlessmc-platform-vanilla')
+    implementation project(':headlessmc-net')
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-util:headlessmc-util-maven')
+
+    implementation libs.jackson.yaml
+    implementation project(':headlessmc-net:headlessmc-net-rest')
+    implementation libs.quarkus.rest.client.jackson
+
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+}
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-net'))
+}
