@@ -186,6 +186,7 @@ jobs:
           ./scripts/build-native.sh
 
       - name: List files
+        if: runner.os != 'Windows'
         run: ls headlessmc-application/build
 
       - name: Rename executable
