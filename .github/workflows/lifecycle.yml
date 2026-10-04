@@ -143,12 +143,6 @@ jobs:
 
   build-natives:
     runs-on: ${{ matrix.os.os }}
-    if: |
-      github.event_name == 'push' &&
-      (
-        startsWith(github.ref, 'refs/tags/') ||
-        github.ref == 'refs/heads/main'
-      )
     strategy:
       matrix:
         os:
