@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.commands.version;
 
+import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.format.TableBuilder;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
     description = "Lists installed or remote versions."
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
-public class ListCommand implements Runnable, CachedConsole.Enabled {
+public class ListCommand implements Runnable, VersionArgCommand, CachedConsole.Enabled {
     private final VersionMatcherService versionMatcherService;
     private final VersionJsonService versionService;
     private final TableProvider tableProvider;
@@ -149,6 +150,11 @@ public class ListCommand implements Runnable, CachedConsole.Enabled {
         }
 
         return result;
+    }
+
+    @Override
+    public @Nullable List<String> getVersionArg() {
+        return getParameters();
     }
 
 }
