@@ -344,7 +344,7 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [build, build-natives]
+    needs: [build, build-natives, docker-release]
     steps:
       - name: Cleanup Docker
         uses: geekyeggo/delete-artifact@v6
