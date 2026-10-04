@@ -201,6 +201,17 @@ jobs:
         if: runner.os == 'Windows'
         run: Move-Item "headlessmc-application/build/headlessmc-application-*-runner.exe" "headlessmc-application/build/${{ matrix.os.name }}.exe"
 
+      - name: Smoke test executable
+        shell: bash
+        run: |
+          EXE="headlessmc-application/build/${{ matrix.os.name }}"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            EXE="$EXE.exe"
+          else
+            chmod +x "$EXE"
+          fi
+          "$EXE" help
+          
       - name: Publish Artifact
         uses: actions/upload-artifact@v7
         with:
