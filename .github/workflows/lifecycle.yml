@@ -150,11 +150,10 @@ jobs:
         os:
           - { os: windows-latest, name: headlessmc-launcher-windows-x64}
           - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
-          - { os: macos-15-intel, name: headlessmc-launcher-macos-x64 }
           #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
           - { os: ubuntu-24.04-arm, name: headlessmc-launcher-linux-arm64 }
-          - { os: macos-latest, name: headlessmc-launcher-macos-arm64 }
-
+        # macOS builds take verrryyy long, so I only want to do this on release
+        include: ${{ fromJSON(github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main') && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"\}\},{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"\}\}]' || '[]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: graalvm/setup-graalvm@v1
@@ -211,13 +210,133 @@ jobs:
             chmod +x "$EXE"
           fi
           "$EXE" help
-          
+
       - name: Publish Artifact
         uses: actions/upload-artifact@v7
         with:
           name: HeadlessMc Native Image ${{ matrix.os.name }}
           path: |
             ./headlessmc-application/build/${{ matrix.os.name }}*
+
+  docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - uses: actions/checkout@v6
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV          
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to Docker Hub
+        if: |
+          github.event_name == 'push' &&
+          (
+            startsWith(github.ref, 'refs/tags/') ||
+            github.ref == 'refs/heads/main'
+          )
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # TODO: actually we could just include the uber-jar from the build job
+      # TODO: even better, we could just build a native Docker image?
+      - name: Build quick
+        run: ./gradlew :headlessmc-application:quarkusBuild --stacktrace
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./headlessmc-application
+          file: ./headlessmc-application/src/main/docker/Dockerfile.jvm
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main') }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"          
+
+      - name: Upload digest
+        if: |
+          github.event_name == 'push' &&
+          (
+            startsWith(github.ref, 'refs/tags/') ||
+            github.ref == 'refs/heads/main'
+          )
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  docker-release:
+    if: |
+      github.event_name == 'push' &&
+      (
+        startsWith(github.ref, 'refs/tags/') ||
+        github.ref == 'refs/heads/main'
+      )
+    runs-on: ubuntu-latest
+    needs: [ docker-build, build, build-natives]
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: type=raw,value=${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}       
 
   merge:
     runs-on: ubuntu-latest
@@ -252,7 +371,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [merge]
+    needs: [merge, docker-build]
     permissions:
       contents: write
     steps:
