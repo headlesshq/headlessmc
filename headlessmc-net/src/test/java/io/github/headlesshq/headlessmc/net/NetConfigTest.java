@@ -21,7 +21,7 @@ public class NetConfigTest {
     public void testDefaults() {
         NetConfig defaultConfig = config.get();
         assertTrue(defaultConfig.httpVersion().isEmpty());
-        assertFalse(defaultConfig.cookies());
+        assertTrue(defaultConfig.cookies());
         assertEquals(HeadlessMc.DEFAULT_USER_AGENT, defaultConfig.userAgent());
         assertTrue(defaultConfig.deleteFailedFiles());
         assertEquals(1, defaultConfig.retries());
@@ -31,14 +31,14 @@ public class NetConfigTest {
     public void testConfiguredValues() {
         ConfigService fork = configService.fork();
         fork.set("hmc.net.http-version", "HTTP_1_1", false);
-        fork.set("hmc.net.cookies", "true", false);
+        fork.set("hmc.net.cookies", "false", false);
         fork.set("hmc.net.user-agent", "test", false);
 
         NetConfig configured = fork.getHolder(NetConfig.class).get();
         assertNotEquals(config.get(), configured);
         assertTrue(configured.httpVersion().isPresent());
         assertEquals(HttpVersion.HTTP_1_1, configured.httpVersion().get());
-        assertTrue(configured.cookies());
+        assertFalse(configured.cookies());
         assertEquals("test", configured.userAgent());
     }
 

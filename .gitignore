@@ -50,3 +50,5 @@ HeadlessMc
 .claude
 .venv
 _site
+
+*.exec
