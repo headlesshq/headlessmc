@@ -24,17 +24,19 @@ final class EntryClassWriter extends ClassWriter {
 
     @Override
     protected String getCommonSuperClass(String type1, String type2) {
+        PatchException exception = new PatchException("Failed to find common super class of " + type1 + ", " + type2);
         for (SuperClassStrategy strategy : superClassStrategies) {
             if (strategy.isApplicable()) {
                 try (SuperClassResolver resolver = strategy.apply(context)) {
                     return resolver.getCommonSuperClass(type1, type2);
                 } catch (HeadlessMcException e) {
-                    log.error("CommonSuperClassStrategy {} failed", strategy, e);
+                    log.info("CommonSuperClassStrategy {} failed", strategy, e);
+                    exception.addSuppressed(e);
                 }
             }
         }
 
-        throw new PatchException("Failed to find common super class of " + type1 + ", " + type2);
+        throw exception;
     }
 
 }

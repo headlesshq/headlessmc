@@ -9,6 +9,7 @@ import io.github.headlesshq.headlessmc.patcher.PatchException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ import java.util.stream.Stream;
  * Produces a {@link ClassSource} for the java version specified
  * by {@link PatchContext#getJavaVersion()}.
  */
+@Slf4j
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ClassSourceFactory {
@@ -38,13 +40,18 @@ public class ClassSourceFactory {
     }
 
     public List<ClassSource.Provider> jvmProviders(PatchContext context) {
+        PatchException exception = new PatchException("Failed to find a Java version with jmods or an rt.jar");
         boolean foundJava = false;
         for (Java java : javaService.getJavaVersions()) {
             if (java.version() == context.getJavaVersion()) {
                 foundJava = true;
-                Optional<List<ClassSource.Provider>> classSource = scan(java);
-                if (classSource.isPresent()) {
-                    return classSource.get();
+                try {
+                    Optional<List<ClassSource.Provider>> classSource = scan(java);
+                    if (classSource.isPresent()) {
+                        return classSource.get();
+                    }
+                } catch (PatchException e) {
+                    exception.addSuppressed(e);
                 }
             }
         }
@@ -57,7 +64,7 @@ public class ClassSourceFactory {
             }
         }
 
-        throw new PatchException("Failed to find a Java version with jmods or an rt.jar");
+        throw exception;
     }
 
     private Optional<List<ClassSource.Provider>> scan(Java java) {

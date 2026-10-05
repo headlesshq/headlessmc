@@ -11,3 +11,11 @@ tasks.named("processResources") {
         into("patcher/probe")
     }
 }
+
+dependencies {
+    testImplementation project(':headlessmc-java:headlessmc-java-all')
+}
+
+dependencies {
+    testImplementation project(':headlessmc-java:headlessmc-java-all')
+}

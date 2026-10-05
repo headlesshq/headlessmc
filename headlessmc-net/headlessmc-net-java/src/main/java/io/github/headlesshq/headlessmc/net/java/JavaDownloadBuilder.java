@@ -148,10 +148,12 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
     private <T> T mapWithoutRetry(ExFunction<Download, T> action) throws Exception {
         Optional<InputStreamVerifier> verifier = getVerifier();
 
+        URI uri = uri();
+        log.debug("Requesting {} with user-agent '{}' and cookies {}", uri, config.userAgent(), config.cookies());
         HttpRequest request = HttpRequest.newBuilder()
             .GET()
             .header("User-Agent", config.userAgent())
-            .uri(uri())
+            .uri(uri)
             .build();
 
         StatusCodeHandler statusCodeHandler = statusCodeHandler();

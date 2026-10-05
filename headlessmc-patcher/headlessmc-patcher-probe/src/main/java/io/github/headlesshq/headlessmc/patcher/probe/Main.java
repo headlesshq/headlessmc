@@ -21,6 +21,7 @@ public class Main {
                     type1 = line;
                 } else {
                     out.println(tryGetCommonSuperClass(type1, line));
+                    out.flush();
                     type1 = null;
                 }
             }
@@ -34,7 +35,7 @@ public class Main {
             Class<?> class1 = Class.forName(type1.replace('/', '.'), false, classLoader);
             Class<?> class2 = Class.forName(type2.replace('/', '.'), false, classLoader);
             return getCommonSuperClass(class1, class2);
-        } catch (ClassNotFoundException e) {
+        } catch (Throwable t) {
             return "error";
         }
     }
@@ -54,6 +55,9 @@ public class Main {
         } else {
             do {
                 class1 = class1.getSuperclass();
+                if (class1 == null) {
+                    return "java/lang/Object";
+                }
             } while (!class1.isAssignableFrom(class2));
             return class1.getName().replace('.', '/');
         }

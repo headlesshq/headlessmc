@@ -19,6 +19,7 @@ final class ProbeProcess implements AutoCloseable {
         try {
             in.println(type1);
             in.println(type2);
+            in.flush();
             String line = out.readLine();
             if (line == null) {
                 throw new HeadlessMcIOException("Probe process ended");
@@ -58,7 +59,7 @@ final class ProbeProcess implements AutoCloseable {
             ));
 
         BufferedReader out = new BufferedReader(new InputStreamReader(actualProcess.getInputStream()));
-        PrintStream in = new PrintStream(actualProcess.getOutputStream());
+        PrintStream in = new PrintStream(actualProcess.getOutputStream(), true);
         return new ProbeProcess(process, out, in);
     }
 
