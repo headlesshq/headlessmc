@@ -150,6 +150,7 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
 
         HttpRequest request = HttpRequest.newBuilder()
             .GET()
+            .header("User-Agent", config.userAgent())
             .uri(uri())
             .build();
 

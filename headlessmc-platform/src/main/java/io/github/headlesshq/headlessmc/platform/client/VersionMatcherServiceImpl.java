@@ -93,7 +93,7 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
         try {
             return match(version, processor);
         } catch (VersionMatchException e) {
-            log.debug("Skipping version {}", version.getId(), e);
+            log.error("Skipping version {}", version.getId(), e);
             return Set.of();
         }
     }
