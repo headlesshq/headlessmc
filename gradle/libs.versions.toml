@@ -63,7 +63,7 @@ juniversalchardet = { group = "com.googlecode.juniversalchardet", name = "junive
 
 jspecify = { group = "org.jspecify", name = "jspecify", version = "1.0.1" }
 
-lombok = { group = "org.projectlombok", name = "lombok", version = "1.18.46" }
+lombok = { group = "org.projectlombok", name = "lombok", version = "1.18.48" }
 
 picocli = { group = "info.picocli", name = "picocli", version = "4.7.7" }
 progressbar = { group = "me.tongfei", name = "progressbar", version = "0.10.2" }
