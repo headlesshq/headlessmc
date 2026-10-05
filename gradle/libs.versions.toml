@@ -80,7 +80,7 @@ resilience4j-retry = { group = "io.github.resilience4j", name = "resilience4j-re
 jboss-logmanager = { group = "org.jboss.logmanager", name = "jboss-logmanager" }
 slf4j-jboss = { group = "org.jboss.slf4j", name = "slf4j-jboss-logmanager" }
 slf4j = { group = "org.slf4j", name = "slf4j-api" }
-slugify = { group = "com.github.slugify", name = "slugify", version = "4.0.0" }
+slugify = { group = "com.github.slugify", name = "slugify", version = "4.0.1" }
 
 smallrye-config = { group = "io.smallrye.config", name = "smallrye-config" }
 
