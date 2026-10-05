@@ -5,7 +5,6 @@ dependencies {
     compileOnly libs.jetbrains.annotations
     implementation project(':headlessmc-util:headlessmc-util-json')
     runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
-    implementation libs.slugify
 }
 
 dependencies {
