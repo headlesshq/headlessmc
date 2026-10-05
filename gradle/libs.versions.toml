@@ -3,7 +3,7 @@ jline = "4.4.6"
 quarkus = "3.35.3"
 asm = "9.10.1"
 resilience4j = "2.4.0"
-jackson = "3.1.4"
+jackson = "3.2.3"
 
 [libraries]
 # platform
