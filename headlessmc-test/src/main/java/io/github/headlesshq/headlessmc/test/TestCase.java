@@ -48,7 +48,7 @@ public class TestCase implements ReflectionRegistered {
     @RegisterForReflection
     public static class Action implements ReflectionRegistered {
         private final Type type;
-        private final boolean ignoreCase;
+        private final @Nullable Boolean ignoreCase;
         private final @Nullable Long timeout;
         private final @Nullable String message;
         private final @Nullable List<Action> and;
@@ -59,6 +59,10 @@ public class TestCase implements ReflectionRegistered {
             return timeout == null ? testCase.getTimeout() : timeout;
         }
 
+        public boolean isIgnoreCase() {
+            return ignoreCase != null && ignoreCase;
+        }
+
         @Getter
         @RequiredArgsConstructor
         @RegisterForReflection
@@ -66,9 +70,9 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Sends the message as a command to the process.
              */
-            SEND((process, action, message) -> {
+            SEND((process, action, _) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
-                log.info("Sending command: " + action.getMessage());
+                log.info("Sending command: {}", action.getMessage());
                 process.getOutputStream().write(
                         (action.getMessage() + System.lineSeparator())
                                 .getBytes(StandardCharsets.UTF_8));
@@ -78,7 +82,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Checks for log messages that end with the message.
              */
-            ENDS_WITH((process, action, message) -> {
+            ENDS_WITH((_, action, message) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 requireNonNull(message, "Cannot execute CONTAINS in end step!");
 
@@ -91,7 +95,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Checks for log messages that match the given regex
              */
-            REGEX((process, action, message) -> {
+            REGEX((_, action, message) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 requireNonNull(message, "Cannot execute CONTAINS in end step!");
                 Pattern pattern = action.isIgnoreCase()
@@ -105,7 +109,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Checks for messages that contain the message.
              */
-            CONTAINS((process, action, message) -> {
+            CONTAINS((_, action, message) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 requireNonNull(message, "Cannot execute CONTAINS in end step!");
 
@@ -118,7 +122,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Waits for the given timeout.
              */
-            WAIT((process, action, message) -> {
+            WAIT((_, action, _) -> {
                 requireNonNull(action.getTimeout(), "Timeout of action was null!");
 
                 try {
@@ -132,11 +136,11 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Match step.
              */
-            MATCH((process, action, message) -> Result.MATCH, true),
+            MATCH((_, _, _) -> Result.MATCH, true),
             /**
              * Pass step.
              */
-            PASS((process, action, message) -> Result.PASS, true),
+            PASS((_, _, _) -> Result.PASS, true),
             /**
              * Waits for the end of the process.
              */
@@ -155,11 +159,11 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Ends the test successfully.
              */
-            SUCCESS((process, action, message) -> Result.END_SUCCESS, false),
+            SUCCESS((_, _, _) -> Result.END_SUCCESS, false),
             /**
              * Ends the test signaling failure.
              */
-            FAIL((process, action, message) -> Result.END_FAIL, false);
+            FAIL((_, _, _) -> Result.END_FAIL, false);
 
             private final ActionFunction function;
             private final boolean condition;
