@@ -20,7 +20,7 @@ quarkus-rest-client-jackson = { module = "io.quarkus:quarkus-rest-client-jackson
 
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
 asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
-auth = { group = "net.raphimc", name = "MinecraftAuth", version = "5.0.1" }
+auth = { group = "net.raphimc", name = "MinecraftAuth", version = "5.0.2" }
 
 cdi = { group = "jakarta.enterprise", name = "jakarta.enterprise.cdi-api" }
 
