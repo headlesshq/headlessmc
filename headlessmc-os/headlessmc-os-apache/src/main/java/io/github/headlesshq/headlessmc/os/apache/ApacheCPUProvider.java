@@ -16,6 +16,11 @@ public class ApacheCPUProvider {
     @ApacheCommons
     public CPU.Bitness detectBitness() {
         Processor processor = ArchUtils.getProcessor();
+        // null if os.arch is unknown to Apache, or not set at all, e.g. in the browser
+        if (processor == null) {
+            return CPU.Bitness.UNKNOWN;
+        }
+
         return Processor.Arch.BIT_64.equals(processor.getArch())
             ? CPU.Bitness.B64
             : Processor.Arch.BIT_32.equals(processor.getArch())
