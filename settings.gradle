@@ -123,3 +123,5 @@ include 'headlessmc-patcher:headlessmc-patcher-probe'
 include 'headlessmc-patcher:headlessmc-patcher-probe-strategy'
 include 'headlessmc-patcher:headlessmc-patcher-nonclassloading'
 include 'headlessmc-patcher:headlessmc-patcher-all'
+
+include 'headlessmc-mods:headlessmc-mods-packwiz'

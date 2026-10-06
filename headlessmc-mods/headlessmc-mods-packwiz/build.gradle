@@ -1,0 +1,12 @@
+dependencies {
+    api project(':headlessmc-platform')
+
+    implementation libs.jackson
+    implementation libs.jackson.toml
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+}
+
+dependencies {
+    testImplementation testFixtures(project(':headlessmc-platform'))
+}

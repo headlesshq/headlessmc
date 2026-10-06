@@ -1,0 +1,13 @@
+name = "Test Pack"
+author = "headlesshq"
+version = "1.0.0"
+pack-format = "packwiz:1.1.0"
+
+[index]
+file = "index.toml"
+hash-format = "sha256"
+hash = "abc123"
+
+[versions]
+fabric = "0.16.14"
+minecraft = "1.21.1"

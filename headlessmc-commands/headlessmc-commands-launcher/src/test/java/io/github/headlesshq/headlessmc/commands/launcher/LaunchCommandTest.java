@@ -15,8 +15,12 @@ import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
+import io.github.headlesshq.headlessmc.mods.packwiz.PackwizService;
+import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
+import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +28,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +82,11 @@ class LaunchCommandTest {
         });
         Mockito.when(serverService.save(Mockito.any())).thenAnswer(invocation -> profileService.save(invocation.getArgument(0)));
 
-        platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"));
+        platformService = new FakePlatformService(
+            new FakeVanillaPlatform("1.21.1"),
+            FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.14"}),
+            FakePlatform.create("quilt", new String[]{"1.21.1", "0.26.0"})
+        );
         profileService = new FakeProfileService(root);
         profileResolver = new ProfileResolver(platformService, profileService);
         mcFiles = TestFiles.mcFiles(root);
@@ -85,7 +95,8 @@ class LaunchCommandTest {
     private LaunchCommand command() {
         return new LaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService, clientLauncher,
-            line -> line.split(" "), console, mcFiles, lastUsedAccountService, xvfbService, authService
+            line -> line.split(" "), console, mcFiles, lastUsedAccountService, xvfbService, authService,
+            new PackwizService(platformService), profileService
         );
     }
 
@@ -226,6 +237,195 @@ class LaunchCommandTest {
         command.setResolution("1024x768");
 
         assertThrows(Launched.class, command::call);
+    }
+
+    private Path packToml(String versions) throws IOException {
+        Path packDir = Files.createDirectories(root.resolve("my pack"));
+        return Files.writeString(packDir.resolve("pack.toml"), """
+            name = "My Pack"
+            pack-format = "packwiz:1.1.0"
+
+            [index]
+            file = "index.toml"
+            hash-format = "sha256"
+            hash = ""
+
+            [versions]
+            minecraft = "1.21.1"
+            """ + versions);
+    }
+
+    private Path singleLoaderPack() throws IOException {
+        return packToml("fabric = \"0.16.14\"\n");
+    }
+
+    private Path multiLoaderPack() throws IOException {
+        return packToml("quilt = \"0.26.0\"\nfabric = \"0.16.14\"\n");
+    }
+
+    private LaunchCommand packwizCommand(Path pack, String... versionArg) {
+        LaunchCommand command = command();
+        command.setPackwiz(pack.toString());
+        command.setVersionArg(List.of(versionArg));
+        return command;
+    }
+
+    @Test
+    void packwizWithoutSideThrows() throws IOException {
+        LaunchCommand command = packwizCommand(singleLoaderPack());
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+        assertTrue(e.getMessage().contains("<side>"), e.getMessage());
+        // spaces in the path are escaped in the suggested command
+        assertTrue(e.getMessage().contains("my\\ pack"), e.getMessage());
+    }
+
+    @Test
+    void packwizWithMultipleLoadersWithoutSideThrows() throws IOException {
+        LaunchCommand command = packwizCommand(multiLoaderPack());
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+        assertTrue(e.getMessage().contains("<side> <loader>"), e.getMessage());
+        assertTrue(e.getMessage().contains("quilt, fabric"), e.getMessage());
+    }
+
+    @Test
+    void packwizLaunchesTheClient() throws IOException {
+        Path pack = singleLoaderPack();
+        LaunchCommand command = packwizCommand(pack, "client");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("fabric", "1.21.1", "0.16.14").withSide(Side.CLIENT), launched.profile.version());
+        assertEquals(Side.CLIENT, launched.profile.side());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+    }
+
+    @Test
+    void packwizSideIsCaseInsensitive() throws IOException {
+        LaunchCommand command = packwizCommand(singleLoaderPack(), "CLIENT");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(Side.CLIENT, launched.profile.side());
+    }
+
+    @Test
+    void packwizLaunchesTheServer() throws IOException {
+        Path pack = singleLoaderPack();
+        LaunchCommand command = packwizCommand(pack, "server");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("fabric", "1.21.1", "0.16.14").withSide(Side.SERVER), launched.profile.version());
+        assertEquals(Side.SERVER, launched.profile.side());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+        // patchers are client-only
+        assertEquals(List.of(), launched.profile.patchers());
+    }
+
+    @Test
+    void packwizVanillaPackLaunchesVanilla() throws IOException {
+        LaunchCommand command = packwizCommand(packToml(""), "client");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("vanilla", "1.21.1").withSide(Side.CLIENT), launched.profile.version());
+    }
+
+    @Test
+    void packwizUsesAnExistingProfileInThePackDirectory() throws IOException {
+        Path pack = multiLoaderPack();
+        client("main");
+        LaunchCommand command = packwizCommand(pack, "main");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals("main", launched.profile.name());
+        assertEquals(VersionArg.parse("vanilla", "1.21.1"), launched.profile.version());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+    }
+
+    @Test
+    void packwizWithUnknownSideThrows() throws IOException {
+        LaunchCommand command = packwizCommand(singleLoaderPack(), "neither");
+
+        assertThrows(IllegalArgumentException.class, command::call);
+    }
+
+    @Test
+    void packwizWithMultipleLoadersAndOnlySideThrows() throws IOException {
+        LaunchCommand command = packwizCommand(multiLoaderPack(), "client");
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+        assertTrue(e.getMessage().contains("loader"), e.getMessage());
+        assertTrue(e.getMessage().contains("quilt, fabric"), e.getMessage());
+    }
+
+    @Test
+    void packwizWithSideAndLoaderLaunchesThatLoader() throws IOException {
+        Path pack = multiLoaderPack();
+        LaunchCommand command = packwizCommand(pack, "server", "Fabric");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("fabric", "1.21.1", "0.16.14").withSide(Side.SERVER), launched.profile.version());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+    }
+
+    @Test
+    void packwizWithSideAndUnknownLoaderThrows() throws IOException {
+        LaunchCommand command = packwizCommand(multiLoaderPack(), "client", "forge");
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+        assertTrue(e.getMessage().contains("Failed to find loader forge"), e.getMessage());
+    }
+
+    @Test
+    void packwizWithAVersionArgResolvesThatVersion() throws IOException {
+        Path pack = multiLoaderPack();
+        LaunchCommand command = packwizCommand(pack, "quilt", "1.21.1");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("quilt", "1.21.1"), launched.profile.version());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+    }
+
+    @Test
+    void packwizWithAFullVersionArgResolvesThatVersion() throws IOException {
+        Path pack = multiLoaderPack();
+        LaunchCommand command = packwizCommand(pack, "server", "fabric", "1.21.1");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("server", "fabric", "1.21.1"), launched.profile.version());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+    }
+
+    @Test
+    void packwizAcceptsTheDirectoryOfThePack() throws IOException {
+        Path pack = singleLoaderPack();
+        LaunchCommand command = packwizCommand(pack.getParent(), "client");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(VersionArg.parse("fabric", "1.21.1", "0.16.14").withSide(Side.CLIENT), launched.profile.version());
+        assertEquals(pack.toAbsolutePath().getParent(), launched.profile.path());
+    }
+
+    @Test
+    void packwizWithDirectoryWithoutPackTomlThrows() throws IOException {
+        LaunchCommand command = packwizCommand(Files.createDirectories(root.resolve("empty")), "client");
+
+        assertThrows(HeadlessMcException.class, command::call);
+    }
+
+    @Test
+    void packwizWithMissingFileThrows() {
+        LaunchCommand command = packwizCommand(root.resolve("missing").resolve("pack.toml"), "client");
+
+        assertThrows(HeadlessMcException.class, command::call);
     }
 
 }
