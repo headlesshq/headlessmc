@@ -39,6 +39,8 @@ public interface VersionMatcherService {
      * that match the given {@link VersionID}.
      * Also resolves the given {@link VersionID} if it e.g. points
      * to the {@code latest} build instead of specifying a certain build.
+     * The {@link VersionID#getSide()} of the given id is ignored,
+     * as installed versions are not bound to a side.
      *
      * @param id        the id of the version to match.
      * @param versions  the versions to search through.

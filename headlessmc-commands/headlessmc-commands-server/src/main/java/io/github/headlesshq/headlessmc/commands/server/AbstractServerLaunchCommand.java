@@ -6,8 +6,6 @@ import io.github.headlesshq.headlessmc.console.FinalCommand;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
-import io.github.headlesshq.headlessmc.java.args.ArgPair;
-import io.github.headlesshq.headlessmc.java.args.SystemPropertyUtil;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;

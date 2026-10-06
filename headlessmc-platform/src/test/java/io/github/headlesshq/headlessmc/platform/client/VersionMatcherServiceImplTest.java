@@ -140,6 +140,26 @@ class VersionMatcherServiceImplTest {
     }
 
     @Test
+    void reverseMatchIgnoresTheSide() {
+        VersionID id = VersionID.resolve(platformService, VersionArg.parse("client", "fabric", "1.21.1", "0.16.9"));
+        Version version = new FakeVersion("fabric-loader-0.16.9-1.21.1");
+
+        Optional<VersionMatcherService.MatchResult> result = service.match(id, List.of(version), versions);
+
+        assertTrue(result.isPresent());
+        assertEquals(id, result.get().resolvedId());
+        assertEquals(version, result.get().version());
+    }
+
+    @Test
+    void reverseMatchRequiresTheSameBuild() {
+        VersionID id = VersionID.resolve(platformService, VersionArg.parse("fabric", "1.20.4", "0.15.0"));
+        Version version = new FakeVersion("fabric-loader-0.16.9-1.21.1");
+
+        assertEquals(Optional.empty(), service.match(id, List.of(version), versions));
+    }
+
+    @Test
     void reverseMatchWithAnyBuildResolvesTheBuild() {
         VersionID id = VersionID.resolve(platformService, VersionArg.parse("fabric", "1.21.1"));
         Version version = new FakeVersion("fabric-loader-0.16.9-1.21.1");

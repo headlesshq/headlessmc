@@ -74,13 +74,21 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
         } else {
             for (Version version : versions) {
                 Set<VersionID> ids = matchOrEmpty(version, processor);
-                if (ids.contains(id)) {
+                if (ids.stream().anyMatch(match -> isSameVersionIgnoringSide(match, id))) {
                     return Optional.of(new MatchResult(id, version));
                 }
             }
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Installed versions are not bound to a side, so the {@link VersionID}s matched from them never have one.
+     * A side of the VersionID we are looking for must therefore be ignored.
+     */
+    private boolean isSameVersionIgnoringSide(VersionID match, VersionID id) {
+        return match.isSamePlatformVersion(id) && match.getBuild().equals(id.getBuild());
     }
 
     // TODO: check?
