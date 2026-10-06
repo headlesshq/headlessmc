@@ -24,7 +24,7 @@ auth = { group = "net.raphimc", name = "MinecraftAuth", version = "5.0.2" }
 
 cdi = { group = "jakarta.enterprise", name = "jakarta.enterprise.cdi-api" }
 
-commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = "3.20.0" }
+commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = "3.21.0" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version = "1.28.0" }
 commons-configuration = { group = "org.apache.commons", name = "commons-configuration2", version = "2.15.1" }
 # maybe for inputstream? But ObservableInputStream is problematic
