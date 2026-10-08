@@ -106,7 +106,6 @@ public class ClientLauncher {
                 .collect(Collectors.joining(File.pathSeparator))
         );
 
-        // TODO: we need to remove the -cp argument, because JavaProcessBuilder also adds it!
         Arguments arguments = argumentsService.process(profile, version, features, loggingArg.orElse(null));
         arguments = argumentTemplateService.process(arguments, templates);
 
@@ -124,7 +123,8 @@ public class ClientLauncher {
                 .arg(arguments.gameArgs().toArray(String[]::new))
                 .mainClass(version.getMainClass())
                 .directory(gameDir)
-                .classpath(classpath.files().toArray(Path[]::new)),
+                .classpath(classpath.files().toArray(Path[]::new))
+                .classpathArgProvided(containsClasspathArg(jvmArgs)),
             gameDir
         );
     }
@@ -151,6 +151,13 @@ public class ClientLauncher {
         }
 
         return result.orElseThrow(() -> new LaunchException("Failed to get version for " + id)).version();
+    }
+
+    private static boolean containsClasspathArg(List<String> jvmArgs) {
+        return jvmArgs.stream().anyMatch(arg -> arg.equals("-cp")
+            || arg.equals("-classpath")
+            || arg.equals("--class-path")
+            || arg.startsWith("--class-path="));
     }
 
     private List<Patcher> getPatchers(Profile profile) {

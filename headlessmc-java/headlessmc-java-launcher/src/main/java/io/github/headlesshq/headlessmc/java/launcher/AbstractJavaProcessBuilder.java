@@ -17,6 +17,7 @@ public abstract class AbstractJavaProcessBuilder implements JavaProcessBuilder {
     private final List<String> jvmArgs = new ArrayList<>();
     private final List<String> args = new ArrayList<>();
 
+    private boolean classpathArgProvided = false;
     private boolean pipeIO = false;
     private @Nullable Integer version;
     private @Nullable String id;
@@ -110,6 +111,12 @@ public abstract class AbstractJavaProcessBuilder implements JavaProcessBuilder {
     }
 
     @Override
+    public JavaProcessBuilder classpathArgProvided(boolean provided) {
+        this.classpathArgProvided = provided;
+        return this;
+    }
+
+    @Override
     public String id() {
         return id == null ? "<unknown>" : id;
     }
@@ -121,10 +128,16 @@ public abstract class AbstractJavaProcessBuilder implements JavaProcessBuilder {
         result.addAll(jvmArgs);
         result.addAll(systemProperties);
 
-        result.add("-cp");
-        result.add(String.join(File.pathSeparator, classPath));
-
         Path jar = this.jar;
+        if (!classPath.isEmpty() && !classpathArgProvided) {
+            if (jar != null) {
+                log.error("--classpath will be ignored because a Jar to run has been specified!");
+            }
+
+            result.add("-cp");
+            result.add(String.join(File.pathSeparator, classPath));
+        }
+
         String main = this.mainClass;
         if (jar == null && mainClass == null) {
             throw new IllegalStateException("Neither jar nor main-class were specified");
