@@ -114,18 +114,21 @@ public record ProcessedVersion(List<Version> hierarchy) implements Version {
     }
 
     private List<Library> mergeLibraries() {
-        Map<String, Library> libraryMap = new LinkedHashMap<>();
+        Map<String, List<Library>> libraryMap = new LinkedHashMap<>();
         for (Version version : hierarchy) {
+            Map<String, List<Library>> versionLibraries = new LinkedHashMap<>();
             for (Library library : version.getLibraries()) {
                 Artifact coords = library.getArtifact();
                 String versionAgnosticId = coords.group() + ":" + coords.name() + ":" + coords.classifier();
-                // TODO: what if overridden library is same, but hash/size are missing?!
-                // TODO: what is behaviour if inherited library has more/other native classifiers?
-                libraryMap.put(versionAgnosticId, library);
+                versionLibraries.computeIfAbsent(versionAgnosticId, _ -> new ArrayList<>()).add(library);
             }
+
+            // TODO: what if overridden library is same, but hash/size are missing?!
+            // TODO: what is behaviour if inherited library has more/other native classifiers?
+            libraryMap.putAll(versionLibraries);
         }
 
-        return new ArrayList<>(libraryMap.values());
+        return libraryMap.values().stream().flatMap(List::stream).toList();
     }
 
 }

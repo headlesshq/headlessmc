@@ -132,6 +132,37 @@ class ProcessedVersionTest {
     }
 
     @Test
+    void librariesWithSameIdInOneVersionAreKept() {
+        // e.g. 1.12.2 lists lwjgl 2.9.4 for every os except osx, and lwjgl 2.9.2 only for osx
+        FakeVersion version = new FakeVersion("1.12.2");
+        Version.Library lwjgl = library("org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209");
+        Version.Library lwjglUtil = library("org.lwjgl.lwjgl:lwjgl_util:2.9.4-nightly-20150209");
+        Version.Library osxLwjgl = library("org.lwjgl.lwjgl:lwjgl:2.9.2-nightly-20140822");
+        Version.Library osxLwjglUtil = library("org.lwjgl.lwjgl:lwjgl_util:2.9.2-nightly-20140822");
+        version.libraries = List.of(lwjgl, lwjglUtil, osxLwjgl, osxLwjglUtil);
+
+        List<Version.Library> libraries = new ProcessedVersion(List.of(version)).getLibraries();
+
+        assertEquals(List.of(lwjgl, osxLwjgl, lwjglUtil, osxLwjglUtil), libraries);
+    }
+
+    @Test
+    void childOverridesAllParentLibrariesWithSameId() {
+        FakeVersion parent = new FakeVersion("1.12.2");
+        Version.Library lwjgl = library("org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209");
+        Version.Library osxLwjgl = library("org.lwjgl.lwjgl:lwjgl:2.9.2-nightly-20140822");
+        Version.Library parentOnly = library("com.example:parent-only:1.0");
+        parent.libraries = List.of(lwjgl, osxLwjgl, parentOnly);
+        FakeVersion child = new FakeVersion("child");
+        Version.Library childLwjgl = library("org.lwjgl.lwjgl:lwjgl:2.9.5");
+        child.libraries = List.of(childLwjgl);
+
+        List<Version.Library> libraries = new ProcessedVersion(List.of(parent, child)).getLibraries();
+
+        assertEquals(List.of(childLwjgl, parentOnly), libraries);
+    }
+
+    @Test
     void libraryHashAlgorithmsSkipMissingHashes() {
         Version.Library library = library("com.example:lib:1.0");
         assertEquals(Map.of("SHA-1", "sha1-value"), library.getHashAlgorithms());
