@@ -218,6 +218,92 @@ jobs:
           path: |
             ./headlessmc-application/build/${{ matrix.os.name }}*
 
+  # https://github.com/headlesshq/headlessmc/issues/333
+  build-mc-runtime-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          # the following line should always be here,
+          # regardless if mc-runtime-test already supports this version or not
+          # to test if this step works
+          - { branch: v3, dir: 26_3,    mc: 26.3,    lex: 66.0.2,             neo: 6-beta,  java: 25 }
+          - { branch: v3, dir: 1_21_11, mc: 1.21.11, lex: 61.0.6,             neo: 35-beta, java: 21 }
+          - { branch: v3, dir: 1_12,    mc: 1.12.2,  lex: 14.23.5.2860,       neo: '',      java: 8 }
+          - { branch: v3, dir: 1_8_9,   mc: 1.8.9,   lex: 11.15.1.2318-1.8.9, neo: '',      java: 8 }
+    uses: ./.github/workflows/build-runtime-test.yml
+    if: '!cancelled()' # run always cause we want to see how each version is doing
+    #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version
+    with:
+      branch: ${{ matrix.version.branch }}
+      dir: ${{ matrix.version.dir }}
+      mc: ${{ matrix.version.mc }}
+      lex: ${{ matrix.version.lex }}
+      neo: ${{ matrix.version.neo }}
+      java: ${{ matrix.version.java }}
+
+  mc-runtime-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          # the following line should always be here,
+          # regardless if mc-runtime-test already supports this version or not
+          # to test if this step works
+          - { mc: 26.3,    type: fabric,   modloader: fabric,   java: 25, xvfb: false }
+          - { mc: 26.3,    type: neoforge, modloader: neoforge, java: 25, xvfb: false }
+          - { mc: 26.3,    type: lexforge, modloader: forge,    java: 25, xvfb: false }
+          - { mc: 1.21.11, type: neoforge, modloader: neoforge, java: 21, xvfb: false }
+          - { mc: 1.12.2,  type: lexforge, modloader: forge,    java: 8,  xvfb: false }
+          - { mc: 1.8.9,   type: lexforge, modloader: forge,    java: 8,  xvfb: false }
+          - { mc: 26.3,    type: fabric,   modloader: fabric,   java: 25, xvfb: true  }
+          - { mc: 26.3,    type: neoforge, modloader: neoforge, java: 25, xvfb: true  }
+          - { mc: 26.3,    type: lexforge, modloader: forge,    java: 25, xvfb: true  }
+          - { mc: 1.21.11, type: neoforge, modloader: neoforge, java: 21, xvfb: true  }
+          - { mc: 1.12.2,  type: lexforge, modloader: forge,    java: 8,  xvfb: true  }
+          - { mc: 1.8.9,   type: lexforge, modloader: forge,    java: 8,  xvfb: true  }
+    runs-on: ubuntu-latest
+    if: '!cancelled()' # run always cause we want to see how each version is doing
+    #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version
+    needs: [ build, build-mc-runtime-test ]
+    steps:
+      - name: Install Java
+        uses: actions/setup-java@v6
+        with:
+          java-version: ${{ matrix.version.java }}
+          distribution: "temurin"
+      - uses: actions/download-artifact@v8
+        with:
+          name: mcrt-${{ matrix.version.mc }}
+          path: .
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: HeadlessMc Launcher files
+          path: hmc
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Copy mc-runtime-test jar
+        run: mkdir -p run/mods; cp mc-runtime-test-${{ matrix.version.mc }}-*-${{ matrix.version.type }}-release.jar run/mods
+      - name: Copy launcher jar
+        # with download-hmc: false mc-runtime-test v3 expects headlessmc.jar in the working directory
+        run: cp hmc/headlessmc-application/build/quarkus-build/gen/headlessmc.jar headlessmc.jar
+
+      - name: Run the MC client
+        uses: headlesshq/mc-runtime-test@543ed65f458b599da27970463999d8a9ba8708b4 # v3
+        with:
+          mc: ${{ matrix.version.mc }}
+          modloader: ${{ matrix.version.modloader }}
+          java: ${{ matrix.version.java }}
+          mc-runtime-test: none
+          # the action adds -lwjgl itself when xvfb is false
+          xvfb: ${{ matrix.version.xvfb }}
+          headlessmc-command: >-
+            --retries 2 --jvm '"-Djava.awt.headless=true${{ matrix.version.mc == '26.3' && ' -DMcRuntimeGameTestInstance=minecraft:always_pass -DMcRuntimeGameTestMinExpectedGameTests=1' || '' }}"'
+          download-hmc: false
+
   docker-build:
     runs-on: ubuntu-latest
     strategy:

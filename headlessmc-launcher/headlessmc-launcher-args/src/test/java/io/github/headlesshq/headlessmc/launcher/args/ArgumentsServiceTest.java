@@ -85,6 +85,7 @@ public class ArgumentsServiceTest {
             arguments.gameArgs()
         );
         assertTrue(arguments.vmArgs().isEmpty());
+        assertEquals(Map.of("java.library.path", "${natives_directory}"), arguments.systemProperties());
     }
 
     @Test
