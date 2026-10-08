@@ -23,6 +23,8 @@ import java.util.Map;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ArgumentsService {
+    static final String LEGACY_NATIVES_ARG = "-Djava.library.path=${natives_directory}";
+
     private final CPU cpu;
     private final OS os;
 
@@ -105,6 +107,8 @@ public class ArgumentsService {
         } else {
             String[] split = mcArgs.split(" ");
             Map<String, List<Version.Argument>> result = new HashMap<>();
+            // legacy version.jsons do not specify jvm args, the official launcher adds the natives directory itself
+            result.put(Version.JVM_ARGUMENTS, List.of(new McArgument(LEGACY_NATIVES_ARG)));
             result.put(Version.GAME_ARGUMENTS, Arrays.stream(split)
                 .map(McArgument::new)
                 .map(Version.Argument.class::cast)
