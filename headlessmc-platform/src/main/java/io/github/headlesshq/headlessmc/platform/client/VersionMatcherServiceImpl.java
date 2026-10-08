@@ -38,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class VersionMatcherServiceImpl implements VersionMatcherService {
     static final String CACHE_FILE = "version-matches.json";
-    static final long CACHE_VERSION = 0;
 
     private final PlatformService platforms;
     private final Cache<VersionMatches> cache;
@@ -59,9 +58,9 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
      * @param platforms the platforms to match versions for.
      */
     @VisibleForTesting
-    VersionMatcherServiceImpl(PlatformService platforms) {
+    public VersionMatcherServiceImpl(PlatformService platforms) {
         this(platforms, CacheBuilder.<VersionMatches>create()
-            .withVersion(CACHE_VERSION)
+            .withVersion(0)
             .withInitialValue(new VersionMatches(new ConcurrentHashMap<>()))
             .build()
         );
@@ -71,13 +70,13 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
     static Cache<VersionMatches> fileCache(JsonService jsonService, Path file) {
         //noinspection Convert2Diamond
         return CacheBuilder.<VersionMatches>create()
-            .withVersion(CACHE_VERSION)
+            .withVersion(0)
             .withInitialValue(new VersionMatches(new ConcurrentHashMap<>()))
             .withSourceStore(new JsonCacheFile<VersionMatches>(
                 CacheExceptionHandler.logging(),
                 jsonService,
                 new TypeLiteral<VersionMatches>() {},
-                CACHE_VERSION,
+                0,
                 file
             )).build();
     }
@@ -92,7 +91,7 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
         Set<VersionID> result = matchUncached(version, processor);
         VersionMatch match = new VersionMatch(
             version.getInheritsFrom(),
-            result.stream().map(id -> id.asArg().toString()).sorted().toList()
+            result.stream().map(VersionID::asArg).sorted(Comparator.comparing(VersionArg::toString)).toList()
         );
 
         cache.maybeModify(matches -> !match.equals(matches.matches().put(version.getId(), match)));
@@ -107,8 +106,8 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
 
         try {
             Set<VersionID> result = new HashSet<>();
-            for (String id : match.ids()) {
-                result.add(VersionID.resolve(platforms, VersionArg.parse(id.split("/"))));
+            for (VersionArg id : match.ids()) {
+                result.add(VersionID.resolve(platforms, id));
             }
 
             return result.isEmpty() ? Optional.empty() : Optional.of(result);
@@ -264,10 +263,10 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
      * The {@link VersionID}s matched for a {@link Version}.
      *
      * @param inheritsFrom {@link Version#getInheritsFrom()}, if it changes the version has been replaced.
-     * @param ids          the matched {@link VersionID}s as {@link VersionArg} strings.
+     * @param ids          the matched {@link VersionID}s as {@link VersionArg}s.
      */
     @RegisterForReflection
-    record VersionMatch(@Nullable String inheritsFrom, List<String> ids) implements ReflectionRegistered {
+    record VersionMatch(@Nullable String inheritsFrom, List<VersionArg> ids) implements ReflectionRegistered {
 
     }
 
