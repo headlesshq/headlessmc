@@ -50,7 +50,7 @@ class JavaProcessBuilderTest {
         Path jar = Path.of("server.jar");
         List<String> command = builder().jar(jar).buildCommand();
 
-        assertEquals(List.of("-cp", "", "-jar", jar.toAbsolutePath().toString()), command);
+        assertEquals(List.of("-jar", jar.toAbsolutePath().toString()), command);
     }
 
     @Test
@@ -146,7 +146,7 @@ class JavaProcessBuilderTest {
             .mainClass("Main")
             .buildCommand();
 
-        assertEquals(List.of("-cp", "", "Main"), command);
+        assertEquals(List.of("Main"), command);
     }
 
 }
