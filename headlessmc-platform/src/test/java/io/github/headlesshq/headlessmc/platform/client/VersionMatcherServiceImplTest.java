@@ -13,10 +13,14 @@ import io.github.headlesshq.headlessmc.version.FakeVersion;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.VersionProcessor;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import io.github.headlesshq.headlessmc.version.service.FakeVersionJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -42,7 +46,34 @@ class VersionMatcherServiceImplTest {
         }
     }
 
+    /** Counts calls to {@link #match}, to check if the cache has been used. */
+    private static final class CountingMatcher implements VersionMatcher {
+        private final VersionMatcher delegate;
+        private int matches;
+
+        private CountingMatcher(VersionMatcher delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public VersionID match(PlatformService platformService, Version version, VersionProcessor processor) {
+            matches++;
+            return delegate.match(platformService, version, processor);
+        }
+
+        @Override
+        public boolean canMatch(PlatformService platformService, Version version, VersionProcessor processor) {
+            return delegate.canMatch(platformService, version, processor);
+        }
+
+        @Override
+        public String getPlatformName() {
+            return delegate.getPlatformName();
+        }
+    }
+
     private FakeVanillaVersionService vanillaVersions;
+    private FakeVersionService fabricVersions;
     private FakeVanillaPlatform vanilla;
     private FakePlatform fabric;
     private FakePlatformService platformService;
@@ -63,7 +94,7 @@ class VersionMatcherServiceImplTest {
             (id, mcDir, args) -> new FakeVersion(id.getVersion().getName())
         ));
 
-        FakeVersionService fabricVersions = new FakeVersionService("fabric")
+        fabricVersions = new FakeVersionService("fabric")
             .withBuilds("1.21.1", "0.16.9")
             .withBuilds("1.20.4", "0.15.0");
         fabric = new FakePlatform("fabric", fabricVersions);
@@ -221,6 +252,57 @@ class VersionMatcherServiceImplTest {
 
         assertTrue(neoforge.includes(platformService, new FakeVersion("neoforge-1.21.1"), forge));
         assertFalse(neoforge.includes(platformService, new FakeVersion("forge-1.21.1"), forge));
+    }
+
+    private CountingMatcher countFabricMatches() {
+        CountingMatcher matcher = new CountingMatcher(new DefaultVersionMatcher(vanillaVersions, fabricVersions));
+        fabric.withClientSupport(new ClientSupport(matcher, (id, mcDir, args) -> new FakeVersion("x")));
+        return matcher;
+    }
+
+    @Test
+    void matchesAreCached() {
+        CountingMatcher matcher = countFabricMatches();
+        Version version = new FakeVersion("fabric-loader-0.16.9-1.21.1").withInheritsFrom("1.21.1");
+
+        Set<VersionID> first = service.match(version, versions);
+        Set<VersionID> second = service.match(version, versions);
+
+        assertEquals(first, second);
+        assertEquals(1, matcher.matches);
+    }
+
+    @Test
+    void changedInheritsFromInvalidatesTheCache() {
+        CountingMatcher matcher = countFabricMatches();
+        service.match(new FakeVersion("fabric-loader-0.16.9-1.21.1").withInheritsFrom("1.21.1"), versions);
+        service.match(new FakeVersion("fabric-loader-0.16.9-1.21.1").withInheritsFrom("1.20.4"), versions);
+
+        assertEquals(2, matcher.matches);
+    }
+
+    @Test
+    void failedMatchesAreNotCached() {
+        assertThrows(VersionMatchException.class, () -> service.match(new FakeVersion("something-else"), versions));
+        assertThrows(VersionMatchException.class, () -> service.match(new FakeVersion("something-else"), versions));
+    }
+
+    @Test
+    void matchesAreRememberedInTheCacheFile(@TempDir Path dir) {
+        Path file = dir.resolve(VersionMatcherServiceImpl.CACHE_FILE);
+        Version version = new FakeVersion("fabric-loader-0.16.9-1.21.1").withInheritsFrom("1.21.1");
+        Set<VersionID> expected = new VersionMatcherServiceImpl(
+            platformService, VersionMatcherServiceImpl.fileCache(new DefaultJacksonJsonService(), file)
+        ).match(version, versions);
+        assertTrue(Files.exists(file));
+
+        CountingMatcher matcher = countFabricMatches();
+        Set<VersionID> fromFile = new VersionMatcherServiceImpl(
+            platformService, VersionMatcherServiceImpl.fileCache(new DefaultJacksonJsonService(), file)
+        ).match(version, versions);
+
+        assertEquals(expected, fromFile);
+        assertEquals(0, matcher.matches);
     }
 
 }
