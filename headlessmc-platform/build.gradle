@@ -23,4 +23,5 @@ dependencies {
 
 dependencies {
     testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }

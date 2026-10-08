@@ -1,30 +1,124 @@
 package io.github.headlesshq.headlessmc.platform.client;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
-import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
+import io.github.headlesshq.headlessmc.files.AppFiles;
+import io.github.headlesshq.headlessmc.files.FileService;
+import io.github.headlesshq.headlessmc.files.cache.Cache;
+import io.github.headlesshq.headlessmc.files.cache.CacheBuilder;
+import io.github.headlesshq.headlessmc.files.cache.CacheExceptionHandler;
+import io.github.headlesshq.headlessmc.files.cache.JsonCacheFile;
 import io.github.headlesshq.headlessmc.platform.Platform;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
+import io.github.headlesshq.headlessmc.util.json.JsonService;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.VersionProcessor;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.util.TypeLiteral;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of {@link VersionMatcherService}.
+ * Remembers the {@link VersionID}s matched for a {@link Version} in a cache file,
+ * as matching can be expensive, e.g. if a platform needs to look up builds.
  */
 @Slf4j
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor_ = {@Inject})
+@RequiredArgsConstructor
 public class VersionMatcherServiceImpl implements VersionMatcherService {
+    static final String CACHE_FILE = "version-matches.json";
+
     private final PlatformService platforms;
+    private final Cache<VersionMatches> cache;
+
+    @Inject
+    public VersionMatcherServiceImpl(
+        PlatformService platforms,
+        AppFiles files,
+        FileService fileService,
+        JsonService jsonService
+    ) {
+        this(platforms, fileCache(jsonService, fileService.getPath(files.getCacheDir(), CACHE_FILE)));
+    }
+
+    /**
+     * Creates a VersionMatcherServiceImpl that only remembers matches in memory.
+     *
+     * @param platforms the platforms to match versions for.
+     */
+    @VisibleForTesting
+    public VersionMatcherServiceImpl(PlatformService platforms) {
+        this(platforms, CacheBuilder.<VersionMatches>create()
+            .withVersion(0)
+            .withInitialValue(new VersionMatches(new ConcurrentHashMap<>()))
+            .build()
+        );
+    }
+
+    @VisibleForTesting
+    static Cache<VersionMatches> fileCache(JsonService jsonService, Path file) {
+        //noinspection Convert2Diamond
+        return CacheBuilder.<VersionMatches>create()
+            .withVersion(0)
+            .withInitialValue(new VersionMatches(new ConcurrentHashMap<>()))
+            .withSourceStore(new JsonCacheFile<VersionMatches>(
+                CacheExceptionHandler.logging(),
+                jsonService,
+                new TypeLiteral<VersionMatches>() {},
+                0,
+                file
+            )).build();
+    }
 
     @Override
     public Set<VersionID> match(Version version, VersionProcessor processor) throws HeadlessMcException {
+        Optional<Set<VersionID>> cached = getCached(version);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
+        Set<VersionID> result = matchUncached(version, processor);
+        VersionMatch match = new VersionMatch(
+            version.getInheritsFrom(),
+            result.stream().map(VersionID::asArg).sorted(Comparator.comparing(VersionArg::toString)).toList()
+        );
+
+        cache.maybeModify(matches -> !match.equals(matches.matches().put(version.getId(), match)));
+        return result;
+    }
+
+    private Optional<Set<VersionID>> getCached(Version version) throws HeadlessMcException {
+        VersionMatch match = cache.get().map(matches -> matches.matches().get(version.getId())).orElse(null);
+        if (match == null || !Objects.equals(match.inheritsFrom(), version.getInheritsFrom())) {
+            return Optional.empty();
+        }
+
+        try {
+            Set<VersionID> result = new HashSet<>();
+            for (VersionArg id : match.ids()) {
+                result.add(VersionID.resolve(platforms, id));
+            }
+
+            return result.isEmpty() ? Optional.empty() : Optional.of(result);
+        } catch (HeadlessMcException | IllegalArgumentException e) {
+            // e.g. a platform that is no longer available, the version will be matched again
+            log.debug("Failed to resolve cached matches {} for {}", match.ids(), version.getId(), e);
+            return Optional.empty();
+        }
+    }
+
+    private Set<VersionID> matchUncached(Version version, VersionProcessor processor) throws HeadlessMcException {
         VersionMatchException exception = new VersionMatchException(
             "Failed to parse version %s (%s)".formatted(version.getId(), version.getInheritsFrom())
         );
@@ -150,6 +244,30 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
         }
 
         return matchingPlatforms;
+    }
+
+    /**
+     * The contents of the cache file, mapping {@link Version#getId()}s to their {@link VersionMatch}.
+     *
+     * @param matches the cached matches.
+     */
+    @RegisterForReflection
+    record VersionMatches(Map<String, VersionMatch> matches) implements ReflectionRegistered {
+        VersionMatches {
+            // matches are read outside the lock of the cache
+            matches = new ConcurrentHashMap<>(matches);
+        }
+    }
+
+    /**
+     * The {@link VersionID}s matched for a {@link Version}.
+     *
+     * @param inheritsFrom {@link Version#getInheritsFrom()}, if it changes the version has been replaced.
+     * @param ids          the matched {@link VersionID}s as {@link VersionArg}s.
+     */
+    @RegisterForReflection
+    record VersionMatch(@Nullable String inheritsFrom, List<VersionArg> ids) implements ReflectionRegistered {
+
     }
 
 }

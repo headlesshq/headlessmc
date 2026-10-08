@@ -90,6 +90,12 @@ class FabricFactory {
         return new FabricVersionService(cache);
     }
 
+    // TODO: one problem is eduroam
+    //  it blocks one of the IPs that are resolved for the fabric host name
+    //  and the Java HttpClient never tries the other IPs
+    //  this is a lack of a feature in Java HttpClient (and maybe also vert.x?)
+    //  TODO: we could manually in JavaDownloadBuilder resolve the IPs on failure
+    //   and try the other ones
     @Fabric
     @Produces
     @ApplicationScoped
