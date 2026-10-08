@@ -25,12 +25,12 @@ on:
       lex:
         description: 'The LexForge version to build for'
         default: '55.0.3'
-        required: true
+        required: false
         type: string
       neo:
         description: 'The NeoForge version to build for'
         default: '24-beta'
-        required: true
+        required: false
         type: string
 
 jobs:
