@@ -250,12 +250,18 @@ jobs:
           # the following line should always be here,
           # regardless if mc-runtime-test already supports this version or not
           # to test if this step works
-          - { mc: 26.3,    type: fabric,   modloader: fabric,   java: 25 }
-          - { mc: 26.3,    type: neoforge, modloader: neoforge, java: 25 }
-          - { mc: 26.3,    type: lexforge, modloader: forge,    java: 25 }
-          - { mc: 1.21.11, type: neoforge, modloader: neoforge, java: 21 }
-          - { mc: 1.12.2,  type: lexforge, modloader: forge,    java: 8 }
-          - { mc: 1.8.9,   type: lexforge, modloader: forge,    java: 8 }
+          - { mc: 26.3,    type: fabric,   modloader: fabric,   java: 25, xvfb: false }
+          - { mc: 26.3,    type: neoforge, modloader: neoforge, java: 25, xvfb: false }
+          - { mc: 26.3,    type: lexforge, modloader: forge,    java: 25, xvfb: false }
+          - { mc: 1.21.11, type: neoforge, modloader: neoforge, java: 21, xvfb: false }
+          - { mc: 1.12.2,  type: lexforge, modloader: forge,    java: 8,  xvfb: false }
+          - { mc: 1.8.9,   type: lexforge, modloader: forge,    java: 8,  xvfb: false }
+          - { mc: 26.3,    type: fabric,   modloader: fabric,   java: 25, xvfb: true  }
+          - { mc: 26.3,    type: neoforge, modloader: neoforge, java: 25, xvfb: true  }
+          - { mc: 26.3,    type: lexforge, modloader: forge,    java: 25, xvfb: true  }
+          - { mc: 1.21.11, type: neoforge, modloader: neoforge, java: 21, xvfb: true  }
+          - { mc: 1.12.2,  type: lexforge, modloader: forge,    java: 8,  xvfb: true  }
+          - { mc: 1.8.9,   type: lexforge, modloader: forge,    java: 8,  xvfb: true  }
     runs-on: ubuntu-latest
     if: '!cancelled()' # run always cause we want to see how each version is doing
     #if: false for when mc-runtime-test is up to date and HeadlessMc can launch any version
@@ -293,7 +299,7 @@ jobs:
           java: ${{ matrix.version.java }}
           mc-runtime-test: none
           # the action adds -lwjgl itself when xvfb is false
-          xvfb: false
+          xvfb: ${{ matrix.version.xvfb }}
           headlessmc-command: >-
             --retries 2 --jvm '"-Djava.awt.headless=true${{ matrix.version.mc == '26.3' && ' -DMcRuntimeGameTestInstance=minecraft:always_pass -DMcRuntimeGameTestMinExpectedGameTests=1' || '' }}"'
           download-hmc: false
