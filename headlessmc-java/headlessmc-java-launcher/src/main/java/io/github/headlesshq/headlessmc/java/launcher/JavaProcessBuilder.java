@@ -37,6 +37,14 @@ public interface JavaProcessBuilder {
 
     JavaProcessBuilder pipeIO(boolean pipe);
 
+    /**
+     * @param provided {@code true} if the jvm args already contain a classpath argument
+     *                 ({@code -cp}, {@code -classpath} or {@code --class-path}),
+     *                 in which case the builder will not add its own.
+     * @return this builder.
+     */
+    JavaProcessBuilder classpathArgProvided(boolean provided);
+
     List<String> buildCommand();
 
     JavaProcess start() throws HeadlessMcException;
