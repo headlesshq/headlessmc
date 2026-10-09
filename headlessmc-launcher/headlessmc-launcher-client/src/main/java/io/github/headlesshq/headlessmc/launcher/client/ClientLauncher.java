@@ -107,6 +107,15 @@ public class ClientLauncher {
         );
 
         Arguments arguments = argumentsService.process(profile, version, features, loggingArg.orElse(null));
+        arguments.systemProperties().putIfAbsent(
+            "libraryDirectory",
+            mcFiles.getLibraryDir().toAbsolutePath().toString()
+        );
+
+        for (Patcher patcher : patchers) {
+            patcher.systemProperties().forEach(arguments.systemProperties()::putIfAbsent);
+        }
+
         arguments = argumentTemplateService.process(arguments, templates);
 
         List<String> jvmArgs = new ArrayList<>(arguments.vmArgs());

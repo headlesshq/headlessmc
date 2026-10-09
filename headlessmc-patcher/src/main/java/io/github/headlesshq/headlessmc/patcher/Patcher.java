@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.patcher;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * Represents a Patcher that patches a certain library.
@@ -35,6 +36,17 @@ public interface Patcher extends Comparable<Patcher> {
      * @return the version of this patcher.
      */
     long version();
+
+    /**
+     * Some patches only work if the game is launched with certain system properties,
+     * e.g. the LWJGL patcher needs JOML to not use {@code sun.misc.Unsafe}.
+     * These are added to the game, unless they have already been specified.
+     *
+     * @return the system properties required by this patcher.
+     */
+    default Map<String, String> systemProperties() {
+        return Map.of();
+    }
 
     @Override
     default int compareTo(Patcher o) {

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @Dependent
@@ -78,6 +79,15 @@ public class LwjglPatcher extends AbstractClassPatcher {
     @Override
     public String name() {
         return "lwjgl";
+    }
+
+    /**
+     * Our LWJGL redirections hand out heap buffers, which JOML would write to with
+     * {@code Unsafe} at their (non-existent) native address, crashing the JVM.
+     */
+    @Override
+    public Map<String, String> systemProperties() {
+        return Map.of("joml.nounsafe", "true");
     }
 
     @Override

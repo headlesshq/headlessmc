@@ -9,6 +9,7 @@ application {
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+    options.release = 8
 }
 
 jar {

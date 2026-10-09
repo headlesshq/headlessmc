@@ -2,6 +2,14 @@ plugins {
     alias libs.plugins.quarkus
 }
 
+// -PuberJar builds the uber-jar for this module only, unlike -Dquarkus.package.jar.type=uber-jar,
+// which applies to every Quarkus module of the build and breaks e.g. headlessmc-platform-util
+if (providers.gradleProperty('uberJar').present) {
+    quarkus {
+        set('package.jar.type', 'uber-jar')
+    }
+}
+
 // quarkusDev is not that great, especially if we want to debug from the shell
 // quarkusRun is not a JavaExec, so IntelliJ cannot attach a debugger
 // the gradle application plugin run task somehow also runs quarkusDev
