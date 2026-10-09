@@ -5,7 +5,7 @@ name: MC-Runtime-Test all versions
     inputs:
       mcrt-ref:
         description: Git ref of headlesshq/mc-runtime-test to take the ci-data.json and the action from
-        default: v3
+        default: 286a6d64008be90fc82f8ffadb8f111adab6907e
       versions:
         description: Comma-delimited Minecraft versions to run (e.g. 1.20.4,1.21.1), or all
         default: all
@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  MCRT_REF: ${{ inputs.mcrt-ref || 'v3' }}
+  MCRT_REF: ${{ inputs.mcrt-ref || '286a6d64008be90fc82f8ffadb8f111adab6907e' }}
 
 jobs:
   build:
