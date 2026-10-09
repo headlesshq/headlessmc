@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.patcher.asm;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
-import io.github.headlesshq.headlessmc.patcher.Classpath;
+import io.github.headlesshq.headlessmc.patcher.PatchResult;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ public class AggregateSuperClassResolverTest {
     }
 
     private static PatchContext context(Path root) {
-        return new FakePatchContext(root, new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of());
+        return new FakePatchContext(root, new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of());
     }
 
     @Test

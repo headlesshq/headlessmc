@@ -1,11 +1,7 @@
 package io.github.headlesshq.headlessmc.patcher.asm;
 
-import io.github.headlesshq.headlessmc.patcher.Classpath;
-import io.github.headlesshq.headlessmc.patcher.HelperService;
-import io.github.headlesshq.headlessmc.patcher.PatchCache;
-import io.github.headlesshq.headlessmc.patcher.PatchContext;
-import io.github.headlesshq.headlessmc.patcher.PatchException;
-import io.github.headlesshq.headlessmc.patcher.Patcher;
+import io.github.headlesshq.headlessmc.patcher.*;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,32 +21,32 @@ import java.util.stream.Stream;
  */
 final class FakePatchContext implements PatchContext {
     private final List<HelperService> services;
-    private final Classpath initialClasspath;
+    private final PatchResult initialPatchResult;
     private final Path baseDir;
-    private Classpath currentClasspath;
+    private PatchResult currentPatchResult;
 
-    FakePatchContext(Path baseDir, Classpath classpath, List<HelperService> services) {
+    FakePatchContext(Path baseDir, PatchResult patchResult, List<HelperService> services) {
         this.baseDir = baseDir;
-        this.initialClasspath = classpath;
-        this.currentClasspath = classpath;
+        this.initialPatchResult = patchResult;
+        this.currentPatchResult = patchResult;
         this.services = services;
     }
 
     @Override
-    public Classpath getInitialClasspath() {
-        return initialClasspath;
+    public PatchResult getInitialPatchResult() {
+        return initialPatchResult;
     }
 
     @Override
-    public Classpath getCurrentClasspath() {
-        return currentClasspath;
+    public PatchResult getCurrentPatchResult() {
+        return currentPatchResult;
     }
 
     @Override
     public OutputStream add(String library, Patcher patcher) throws IOException {
         Path file = baseDir.resolve(patcher.name()).resolve(library + ".jar");
         Files.createDirectories(file.getParent());
-        currentClasspath = currentClasspath.withFile(file);
+        currentPatchResult = currentPatchResult.withFile(file);
         return Files.newOutputStream(file);
     }
 
@@ -58,7 +54,7 @@ final class FakePatchContext implements PatchContext {
     public OutputStream addAgent(String library, Patcher patcher) throws IOException {
         Path file = baseDir.resolve(patcher.name()).resolve(library + ".jar");
         Files.createDirectories(file.getParent());
-        currentClasspath = currentClasspath.withAgent(file);
+        currentPatchResult = currentPatchResult.withAgent(file);
         return Files.newOutputStream(file);
     }
 
@@ -74,16 +70,21 @@ final class FakePatchContext implements PatchContext {
             }
 
             if (changed) {
-                SequencedSet<Path> files = new LinkedHashSet<>(currentClasspath.files());
+                SequencedSet<Path> files = new LinkedHashSet<>(currentPatchResult.files());
                 files.remove(library);
                 files.add(out);
-                currentClasspath = new Classpath(files, currentClasspath.javaAgents());
+                currentPatchResult = new PatchResult(files, currentPatchResult.javaAgents(), currentPatchResult.systemProperties());
             } else {
                 Files.deleteIfExists(out);
             }
         } catch (IOException e) {
             throw new PatchException("Failed to patch " + library, e);
         }
+    }
+
+    @Override
+    public void addSystemProperty(String key, @Nullable String value) {
+        currentPatchResult = currentPatchResult.withSystemProperty(key, value);
     }
 
     @Override

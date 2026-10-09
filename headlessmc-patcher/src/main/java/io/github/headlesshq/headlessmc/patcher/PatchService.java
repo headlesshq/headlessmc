@@ -8,7 +8,7 @@ import java.util.Optional;
  * May perform caching with {@link PatchCache}.
  */
 public interface PatchService {
-    Classpath patch(Classpath classpath, int javaVersion, List<Patcher> patchers);
+    PatchResult patch(PatchResult patchResult, int javaVersion, List<Patcher> patchers);
 
     List<Patcher> getPatchers();
 

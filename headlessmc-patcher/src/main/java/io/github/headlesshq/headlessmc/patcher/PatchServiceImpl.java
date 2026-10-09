@@ -38,18 +38,18 @@ public class PatchServiceImpl implements PatchService {
     }
 
     @Override
-    public Classpath patch(Classpath classpath, int javaVersion, List<Patcher> patchers) {
+    public PatchResult patch(PatchResult patchResult, int javaVersion, List<Patcher> patchers) {
         if (patchers.isEmpty()) {
-            return classpath;
+            return patchResult;
         }
 
-        PatchCache.Key key = cache.getCacheKey(classpath, patchers, javaVersion);
+        PatchCache.Key key = cache.getCacheKey(patchResult, patchers, javaVersion);
         Path cacheDir = cache.getCacheDir(key);
         PatchContext context = new PatchContextImpl(
-            services::stream, classpath, fileService, key, patchers, mcFiles, javaVersion, cacheDir, classpath
+            services::stream, patchResult, fileService, key, patchers, mcFiles, javaVersion, cacheDir, patchResult
         );
 
-        Optional<Classpath> cached = cache.getCache(context);
+        Optional<PatchResult> cached = cache.getCache(context);
         if (cached.isPresent()) {
             return cached.get();
         }
@@ -59,7 +59,7 @@ public class PatchServiceImpl implements PatchService {
         }
 
         cache.saveCache(context);
-        return context.getCurrentClasspath();
+        return context.getCurrentPatchResult();
     }
 
     @Override

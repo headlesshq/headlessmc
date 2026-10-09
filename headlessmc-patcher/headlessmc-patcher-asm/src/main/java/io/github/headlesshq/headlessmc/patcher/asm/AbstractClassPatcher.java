@@ -26,7 +26,7 @@ public abstract class AbstractClassPatcher implements Patcher, ClassPatcher {
 
     @Override
     public void patch(PatchContext context) {
-        for (Path library : context.getCurrentClasspath().files()) {
+        for (Path library : context.getCurrentPatchResult().files()) {
             if (shouldPatch(library)) {
                 log.info("{}: patching library {}", name(), library);
                 patch(context, library);

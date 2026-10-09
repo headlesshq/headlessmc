@@ -32,7 +32,7 @@ public class ClassSourceFactory {
 
     public List<ClassSource.Provider> create(PatchContext context) {
         List<ClassSource.Provider> providers = new ArrayList<>();
-        context.getCurrentClasspath().files().stream()
+        context.getCurrentPatchResult().files().stream()
             .map(file -> ClassSource.Provider.jar(file, context.getJavaVersion(), JarClassSource::new))
             .forEach(providers::add);
         providers.addAll(jvmProviders(context));

@@ -1,14 +1,126 @@
 package io.github.headlesshq.headlessmc.patcher.lwjgl;
 
-import org.junit.jupiter.api.Disabled;
+import io.github.headlesshq.headlessmc.lwjgl.transformer.LwjglTransformer;
+import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.OS;
+import io.github.headlesshq.headlessmc.os.OSConfigurator;
+import io.github.headlesshq.headlessmc.os.OSService;
+import io.github.headlesshq.headlessmc.patcher.HelperService;
+import io.github.headlesshq.headlessmc.patcher.PatchCache;
+import io.github.headlesshq.headlessmc.patcher.PatchContext;
+import io.github.headlesshq.headlessmc.patcher.PatchResult;
+import io.github.headlesshq.headlessmc.patcher.Patcher;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 // TODO: port HmcLwjglTransformerTest
 public class LwjglPatcherTest {
     @Test
-    @Disabled
-    public void dummy() {
+    public void jomlUnsafeIsDisabled(@TempDir Path root) {
+        TestContext context = new TestContext(root);
 
+        new LwjglPatcher(new LwjglTransformer(), osService()).patch(context);
+
+        assertEquals("true", context.result.systemProperties().get(LwjglPatcher.JOML_NO_UNSAFE));
+        assertEquals(
+            List.of(root.resolve("headlessmc-lwjgl.jar")),
+            List.copyOf(context.result.files()),
+            "the headlessmc-lwjgl jar should be added to the classpath"
+        );
+    }
+
+    private static OSService osService() {
+        return new OSService() {
+            @Override
+            public OS getOS() {
+                return new OS("Linux", OS.Type.LINUX, "6.0");
+            }
+
+            @Override
+            public CPU getCPU() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public List<OSConfigurator> getConfigurators() {
+                return List.of();
+            }
+        };
+    }
+
+    /** A {@link PatchContext} with an empty classpath, which records what the patcher adds. */
+    private static final class TestContext implements PatchContext {
+        private final Path root;
+        private PatchResult result = new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>());
+
+        private TestContext(Path root) {
+            this.root = root;
+        }
+
+        @Override
+        public PatchResult getInitialPatchResult() {
+            return new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>());
+        }
+
+        @Override
+        public PatchResult getCurrentPatchResult() {
+            return result;
+        }
+
+        @Override
+        public OutputStream add(String library, Patcher patcher) throws IOException {
+            Path file = root.resolve(library + ".jar");
+            result = result.withFile(file);
+            return Files.newOutputStream(file);
+        }
+
+        @Override
+        public OutputStream addAgent(String library, Patcher patcher) throws IOException {
+            Path file = root.resolve(library + ".jar");
+            result = result.withAgent(file);
+            return Files.newOutputStream(file);
+        }
+
+        @Override
+        public void patch(Path library, Patcher patcher, PatchAction action) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addSystemProperty(String key, @Nullable String value) {
+            result = result.withSystemProperty(key, value);
+        }
+
+        @Override
+        public List<Patcher> getPatchers() {
+            return List.of();
+        }
+
+        @Override
+        public int getJavaVersion() {
+            return 21;
+        }
+
+        @Override
+        public <C extends HelperService> Stream<C> services(Class<C> type) {
+            return Stream.empty();
+        }
+
+        @Override
+        public PatchCache.Key getCacheKey() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /*

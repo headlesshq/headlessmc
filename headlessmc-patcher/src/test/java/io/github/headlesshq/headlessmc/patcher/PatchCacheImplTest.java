@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.patcher;
 
-import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.net.hash.HashService;
@@ -42,7 +41,7 @@ public class PatchCacheImplTest {
         );
     }
 
-    private PatchContext context(Path root, PatchCacheImpl cache, Classpath initial, Classpath current) {
+    private PatchContext context(Path root, PatchCacheImpl cache, PatchResult initial, PatchResult current) {
         PatchCache.Key key = cache.getCacheKey(initial, List.of(TestPatchers.patcher("test", 1L)), 21);
         return new PatchContextImpl(
             Stream::empty,
@@ -57,8 +56,8 @@ public class PatchCacheImplTest {
         );
     }
 
-    private Classpath classpath(Path... files) {
-        return new Classpath(new LinkedHashSet<>(List.of(files)), new LinkedHashSet<>());
+    private PatchResult classpath(Path... files) {
+        return new PatchResult(new LinkedHashSet<>(List.of(files)), new LinkedHashSet<>());
     }
 
     @Test
@@ -101,13 +100,49 @@ public class PatchCacheImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
         PatchCacheImpl cache = cache(root);
-        Classpath initial = classpath(library);
+        PatchResult initial = classpath(library);
 
         cache.saveCache(context(root, cache, initial, initial));
-        Optional<Classpath> loaded = cache.getCache(context(root, cache, initial, initial));
+        Optional<PatchResult> loaded = cache.getCache(context(root, cache, initial, initial));
 
         assertTrue(loaded.isPresent());
         assertEquals(initial, loaded.get());
+    }
+
+    @Test
+    public void savedCacheRestoresJavaAgentsAndSystemProperties(@TempDir Path root) throws IOException {
+        McFiles mcFiles = TestPatchers.mcFiles(root);
+        Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
+        PatchCacheImpl cache = cache(root);
+        PatchResult initial = classpath(library);
+        PatchCache.Key key = cache.getCacheKey(initial, List.of(TestPatchers.patcher("test", 1L)), 21);
+        Path agent = TestPatchers.writeJar(
+            cache.getCacheDir(key).resolve("test").resolve("agent.jar"), "Agent.class", "agent");
+        PatchResult patched = initial
+            .withAgent(agent)
+            .withSystemProperty("joml.nounsafe", "true")
+            .withSystemProperty("flag", null);
+
+        cache.saveCache(context(root, cache, initial, patched));
+        Optional<PatchResult> loaded = cache.getCache(context(root, cache, initial, initial));
+
+        assertTrue(loaded.isPresent());
+        assertEquals(patched, loaded.get());
+        assertEquals(List.of("joml.nounsafe", "flag"), List.copyOf(loaded.get().systemProperties().keySet()));
+    }
+
+    @Test
+    public void cacheIsInvalidWhenJavaAgentIsMissing(@TempDir Path root) throws IOException {
+        McFiles mcFiles = TestPatchers.mcFiles(root);
+        Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
+        PatchCacheImpl cache = cache(root);
+        PatchResult initial = classpath(library);
+        PatchCache.Key key = cache.getCacheKey(initial, List.of(TestPatchers.patcher("test", 1L)), 21);
+        Path missingAgent = cache.getCacheDir(key).resolve("test").resolve("agent.jar");
+
+        cache.saveCache(context(root, cache, initial, initial.withAgent(missingAgent)));
+
+        assertTrue(cache.getCache(context(root, cache, initial, initial)).isEmpty());
     }
 
     @Test
@@ -116,13 +151,13 @@ public class PatchCacheImplTest {
         Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
         Path extra = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("extra.jar"), "b.txt", "bbb");
         PatchCacheImpl cache = cache(root);
-        Classpath initial = classpath(library);
+        PatchResult initial = classpath(library);
 
         PatchContext saved = context(root, cache, initial, initial);
         cache.saveCache(saved);
 
         // reuse the cache dir of the saved context but present a different initial classpath
-        Classpath grown = classpath(library, extra);
+        PatchResult grown = classpath(library, extra);
         PatchContext invalid = new PatchContextImpl(
             Stream::empty,
             grown,
@@ -145,7 +180,7 @@ public class PatchCacheImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
         PatchCacheImpl cache = cache(root);
-        Classpath initial = classpath(library);
+        PatchResult initial = classpath(library);
         PatchCache.Key key = cache.getCacheKey(initial, List.of(TestPatchers.patcher("test", 1L)), 21);
         Path missingPatched = cache.getCacheDir(key).resolve("patched").resolve("lib.jar");
 
@@ -159,7 +194,7 @@ public class PatchCacheImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
         PatchCacheImpl cache = cache(root);
-        Classpath initial = classpath(library);
+        PatchResult initial = classpath(library);
 
         assertTrue(cache.getCache(context(root, cache, initial, initial)).isEmpty());
     }

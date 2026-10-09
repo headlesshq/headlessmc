@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -106,34 +107,65 @@ public class PatchServiceImplTest {
         return new PatchServiceImpl(helperServices, patchers, fileService, cache, TestPatchers.mcFiles(root));
     }
 
-    private Classpath classpath(Path root) throws IOException {
-        return new Classpath(new LinkedHashSet<>(
+    private PatchResult classpath(Path root) throws IOException {
+        return new PatchResult(new LinkedHashSet<>(
             List.of(TestPatchers.writeJar(root.resolve("mc.jar"), "a.class", "content"))
         ), new LinkedHashSet<>());
     }
 
     @Test
     public void withoutPatchersTheClasspathIsUnchanged(@TempDir Path root) throws IOException {
-        Classpath classpath = classpath(root);
+        PatchResult patchResult = classpath(root);
 
-        assertSame(classpath, service(root).patch(classpath, 21, List.of()));
+        assertSame(patchResult, service(root).patch(patchResult, 21, List.of()));
     }
 
     @Test
     public void everyPatcherIsRunAndTheResultIsCached(@TempDir Path root) throws IOException {
         PatchServiceImpl service = service(root);
-        Classpath classpath = classpath(root);
+        PatchResult patchResult = classpath(root);
 
-        Classpath result = service.patch(classpath, 21, List.of(a, b));
+        PatchResult result = service.patch(patchResult, 21, List.of(a, b));
 
-        assertEquals(classpath.files(), result.files());
+        assertEquals(patchResult.files(), result.files());
         assertEquals(1, ((RecordingPatcher) a).contexts.size());
         assertEquals(1, ((RecordingPatcher) b).contexts.size());
         assertEquals(21, ((RecordingPatcher) a).contexts.getFirst().getJavaVersion());
 
         // the second run is served from the cache
-        service.patch(classpath, 21, List.of(a, b));
+        service.patch(patchResult, 21, List.of(a, b));
         assertEquals(1, ((RecordingPatcher) a).contexts.size());
+    }
+
+    @Test
+    public void systemPropertiesOfPatchersAreReturnedAlsoFromTheCache(@TempDir Path root) throws IOException {
+        PatchServiceImpl service = service(root);
+        PatchResult patchResult = classpath(root);
+        List<PatchContext> contexts = new ArrayList<>();
+        Patcher patcher = new Patcher() {
+            @Override
+            public void patch(PatchContext context) {
+                contexts.add(context);
+                context.addSystemProperty("joml.nounsafe", "true");
+            }
+
+            @Override
+            public String name() {
+                return "property";
+            }
+
+            @Override
+            public long version() {
+                return 1L;
+            }
+        };
+
+        PatchResult result = service.patch(patchResult, 21, List.of(patcher));
+        PatchResult cached = service.patch(patchResult, 21, List.of(patcher));
+
+        assertEquals(1, contexts.size(), "the second run should be served from the cache");
+        assertEquals(Map.of("joml.nounsafe", "true"), result.systemProperties());
+        assertEquals(result, cached);
     }
 
     @Test

@@ -17,11 +17,11 @@ import java.util.Optional;
  * needs re-patching.
  */
 public interface PatchCache {
-    Optional<Classpath> getCache(PatchContext context);
+    Optional<PatchResult> getCache(PatchContext context);
 
     void saveCache(PatchContext context);
 
-    Key getCacheKey(Classpath classpath, List<Patcher> patchers, int javaVersion);
+    Key getCacheKey(PatchResult patchResult, List<Patcher> patchers, int javaVersion);
 
     Path getCacheDir(Key key);
 

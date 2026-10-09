@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.patcher.asm;
 
-import io.github.headlesshq.headlessmc.patcher.Classpath;
+import io.github.headlesshq.headlessmc.patcher.PatchResult;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ public class EntryClassWriterTest {
     private static PatchContext context(Path root, List<SuperClassStrategy> strategies) {
         return new FakePatchContext(
             root.resolve("base"),
-            new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()),
+            new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>()),
             List.of(service(strategies))
         );
     }
