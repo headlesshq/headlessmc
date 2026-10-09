@@ -99,6 +99,17 @@ class DefaultVersionMatcherTest {
     }
 
     @Test
+    void longerBuildNameOfOtherVanillaVersionIsIgnoredWhenInheritingFromVanilla() {
+        // neoforge-21.10.64 contains "0.64", the build name of NeoForge 26.2.0.64
+        fabricVersions.withBuilds("1.21.1", "64").withBuilds("1.20.4", "0.64");
+        Version version = new FakeVersion("fabric-21.1.64").withInheritsFrom("1.21.1");
+
+        VersionID id = matcher.match(platformService, version, processor());
+        assertEquals("1.21.1", id.getVersion().getName());
+        assertEquals("64", id.getBuild().orElseThrow().getName());
+    }
+
+    @Test
     void vanillaVersionIsTakenFromParentHierarchy() {
         fabricVersions.withBuilds("1.21.1", "0.16.9").withBuilds("1.20.4", "0.16.9");
 
