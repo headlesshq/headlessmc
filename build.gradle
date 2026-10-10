@@ -22,7 +22,7 @@ allprojects {
     apply plugin: 'io.quarkus'
 
     group = 'io.github.headlesshq'
-    version = '3.0.0-RC4'
+    version = '3.0.0-RC5'
 
     repositories {
         mavenCentral()

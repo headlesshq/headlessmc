@@ -12,7 +12,7 @@ Download the executable for your Operating System from the latest
     chmod +x headlessmc-launcher-linux-x64
     ./headlessmc-launcher-linux-x64
     ```
-    You can download the file e.g. via curl:
+    You can download the file e.g. via curl, replace $VERSION with the HeadlessMc version to download:
     ``` sh
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
     ```
@@ -23,7 +23,7 @@ Download the executable for your Operating System from the latest
     ```lang-powershell
     .\headlessmc-launcher-windows-x64.exe
     ```
-    You can download the file e.g. via curl.exe in the Command prompt:
+    You can download the file e.g. via curl.exe in the Command prompt, replace $VERSION with the HeadlessMc version to download:
     ```lang-powershell
     curl.exe -L --output headlessmc-launcher.exe --url https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-windows-x64.exe
     ```
@@ -37,7 +37,7 @@ Download the executable for your Operating System from the latest
     chmod +x headlessmc-launcher-macos-arm64
     ./headlessmc-launcher-macos-arm64
     ```
-    You can download the file e.g. via curl:
+    You can download the file e.g. via curl, replace $VERSION with the HeadlessMc version to download:
     ``` sh
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
