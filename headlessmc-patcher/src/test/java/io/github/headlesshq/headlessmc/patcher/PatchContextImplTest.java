@@ -32,34 +32,34 @@ public class PatchContextImplTest {
     private interface SecondService extends HelperService {
     }
 
-    private PatchContextImpl context(Path root, Classpath classpath, List<HelperService> services) {
+    private PatchContextImpl context(Path root, PatchResult patchResult, List<HelperService> services) {
         return new PatchContextImpl(
             services::stream,
-            classpath,
+            patchResult,
             fileService,
             new PatchCache.Key("abc", 1L, Map.of(), 21, 0L),
             List.of(TestPatchers.patcher("test", 1L)),
             TestPatchers.mcFiles(root),
             21,
             root.resolve("base"),
-            classpath
+            patchResult
         );
     }
 
     @Test
     public void addPutsNewFileOnClasspathOnClose(@TempDir Path root) throws IOException {
-        PatchContextImpl context = context(root, new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of());
+        PatchContextImpl context = context(root, new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of());
         Patcher patcher = TestPatchers.patcher("adder", 1L);
 
         try (OutputStream out = context.add("extra", patcher)) {
             out.write("content".getBytes(StandardCharsets.UTF_8));
-            assertTrue(context.getCurrentClasspath().files().isEmpty(), "file should only be added on close");
+            assertTrue(context.getCurrentPatchResult().files().isEmpty(), "file should only be added on close");
         }
 
         Path expected = root.resolve("base").resolve("adder").resolve("extra.jar");
         assertTrue(Files.exists(expected));
         assertEquals("content", Files.readString(expected));
-        assertTrue(context.getCurrentClasspath().files().contains(expected));
+        assertTrue(context.getCurrentPatchResult().files().contains(expected));
     }
 
     @Test
@@ -67,8 +67,8 @@ public class PatchContextImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(
             mcFiles.getLibraryDir().resolve("org").resolve("lib.jar"), "a.txt", "original");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
-        PatchContextImpl context = context(root, classpath, List.of());
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
+        PatchContextImpl context = context(root, patchResult, List.of());
         Patcher patcher = TestPatchers.patcher("patcher", 1L);
 
         context.patch(library, patcher, (source, destination) -> {
@@ -82,7 +82,7 @@ public class PatchContextImplTest {
         Path patched = root.resolve("base").resolve("patcher").resolve("org").resolve("lib.jar");
         assertTrue(Files.exists(patched));
         assertTrue(Files.exists(library), "original library outside base dir must not be deleted");
-        assertEquals(new LinkedHashSet<>(List.of(patched)), context.getCurrentClasspath().files());
+        assertEquals(new LinkedHashSet<>(List.of(patched)), context.getCurrentPatchResult().files());
         try (JarFile jar = new JarFile(patched.toFile())) {
             assertNotNull(jar.getEntry("a.txt"));
             assertNotNull(jar.getEntry("patched.txt"));
@@ -93,12 +93,12 @@ public class PatchContextImplTest {
     public void abandonedPatchLeavesClasspathUntouched(@TempDir Path root) throws IOException {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "original");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
-        PatchContextImpl context = context(root, classpath, List.of());
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
+        PatchContextImpl context = context(root, patchResult, List.of());
 
         context.patch(library, TestPatchers.patcher("patcher", 1L), (source, destination) -> false);
 
-        assertEquals(classpath, context.getCurrentClasspath());
+        assertEquals(patchResult, context.getCurrentPatchResult());
         assertTrue(Files.notExists(root.resolve("base").resolve("patcher").resolve("lib.jar")));
     }
 
@@ -107,8 +107,8 @@ public class PatchContextImplTest {
         McFiles mcFiles = TestPatchers.mcFiles(root);
         Path library = TestPatchers.writeJar(
             mcFiles.getLibraryDir().resolve("org").resolve("lib.jar"), "a.txt", "original");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
-        PatchContextImpl context = context(root, classpath, List.of());
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
+        PatchContextImpl context = context(root, patchResult, List.of());
 
         context.patch(library, TestPatchers.patcher("first", 1L), (source, destination) -> {
             copy(source, destination);
@@ -124,17 +124,53 @@ public class PatchContextImplTest {
 
         Path patched = root.resolve("base").resolve("second").resolve("org").resolve("lib.jar");
         assertTrue(Files.notExists(intermediate), "intermediate patch file should be deleted");
-        assertEquals(new LinkedHashSet<>(List.of(patched)), context.getCurrentClasspath().files());
+        assertEquals(new LinkedHashSet<>(List.of(patched)), context.getCurrentPatchResult().files());
     }
 
     @Test
     public void patchWrapsIoExceptions(@TempDir Path root) throws IOException {
         Path notAJar = Files.writeString(root.resolve("not-a-jar.jar"), "garbage");
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(notAJar)), new LinkedHashSet<>());
-        PatchContextImpl context = context(root, classpath, List.of());
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(List.of(notAJar)), new LinkedHashSet<>());
+        PatchContextImpl context = context(root, patchResult, List.of());
 
         assertThrows(PatchException.class,
             () -> context.patch(notAJar, TestPatchers.patcher("patcher", 1L), (source, destination) -> true));
+    }
+
+    @Test
+    public void addSystemPropertyIsPartOfTheCurrentPatchResult(@TempDir Path root) {
+        PatchResult initial = new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>());
+        PatchContextImpl context = context(root, initial, List.of());
+
+        context.addSystemProperty("joml.nounsafe", "true");
+
+        assertEquals(Map.of("joml.nounsafe", "true"), context.getCurrentPatchResult().systemProperties());
+        assertEquals(Map.of(), context.getInitialPatchResult().systemProperties());
+    }
+
+    @Test
+    public void systemPropertiesSurviveAddingAndPatchingLibraries(@TempDir Path root) throws IOException {
+        McFiles mcFiles = TestPatchers.mcFiles(root);
+        Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "original");
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(List.of(library)), new LinkedHashSet<>());
+        PatchContextImpl context = context(root, patchResult, List.of());
+        Patcher patcher = TestPatchers.patcher("patcher", 1L);
+
+        context.addSystemProperty("key", "value");
+        context.patch(library, patcher, (source, destination) -> {
+            copy(source, destination);
+            return true;
+        });
+        try (OutputStream ignored = context.add("extra", patcher)) {
+            // empty jar is fine
+        }
+        try (OutputStream ignored = context.addAgent("agent", patcher)) {
+            // empty jar is fine
+        }
+
+        assertEquals(Map.of("key", "value"), context.getCurrentPatchResult().systemProperties());
+        assertEquals(2, context.getCurrentPatchResult().files().size());
+        assertEquals(1, context.getCurrentPatchResult().javaAgents().size());
     }
 
     @Test
@@ -143,7 +179,7 @@ public class PatchContextImplTest {
         };
         SecondService second = new SecondService() {
         };
-        PatchContextImpl context = context(root, new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of(first, second));
+        PatchContextImpl context = context(root, new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>()), List.of(first, second));
 
         assertEquals(List.of(first), context.services(FirstService.class).toList());
         assertEquals(List.of(second), context.services(SecondService.class).toList());

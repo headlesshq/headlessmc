@@ -12,7 +12,8 @@ public interface Patcher extends Comparable<Patcher> {
     /**
      * Runs this patcher on the given {@link PatchContext}.
      * A patcher can modify the classpath using
-     * {@link PatchContext#patch(Path, Patcher, PatchContext.PatchAction)}.
+     * {@link PatchContext#patch(Path, Patcher, PatchContext.PatchAction)}
+     * and add system properties using {@link PatchContext#addSystemProperty(String, String)}.
      *
      * @param context the context to use for patching.
      */

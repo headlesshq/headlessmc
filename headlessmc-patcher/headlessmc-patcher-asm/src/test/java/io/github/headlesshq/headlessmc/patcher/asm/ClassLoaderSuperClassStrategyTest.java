@@ -1,6 +1,6 @@
 package io.github.headlesshq.headlessmc.patcher.asm;
 
-import io.github.headlesshq.headlessmc.patcher.Classpath;
+import io.github.headlesshq.headlessmc.patcher.PatchResult;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ClassLoaderSuperClassStrategyTest {
     private final ClassLoaderSuperClassStrategy strategy = new ClassLoaderSuperClassStrategy();
 
-    private FakePatchContext context(Path root, Classpath classpath) {
-        return new FakePatchContext(root.resolve("base"), classpath, List.of());
+    private FakePatchContext context(Path root, PatchResult patchResult) {
+        return new FakePatchContext(root.resolve("base"), patchResult, List.of());
     }
 
     @Test
@@ -48,9 +48,9 @@ public class ClassLoaderSuperClassStrategyTest {
             "test/A.class", TestClasses.classBytes("test/A", "test/Base"),
             "test/B.class", TestClasses.classBytes("test/B", "test/Base")
         ));
-        Classpath classpath = new Classpath(new LinkedHashSet<>(List.of(jar)), new LinkedHashSet<>());
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(List.of(jar)), new LinkedHashSet<>());
 
-        try (SuperClassResolver resolver = strategy.apply(context(root, classpath))) {
+        try (SuperClassResolver resolver = strategy.apply(context(root, patchResult))) {
             assertEquals("test/Base", resolver.getCommonSuperClass("test/A", "test/B"));
         }
     }
@@ -71,8 +71,8 @@ public class ClassLoaderSuperClassStrategyTest {
         assertEquals(SuperClassStrategy.SORT_CLASS_LOADER, strategy.sort());
     }
 
-    private static Classpath emptyClasspath() {
-        return new Classpath(new LinkedHashSet<>(), new LinkedHashSet<>());
+    private static PatchResult emptyClasspath() {
+        return new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>());
     }
 
 }

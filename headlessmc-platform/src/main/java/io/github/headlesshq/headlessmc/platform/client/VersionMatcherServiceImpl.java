@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class VersionMatcherServiceImpl implements VersionMatcherService {
     static final String CACHE_FILE = "version-matches.json";
+    static final int CACHE_VERSION = 1;
 
     private final PlatformService platforms;
     private final Cache<VersionMatches> cache;
@@ -60,7 +61,7 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
     @VisibleForTesting
     public VersionMatcherServiceImpl(PlatformService platforms) {
         this(platforms, CacheBuilder.<VersionMatches>create()
-            .withVersion(0)
+            .withVersion(CACHE_VERSION)
             .withInitialValue(new VersionMatches(new ConcurrentHashMap<>()))
             .build()
         );
@@ -70,13 +71,13 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
     static Cache<VersionMatches> fileCache(JsonService jsonService, Path file) {
         //noinspection Convert2Diamond
         return CacheBuilder.<VersionMatches>create()
-            .withVersion(0)
+            .withVersion(CACHE_VERSION)
             .withInitialValue(new VersionMatches(new ConcurrentHashMap<>()))
             .withSourceStore(new JsonCacheFile<VersionMatches>(
                 CacheExceptionHandler.logging(),
                 jsonService,
                 new TypeLiteral<VersionMatches>() {},
-                0,
+                CACHE_VERSION,
                 file
             )).build();
     }

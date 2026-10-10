@@ -1,0 +1,157 @@
+name: MC-Runtime-Test all versions
+
+"on":
+  workflow_dispatch:
+    inputs:
+      mcrt-ref:
+        description: Git ref of headlesshq/mc-runtime-test to take the ci-data.json and the action from
+        default: 286a6d64008be90fc82f8ffadb8f111adab6907e
+      versions:
+        description: Comma-delimited Minecraft versions to run (e.g. 1.20.4,1.21.1), or all
+        default: all
+      xvfb:
+        description: Run with xvfb, headless (-lwjgl), or both
+        type: choice
+        default: both
+        options:
+          - both
+          - xvfb
+          - headless
+  pull_request:
+    paths:
+      - .github/workflows/mc-runtime-test-all.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MCRT_REF: ${{ inputs.mcrt-ref || '286a6d64008be90fc82f8ffadb8f111adab6907e' }}
+
+jobs:
+  build:
+    name: Build HeadlessMc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build uber jar
+        run: ./gradlew :headlessmc-application:quarkusBuild -Dquarkus.package.jar.type=uber-jar --stacktrace
+
+      - name: Rename uber jar
+        run: mv headlessmc-application/build/quarkus-build/gen/headlessmc-application-*.jar headlessmc.jar
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: headlessmc-all-versions
+          path: headlessmc.jar
+          retention-days: 1
+
+  matrix:
+    name: Construct matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: headlesshq/mc-runtime-test
+          ref: ${{ env.MCRT_REF }}
+          sparse-checkout: ci-data.json
+          sparse-checkout-cone-mode: false
+
+      - id: matrix
+        name: Construct matrix
+        env:
+          VERSIONS: ${{ inputs.versions || 'all' }}
+          XVFB: ${{ inputs.xvfb || 'both' }}
+        shell: python
+        run: |
+          import json
+          import os
+
+          with open('ci-data.json') as f:
+              run_data = json.load(f)['run_data']
+
+          versions = [v.strip() for v in os.environ['VERSIONS'].split(',') if v.strip()]
+          if 'all' not in versions:
+              run_data = [entry for entry in run_data if entry['mc'] in versions]
+
+          xvfb = {'both': [True, False], 'xvfb': [True], 'headless': [False]}[os.environ['XVFB']]
+          include = [
+              {
+                  'mc': entry['mc'],
+                  'type': entry['type'],
+                  'modloader': entry['modloader'],
+                  'java': entry['java'],
+                  'xvfb': x,
+              }
+              for entry in run_data
+              for x in xvfb
+          ]
+
+          if not include:
+              raise SystemExit(f"No versions in ci-data.json match {os.environ['VERSIONS']}")
+
+          print(json.dumps(include, indent=2))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+              fh.write(f"matrix={json.dumps({'include': include})}\n")
+
+  run:
+    name: ${{ matrix.mc }} ${{ matrix.type }} ${{ matrix.xvfb && 'xvfb' || 'headless' }}
+    needs: [ build, matrix ]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    steps:
+      # checked out into a sub directory to use the action of the same ref as the ci-data.json
+      - uses: actions/checkout@v7
+        with:
+          repository: headlesshq/mc-runtime-test
+          ref: ${{ env.MCRT_REF }}
+          path: mc-runtime-test
+
+      - uses: actions/setup-java@v6
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+
+      # with download-hmc: false the action expects headlessmc.jar in the working directory
+      - uses: actions/download-artifact@v8
+        with:
+          name: headlessmc-all-versions
+          path: .
+
+      - name: Run the MC client
+        timeout-minutes: 10
+        uses: ./mc-runtime-test
+        with:
+          mc: ${{ matrix.mc }}
+          modloader: ${{ matrix.modloader }}
+          java: ${{ matrix.java }}
+          # downloads the prebuilt mc-runtime-test jar from the mc-runtime-test release
+          mc-runtime-test: ${{ matrix.type }}
+          # the action adds -lwjgl itself when xvfb is false
+          xvfb: ${{ matrix.xvfb }}
+          cache-mc: github
+          download-hmc: false
+          headlessmc-command: --retries 3 --jvm -Djava.awt.headless=true
+
+      - name: Upload crash reports and logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: logs-${{ matrix.mc }}-${{ matrix.type }}-${{ matrix.xvfb && 'xvfb' || 'headless' }}
+          path: |
+            run/crash-reports/**
+            run/logs/**
+            run/hs_err_pid*.log
+            HeadlessMC/logs/**
+          if-no-files-found: ignore
+          retention-days: 7

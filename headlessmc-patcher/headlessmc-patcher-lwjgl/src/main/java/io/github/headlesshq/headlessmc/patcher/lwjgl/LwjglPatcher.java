@@ -29,6 +29,7 @@ import java.util.Objects;
 )
 @RequiredArgsConstructor
 public class LwjglPatcher extends AbstractClassPatcher {
+    static final String JOML_NO_UNSAFE = "joml.nounsafe";
     static final String LWJGL_JAR = "headlessmc-lwjgl.jar";
     static final String MACOS_MENU_AGENT_JAR = "headlessmc-macos-menu-agent.jar";
     static final String RESOURCE_NAME = "patcher/lwjgl/" + LWJGL_JAR;
@@ -45,6 +46,9 @@ public class LwjglPatcher extends AbstractClassPatcher {
     @Override
     public void patch(PatchContext context) {
         super.patch(context);
+        // Our LWJGL redirections hand out heap buffers, which JOML would write to with
+        // Unsafe at their (non-existent) native address, crashing the JVM.
+        context.addSystemProperty(JOML_NO_UNSAFE, "true");
         try (
             InputStream inputStream = Objects.requireNonNull(
                 getClass().getClassLoader().getResourceAsStream(RESOURCE_NAME),

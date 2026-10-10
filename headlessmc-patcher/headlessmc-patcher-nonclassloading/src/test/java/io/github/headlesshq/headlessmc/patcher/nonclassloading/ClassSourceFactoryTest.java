@@ -5,16 +5,13 @@ import io.github.headlesshq.headlessmc.java.JavaService;
 import io.github.headlesshq.headlessmc.java.JavaSource;
 import io.github.headlesshq.headlessmc.java.SafePath;
 import io.github.headlesshq.headlessmc.java.launcher.JavaFinder;
-import io.github.headlesshq.headlessmc.patcher.Classpath;
-import io.github.headlesshq.headlessmc.patcher.PatchCache;
-import io.github.headlesshq.headlessmc.patcher.PatchContext;
-import io.github.headlesshq.headlessmc.patcher.PatchException;
-import io.github.headlesshq.headlessmc.patcher.Patcher;
-import io.github.headlesshq.headlessmc.patcher.HelperService;
+import io.github.headlesshq.headlessmc.patcher.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
+
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,15 +35,15 @@ class ClassSourceFactoryTest {
     private static final String TYPE = "io/github/headlesshq/headlessmc/patcher/nonclassloading/JarClassSource";
 
     /** A minimal {@link PatchContext} that only answers what the factory needs. */
-    private record TestContext(Classpath classpath, int javaVersion) implements PatchContext {
+    private record TestContext(PatchResult patchResult, int javaVersion) implements PatchContext {
         @Override
-        public Classpath getInitialClasspath() {
-            return classpath;
+        public PatchResult getInitialPatchResult() {
+            return patchResult;
         }
 
         @Override
-        public Classpath getCurrentClasspath() {
-            return classpath;
+        public PatchResult getCurrentPatchResult() {
+            return patchResult;
         }
 
         @Override
@@ -61,6 +58,11 @@ class ClassSourceFactoryTest {
 
         @Override
         public void patch(Path library, Patcher patcher, PatchAction action) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addSystemProperty(String key, @Nullable String value) {
             throw new UnsupportedOperationException();
         }
 
@@ -176,7 +178,7 @@ class ClassSourceFactoryTest {
     }
 
     private PatchContext context(Path... classpath) {
-        return new TestContext(new Classpath(new LinkedHashSet<>(List.of(classpath)), new LinkedHashSet<>()), 21);
+        return new TestContext(new PatchResult(new LinkedHashSet<>(List.of(classpath)), new LinkedHashSet<>()), 21);
     }
 
     @Test

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class DefaultVersionMatcher extends AbstractVersionMatcher implements VersionMatcher {
@@ -27,10 +28,13 @@ public class DefaultVersionMatcher extends AbstractVersionMatcher implements Ver
             return createVersionId(platformService, exactVanillaMatch, null);
         }
 
-        NameMatchResult<? extends PlatformVersion> match = match(
-            // TODO: this might not always be feasible, or good, e.g. on Purpur,
-            //  instead try to get VanillaVersion first and filter builds???
-            versionService.getVersions(),
+        NameMatchResult<? extends PlatformVersion> match = filterByParent(
+            match(
+                // TODO: this might not always be feasible, or good, e.g. on Purpur,
+                //  instead try to get VanillaVersion first and filter builds???
+                versionService.getVersions(),
+                version
+            ),
             version
         );
 
@@ -54,6 +58,36 @@ public class DefaultVersionMatcher extends AbstractVersionMatcher implements Ver
 
         VanillaVersion vanillaVersion = getVanillaVersion(version, processor);
         return createVersionId(platformService, vanillaVersion, first);
+    }
+
+    /**
+     * Name matching is substring based, so e.g. the id neoforge-21.10.64 also contains 0.64,
+     * the build name of NeoForge 26.2.0.64, which is longer than the correct build name 64.
+     * If the version inherits directly from a known vanilla version,
+     * we only consider builds bound to that vanilla version.
+     */
+    protected NameMatchResult<? extends PlatformVersion> filterByParent(
+        NameMatchResult<? extends PlatformVersion> match,
+        Version version
+    ) {
+        String parent = version.getInheritsFrom();
+        if (parent == null) {
+            return match;
+        }
+
+        Optional<VanillaVersion> vanillaVersion = vanillaVersionService.getVersion(parent);
+        if (vanillaVersion.isEmpty()) {
+            return match;
+        }
+
+        String vanillaName = vanillaVersion.get().getName();
+        List<PlatformVersion> filtered = match.versions().stream()
+            .filter(platformVersion -> !(platformVersion instanceof BoundPlatformVersion boundVersion)
+                || boundVersion.getVanillaVersion().equals(vanillaName))
+            .map(PlatformVersion.class::cast)
+            .toList();
+
+        return filtered.isEmpty() ? match : new NameMatchResult<>(filtered);
     }
 
     protected VersionID resolveAmbiguousMatch(

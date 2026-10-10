@@ -28,7 +28,7 @@ public class ClassLoaderSuperClassStrategy implements SuperClassStrategy {
 
     @Override
     public SuperClassResolver apply(PatchContext context) {
-        URL[] urls = context.getCurrentClasspath().files().stream()
+        URL[] urls = context.getCurrentPatchResult().files().stream()
             .map(Path::toAbsolutePath)
             .map(Path::toUri)
             .map(this::toURL)

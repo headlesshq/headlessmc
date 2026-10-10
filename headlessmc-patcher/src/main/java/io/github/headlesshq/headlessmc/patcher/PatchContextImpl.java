@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -27,14 +28,14 @@ final class PatchContextImpl implements PatchContext {
     private final Map<Path, Path> relativePaths = new HashMap<>();
 
     private final Supplier<Stream<HelperService>> services;
-    private final Classpath initialClasspath;
+    private final PatchResult initialPatchResult;
     private final FileService fileService;
     private final PatchCache.Key cacheKey;
     private final List<Patcher> patchers;
     private final McFiles mcFiles;
     private final int javaVersion;
     private final Path baseDir;
-    private Classpath currentClasspath;
+    private PatchResult currentPatchResult;
 
     @Override
     public OutputStream add(String library, Patcher patcher) throws IOException {
@@ -73,10 +74,12 @@ final class PatchContextImpl implements PatchContext {
                         fileService.deleteFileAndEmptyParentDirs(library);
                     }
 
-                    SequencedSet<Path> classpath = new LinkedHashSet<>(currentClasspath.files());
+                    SequencedSet<Path> classpath = new LinkedHashSet<>(currentPatchResult.files());
                     classpath.remove(library);
                     classpath.add(patchedFile);
-                    currentClasspath = new Classpath(classpath, currentClasspath.javaAgents());
+                    currentPatchResult = new PatchResult(
+                        classpath, currentPatchResult.javaAgents(), currentPatchResult.systemProperties()
+                    );
                     relativePaths.put(patchedFile, relative);
                 } else {
                     fileService.deleteFileAndEmptyParentDirs(patchedFile);
@@ -85,6 +88,11 @@ final class PatchContextImpl implements PatchContext {
         } catch (IOException e) {
             throw new PatchException("Failed to patch library " + library + " with patcher " + patcher.name(), e);
         }
+    }
+
+    @Override
+    public void addSystemProperty(String key, @Nullable String value) {
+        currentPatchResult = currentPatchResult.withSystemProperty(key, value);
     }
 
     @Override
@@ -105,7 +113,7 @@ final class PatchContextImpl implements PatchContext {
         @Override
         public void close() throws IOException {
             super.close();
-            currentClasspath = agent ? currentClasspath.withAgent(file) : currentClasspath.withFile(file);
+            currentPatchResult = agent ? currentPatchResult.withAgent(file) : currentPatchResult.withFile(file);
             relativePaths.put(file, file.getFileName());
         }
     }

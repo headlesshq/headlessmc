@@ -1,7 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.client;
 
 import io.github.headlesshq.headlessmc.auth.Account;
-import io.github.headlesshq.headlessmc.auth.AuthException;
 import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.McFiles;
@@ -18,7 +17,7 @@ import io.github.headlesshq.headlessmc.launcher.process.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
-import io.github.headlesshq.headlessmc.patcher.Classpath;
+import io.github.headlesshq.headlessmc.patcher.PatchResult;
 import io.github.headlesshq.headlessmc.patcher.PatchService;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
@@ -95,22 +94,30 @@ public class ClientLauncher {
         List<Path> unpatchedClasspath = classpathService.buildClasspath(templates, features, version, repositories);
 
         int javaVersion = profile.javaVersion() == null ? version.requireJavaVersion() : profile.javaVersion();
-        Classpath classpath = new Classpath(new LinkedHashSet<>(unpatchedClasspath), new LinkedHashSet<>());
-        classpath = patchService.patch(classpath, javaVersion, patchers);
+        PatchResult patchResult = new PatchResult(new LinkedHashSet<>(unpatchedClasspath), new LinkedHashSet<>());
+        patchResult = patchService.patch(patchResult, javaVersion, patchers);
 
         templates.add(
             TemplateString.CLASSPATH,
-            classpath.files().stream()
+            patchResult.files().stream()
                 .map(Path::toAbsolutePath)
                 .map(Path::toString)
                 .collect(Collectors.joining(File.pathSeparator))
         );
 
         Arguments arguments = argumentsService.process(profile, version, features, loggingArg.orElse(null));
+        arguments.systemProperties().putIfAbsent(
+            "libraryDirectory",
+            mcFiles.getLibraryDir().toAbsolutePath().toString()
+        );
+
+        // system properties required by the patchers, unless the user specified them otherwise
+        patchResult.systemProperties().forEach(arguments.systemProperties()::putIfAbsent);
+
         arguments = argumentTemplateService.process(arguments, templates);
 
         List<String> jvmArgs = new ArrayList<>(arguments.vmArgs());
-        for (Path javaAgent : classpath.javaAgents()) {
+        for (Path javaAgent : patchResult.javaAgents()) {
             jvmArgs.add("-javaagent:" + javaAgent.toAbsolutePath());
         }
 
@@ -123,7 +130,7 @@ public class ClientLauncher {
                 .arg(arguments.gameArgs().toArray(String[]::new))
                 .mainClass(version.getMainClass())
                 .directory(gameDir)
-                .classpath(classpath.files().toArray(Path[]::new))
+                .classpath(patchResult.files().toArray(Path[]::new))
                 .classpathArgProvided(containsClasspathArg(jvmArgs)),
             gameDir
         );
