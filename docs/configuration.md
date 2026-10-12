@@ -78,6 +78,8 @@ hmc.parallel.retry-initial-interval-ms                     250                  
 hmc.parallel.retry-jitter                                  0.5                                        Randomization factor (0.0-1.0) applied to each retry delay.
 hmc.parallel.retry-max-attempts                            4                                          Total number of attempts per task, including the initial attempt.
 hmc.parallel.retry-max-interval-ms                         2000                                       Upper bound in milliseconds for a single retry delay.
+hmc.server.script.mock-java                                false                                      Whether server scripts (e.g. Forge/NeoForge run.sh/run.bat) are run with a mock java command that captures their java arguments, so HeadlessMc can launch the server itself, instead of running the scripts directly.
+hmc.server.script.timeout                                  60                                         Time in seconds to wait for a server script to call the mock java command (only used if hmc.server.script.mock-java is enabled).
 hmc.test.leave                                             true                                       -
 hmc.test.no-timeout                                        false                                      -
 hmc.test.server                                            false                                      -

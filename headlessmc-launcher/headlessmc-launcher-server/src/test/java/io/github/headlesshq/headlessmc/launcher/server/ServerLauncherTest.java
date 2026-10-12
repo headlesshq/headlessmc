@@ -25,12 +25,17 @@ import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import io.github.headlesshq.headlessmc.os.OS;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,6 +89,24 @@ class ServerLauncherTest {
         }
     };
 
+    private boolean mockJava = false;
+
+    private final ScriptConfig scriptConfig = new ScriptConfig() {
+        @Override
+        public boolean mockJava() {
+            return mockJava;
+        }
+
+        @Override
+        public int timeout() {
+            return 30;
+        }
+    };
+
+    private final ScriptLauncher scriptLauncher = new ScriptLauncher(
+        () -> scriptConfig, new OS("linux", OS.Type.LINUX, "1")
+    );
+
     private FakePlatformService platformService;
     private FakeProfileService profileService;
     private ServerLauncher launcher;
@@ -103,7 +126,7 @@ class ServerLauncherTest {
         platformService = new FakePlatformService(vanilla);
         profileService = new FakeProfileService(root);
         launcher = new ServerLauncher(
-            launcherService, vanillaInstaller, platformService, profileService, new FakeServerService(profileService), javaFinder
+            launcherService, vanillaInstaller, platformService, profileService, new FakeServerService(profileService), javaFinder, scriptLauncher
         );
     }
 
@@ -176,19 +199,95 @@ class ServerLauncherTest {
         assertEquals(List.of(), builder(process).getArgs());
     }
 
-    @Test
-    void nonJarExecutablesAreNotSupportedYet() {
+    private ServerLauncher scriptServerLauncher() {
         FakeVanillaPlatform vanilla = new FakeVanillaPlatform("1.21.1");
-        vanilla.withServerSupport(serverSupport("start.sh"));
-        ServerLauncher scriptLauncher = new ServerLauncher(
+        vanilla.withServerSupport(serverSupport("run.sh"));
+        return new ServerLauncher(
             launcherService, vanillaInstaller, new FakePlatformService(vanilla), profileService,
-            new FakeServerService(profileService), javaFinder
+            new FakeServerService(profileService), javaFinder, scriptLauncher
         );
+    }
 
-        assertThrows(
-            UnsupportedOperationException.class,
-            () -> scriptLauncher.launcher(server("srv").withJavaVersion(17))
+    private Path writeForgeLikeServer(String name) throws IOException {
+        Path dir = root.resolve(name);
+        Path libraries = dir.resolve("libraries/net/minecraftforge/forge/1.21.1-52.0.0");
+        Files.createDirectories(libraries);
+        Files.writeString(dir.resolve("run.sh"), """
+            #!/usr/bin/env sh
+            java -jar forge-1.21.1-52.0.0-shim.jar --onlyCheckJava || exit 1
+            # Forge requires a configured set of both JVM and program arguments.
+            java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.21.1-52.0.0/unix_args.txt "$@"
+            """);
+        Files.writeString(dir.resolve("user_jvm_args.txt"), """
+            # Xmx and Xms set the maximum and minimum RAM usage, respectively.
+            -Xmx4G
+            """);
+        Files.writeString(libraries.resolve("unix_args.txt"), """
+            -DlibraryDirectory=libraries
+            -p libraries/a.jar:libraries/b.jar
+            --add-modules ALL-MODULE-PATH
+            -cp libraries/c.jar:libraries/d.jar
+            cpw.mods.bootstraplauncher.BootstrapLauncher
+            --launchTarget forgeserver
+            "--fml.forgeVersion" 52.0.0
+            """);
+        return dir;
+    }
+
+    @Test
+    @DisabledOnOs(org.junit.jupiter.api.condition.OS.WINDOWS)
+    void scriptsAreLaunchedWithTheCapturedJavaCommand() throws IOException {
+        mockJava = true;
+        writeForgeLikeServer("srv");
+        Profile profile = server("srv").withJavaVersion(21)
+            .withVmArgs(List.of("-Xmx2G"))
+            .withGameArgs(List.of("nogui"));
+
+        ProcessLauncher process = scriptServerLauncher().launcher(profile);
+
+        RecordingBuilder builder = builder(process);
+        assertEquals("cpw.mods.bootstraplauncher.BootstrapLauncher", builder.getMainClass());
+        assertNull(builder.getJar());
+        assertEquals(List.of("libraries/c.jar", "libraries/d.jar"), builder.getClassPath());
+        assertEquals(List.of(
+            "-Xmx4G", "-DlibraryDirectory=libraries", "-p", "libraries/a.jar:libraries/b.jar",
+            "--add-modules", "ALL-MODULE-PATH", "-Xmx2G"
+        ), builder.getJvmArgs());
+        assertEquals(List.of("--launchTarget", "forgeserver", "--fml.forgeVersion", "52.0.0", "nogui"), builder.getArgs());
+        assertEquals(root.resolve("srv"), builder.getDirectory());
+        assertEquals("java-21", Objects.requireNonNull(builder.getJava()).name());
+    }
+
+    @Test
+    @DisabledOnOs(org.junit.jupiter.api.condition.OS.WINDOWS)
+    void scriptsThatDoNotCallJavaFail() throws IOException {
+        mockJava = true;
+        Path dir = root.resolve("srv");
+        Files.createDirectories(dir);
+        Files.writeString(dir.resolve("run.sh"), "echo no java here\nexit 3\n");
+
+        ServerException e = assertThrows(
+            ServerException.class,
+            () -> scriptServerLauncher().launcher(server("srv").withJavaVersion(17))
         );
+        assertTrue(e.getMessage().contains("no java here"), e.getMessage());
+    }
+
+    @Test
+    void scriptsAreLaunchedDirectlyByDefault() throws IOException {
+        writeForgeLikeServer("srv");
+        Profile profile = server("srv").withJavaVersion(21)
+            .withVmArgs(List.of("-Xmx2G", "-Dname=with space"))
+            .withGameArgs(List.of("nogui"));
+
+        ProcessLauncher process = scriptServerLauncher().launcher(profile);
+
+        assertTrue(process.getJavaProcessBuilder().isEmpty());
+        ProcessBuilder processBuilder = process.getProcessBuilder().orElseThrow();
+        assertEquals(List.of("sh", root.resolve("srv/run.sh").toAbsolutePath().toString(), "nogui"),
+            processBuilder.command());
+        assertTrue(processBuilder.environment().get("PATH").startsWith(root.resolve("java-21/bin").toString()));
+        assertEquals("-Xmx2G \"-Dname=with space\"", processBuilder.environment().get("JDK_JAVA_OPTIONS"));
     }
 
     @Test
@@ -197,7 +296,7 @@ class ServerLauncherTest {
         ServerLauncher unsupported = new ServerLauncher(
             launcherService, vanillaInstaller,
             new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric),
-            profileService, new FakeServerService(profileService), javaFinder
+            profileService, new FakeServerService(profileService), javaFinder, scriptLauncher
         );
 
         Profile profile = new Profile("srv", VersionArg.parse("server", "fabric", "1.21.1"), root.resolve("srv"))
