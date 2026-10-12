@@ -4,8 +4,6 @@ name: Lifecycle
   push:
     branches:
       - main
-    tags:
-      - '**'
   pull_request:
     types:
       #- closed
@@ -19,12 +17,30 @@ concurrency: # FIXME: prevent release commit cancellation
     ${{ github.workflow }}-
     ${{ github.event_name }}-
     ${{ github.event.inputs.ref || github.ref }}
-  cancel-in-progress: true
+  # never cancel runs on main, they might be creating a release
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   REGISTRY_IMAGE: 3arthqu4ke/headlessmc
 
 jobs:
+  release-please:
+    name: Release Please
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      tag_name: ${{ steps.release-please.outputs.tag_name }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: release-please
+        name: Run Release Please
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -66,7 +82,7 @@ jobs:
           if-no-files-found: ignore
 
       #- name: Publish with gradle
-      #  if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      #  if: needs.release-please.outputs.release_created == 'true'
       #  env:
       #    IS_MAVEN_PUB: true
       #    DEPLOY_TO_GITHUB_PACKAGES_URL: https://maven.pkg.github.com/headlesshq/headlessmc
@@ -102,20 +118,19 @@ jobs:
 
       # Prepare Site deployment
       #- name: Copy javadoc
-      #  if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+      #  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       #  run: cp -r build/docs/javadoc/ _site/
       - name: Rename report dir
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: mv build/reports/jacoco/root build/reports/jacoco/coverage
       - name: Copy coverage
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: cp -r build/reports/jacoco/coverage/ _site/
       - name: Upload Web page artifact
-        if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v5.0.0
 
   deploy-pages:
-    # startsWith(github.ref, 'refs/tags/') || we do not allow tags to deploy github pages
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main')
     needs: build
     permissions:
@@ -146,7 +161,7 @@ jobs:
           #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
           - { os: ubuntu-24.04-arm, name: headlessmc-launcher-linux-arm64 }
         # macOS builds take verrryyy long, so I only want to do this on release
-        include: ${{ fromJSON(github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main') && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"} },{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
+        include: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"} },{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: graalvm/setup-graalvm@v1
@@ -327,10 +342,7 @@ jobs:
       - name: Login to Docker Hub
         if: |
           github.event_name == 'push' &&
-          (
-            startsWith(github.ref, 'refs/tags/') ||
-            github.ref == 'refs/heads/main'
-          )
+          github.ref == 'refs/heads/main'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -355,7 +367,7 @@ jobs:
           file: ./headlessmc-application/src/main/docker/Dockerfile.jvm
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=${{ github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main') }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
       - name: Export digest
         run: |
@@ -366,10 +378,7 @@ jobs:
       - name: Upload digest
         if: |
           github.event_name == 'push' &&
-          (
-            startsWith(github.ref, 'refs/tags/') ||
-            github.ref == 'refs/heads/main'
-          )
+          github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v7
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
@@ -380,12 +389,9 @@ jobs:
   docker-release:
     if: |
       github.event_name == 'push' &&
-      (
-        startsWith(github.ref, 'refs/tags/') ||
-        github.ref == 'refs/heads/main'
-      )
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: [ docker-build, build, build-natives]
+    needs: [ release-please, docker-build, build, build-natives]
     steps:
       - name: Download digests
         uses: actions/download-artifact@v8
@@ -402,7 +408,9 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
-          tags: type=raw,value=${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ needs.release-please.outputs.tag_name }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v4
@@ -418,12 +426,12 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}       
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:latest       
 
   merge:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [build, build-natives, docker-release]
+    if: needs.release-please.outputs.release_created == 'true'
+    needs: [release-please, build, build-natives, docker-release]
     steps:
       - name: Cleanup Docker
         uses: geekyeggo/delete-artifact@v6
@@ -452,8 +460,8 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: [merge, docker-build]
+    if: needs.release-please.outputs.release_created == 'true'
+    needs: [release-please, merge, docker-build]
     permissions:
       contents: write
     steps:
@@ -461,18 +469,18 @@ jobs:
         uses: actions/download-artifact@v8
       - name: Display structure of downloaded files
         run: ls -R
-      - name: Release
-        uses: softprops/action-gh-release@v3
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          #draft: true
-          generate_release_notes: true
-          files: |
-            ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar
-            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
-            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
-            ./headlessmc-launcher-linux-x64
-            ./headlessmc-launcher-windows-x64.exe
-            ./headlessmc-launcher-macos-x64
-            ./headlessmc-launcher-linux-arm64
+      - name: Upload release assets
+        # the release itself (tag and notes) has been created by release-please
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh release upload "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --clobber \
+            ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar \
+            ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar \
+            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar \
+            ./headlessmc-launcher-linux-x64 \
+            ./headlessmc-launcher-windows-x64.exe \
+            ./headlessmc-launcher-macos-x64 \
+            ./headlessmc-launcher-linux-arm64 \
             ./headlessmc-launcher-macos-arm64

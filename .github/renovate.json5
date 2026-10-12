@@ -1,0 +1,72 @@
+{
+  extends: [
+    ':enableRenovate',
+    ':semanticCommits',
+    'config:best-practices',
+  ],
+  platform: 'github',
+  onboarding: false,
+  requireConfig: 'optional',
+  timezone: 'UTC',
+  dependencyDashboard: true,
+  platformCommit: 'enabled',
+  prCreation: 'not-pending',
+  automergeStrategy: 'squash',
+  suppressNotifications: [
+    'prIgnoreNotification',
+  ],
+  rebaseWhen: 'conflicted',
+  enabledManagers: [
+    'gradle',
+    'gradle-wrapper',
+    'github-actions',
+  ],
+  packageRules: [
+    {
+      // dependency updates affect the released artifacts, so they should trigger a release
+      matchManagers: [
+        'gradle',
+      ],
+      semanticCommitType: 'fix',
+      semanticCommitScope: 'deps',
+    },
+    {
+      matchManagers: [
+        'gradle-wrapper',
+      ],
+      semanticCommitType: 'build',
+      semanticCommitScope: 'deps',
+    },
+    {
+      matchManagers: [
+        'github-actions',
+      ],
+      semanticCommitType: 'ci',
+      semanticCommitScope: 'deps',
+    },
+    {
+      matchUpdateTypes: [
+        'major',
+      ],
+      addLabels: [
+        'dependency/major',
+      ],
+    },
+    {
+      matchUpdateTypes: [
+        'minor',
+      ],
+      addLabels: [
+        'dependency/minor',
+      ],
+    },
+    {
+      matchUpdateTypes: [
+        'patch',
+      ],
+      addLabels: [
+        'dependency/patch',
+      ],
+    },
+  ],
+}
