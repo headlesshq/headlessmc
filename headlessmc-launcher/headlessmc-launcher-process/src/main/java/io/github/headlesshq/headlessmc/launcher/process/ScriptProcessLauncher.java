@@ -18,7 +18,7 @@ final class ScriptProcessLauncher implements ProcessLauncher {
     public synchronized McProcess launch(boolean pipeIO) throws HeadlessMcException {
         if (pipeIO) {
             processBuilder
-                .redirectError(ProcessBuilder.Redirect.PIPE)
+                .redirectErrorStream(true)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectInput(ProcessBuilder.Redirect.PIPE);
         }

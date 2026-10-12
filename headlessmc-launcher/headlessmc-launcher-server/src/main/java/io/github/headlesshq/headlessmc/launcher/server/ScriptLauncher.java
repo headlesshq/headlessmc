@@ -141,7 +141,7 @@ public class ScriptLauncher {
         ProcessBuilder processBuilder = new ProcessBuilder(command).directory(profile.path().toAbsolutePath().toFile());
         if (pipe) {
             processBuilder
-                .redirectError(ProcessBuilder.Redirect.PIPE)
+                .redirectErrorStream(true)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectInput(ProcessBuilder.Redirect.PIPE);
         } else {

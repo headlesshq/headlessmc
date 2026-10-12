@@ -35,6 +35,18 @@ class ProcessLaunchTest {
                 return;
             }
 
+            if (args.length > 0 && "stderr".equals(args[0])) {
+                // way more than any pipe buffer, blocks if stderr is not read
+                String line = "x".repeat(1023);
+                for (int i = 0; i < 1024; i++) {
+                    System.err.println(line);
+                }
+
+                System.err.flush();
+                System.out.println("done");
+                return;
+            }
+
             System.out.println("property=" + System.getProperty("hmc.test.property"));
             System.out.println("dir=" + System.getProperty("user.dir"));
             if (args.length > 0) {
@@ -109,6 +121,22 @@ class ProcessLaunchTest {
         assertTrue(output.contains("property=hello"));
         assertTrue(Files.isDirectory(dir));
         assertEquals(Optional.of(dir), process.getDirectory());
+    }
+
+    @Test
+    void stderrIsMergedIntoStdoutSoReadingStdoutCannotDeadlock() {
+        JavaProcess process = builder().arg("stderr").pipeIO(true).start();
+        try {
+            String output = assertTimeoutPreemptively(
+                Duration.ofSeconds(60L), () -> read(process.getProcess().orElseThrow().getInputStream())
+            );
+
+            assertTrue(output.contains("xxxxxxxx"));
+            assertTrue(output.strip().endsWith("done"));
+            assertEquals(0, process.waitFor((Duration) null));
+        } finally {
+            process.killForcibly();
+        }
     }
 
     @Test

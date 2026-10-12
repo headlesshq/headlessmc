@@ -6,12 +6,16 @@ import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 public class EulaLauncher {
     private final ServerLauncher serverLauncher;
@@ -43,6 +47,8 @@ public class EulaLauncher {
             } catch (IOException e) {
                 throw new ServerException("Failed to get server STD_IN", e);
             }
+
+            drainOutput(process);
         });
 
         int result = serverProcess.waitFor(ProcessHandler.defaultHandler());
@@ -57,6 +63,22 @@ public class EulaLauncher {
 
         serverService.save(profile.withEulaStatus(EulaStatus.NONE));
         return Optional.empty();
+    }
+
+    /**
+     * Reads the output of the process until it exits.
+     * The output is piped, if nobody reads it the process blocks
+     * as soon as the pipe buffer (only ~4KB on Windows) is full.
+     */
+    private void drainOutput(Process process) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                log.debug("[EULA] {}", line);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to read output of EULA launch", e);
+        }
     }
 
 }

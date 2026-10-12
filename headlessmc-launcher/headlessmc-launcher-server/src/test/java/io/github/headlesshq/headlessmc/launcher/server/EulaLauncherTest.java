@@ -163,6 +163,62 @@ class EulaLauncherTest {
         assertEquals("stop" + System.lineSeparator(), stdIn.toString(StandardCharsets.UTF_8));
     }
 
+    @Test
+    void theServerOutputIsReadSoTheServerCanExit() {
+        writeEulaOnLaunch = true;
+        PipedOutputProcess process = new PipedOutputProcess(new byte[64 * 1024]);
+        EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(process)));
+
+        Profile profile = server("srv");
+        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
+        assertEquals(0, process.stdOut.available());
+    }
+
+    /**
+     * {@link Process} with output that has to be read before it can exit,
+     * like a real process that blocks once its output pipe is full.
+     */
+    private static final class PipedOutputProcess extends Process {
+        private final java.io.ByteArrayInputStream stdOut;
+
+        PipedOutputProcess(byte[] output) {
+            this.stdOut = new java.io.ByteArrayInputStream(output);
+        }
+
+        @Override
+        public OutputStream getOutputStream() {
+            return OutputStream.nullOutputStream();
+        }
+
+        @Override
+        public java.io.InputStream getInputStream() {
+            return stdOut;
+        }
+
+        @Override
+        public java.io.InputStream getErrorStream() {
+            return java.io.InputStream.nullInputStream();
+        }
+
+        @Override
+        public int waitFor() {
+            if (stdOut.available() > 0) {
+                fail("Process output was not read, a real process would block forever");
+            }
+
+            return 0;
+        }
+
+        @Override
+        public int exitValue() {
+            return 0;
+        }
+
+        @Override
+        public void destroy() {
+        }
+    }
+
     /** Minimal {@link Process} that only exposes an output stream. */
     private static final class StdInProcess extends Process {
         private final OutputStream outputStream;
