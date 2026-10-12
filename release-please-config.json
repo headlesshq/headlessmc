@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "db0e60fc99d285ca2841cad406d5a9f02691be26",
+  "packages": {
+    ".": {
+      "include-component-in-tag": false,
+      "include-v-in-tag": false,
+      "package-name": "headlessmc",
+      "release-type": "simple",
+      "versioning": "prerelease",
+      "prerelease": true,
+      "prerelease-type": "RC",
+      "extra-files": [
+        "gradle.properties"
+      ]
+    }
+  }
+}
