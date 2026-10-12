@@ -214,6 +214,7 @@ class ServerLauncherTest {
         Files.createDirectories(libraries);
         Files.writeString(dir.resolve("run.sh"), """
             #!/usr/bin/env sh
+            java -jar forge-1.21.1-52.0.0-shim.jar --onlyCheckJava || exit 1
             # Forge requires a configured set of both JVM and program arguments.
             java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.21.1-52.0.0/unix_args.txt "$@"
             """);

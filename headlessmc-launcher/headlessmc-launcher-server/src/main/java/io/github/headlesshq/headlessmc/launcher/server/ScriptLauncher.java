@@ -44,6 +44,8 @@ public class ScriptLauncher {
     static final String ARGS_FILE_ENV = "HMC_JAVA_ARGS_FILE";
     static final String NON_PAUSING_BAT = "hmc_run_server.bat";
 
+    // Every call overwrites the args file, so the last java call of a script is captured.
+    // Forge scripts first call java with --onlyCheckJava and then launch the server.
     private static final String UNIX_MOCK_JAVA = """
         #!/bin/sh
         for arg in "$@"; do printf '%s\\0' "$arg"; done > "$HMC_JAVA_ARGS_FILE"
@@ -179,10 +181,13 @@ public class ScriptLauncher {
     }
 
     // Forge .bat files end with pause, so the program always ends with "Press any key to continue..."
+    // Calling the mock java.bat without "call" would never return to the script,
+    // and Forge scripts call java twice, first with --onlyCheckJava, so we call java.
     private Path createNonPausingBatFile(Path bat) {
         try {
             List<String> lines = Files.readAllLines(bat, Charset.defaultCharset()).stream()
                 .filter(line -> !line.trim().toLowerCase(Locale.ENGLISH).equals("pause"))
+                .map(ScriptLauncher::callJava)
                 .toList();
             Path result = bat.toAbsolutePath().resolveSibling(NON_PAUSING_BAT);
             Files.write(result, lines, Charset.defaultCharset());
@@ -190,6 +195,16 @@ public class ScriptLauncher {
         } catch (IOException e) {
             throw new ServerException("Failed to create non-pausing copy of " + bat, e);
         }
+    }
+
+    private static String callJava(String line) {
+        String trimmed = line.stripLeading();
+        String lowerCase = trimmed.toLowerCase(Locale.ENGLISH);
+        if (lowerCase.startsWith("java ") || lowerCase.startsWith("java.exe ")) {
+            return line.substring(0, line.length() - trimmed.length()) + "call " + trimmed;
+        }
+
+        return line;
     }
 
     private void writeMockJava(Path mockDir) throws IOException {
