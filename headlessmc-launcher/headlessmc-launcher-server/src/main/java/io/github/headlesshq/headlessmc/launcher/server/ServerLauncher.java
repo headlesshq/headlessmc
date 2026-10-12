@@ -34,6 +34,7 @@ public class ServerLauncher {
     private final ProfileService profileService;
     private final ServerService serverService;
     private final JavaFinder javaFinder;
+    private final ScriptLauncher scriptLauncher;
 
     public ProcessLauncher launcher(Profile profile) {
         return launchProcess(profile, "mc-server-" + profile.name(), false);
@@ -73,24 +74,25 @@ public class ServerLauncher {
 
         Path executable = serverSupport.serverFinder().findExecutable(profile.path());
         Java java = javaFinder.findJava(Objects.requireNonNull(profile.javaVersion()));
-        if (executable.toString().toLowerCase(Locale.ENGLISH).endsWith(".jar")) {
-            return ProcessLauncher.of(launchJava(profile, executable, java, processName, pipe), profile.path());
-        } else {
-            // TODO: script launcher
-            throw new UnsupportedOperationException("Script launching for " + executable + " not supported yet");
-        }
-    }
-
-    private JavaProcessBuilder launchJava(Profile profile, Path jar, Java java, String processName, boolean pipe) {
-        return javaLauncherService.buildProcess()
+        JavaProcessBuilder builder = javaLauncherService.buildProcess()
             .id(processName)
             .pipeIO(pipe)
             .directory(profile.path())
-            .jar(jar)
-            .jvmArg(profile.vmArgs().toArray(String[]::new))
-            .systemProperties(profile.systemProperties())
-            .arg(profile.gameArgs() == null ? new String[0] : profile.gameArgs().toArray(String[]::new))
             .java(java);
+
+        if (executable.toString().toLowerCase(Locale.ENGLISH).endsWith(".jar")) {
+            builder.jar(executable);
+        } else if (scriptLauncher.isMockJava()) {
+            scriptLauncher.captureJavaCommand(executable, profile.path()).applyTo(builder);
+        } else {
+            return scriptLauncher.launcher(profile, executable, java, processName, pipe);
+        }
+
+        builder.jvmArg(profile.vmArgs().toArray(String[]::new))
+            .systemProperties(profile.systemProperties())
+            .arg(profile.gameArgs() == null ? new String[0] : profile.gameArgs().toArray(String[]::new));
+
+        return ProcessLauncher.of(builder, profile.path());
     }
 
 }

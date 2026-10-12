@@ -35,6 +35,28 @@ You can also specify JVM and other game arguments like this:
 > server launch paper-1.21.5-76 --jvm "-Xms10G -Xmx10G" --game-args "bonusChest eraseCache"
 ```
 
+#### Forge and NeoForge server scripts
+
+Newer Forge and NeoForge servers are started with a `run.sh` (or `run.bat` on Windows) script
+instead of a server jar.
+By default, HeadlessMc runs this script directly,
+with the bin directory of the Java version for the server first on the `PATH`.
+JVM arguments and system properties are passed to Java via the `JDK_JAVA_OPTIONS` environment variable,
+game arguments are passed to the script.
+On Windows the `pause` at the end of the `run.bat` is removed, by running a copy called `hmc_run_server.bat`.
+
+Alternatively, you can enable `hmc.server.script.mock-java`:
+
+```
+> config set hmc.server.script.mock-java true
+```
+
+HeadlessMc will then run the script with a mock `java` command,
+which only records the arguments the script passes to it.
+HeadlessMc parses these arguments, including `@argument` files like `user_jvm_args.txt`,
+and launches the server itself, just like it launches servers that use a jar.
+If the script does not call `java` within `hmc.server.script.timeout` seconds, the launch fails.
+
 #### Mods and plugins
 
 You can also manage the mods/plugins of your server.
