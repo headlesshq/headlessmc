@@ -164,13 +164,24 @@ jobs:
         include: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"} },{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
     steps:
       - uses: actions/checkout@v7
+
+      # native image builds take very long, reuse the executable if nothing it is built from has changed
+      - name: Cache native image
+        id: native-cache
+        uses: actions/cache@v6
+        with:
+          key: native-image-${{ matrix.os.name }}-${{ hashFiles('gradle/**', 'headlessmc-*/**', 'src/**', 'scripts/**', '.gitignore', 'build.gradle', 'gradle.properties', 'gradlew', 'gradlew.bat', 'lombok.config', 'settings.gradle') }}
+          path: headlessmc-application/build/${{ matrix.os.name }}*
+
       - uses: graalvm/setup-graalvm@v1
+        if: steps.native-cache.outputs.cache-hit != 'true'
         with:
           java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Output Graal Info
+        if: steps.native-cache.outputs.cache-hit != 'true'
         run: |
           echo "GRAALVM_HOME: $GRAALVM_HOME"
           echo "JAVA_HOME: $JAVA_HOME"
@@ -178,14 +189,15 @@ jobs:
           native-image --version
 
       - name: Grant execute permission for gradlew
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: chmod +x gradlew
 
       - name: Grant execute permission for script
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: chmod +x scripts/build-native.sh
 
       - name: Build with Script
+        if: steps.native-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
@@ -197,15 +209,15 @@ jobs:
           bash scripts/build-native.sh
 
       - name: List files
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: ls headlessmc-application/build
 
       - name: Rename executable
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: mv headlessmc-application/build/headlessmc-application-*-runner headlessmc-application/build/${{ matrix.os.name }}
 
       - name: Rename executable
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: Move-Item "headlessmc-application/build/headlessmc-application-*-runner.exe" "headlessmc-application/build/${{ matrix.os.name }}.exe"
 
       - name: Smoke test executable
