@@ -65,25 +65,28 @@ final class PatchContextImpl implements PatchContext {
         Path patchedFile = baseDir.resolve(patcher.name()).resolve(relative);
         try {
             Files.createDirectories(patchedFile.getParent());
+            boolean patched;
             try (
                 JarFile source = new JarFile(library.toFile());
                 JarOutputStream destination = new JarOutputStream(Files.newOutputStream(patchedFile));
             ) {
-                if (action.apply(source, destination)) {
-                    if (library.startsWith(baseDir)) {
-                        fileService.deleteFileAndEmptyParentDirs(library);
-                    }
+                patched = action.apply(source, destination);
+            }
 
-                    SequencedSet<Path> classpath = new LinkedHashSet<>(currentPatchResult.files());
-                    classpath.remove(library);
-                    classpath.add(patchedFile);
-                    currentPatchResult = new PatchResult(
-                        classpath, currentPatchResult.javaAgents(), currentPatchResult.systemProperties()
-                    );
-                    relativePaths.put(patchedFile, relative);
-                } else {
-                    fileService.deleteFileAndEmptyParentDirs(patchedFile);
+            if (patched) {
+                if (library.startsWith(baseDir)) {
+                    fileService.deleteFileAndEmptyParentDirs(library);
                 }
+
+                SequencedSet<Path> classpath = new LinkedHashSet<>(currentPatchResult.files());
+                classpath.remove(library);
+                classpath.add(patchedFile);
+                currentPatchResult = new PatchResult(
+                    classpath, currentPatchResult.javaAgents(), currentPatchResult.systemProperties()
+                );
+                relativePaths.put(patchedFile, relative);
+            } else {
+                fileService.deleteFileAndEmptyParentDirs(patchedFile);
             }
         } catch (IOException e) {
             throw new PatchException("Failed to patch library " + library + " with patcher " + patcher.name(), e);

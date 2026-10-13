@@ -199,7 +199,7 @@ jobs:
       # run the tests of all modules on every platform, to catch platform specific bugs
       - name: Test
         if: steps.native-cache.outputs.cache-hit != 'true'
-        run: ./gradlew test --stacktrace
+        run: ./gradlew test --continue --stacktrace
 
       - name: Build with Script
         if: steps.native-cache.outputs.cache-hit != 'true'
