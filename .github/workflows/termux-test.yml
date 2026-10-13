@@ -1,0 +1,245 @@
+name: Termux Test
+
+"on":
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Everything runs inside termux/termux-docker (bionic libc, Termux paths, Termux OpenJDK builds).
+# GitHub's JavaScript actions cannot run inside that image, so instead of using a job container
+# we start it in the background and run each step through docker exec as the Termux user (1000).
+env:
+  MCRT_VERSION: 4.5.2
+  TERMUX_HOME: /data/data/com.termux/files/home
+
+jobs:
+  build:
+    name: Build HeadlessMc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+
+      - name: Build uber jar
+        run: ./gradlew :headlessmc-application:quarkusBuild -PuberJar --stacktrace
+
+      - name: Rename uber jar
+        run: mv headlessmc-application/build/headlessmc-application-*-runner.jar headlessmc.jar
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: headlessmc-termux-test
+          path: headlessmc.jar
+          retention-days: 1
+
+  java-discovery:
+    name: Java discovery ${{ matrix.arch }}
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: aarch64, runner: ubuntu-24.04-arm }
+          - { arch: x86_64,  runner: ubuntu-latest }
+    env:
+      # HMC_JAVA runs HeadlessMc itself, the Java for the game has to be found by HeadlessMc
+      TERMUX: docker exec -i -u 1000:1000 -w /data/data/com.termux/files/home -e HMC_JAVA=/data/data/com.termux/files/usr/lib/jvm/java-25-openjdk/bin/java termux bash -ec
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: headlessmc-termux-test
+          path: .
+
+      - name: Start Termux
+        run: docker run -d --name termux --privileged termux/termux-docker:${{ matrix.arch }} sleep infinity
+
+      - name: Install every Java Termux packages
+        run: $TERMUX 'apt-get update && apt-get install -y -o Dpkg::Options::=--force-confnew openjdk-17 openjdk-21 openjdk-25'
+
+      - name: Copy HeadlessMc into Termux
+        run: $TERMUX 'cat > headlessmc.jar' < headlessmc.jar
+
+      # no hmc.java.versions, HeadlessMc has to find the Termux installations in $PREFIX/lib/jvm on its own
+      - name: List Java installations
+        run: $TERMUX '"$HMC_JAVA" -Dhmc.jline.enabled=false -Dhmc.java.download=false -jar headlessmc.jar java list | tee java-list.txt'
+
+      - name: Check that every Java was found with the right version
+        run: |
+          $TERMUX '
+          failed=0
+          for version in 17 21 25; do
+            home="$PREFIX/lib/jvm/java-$version-openjdk"
+            row="$(grep -F "$home" java-list.txt || true)"
+            if [ -z "$row" ]; then
+              echo "::error::HeadlessMc did not find Java $version at $home"
+              failed=1
+            elif ! echo "$row" | awk -v v="$version" "{ for (i = 1; i <= NF; i++) if (\$i == v) found = 1 } END { exit !found }"; then
+              echo "::error::HeadlessMc found $home, but not as Java $version: $row"
+              failed=1
+            fi
+          done
+          exit $failed
+          '
+
+  server:
+    name: Server ${{ matrix.platform }} 26.3${{ (matrix.platform == 'forge' || matrix.platform == 'neoforge') && (matrix.mock-java && ' mock-java' || ' script') || '' }}
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ vanilla, fabric, forge, neoforge ]
+        # run.sh needs #!/usr/bin/env, which does not exist on Termux, see hmc.server.script.mock-java
+        mock-java: [ false, true ]
+        exclude:
+          # only forge and neoforge are launched via run.sh
+          - platform: vanilla
+            mock-java: true
+          - platform: fabric
+            mock-java: true
+    env:
+      TERMUX: docker exec -i -u 1000:1000 -w /data/data/com.termux/files/home -e HMC_JAVA=/data/data/com.termux/files/usr/lib/jvm/java-25-openjdk/bin/java termux bash -ec
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: headlessmc-termux-test
+          path: .
+
+      - name: Start Termux
+        run: docker run -d --name termux --privileged termux/termux-docker:aarch64 sleep infinity
+
+      - name: Install Java
+        run: $TERMUX 'apt-get update && apt-get install -y -o Dpkg::Options::=--force-confnew openjdk-25'
+
+      - name: Copy HeadlessMc into Termux
+        run: $TERMUX 'cat > headlessmc.jar' < headlessmc.jar
+
+      - name: Install the server
+        run: $TERMUX '"$HMC_JAVA" -Dhmc.jline.enabled=false -jar headlessmc.jar server add ${{ matrix.platform }} 26.3 --name test-server --dir "$HOME/server"'
+
+      - name: Run the server test
+        # hmc.test.server waits for 'For help, type "help"' and then sends 'stop'
+        run: >
+          $TERMUX '"$HMC_JAVA" -Dhmc.jline.enabled=false
+          -Dhmc.test.server=true
+          -Dhmc.server.script.mock-java=${{ matrix.mock-java }}
+          -jar headlessmc.jar server launch test-server --eula-accept'
+
+      - name: Copy logs out of Termux
+        if: failure()
+        run: |
+          mkdir -p server
+          for dir in logs crash-reports; do
+            docker cp "termux:$TERMUX_HOME/server/$dir" server/ || true
+          done
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: termux-server-logs-${{ matrix.platform }}${{ (matrix.platform == 'forge' || matrix.platform == 'neoforge') && (matrix.mock-java && '-mock-java' || '-script') || '' }}
+          path: server/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+  client:
+    name: Client ${{ matrix.mc }} ${{ matrix.type }}
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { mc: 26.3,    type: fabric,   modloader: fabric,   java: 25 }
+          - { mc: 26.3,    type: neoforge, modloader: neoforge, java: 25 }
+          - { mc: 26.3,    type: lexforge, modloader: forge,    java: 25 }
+          # HeadlessMc runs on Java 25, so this one needs to discover Java 21 on its own
+          - { mc: 1.21.11, type: neoforge, modloader: neoforge, java: 21 }
+    env:
+      TERMUX: >-
+        docker exec -i -u 1000:1000 -w /data/data/com.termux/files/home
+        -e HMC_JAVA=/data/data/com.termux/files/usr/lib/jvm/java-25-openjdk/bin/java
+        -e HMC_FILES_LOCATION=/data/data/com.termux/files/home/HeadlessMC
+        termux bash -ec
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: headlessmc-termux-test
+          path: .
+
+      - name: Download mc-runtime-test
+        run: >
+          curl -fsSL -o mc-runtime-test.jar
+          https://github.com/headlesshq/mc-runtime-test/releases/download/${{ env.MCRT_VERSION }}/mc-runtime-test-${{ matrix.mc }}-${{ env.MCRT_VERSION }}-${{ matrix.type }}-release.jar
+
+      - name: Start Termux
+        run: docker run -d --name termux --privileged termux/termux-docker:aarch64 sleep infinity
+
+      - name: Install Java
+        run: $TERMUX 'apt-get update && apt-get install -y -o Dpkg::Options::=--force-confnew openjdk-25 openjdk-${{ matrix.java }}'
+
+      # the same setup as the mc-runtime-test action, except for hmc.java.versions
+      - name: Bootstrap HeadlessMc
+        run: |
+          $TERMUX '
+          mkdir -p HeadlessMC run/mods
+          cat <<EOF > HeadlessMC/config.properties
+          hmc.files.game=$HOME/run
+          hmc.files.game-for-each-version=false
+          hmc.files.mc=$HOME/.minecraft
+          hmc.jline.enabled=false
+          hmc.java.download=false
+          hmc.assets.dummy=true
+          EOF
+          cat <<EOF > run/options.txt
+          onboardAccessibility:false
+          pauseOnLostFocus:false
+          EOF
+          '
+          $TERMUX 'cat > headlessmc.jar' < headlessmc.jar
+          $TERMUX 'cat > run/mods/mc-runtime-test.jar' < mc-runtime-test.jar
+
+      - name: Install ${{ matrix.modloader }} ${{ matrix.mc }}
+        run: $TERMUX '"$HMC_JAVA" -jar headlessmc.jar version install ${{ matrix.modloader }} ${{ matrix.mc }}'
+
+      - name: Run the MC client
+        run: >
+          $TERMUX '"$HMC_JAVA" -jar headlessmc.jar launch -lwjgl --offline --retries 3
+          --jvm -Djava.awt.headless=true ${{ matrix.modloader }} ${{ matrix.mc }}'
+
+      - name: Copy logs out of Termux
+        if: failure()
+        run: |
+          mkdir -p logs/run logs/HeadlessMC
+          for dir in crash-reports logs; do
+            docker cp "termux:$TERMUX_HOME/run/$dir" logs/run/ || true
+          done
+          docker cp "termux:$TERMUX_HOME/HeadlessMC/logs" logs/HeadlessMC/ || true
+          docker exec termux sh -c "cat $TERMUX_HOME/run/hs_err_pid*.log" > logs/run/hs_err.log 2>/dev/null || true
+
+      - name: Upload crash reports and logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: termux-client-logs-${{ matrix.mc }}-${{ matrix.type }}
+          path: logs/**
+          if-no-files-found: ignore
+          retention-days: 7
