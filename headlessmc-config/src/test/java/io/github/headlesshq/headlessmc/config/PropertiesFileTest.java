@@ -147,7 +147,7 @@ public class PropertiesFileTest {
     public void setWorksWithWindowsLineSeparators() throws Exception {
         write("# header\r\nkey=old\r\nother=x\r\n");
         PropertiesFile.set(file(), "key", "new");
-        assertEquals(List.of("# header", "key=new", "other=x"), read().lines().toList());
+        assertEquals("# header\r\nkey=new\r\nother=x\r\n", read());
         assertEquals(Map.of("key", "new", "other", "x"), PropertiesFile.load(file()));
     }
 

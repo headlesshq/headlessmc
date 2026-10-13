@@ -66,6 +66,7 @@ final class PropertiesFile {
     static void set(Path file, String name, String value) throws ConfigurationException {
         PropertiesConfiguration configuration = Files.exists(file) ? read(file) : newConfiguration();
         PropertiesConfigurationLayout layout = configuration.getLayout();
+        layout.setLineSeparator(lineSeparator(file));
         if (configuration.isEmpty()) {
             // a file with only comments has them as footer, which would put new properties above them
             layout.setHeaderComment(layout.getFooterComment());
@@ -78,6 +79,18 @@ final class PropertiesFile {
 
         configuration.setProperty(name, value);
         write(configuration, file);
+    }
+
+    private static String lineSeparator(Path file) throws ConfigurationException {
+        if (!Files.exists(file)) {
+            return "\n";
+        }
+
+        try {
+            return Files.readString(file).contains("\r\n") ? "\r\n" : "\n";
+        } catch (IOException e) {
+            throw new ConfigurationException("Failed to read " + file, e);
+        }
     }
 
     private static PropertiesConfiguration newConfiguration() {
