@@ -40,25 +40,34 @@ jobs:
           retention-days: 1
 
   server-test:
-    name: ${{ matrix.platform }} ${{ matrix.mc }} ${{ matrix.os }} ${{ matrix.mock-java && 'mock-java' || 'script' }}
+    name: ${{ matrix.platform }} ${{ matrix.mc }} ${{ matrix.os }}${{ (matrix.platform == 'forge' || matrix.platform == 'neoforge') && (matrix.mock-java && ' mock-java' || ' script') || '' }}
     needs: build
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
+        # Windows pipes only buffer ~4KB, servers block if HeadlessMc does not read all of their output
         os: [ ubuntu-latest, windows-latest ]
-        platform: [ forge, neoforge ]
-        mc: [ 1.21.1 ]
+        # vanilla and fabric print more than 4KB during the EULA launch,
+        # forge and neoforge 26.3 print more than 4KB to stderr while starting
+        platform: [ vanilla, fabric, forge, neoforge ]
+        mc: [ 1.21.1, 26.3 ]
         # tests both ways of launching run.sh/run.bat, see hmc.server.script.mock-java
         mock-java: [ false, true ]
+        exclude:
+          # only forge and neoforge are launched via run.sh/run.bat
+          - platform: vanilla
+            mock-java: true
+          - platform: fabric
+            mock-java: true
     defaults:
       run:
         shell: bash
     env:
       HMC: java -Dhmc.jline.enabled=false
     steps:
-      # HeadlessMc runs on Java 25, the 1.21.1 server needs Java 21
+      # HeadlessMc and the 26.3 server run on Java 25, the 1.21.1 server needs Java 21
       - uses: actions/setup-java@v6
         with:
           java-version: |
@@ -87,7 +96,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: server-logs-${{ matrix.platform }}-${{ matrix.mc }}-${{ matrix.os }}-${{ matrix.mock-java && 'mock-java' || 'script' }}
+          name: server-logs-${{ matrix.platform }}-${{ matrix.mc }}-${{ matrix.os }}${{ (matrix.platform == 'forge' || matrix.platform == 'neoforge') && (matrix.mock-java && '-mock-java' || '-script') || '' }}
           path: |
             server/logs/**
             server/crash-reports/**

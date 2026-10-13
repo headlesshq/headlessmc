@@ -1,17 +1,22 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcess;
 import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 public class EulaLauncher {
     private final ServerLauncher serverLauncher;
@@ -43,9 +48,11 @@ public class EulaLauncher {
             } catch (IOException e) {
                 throw new ServerException("Failed to get server STD_IN", e);
             }
+
+            drainOutput(process);
         });
 
-        int result = serverProcess.waitFor(ProcessHandler.defaultHandler());
+        int result = serverProcess.waitFor(ignoringExitCode(ProcessHandler.defaultHandler()));
         if (eula.exists()) {
             serverService.save(profile.withEulaStatus(EulaStatus.EXISTS));
             return Optional.of(eula);
@@ -57,6 +64,41 @@ public class EulaLauncher {
 
         serverService.save(profile.withEulaStatus(EulaStatus.NONE));
         return Optional.empty();
+    }
+
+    private static ProcessHandler ignoringExitCode(ProcessHandler handler) {
+        return new ProcessHandler() {
+            @Override
+            public void handle(String process, int exitCode) {
+                // ignored
+            }
+
+            @Override
+            public void interrupted(JavaProcess process) {
+                handler.interrupted(process);
+            }
+
+            @Override
+            public void interrupted(String id, Process process) {
+                handler.interrupted(id, process);
+            }
+        };
+    }
+
+    /**
+     * Reads the output of the process until it exits.
+     * The output is piped, if nobody reads it the process blocks
+     * as soon as the pipe buffer (only ~4KB on Windows) is full.
+     */
+    private void drainOutput(Process process) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                log.debug("[EULA] {}", line);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to read output of EULA launch", e);
+        }
     }
 
 }

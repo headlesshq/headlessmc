@@ -1,7 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcess;
 import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
+import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
@@ -52,6 +54,14 @@ class EulaLauncherTest {
      * @param process the process the launch reports back, e.g. to capture its stdin.
      */
     private ServerLauncher recordingLauncher(Optional<Process> process) {
+        return recordingLauncher(Optional.empty(), process);
+    }
+
+    /**
+     * @param javaProcess the java process the launch reports back, set if the server is launched via java directly.
+     * @param process     the process the launch reports back, e.g. to capture its stdin.
+     */
+    private ServerLauncher recordingLauncher(Optional<JavaProcess> javaProcess, Optional<Process> process) {
         ServerLauncher launcher = Mockito.mock(ServerLauncher.class);
         Mockito.when(launcher.launchProcess(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
             .thenAnswer(invocation -> {
@@ -65,7 +75,7 @@ class EulaLauncherTest {
                 return new ProcessLauncher() {
                     @Override
                     public McProcess launch(boolean pipeIO) throws HeadlessMcException {
-                        return new McProcess(processName, Optional.empty(), process);
+                        return new McProcess(processName, javaProcess, process);
                     }
 
                     @Override
@@ -161,6 +171,91 @@ class EulaLauncherTest {
         Profile profile = server("srv");
         assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
         assertEquals("stop" + System.lineSeparator(), stdIn.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void javaProcessesThatExitWithAnErrorAfterCreatingTheEulaAreFine() {
+        // NeoForge 26.3 exits with 1 after creating the eula.txt
+        writeEulaOnLaunch = true;
+        JavaProcess javaProcess = Mockito.mock(JavaProcess.class);
+        Mockito.when(javaProcess.waitFor(Mockito.<ProcessHandler>any())).thenAnswer(invocation -> {
+            ProcessHandler handler = invocation.getArgument(0);
+            handler.handle("mc-eula-srv", 1);
+            return 1;
+        });
+
+        EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(javaProcess), Optional.empty()));
+
+        Profile profile = server("srv");
+        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
+        assertEquals(EulaStatus.EXISTS, profileService.getProfile("srv").orElseThrow().eulaStatus());
+    }
+
+    @Test
+    void javaProcessesThatExitWithAnErrorWithoutCreatingTheEulaFail() {
+        JavaProcess javaProcess = Mockito.mock(JavaProcess.class);
+        Mockito.when(javaProcess.waitFor(Mockito.<ProcessHandler>any())).thenReturn(1);
+        EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(javaProcess), Optional.empty()));
+
+        Profile profile = server("srv");
+        ServerException e = assertThrows(ServerException.class, () -> launcher.eulaLaunch(profile, serverService));
+        assertTrue(e.getMessage().contains("failed with exit code 1"));
+    }
+
+    @Test
+    void theServerOutputIsReadSoTheServerCanExit() {
+        writeEulaOnLaunch = true;
+        PipedOutputProcess process = new PipedOutputProcess(new byte[64 * 1024]);
+        EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(process)));
+
+        Profile profile = server("srv");
+        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
+        assertEquals(0, process.stdOut.available());
+    }
+
+    /**
+     * {@link Process} with output that has to be read before it can exit,
+     * like a real process that blocks once its output pipe is full.
+     */
+    private static final class PipedOutputProcess extends Process {
+        private final java.io.ByteArrayInputStream stdOut;
+
+        PipedOutputProcess(byte[] output) {
+            this.stdOut = new java.io.ByteArrayInputStream(output);
+        }
+
+        @Override
+        public OutputStream getOutputStream() {
+            return OutputStream.nullOutputStream();
+        }
+
+        @Override
+        public java.io.InputStream getInputStream() {
+            return stdOut;
+        }
+
+        @Override
+        public java.io.InputStream getErrorStream() {
+            return java.io.InputStream.nullInputStream();
+        }
+
+        @Override
+        public int waitFor() {
+            if (stdOut.available() > 0) {
+                fail("Process output was not read, a real process would block forever");
+            }
+
+            return 0;
+        }
+
+        @Override
+        public int exitValue() {
+            return 0;
+        }
+
+        @Override
+        public void destroy() {
+        }
     }
 
     /** Minimal {@link Process} that only exposes an output stream. */

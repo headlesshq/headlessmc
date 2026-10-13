@@ -35,7 +35,7 @@ final class ProcessBuilderImpl extends AbstractJavaProcessBuilder {
 
         if (isPipeIO()) {
             processBuilder
-                .redirectError(ProcessBuilder.Redirect.PIPE)
+                .redirectErrorStream(true)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectInput(ProcessBuilder.Redirect.PIPE);
         } else {
