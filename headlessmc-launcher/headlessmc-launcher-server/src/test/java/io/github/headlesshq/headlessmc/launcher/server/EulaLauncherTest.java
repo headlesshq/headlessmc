@@ -1,7 +1,9 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcess;
 import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
+import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
@@ -52,6 +54,14 @@ class EulaLauncherTest {
      * @param process the process the launch reports back, e.g. to capture its stdin.
      */
     private ServerLauncher recordingLauncher(Optional<Process> process) {
+        return recordingLauncher(Optional.empty(), process);
+    }
+
+    /**
+     * @param javaProcess the java process the launch reports back, set if the server is launched via java directly.
+     * @param process     the process the launch reports back, e.g. to capture its stdin.
+     */
+    private ServerLauncher recordingLauncher(Optional<JavaProcess> javaProcess, Optional<Process> process) {
         ServerLauncher launcher = Mockito.mock(ServerLauncher.class);
         Mockito.when(launcher.launchProcess(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
             .thenAnswer(invocation -> {
@@ -65,7 +75,7 @@ class EulaLauncherTest {
                 return new ProcessLauncher() {
                     @Override
                     public McProcess launch(boolean pipeIO) throws HeadlessMcException {
-                        return new McProcess(processName, Optional.empty(), process);
+                        return new McProcess(processName, javaProcess, process);
                     }
 
                     @Override
@@ -161,6 +171,35 @@ class EulaLauncherTest {
         Profile profile = server("srv");
         assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
         assertEquals("stop" + System.lineSeparator(), stdIn.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void javaProcessesThatExitWithAnErrorAfterCreatingTheEulaAreFine() {
+        // NeoForge 26.3 exits with 1 after creating the eula.txt
+        writeEulaOnLaunch = true;
+        JavaProcess javaProcess = Mockito.mock(JavaProcess.class);
+        Mockito.when(javaProcess.waitFor(Mockito.<ProcessHandler>any())).thenAnswer(invocation -> {
+            ProcessHandler handler = invocation.getArgument(0);
+            handler.handle("mc-eula-srv", 1);
+            return 1;
+        });
+
+        EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(javaProcess), Optional.empty()));
+
+        Profile profile = server("srv");
+        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
+        assertEquals(EulaStatus.EXISTS, profileService.getProfile("srv").orElseThrow().eulaStatus());
+    }
+
+    @Test
+    void javaProcessesThatExitWithAnErrorWithoutCreatingTheEulaFail() {
+        JavaProcess javaProcess = Mockito.mock(JavaProcess.class);
+        Mockito.when(javaProcess.waitFor(Mockito.<ProcessHandler>any())).thenReturn(1);
+        EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(javaProcess), Optional.empty()));
+
+        Profile profile = server("srv");
+        ServerException e = assertThrows(ServerException.class, () -> launcher.eulaLaunch(profile, serverService));
+        assertTrue(e.getMessage().contains("failed with exit code 1"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcess;
 import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
@@ -51,7 +52,7 @@ public class EulaLauncher {
             drainOutput(process);
         });
 
-        int result = serverProcess.waitFor(ProcessHandler.defaultHandler());
+        int result = serverProcess.waitFor(ignoringExitCode(ProcessHandler.defaultHandler()));
         if (eula.exists()) {
             serverService.save(profile.withEulaStatus(EulaStatus.EXISTS));
             return Optional.of(eula);
@@ -63,6 +64,25 @@ public class EulaLauncher {
 
         serverService.save(profile.withEulaStatus(EulaStatus.NONE));
         return Optional.empty();
+    }
+
+    private static ProcessHandler ignoringExitCode(ProcessHandler handler) {
+        return new ProcessHandler() {
+            @Override
+            public void handle(String process, int exitCode) {
+                // ignored
+            }
+
+            @Override
+            public void interrupted(JavaProcess process) {
+                handler.interrupted(process);
+            }
+
+            @Override
+            public void interrupted(String id, Process process) {
+                handler.interrupted(id, process);
+            }
+        };
     }
 
     /**
