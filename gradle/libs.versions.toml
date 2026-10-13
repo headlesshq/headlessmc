@@ -86,5 +86,5 @@ smallrye-config = { group = "io.smallrye.config", name = "smallrye-config" }
 xz = { group = "org.tukaani", name = "xz", version = "1.12" }
 
 [plugins]
-versions = { id = "com.github.ben-manes.versions", version = "0.64.0" }
+versions = { id = "com.github.ben-manes.versions", version = "0.66.0" }
 quarkus = { id = "io.quarkus", version.ref = "quarkus" }
