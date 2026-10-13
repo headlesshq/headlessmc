@@ -48,8 +48,8 @@ jobs:
       pull-requests: write
       packages: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
         with:
           java-version: 25
           distribution: temurin
@@ -62,7 +62,7 @@ jobs:
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
         id: jacoco
-        uses: madrapps/jacoco-report@v1.8.0
+        uses: madrapps/jacoco-report@e51ce1f46f7f8b5331593f935e59cbaf44b84920 # v1.8.0
         with:
           paths: |
             ${{ github.workspace }}/build/reports/jacoco/root/jacoco.xml
@@ -73,7 +73,7 @@ jobs:
       - name: Upload Test Reports
         if: failure()
         continue-on-error: true
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: test-reports
           path: |
@@ -94,7 +94,7 @@ jobs:
         run: mv headlessmc-application/build/headlessmc-application-*-runner.jar headlessmc-application/build/quarkus-build/gen/headlessmc.jar
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: HeadlessMc Launcher files
           path: |
@@ -102,11 +102,11 @@ jobs:
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
             ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
@@ -128,7 +128,7 @@ jobs:
         run: cp -r build/reports/jacoco/coverage/ _site/
       - name: Upload Web page artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v5.0.0
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
 
   deploy-pages:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main')
@@ -141,7 +141,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: github-pages
           path: .
@@ -149,7 +149,7 @@ jobs:
         run: ls -R
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
 
   build-natives:
     runs-on: ${{ matrix.os.os }}
@@ -163,17 +163,17 @@ jobs:
         # macOS builds take verrryyy long, so I only want to do this on release
         include: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"} },{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # native image builds take very long, reuse the executable if nothing it is built from has changed
       - name: Cache native image
         id: native-cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           key: native-image-${{ matrix.os.name }}-${{ hashFiles('gradle/**', 'headlessmc-*/**', 'src/**', 'scripts/**', '.gitignore', 'build.gradle', 'gradle.properties', 'gradlew', 'gradlew.bat', 'lombok.config', 'settings.gradle') }}
           path: headlessmc-application/build/${{ matrix.os.name }}*
 
-      - uses: graalvm/setup-graalvm@v1
+      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173 # v1
         if: steps.native-cache.outputs.cache-hit != 'true'
         with:
           java-version: '25'
@@ -232,7 +232,7 @@ jobs:
           "$EXE" help
 
       - name: Publish Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: HeadlessMc Native Image ${{ matrix.os.name }}
           path: |
@@ -288,16 +288,16 @@ jobs:
     needs: [ build, build-mc-runtime-test ]
     steps:
       - name: Install Java
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
         with:
           java-version: ${{ matrix.version.java }}
           distribution: "temurin"
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: mcrt-${{ matrix.version.mc }}
           path: .
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: HeadlessMc Launcher files
           path: hmc
@@ -333,7 +333,7 @@ jobs:
           - linux/amd64
           - linux/arm64
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
@@ -341,26 +341,26 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - name: Login to Docker Hub
         if: |
           github.event_name == 'push' &&
           github.ref == 'refs/heads/main'
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
         with:
           java-version: 25
           distribution: temurin
@@ -373,7 +373,7 @@ jobs:
 
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: ./headlessmc-application
           file: ./headlessmc-application/src/main/docker/Dockerfile.jvm
@@ -391,7 +391,7 @@ jobs:
         if: |
           github.event_name == 'push' &&
           github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -406,18 +406,18 @@ jobs:
     needs: [ release-please, docker-build, build, build-natives]
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: /tmp/digests
           pattern: digests-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
@@ -425,7 +425,7 @@ jobs:
             type=raw,value=${{ needs.release-please.outputs.tag_name }},enable=${{ needs.release-please.outputs.release_created == 'true' }}
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -446,27 +446,27 @@ jobs:
     needs: [release-please, build, build-natives, docker-release]
     steps:
       - name: Cleanup Docker
-        uses: geekyeggo/delete-artifact@v6
+        uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
         with:
           name: digests-*
           failOnError: false
       - name: Cleanup Docker 2
-        uses: geekyeggo/delete-artifact@v6
+        uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
         with:
           name: "*.dockerbuild"
           failOnError: false
       - name: Cleanup Pages
-        uses: geekyeggo/delete-artifact@v6
+        uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
         with:
           name: github-pages*
           failOnError: false
       - name: Cleanup mc-runtime-test
-        uses: geekyeggo/delete-artifact@v6
+        uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
         with:
           name: mcrt-*
           failOnError: false
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v7
+        uses: actions/upload-artifact/merge@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           delete-merged: true
 
@@ -478,7 +478,7 @@ jobs:
       contents: write
     steps:
       - name: Download HeadlessMc Launcher Artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
       - name: Display structure of downloaded files
         run: ls -R
       - name: Upload release assets
