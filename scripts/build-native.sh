@@ -2,10 +2,6 @@
 
 set -e
 
-# quarkusBuild instead of build: tests already run in the build job, and their JVMs
-# compete with native-image for memory on small runners. Extra args are passed to Gradle.
-# With SEPARATE_NATIVE_BUILD=true Gradle only generates the native-image inputs and is stopped
-# before native-image runs, so the Gradle and Quarkus JVMs do not take memory away from it.
 if [ "$SEPARATE_NATIVE_BUILD" = "true" ]; then
   set -- -Dquarkus.native.sources-only=true "$@"
 fi

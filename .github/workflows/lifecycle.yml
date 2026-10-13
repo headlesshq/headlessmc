@@ -160,7 +160,6 @@ jobs:
           - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
           #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
           - { os: ubuntu-24.04-arm, name: headlessmc-launcher-linux-arm64 }
-          - {"os": macos-latest, name: headlessmc-launcher-macos-arm64 }
         # macOS builds take verrryyy long, so I only want to do this on release
         #include: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"} },{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
     steps:
@@ -196,6 +195,11 @@ jobs:
       - name: Grant execute permission for script
         if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: chmod +x scripts/build-native.sh
+
+      # run the tests of all modules on every platform, to catch platform specific bugs
+      - name: Test
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        run: ./gradlew test --stacktrace
 
       - name: Build with Script
         if: steps.native-cache.outputs.cache-hit != 'true'
