@@ -12,6 +12,7 @@ import io.github.headlesshq.headlessmc.os.OS;
 import io.quarkus.test.component.QuarkusComponentTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
@@ -57,6 +58,7 @@ public class JavaSourcesTest {
     }
 
     @Test
+    @DisabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void configSourceScansConfiguredDirs(@TempDir Path dir) throws Exception {
         Path jdk = FakeJdks.create(dir.resolve("jdk-17"), 17);
         ConfigJavaSource source = new ConfigJavaSource(javaScannerService, FakeJavaConfig.holder(List.of(jdk)));
@@ -69,6 +71,7 @@ public class JavaSourcesTest {
     }
 
     @Test
+    @DisabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void configSourceMapsExecutablePathToHome(@TempDir Path dir) throws Exception {
         Path jdk = FakeJdks.create(dir.resolve("jdk-21"), 21);
         Path executable = jdk.resolve("bin").resolve("java");
@@ -102,6 +105,7 @@ public class JavaSourcesTest {
     }
 
     @Test
+    @DisabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void headlessMcSourceScansNestedInstallations(@TempDir Path dir) throws Exception {
         AppFiles appFiles = TestFiles.appFiles(dir);
         // e.g. OpenJDK8U-jre_x64_mac_hotspot_8u502b07/jdk8u502-b07-jre/Contents/Home on macOS

@@ -66,7 +66,9 @@ class FoojayInstallerService {
     }
 
     private void addPermissions(Path javaHome, Path executable) throws FileException {
-        if (OS.Type.WINDOWS.equals(os.type())) { // enough? Other OS we should not do this on?
+        // the file system might not support posix permissions, even if the OS type says otherwise
+        if (OS.Type.WINDOWS.equals(os.type())
+            || !executable.getFileSystem().supportedFileAttributeViews().contains("posix")) {
             return;
         }
 

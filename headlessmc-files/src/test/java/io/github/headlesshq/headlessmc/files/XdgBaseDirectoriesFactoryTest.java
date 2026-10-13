@@ -15,8 +15,14 @@ class XdgBaseDirectoriesFactoryTest {
     private static final OS MACOS = new OS("macos", OS.Type.MACOS, "15");
 
     private final FileService fileService = new DefaultFileService(new DefaultFileSystemProvider());
-    private final Path home = Path.of("/home", "hmc");
+    // "/" on Unix, but e.g. "C:\" on Windows, where "/home" would not be absolute
+    private final Path root = Path.of("").toAbsolutePath().getRoot();
+    private final Path home = root.resolve("home").resolve("hmc");
     private final XdgBaseDirectoriesFactory factory = new XdgBaseDirectoriesFactory();
+
+    private Path abs(String path) {
+        return root.resolve(path);
+    }
 
     private XdgBaseDirectories resolve(OS os, Map<String, @Nullable String> environment) {
         return factory.resolve(fileService, os, environment::get, home);
@@ -35,29 +41,29 @@ class XdgBaseDirectoriesFactoryTest {
     @Test
     void usesTheXdgVariablesIfTheyAreSet() {
         XdgBaseDirectories dirs = resolve(LINUX, Map.of(
-            XdgBaseDirectories.XDG_DATA_HOME, "/data",
-            XdgBaseDirectories.XDG_CONFIG_HOME, "/config",
-            XdgBaseDirectories.XDG_STATE_HOME, "/state",
-            XdgBaseDirectories.XDG_CACHE_HOME, "/cache"
+            XdgBaseDirectories.XDG_DATA_HOME, abs("data").toString(),
+            XdgBaseDirectories.XDG_CONFIG_HOME, abs("config").toString(),
+            XdgBaseDirectories.XDG_STATE_HOME, abs("state").toString(),
+            XdgBaseDirectories.XDG_CACHE_HOME, abs("cache").toString()
         ));
 
-        assertEquals(Path.of("/data"), dirs.dataHome());
-        assertEquals(Path.of("/config"), dirs.configHome());
-        assertEquals(Path.of("/state"), dirs.stateHome());
-        assertEquals(Path.of("/cache"), dirs.cacheHome());
+        assertEquals(abs("data"), dirs.dataHome());
+        assertEquals(abs("config"), dirs.configHome());
+        assertEquals(abs("state"), dirs.stateHome());
+        assertEquals(abs("cache"), dirs.cacheHome());
     }
 
     @Test
     void fallsBackToAppDataOnWindows() {
         XdgBaseDirectories dirs = resolve(WINDOWS, Map.of(
-            XdgBaseDirectories.APPDATA, "/C/Users/hmc/AppData/Roaming",
-            XdgBaseDirectories.LOCALAPPDATA, "/C/Users/hmc/AppData/Local"
+            XdgBaseDirectories.APPDATA, abs("C/Users/hmc/AppData/Roaming").toString(),
+            XdgBaseDirectories.LOCALAPPDATA, abs("C/Users/hmc/AppData/Local").toString()
         ));
 
-        assertEquals(Path.of("/C/Users/hmc/AppData/Roaming"), dirs.dataHome());
-        assertEquals(Path.of("/C/Users/hmc/AppData/Roaming"), dirs.configHome());
-        assertEquals(Path.of("/C/Users/hmc/AppData/Local/state"), dirs.stateHome());
-        assertEquals(Path.of("/C/Users/hmc/AppData/Local/cache"), dirs.cacheHome());
+        assertEquals(abs("C/Users/hmc/AppData/Roaming"), dirs.dataHome());
+        assertEquals(abs("C/Users/hmc/AppData/Roaming"), dirs.configHome());
+        assertEquals(abs("C/Users/hmc/AppData/Local/state"), dirs.stateHome());
+        assertEquals(abs("C/Users/hmc/AppData/Local/cache"), dirs.cacheHome());
     }
 
     @Test
@@ -72,14 +78,14 @@ class XdgBaseDirectoriesFactoryTest {
     @Test
     void theXdgVariablesWinOnWindowsToo() {
         XdgBaseDirectories dirs = resolve(WINDOWS, Map.of(
-            XdgBaseDirectories.APPDATA, "/C/Users/hmc/AppData/Roaming",
-            XdgBaseDirectories.XDG_DATA_HOME, "/D/data",
-            XdgBaseDirectories.XDG_CACHE_HOME, "/D/cache"
+            XdgBaseDirectories.APPDATA, abs("C/Users/hmc/AppData/Roaming").toString(),
+            XdgBaseDirectories.XDG_DATA_HOME, abs("D/data").toString(),
+            XdgBaseDirectories.XDG_CACHE_HOME, abs("D/cache").toString()
         ));
 
-        assertEquals(Path.of("/D/data"), dirs.dataHome());
-        assertEquals(Path.of("/C/Users/hmc/AppData/Roaming"), dirs.configHome());
-        assertEquals(Path.of("/D/cache"), dirs.cacheHome());
+        assertEquals(abs("D/data"), dirs.dataHome());
+        assertEquals(abs("C/Users/hmc/AppData/Roaming"), dirs.configHome());
+        assertEquals(abs("D/cache"), dirs.cacheHome());
     }
 
     @Test
