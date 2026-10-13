@@ -23,7 +23,7 @@ configurations {
 
 dependencies {
     // these configurations are here because they can be updated by dependabot
-    fabric "net.fabricmc:fabric-installer:1.1.1"
+    fabric "net.fabricmc:fabric-installer:1.1.2"
     fabric "net.legacyfabric:fabric-installer:1.1.1"
 
     implementation project(':headlessmc-platform')
