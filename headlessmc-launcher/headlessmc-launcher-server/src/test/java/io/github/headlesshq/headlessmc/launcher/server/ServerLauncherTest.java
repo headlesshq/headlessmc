@@ -286,7 +286,13 @@ class ServerLauncherTest {
         ProcessBuilder processBuilder = process.getProcessBuilder().orElseThrow();
         assertEquals(List.of("sh", root.resolve("srv/run.sh").toAbsolutePath().toString(), "nogui"),
             processBuilder.command());
-        assertTrue(processBuilder.environment().get("PATH").startsWith(root.resolve("java-21/bin").toString()));
+        // on Windows the variable is called "Path"
+        String path = processBuilder.environment().entrySet().stream()
+            .filter(e -> e.getKey().equalsIgnoreCase("PATH"))
+            .map(Map.Entry::getValue)
+            .findFirst()
+            .orElseThrow();
+        assertTrue(path.startsWith(root.resolve("java-21/bin").toString()), path);
         assertEquals("-Xmx2G \"-Dname=with space\"", processBuilder.environment().get("JDK_JAVA_OPTIONS"));
     }
 

@@ -9,6 +9,8 @@ import io.github.headlesshq.headlessmc.java.version.SpecificationVersionParser;
 import io.quarkus.test.component.QuarkusComponentTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
@@ -50,6 +52,7 @@ public class JavaScannerServiceTest {
     };
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void scansFakeJdkDir(@TempDir Path dir) throws Exception {
         Path jdk = FakeJdks.create(dir.resolve("jdk-17"), 17);
 
@@ -70,6 +73,7 @@ public class JavaScannerServiceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void throwsWhenAllScannersFail(@TempDir Path dir) throws Exception {
         Path jdk = FakeJdks.createBroken(dir.resolve("broken"));
 
@@ -78,6 +82,7 @@ public class JavaScannerServiceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void scanDirsSkipsFilesAndFailingDirs(@TempDir Path dir) throws Exception {
         Path good = FakeJdks.create(dir.resolve("jdk-21"), 21);
         Path broken = FakeJdks.createBroken(dir.resolve("broken"));
@@ -90,6 +95,7 @@ public class JavaScannerServiceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void scansSubDirs(@TempDir Path dir) throws Exception {
         FakeJdks.create(dir.resolve("jdk-8"), 8);
         FakeJdks.create(dir.resolve("jdk-17"), 17);
@@ -108,6 +114,7 @@ public class JavaScannerServiceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void doesNotScanNestedDirsWithoutDepth(@TempDir Path dir) throws Exception {
         FakeJdks.create(dir.resolve("jdk-17").resolve("Contents").resolve("Home"), 17);
 
@@ -116,6 +123,7 @@ public class JavaScannerServiceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void scansNestedInstallationDirs(@TempDir Path dir) throws Exception {
         // e.g. OpenJDK8U-jre_x64_mac_hotspot_8u502b07/jdk8u502-b07-jre/Contents/Home on macOS
         Path installation = dir.resolve("jre-8");

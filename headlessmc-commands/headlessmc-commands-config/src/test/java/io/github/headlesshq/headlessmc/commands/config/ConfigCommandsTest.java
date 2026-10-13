@@ -197,7 +197,7 @@ public class ConfigCommandsTest {
         command.run();
 
         assertEquals("false", fileBacked.getConfig().getValue(PROPERTY, String.class));
-        assertEquals(PROPERTY + "=false" + System.lineSeparator(), Files.readString(configFile()));
+        assertEquals(PROPERTY + "=false\n", Files.readString(configFile()));
         assertTrue(output().contains("Set " + PROPERTY + " to false"), () -> "was: " + output());
         assertFalse(output().contains("temporarily"), () -> "was: " + output());
         // a restart picks up the value

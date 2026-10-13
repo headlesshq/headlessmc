@@ -10,6 +10,8 @@ import java.nio.file.attribute.PosixFilePermissions;
  * printing a version banner to stderr, like a real java -version.
  */
 final class FakeJdks {
+    static final String WINDOWS_REASON = "fake JDKs use a shell script as bin/java, which cannot be executed on Windows";
+
     private FakeJdks() {
     }
 

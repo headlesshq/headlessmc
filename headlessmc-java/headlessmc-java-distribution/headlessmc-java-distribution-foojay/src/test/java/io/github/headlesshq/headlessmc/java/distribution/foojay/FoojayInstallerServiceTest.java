@@ -29,6 +29,13 @@ class FoojayInstallerServiceTest {
         return Installers.installer(os);
     }
 
+    private static void assertExecutable(Path file) throws IOException {
+        // e.g. on Windows there are no posix permissions to check
+        if (file.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+            assertTrue(Files.getPosixFilePermissions(file).contains(PosixFilePermission.OWNER_EXECUTE));
+        }
+    }
+
     private byte[] jdkZip() {
         return jdkZip("java");
     }
@@ -57,10 +64,8 @@ class FoojayInstallerServiceTest {
         Path home = target.resolve("jdk-21");
         assertEquals("binary", Files.readString(home.resolve("bin").resolve("java")));
 
-        Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(home.resolve("bin").resolve("java"));
-        assertTrue(permissions.contains(PosixFilePermission.OWNER_EXECUTE));
-        assertTrue(Files.getPosixFilePermissions(home.resolve("lib").resolve("jspawnhelper"))
-            .contains(PosixFilePermission.OWNER_EXECUTE));
+        assertExecutable(home.resolve("bin").resolve("java"));
+        assertExecutable(home.resolve("lib").resolve("jspawnhelper"));
     }
 
     @Test
@@ -75,10 +80,8 @@ class FoojayInstallerServiceTest {
         );
 
         Path javaHome = target.resolve(home);
-        assertTrue(Files.getPosixFilePermissions(javaHome.resolve("bin").resolve("java"))
-            .contains(PosixFilePermission.OWNER_EXECUTE));
-        assertTrue(Files.getPosixFilePermissions(javaHome.resolve("lib").resolve("jspawnhelper"))
-            .contains(PosixFilePermission.OWNER_EXECUTE));
+        assertExecutable(javaHome.resolve("bin").resolve("java"));
+        assertExecutable(javaHome.resolve("lib").resolve("jspawnhelper"));
     }
 
     @Test
