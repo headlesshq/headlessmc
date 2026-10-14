@@ -117,8 +117,11 @@ allprojects {
         // Classes loaded by the QuarkusClassLoader are transformed, so the plain jacoco
         // agent records them under mismatched class ids; quarkus-jacoco records them
         // instead, writing into the same exec file (see the Quarkus JaCoCo guide).
+        // @QuarkusComponentTest classes are defined by the QuarkusComponentTestClassLoader without
+        // a ProtectionDomain, which jacoco skips unless includeNoLocationClasses is set.
         jacoco {
             excludeClassLoaders = ["*QuarkusClassLoader"]
+            includeNoLocationClasses = true
         }
 
         systemProperty 'quarkus.jacoco.data-file', layout.buildDirectory.file('jacoco/test.exec').get().asFile.absolutePath
