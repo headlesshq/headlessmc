@@ -8,4 +8,6 @@ dependencies {
     runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
 
     implementation libs.resilience4j.retry
+
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }

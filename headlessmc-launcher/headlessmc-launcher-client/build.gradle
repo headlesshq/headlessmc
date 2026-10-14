@@ -23,4 +23,9 @@ dependencies {
 
     implementation project(':headlessmc-auth')
     implementation project(':headlessmc-auth:headlessmc-auth-cdi')
+
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
 }

@@ -1,5 +1,13 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
 dependencies {
     api project(':headlessmc-patcher')
     api libs.asm
     api libs.asm.tree
+
+    testFixturesApi project(':headlessmc-patcher')
+    testFixturesApi libs.asm
+    testFixturesImplementation libs.jspecify
 }
