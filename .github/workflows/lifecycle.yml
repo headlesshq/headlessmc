@@ -100,7 +100,6 @@ jobs:
           path: |
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
-            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
@@ -553,7 +552,6 @@ jobs:
           gh release upload "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --clobber \
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar \
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar \
-            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar \
             ./headlessmc-launcher-linux-x64 \
             ./headlessmc-launcher-windows-x64.exe \
             ./headlessmc-launcher-macos-x64 \
