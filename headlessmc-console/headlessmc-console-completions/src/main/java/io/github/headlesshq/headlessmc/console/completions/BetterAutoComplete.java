@@ -1,9 +1,7 @@
 package io.github.headlesshq.headlessmc.console.completions;
 
 import io.github.headlesshq.headlessmc.console.Completions;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
@@ -14,19 +12,16 @@ import java.util.*;
  * A better {@link picocli.AutoComplete}.
  * Has better handling for positional parameters.
  */
-@Slf4j
-@RegisterForReflection(targets = CommandLine.ParseResult.class) // access tentativeMatch
 @RequiredArgsConstructor
 public class BetterAutoComplete {
     @SuppressWarnings("unchecked")
-    private List<Object> tentativeMatch(CommandLine.ParseResult parseResult) {
+    static List<Object> tentativeMatch(CommandLine.ParseResult parseResult) {
         try {
             Field field = CommandLine.ParseResult.class.getDeclaredField("tentativeMatch");
             field.setAccessible(true);
             return (List<Object>) field.get(parseResult);
         } catch (IllegalAccessException | NoSuchFieldException e) {
-            log.error("Failed to get tentativeMatch", e);
-            return new ArrayList<>();
+            throw new IllegalStateException("Failed to get tentativeMatch", e);
         }
     }
 
@@ -76,7 +71,8 @@ public class BetterAutoComplete {
                 }
             } else {
                 CommandLine.Model.CommandSpec lastSpec = parseResult.commandSpec();
-                for (Object match : tentativeMatch.reversed()) {
+                for (int i = tentativeMatch.size() - 1; i >= 0; i--) {
+                    Object match = tentativeMatch.get(i);
                     if (match instanceof CommandLine.Model.CommandSpec) {
                         lastSpec = (CommandLine.Model.CommandSpec) match;
                         break;

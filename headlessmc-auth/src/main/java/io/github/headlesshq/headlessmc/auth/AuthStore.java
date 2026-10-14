@@ -24,7 +24,7 @@ public interface AuthStore<T> {
     Optional<T> getById(String id) throws AuthStoreException;
 
     default Stream<T> stream() throws AuthStoreException {
-        return read().sequencedValues().stream();
+        return read().values().stream();
     }
 
 }

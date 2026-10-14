@@ -52,7 +52,7 @@ public class LastUsedAccountServiceImpl implements LastUsedAccountService {
             info -> info.getProvider().equals(account.getProvider()) && info.getName().equals(account.getName())
         );
 
-        infos.addFirst(new AccountInfo(account.getProvider(), account.getName()));
+        infos.add(0, new AccountInfo(account.getProvider(), account.getName()));
         store.add("latest", infos);
     }
 

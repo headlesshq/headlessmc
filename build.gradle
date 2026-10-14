@@ -56,12 +56,14 @@ allprojects {
         Set<String> java8Projects = new HashSet<>(baseProjects)
         java8Projects.add('headlessmc-console')
         java8Projects.add('headlessmc-console-format')
+        java8Projects.add('headlessmc-console-completions')
         java8Projects.add('headlessmc-auth')
         java8Projects.add('headlessmc-auth-all')
         java8Projects.add('headlessmc-auth-impl')
         java8Projects.add('headlessmc-auth-offline')
         java8Projects.add('headlessmc-auth-store-gson')
         java8Projects.add('headlessmc-auth-yggdrasil')
+        java8Projects.add('headlessmc-auth-webview')
         java8Projects.add('headlessmc-commands-auth')
         if (!java8Projects.contains(project.name)) {
             implementation platform(libs.quarkus)
@@ -147,6 +149,7 @@ publish {
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+    options.release = 8
 }
 
 tasks.register('jacocoRootReport', JacocoReport) {

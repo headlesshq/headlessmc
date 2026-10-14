@@ -13,14 +13,17 @@ import io.github.headlesshq.headlessmc.console.jline.JlineConsoleProvider;
 import io.github.headlesshq.headlessmc.console.output.FileDescriptorOutput;
 import io.github.headlesshq.headlessmc.console.output.OutputProvider;
 import io.github.headlesshq.headlessmc.console.output.StdOutOutput;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Default;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Named;
+import picocli.CommandLine;
 
 @ApplicationScoped
+@RegisterForReflection(targets = CommandLine.ParseResult.class) // BetterAutoComplete accesses tentativeMatch
 public class ConsoleFactory {
     @Produces
     @Default
