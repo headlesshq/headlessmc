@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     alias(libs.plugins.quarkus)
+    alias(libs.plugins.nmcp)
 }
 
 def generateVersionSource = tasks.register('generateVersionSource', Sync) {
@@ -17,6 +18,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+    apply plugin: 'com.gradleup.nmcp'
     apply plugin: 'jacoco'
     apply plugin: 'jacoco-report-aggregation'
     apply plugin: 'io.quarkus'
@@ -128,10 +131,81 @@ allprojects {
     }
 
 
+    java {
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    def delombok = tasks.register('delombok', JavaExec) {
+        def srcDirs = sourceSets.main.java.sourceDirectories
+        def outputDir = layout.buildDirectory.dir('delombok')
+        inputs.files(srcDirs).skipWhenEmpty()
+        outputs.dir(outputDir)
+        classpath = configurations.annotationProcessor
+        mainClass = 'lombok.launch.Main'
+        argumentProviders.add({
+            ['delombok', '--quiet', '--encoding', 'UTF-8',
+             '--classpath', sourceSets.main.compileClasspath.asPath,
+             '-d', outputDir.get().asFile.absolutePath] +
+                    srcDirs.files.findAll { it.exists() }.collect { it.absolutePath }
+        } as CommandLineArgumentProvider)
+    }
+
+    javadoc {
+        dependsOn delombok
+        source = files(delombok.map { it.outputs.files })
+        options.encoding = 'UTF-8'
+        options.addStringOption('Xdoclint:none', '-quiet')
+        options.addBooleanOption('-no-fonts', true)
+        failOnError = false
+    }
+
+    def published = !['headlessmc-application', 'headlessmc-docs'].contains(project.name)
+
     publishing {
         publications {
-            mavenJava(MavenPublication) {
+            if (published) mavenJava(MavenPublication) {
                 from components.java
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
+                    }
+                }
+                pom {
+                    name = project.name
+                    description = project.description ?: 'HeadlessMc, a command line launcher for Minecraft Java Edition. Module: ' + project.name
+                    url = 'https://github.com/headlesshq/headlessmc'
+                    licenses {
+                        license {
+                            name = 'MIT License'
+                            url = 'https://opensource.org/license/mit'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = '3arthqu4ke'
+                            name = '3arthqu4ke'
+                            url = 'https://github.com/3arthqu4ke'
+                        }
+                        developer {
+                            id = 'okafke'
+                            name = 'okafke'
+                            url = 'https://github.com/okafke'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:https://github.com/headlesshq/headlessmc.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/headlesshq/headlessmc.git'
+                        url = 'https://github.com/headlesshq/headlessmc'
+                    }
+                    issueManagement {
+                        system = 'GitHub'
+                        url = 'https://github.com/headlesshq/headlessmc/issues'
+                    }
+                }
             }
         }
         repositories {
@@ -140,10 +214,38 @@ allprojects {
             }
         }
     }
+
+    def signingKey = providers.environmentVariable('SIGNING_KEY')
+    signing {
+        required = signingKey.present
+        if (signingKey.present) {
+            useInMemoryPgpKeys(signingKey.get(), providers.environmentVariable('SIGNING_PASSWORD').getOrElse(''))
+        }
+        sign publishing.publications
+    }
+}
+
+nmcpAggregation {
+    centralPortal {
+        username = providers.environmentVariable('MAVEN_CENTRAL_USERNAME')
+        password = providers.environmentVariable('MAVEN_CENTRAL_PASSWORD')
+        // USER_MANAGED: check and publish the deployment manually at https://central.sonatype.com/publishing/deployments
+        publishingType = providers.environmentVariable('MAVEN_CENTRAL_PUBLISHING_TYPE').orElse('AUTOMATIC')
+        publicationName = "headlessmc-${version}"
+        validationTimeout = java.time.Duration.ofMinutes(30)
+        // validation passed, Central finishes publishing by itself
+        publishingTimeout = java.time.Duration.ZERO
+    }
+}
+
+dependencies {
+    allprojects {
+        nmcpAggregation(project(path))
+    }
 }
 
 publish {
-    subprojects.each { dependsOn("${it.name}:publish") }
+    subprojects.each { dependsOn("${it.path}:publish") }
 }
 
 compileJava {

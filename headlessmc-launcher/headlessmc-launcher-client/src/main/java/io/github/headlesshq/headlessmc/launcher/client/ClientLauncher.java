@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 public class ClientLauncher {
     private final ArgumentTemplateService argumentTemplateService;
     private final LastUsedAccountService lastUsedAccountService;
+    private final SpecificsPropertiesService specificsPropertiesService;
     private final VersionMatcherService versionMatcherService;
     private final VersionJsonService versionJsonService;
     private final TemplateStringService templateService;
@@ -113,6 +114,7 @@ public class ClientLauncher {
 
         // system properties required by the patchers, unless the user specified them otherwise
         patchResult.systemProperties().forEach(arguments.systemProperties()::putIfAbsent);
+        specificsPropertiesService.getSystemProperties().forEach(arguments.systemProperties()::putIfAbsent);
 
         arguments = argumentTemplateService.process(arguments, templates);
 

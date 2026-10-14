@@ -22,6 +22,7 @@ sourceSets.java9.compileClasspath += sourceSets.main.output
 sourceSets.java9.compileClasspath += sourceSets.main.compileClasspath
 
 sourceSets.main.compileClasspath += sourceSets.mock.output
+javadoc.classpath += sourceSets.mock.output
 
 dependencies {
     api libs.asm
