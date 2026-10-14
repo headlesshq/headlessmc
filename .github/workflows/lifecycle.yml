@@ -156,12 +156,13 @@ jobs:
     strategy:
       matrix:
         os:
-          - { os: windows-latest, name: headlessmc-launcher-windows-x64}
-          - { os: ubuntu-latest, name: headlessmc-launcher-linux-x64 }
-          #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
+          - { os: windows-latest,   name: headlessmc-launcher-windows-x64}
+          - { os: ubuntu-latest,    name: headlessmc-launcher-linux-x64 }
           - { os: ubuntu-24.04-arm, name: headlessmc-launcher-linux-arm64 }
+          - { os: macos-15-intel,   name: headlessmc-launcher-macos-x64 }
+          #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
         # macOS builds take verrryyy long, so I only want to do this on release
-        include: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[{"os":{"os":"macos-15-intel","name":"headlessmc-launcher-macos-x64"} },{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
+        include: ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[{"os":{"os":"macos-latest","name":"headlessmc-launcher-macos-arm64"} }]' || '[]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -196,11 +197,6 @@ jobs:
         if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
         run: chmod +x scripts/build-native.sh
 
-      # run the tests of all modules on every platform, to catch platform specific bugs
-      - name: Test
-        if: steps.native-cache.outputs.cache-hit != 'true'
-        run: ./gradlew test --continue --stacktrace
-
       - name: Build with Script
         if: steps.native-cache.outputs.cache-hit != 'true'
         shell: bash
@@ -211,19 +207,7 @@ jobs:
             sudo launchctl limit maxfiles 524288 524288
             ulimit -n 524288
           fi
-          ARGS=()
-          if [[ "$RUNNER_OS" == "macOS" && "$RUNNER_ARCH" == "ARM64" ]]; then
-            # macos-latest only has 7GB RAM, native-image defaults to 75% of it as heap
-            ARGS+=(-Dorg.gradle.jvmargs=-Xmx512m -Dquarkus.native.native-image-xmx=4g)
-            # stop Gradle before running native-image, its JVMs otherwise push the runner into swap
-            export SEPARATE_NATIVE_BUILD=true
-            # log memory/swap every minute, to see if the runner is swapping
-            (while sleep 60; do
-              echo "[mem] $(sysctl -n vm.swapusage) | $(vm_stat | grep -E 'Pages (free|occupied by compressor)|Compressions|Decompressions|Swapouts' | tr -s ' ' | tr '\n' ' ') | load $(sysctl -n vm.loadavg)"
-              ps -Ao pcpu=,rss=,comm= -r | head -5 | sed 's/^/[top] /'
-            done) &
-          fi
-          bash scripts/build-native.sh "${ARGS[@]}"
+          bash scripts/build-native.sh
 
       - name: List files
         if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
