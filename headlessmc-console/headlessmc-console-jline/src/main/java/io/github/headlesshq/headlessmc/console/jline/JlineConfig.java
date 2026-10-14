@@ -15,4 +15,9 @@ public interface JlineConfig extends DynamicConfig {
 
     Optional<String> tooManyCandidates();
 
+    /**
+     * Only used in game by hmc-specifics, declared here so that the config knows the property.
+     */
+    boolean dumb();
+
 }
