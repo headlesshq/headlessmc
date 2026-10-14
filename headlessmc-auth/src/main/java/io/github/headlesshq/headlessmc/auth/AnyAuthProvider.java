@@ -24,7 +24,7 @@ public class AnyAuthProvider implements AuthProvider {
         }
 
         if (result.size() == 1) {
-            return Optional.of(result.getFirst());
+            return Optional.of(result.get(0));
         } else if (result.isEmpty()) {
             return Optional.empty();
         } else {
