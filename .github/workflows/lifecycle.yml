@@ -59,6 +59,20 @@ jobs:
       - name: Test, coverage and build
         run: ./gradlew jacocoRootReport build :headlessmc-application:quarkusBuild -PuberJar --stacktrace
 
+      # Runs on PRs too, so problems with javadoc/sources/poms show up before a release.
+      # Writes the unsigned artifacts to build/maven, they are signed by the maven-central job.
+      - name: Stage Maven Central artifacts
+        run: ./gradlew publish --stacktrace
+
+      # The maven-central job runs after every other job and publishes exactly these artifacts,
+      # so nothing has to be built or tested again. An artifact would not survive the merge job.
+      - name: Cache Maven Central artifacts
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          key: maven-central-staging-${{ github.run_id }}
+          path: build/maven
+
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
         id: jacoco
@@ -559,3 +573,54 @@ jobs:
             ./headlessmc-launcher-macos-x64 \
             ./headlessmc-launcher-linux-arm64 \
             ./headlessmc-launcher-macos-arm64
+
+  maven-central:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+    # Releases on Maven Central are immutable, so this job runs last and only if every other job succeeded.
+    # Keep this list in sync with all jobs of this workflow!
+    needs:
+      - release-please
+      - build
+      - deploy-pages
+      - build-natives
+      - build-mc-runtime-test
+      - mc-runtime-test
+      - server-test
+      - docker-build
+      - docker-release
+      - merge
+      - release
+    if: >-
+      !cancelled()
+      && needs.release-please.outputs.release_created == 'true'
+      && !contains(needs.*.result, 'failure')
+      && !contains(needs.*.result, 'cancelled')
+      && !contains(needs.*.result, 'skipped')
+    # holds the secrets, can be protected with required reviewers
+    environment:
+      name: maven-central
+      url: https://central.sonatype.com/namespace/io.github.headlesshq
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout: scripts
+
+      - name: Restore Maven Central artifacts
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          key: maven-central-staging-${{ github.run_id }}
+          path: build/maven
+          fail-on-cache-miss: true
+
+      - name: Sign and upload to Maven Central
+        env:
+          SIGNING_KEY: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SIGNING_PASSWORD }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          # set the repository variable to USER_MANAGED to check and publish deployments manually in the portal
+          MAVEN_CENTRAL_PUBLISHING_TYPE: ${{ vars.MAVEN_CENTRAL_PUBLISHING_TYPE || 'AUTOMATIC' }}
+        run: bash scripts/publish-maven-central.sh build/maven
