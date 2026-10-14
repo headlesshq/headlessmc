@@ -130,8 +130,9 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
                         Files.createDirectories(parent);
                     }
 
-                    written.set(true);
                     try (OutputStream outputStream = Files.newOutputStream(file)) {
+                        // only now has an existing file been truncated, if opening fails we must not delete it
+                        written.set(true);
                         inputStream.transferTo(outputStream);
                     }
                 }

@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests the {@link JavaDownloadService} against a local {@link HttpServer}.
@@ -348,6 +349,20 @@ class JavaDownloadTest {
         assertThrows(RequestException.class, () -> service().download(uri("/missing")).toFile(file));
 
         assertEquals("existing", Files.readString(file));
+    }
+
+    @Test
+    void existingFilesAreKeptIfTheyCannotBeOpened() throws IOException {
+        Path file = Files.writeString(root.resolve("file.txt"), "existing");
+        assumeTrue(file.toFile().setWritable(false) && !Files.isWritable(file), "cannot make file read-only (root?)");
+        try {
+            assertThrows(RequestException.class, () -> service().download(uri("/text")).toFile(file));
+
+            assertEquals("existing", Files.readString(file));
+        } finally {
+            // allow the TempDir to clean up
+            file.toFile().setWritable(true);
+        }
     }
 
     @Test
