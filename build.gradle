@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     alias(libs.plugins.quarkus)
+    alias(libs.plugins.nmcp)
 }
 
 def generateVersionSource = tasks.register('generateVersionSource', Sync) {
@@ -17,6 +18,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+    apply plugin: 'com.gradleup.nmcp'
     apply plugin: 'jacoco'
     apply plugin: 'jacoco-report-aggregation'
     apply plugin: 'io.quarkus'
@@ -128,13 +131,11 @@ allprojects {
     }
 
 
-    // Maven Central requires a -sources.jar and a -javadoc.jar for every jar
     java {
         withSourcesJar()
         withJavadocJar()
     }
 
-    // javadoc does not run annotation processors, so it has to work on delomboked sources
     def delombok = tasks.register('delombok', JavaExec) {
         def srcDirs = sourceSets.main.java.sourceDirectories
         def outputDir = layout.buildDirectory.dir('delombok')
@@ -154,22 +155,17 @@ allprojects {
         dependsOn delombok
         source = files(delombok.map { it.outputs.files })
         options.encoding = 'UTF-8'
-        // Lombok generated members and incomplete docs must not fail the build
         options.addStringOption('Xdoclint:none', '-quiet')
-        // otherwise every javadoc jar bundles ~4MB of web fonts
         options.addBooleanOption('-no-fonts', true)
         failOnError = false
     }
 
-    // The application is distributed as uber-jar/native image/docker image,
-    // headlessmc-docs is only used to generate documentation.
     def published = !['headlessmc-application', 'headlessmc-docs'].contains(project.name)
 
     publishing {
         publications {
             if (published) mavenJava(MavenPublication) {
                 from components.java
-                // write the resolved versions instead of relying on the imported Quarkus BOM
                 versionMapping {
                     usage('java-api') {
                         fromResolutionOf('runtimeClasspath')
@@ -213,11 +209,38 @@ allprojects {
             }
         }
         repositories {
-            // Local staging repository, signed and uploaded to Maven Central by scripts/publish-maven-central.sh
             maven {
                 url = uri("${project.rootProject.getLayout().buildDirectory.get()}/maven")
             }
         }
+    }
+
+    def signingKey = providers.environmentVariable('SIGNING_KEY')
+    signing {
+        required = signingKey.present
+        if (signingKey.present) {
+            useInMemoryPgpKeys(signingKey.get(), providers.environmentVariable('SIGNING_PASSWORD').getOrElse(''))
+        }
+        sign publishing.publications
+    }
+}
+
+nmcpAggregation {
+    centralPortal {
+        username = providers.environmentVariable('MAVEN_CENTRAL_USERNAME')
+        password = providers.environmentVariable('MAVEN_CENTRAL_PASSWORD')
+        // USER_MANAGED: check and publish the deployment manually at https://central.sonatype.com/publishing/deployments
+        publishingType = providers.environmentVariable('MAVEN_CENTRAL_PUBLISHING_TYPE').orElse('AUTOMATIC')
+        publicationName = "headlessmc-${version}"
+        validationTimeout = java.time.Duration.ofMinutes(30)
+        // validation passed, Central finishes publishing by itself
+        publishingTimeout = java.time.Duration.ZERO
+    }
+}
+
+dependencies {
+    allprojects {
+        nmcpAggregation(project(path))
     }
 }
 
