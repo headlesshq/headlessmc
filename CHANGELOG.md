@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.0-RC8](https://github.com/headlesshq/headlessmc/compare/3.0.0-RC7...3.0.0-RC8) (2026-10-15)
+
+
+### Features
+
+* **specifics:** pass specifics to game system properties ([#470](https://github.com/headlesshq/headlessmc/issues/470)) ([2fe59a7](https://github.com/headlesshq/headlessmc/commit/2fe59a70f73407e1098c4520e0702a0f0c22cfd6))
+
+
+### Bug Fixes
+
+* **lwjgl:** relocate ASM in agent jar and report transform failures ([#473](https://github.com/headlesshq/headlessmc/issues/473)) ([aa14b29](https://github.com/headlesshq/headlessmc/commit/aa14b293b56cfb437a3a37fec61c62c47dab90ec)), closes [#471](https://github.com/headlesshq/headlessmc/issues/471) [#472](https://github.com/headlesshq/headlessmc/issues/472)
+* **net:** delete files when hash verification failed ([#474](https://github.com/headlesshq/headlessmc/issues/474)) ([544db67](https://github.com/headlesshq/headlessmc/commit/544db67fa2984f7e6e71f18bbe9775d8947d2e6a))
+* **windows:** fixed line ending and patching issues ([#466](https://github.com/headlesshq/headlessmc/issues/466)) ([5b16cbf](https://github.com/headlesshq/headlessmc/commit/5b16cbf6a00ec75ba0dedd31b2e8aa6eb103a204))
+
 ## [3.0.0-RC7](https://github.com/headlesshq/headlessmc/compare/3.0.0-RC6...3.0.0-RC7) (2026-10-13)
 
 
