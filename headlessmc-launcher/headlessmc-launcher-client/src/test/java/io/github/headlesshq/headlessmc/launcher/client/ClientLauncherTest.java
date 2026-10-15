@@ -189,6 +189,7 @@ class ClientLauncherTest {
         return new ClientLauncher(
             new ArgumentTemplateService(),
             Mockito.mock(LastUsedAccountService.class),
+            Mockito.mock(SpecificsPropertiesService.class),
             versionMatcherService,
             versionJsonService,
             new TemplateStringService(mcFiles, CPU.X64),
