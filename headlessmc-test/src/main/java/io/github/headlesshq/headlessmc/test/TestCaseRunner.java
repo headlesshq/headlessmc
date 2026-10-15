@@ -41,7 +41,7 @@ public class TestCaseRunner {
         Frame nextFrame = getFrame();
         if (nextFrame != null) {
             TestCase.Action nextAction = nextFrame.actions.get(nextFrame.index);
-            timeoutHandler.setTimeout(nextAction.getTimeout(test));
+            timeoutHandler.setTimeout(nextAction.getStepTimeout(test));
         } else {
             timeoutHandler.removeTimeout();
         }

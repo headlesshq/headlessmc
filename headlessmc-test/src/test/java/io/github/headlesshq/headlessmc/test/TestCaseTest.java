@@ -37,6 +37,16 @@ public class TestCaseTest {
     }
 
     @Test
+    public void stepTimeoutOfWaitIncludesItsDuration() {
+        TestCase testCase = new TestCase(List.of(), "test", 42L, null, null);
+        assertEquals(42L, action(CONTAINS, "x").getStepTimeout(testCase));
+        assertEquals(3L, Actions.withTimeout(action(CONTAINS, "x"), 3L).getStepTimeout(testCase));
+        assertEquals(45L, Actions.withTimeout(action(WAIT, null), 3L).getStepTimeout(testCase));
+        assertEquals(42L, action(WAIT, null).getStepTimeout(testCase), "WAIT without timeout fails when evaluated");
+        assertEquals(3L, Actions.withTimeout(action(WAIT_FOR_END, null), 3L).getStepTimeout(testCase));
+    }
+
+    @Test
     public void actionIgnoreCaseDefaultsToFalse() {
         assertFalse(action(CONTAINS, "x").isIgnoreCase());
         assertTrue(ignoreCase(CONTAINS, "x").isIgnoreCase());

@@ -59,6 +59,19 @@ public class TestCase implements ReflectionRegistered {
             return timeout == null ? testCase.getTimeout() : timeout;
         }
 
+        /**
+         * The timeout for the {@link TimeoutHandler} while this action is the current step.
+         * A {@link Type#WAIT} sleeps for its timeout, so it gets the timeout of the test case on top,
+         * otherwise the step would time out while waiting.
+         */
+        public Long getStepTimeout(TestCase testCase) {
+            if (type == Type.WAIT && timeout != null) {
+                return timeout + testCase.getTimeout();
+            }
+
+            return getTimeout(testCase);
+        }
+
         public boolean isIgnoreCase() {
             return ignoreCase != null && ignoreCase;
         }

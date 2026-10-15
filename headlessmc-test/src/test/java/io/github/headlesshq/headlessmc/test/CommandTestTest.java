@@ -84,6 +84,22 @@ public class CommandTestTest {
     }
 
     @Test
+    public void waitDoesNotTimeOutTheTest() {
+        // the step timeout of a WAIT used to be the duration of the WAIT, so the timeout always fired during it
+        TestCase testCase = new TestCase(
+            List.of(contains("ready"), withTimeout(action(TestCase.Action.Type.WAIT, null), 1L), send("waited"), contains("done"), success()),
+            "test", 5L, false, null);
+        FakeProcess process = FakeProcess.withLines(true, "ready", "done");
+
+        CommandTest commandTest = commandTest(testCase, process);
+        commandTest.run();
+
+        assertTrue(commandTest.wasSuccessful(), "test failed: " + commandTest.getMessage());
+        assertNull(commandTest.getMessage());
+        assertEquals("waited" + System.lineSeparator(), process.getWrittenInput());
+    }
+
+    @Test
     public void totalTimeoutStopsWaiting() throws IOException {
         TestCase testCase = new TestCase(List.of(contains("never")), "test", 60L, false, 1L);
         CommandTest commandTest = commandTest(testCase, new FakeProcess(silentStream(), true));

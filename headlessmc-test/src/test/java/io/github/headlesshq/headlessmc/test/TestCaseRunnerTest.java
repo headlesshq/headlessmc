@@ -207,6 +207,16 @@ public class TestCaseRunnerTest {
     }
 
     @Test
+    public void waitTimeoutIncludesTheDurationOfTheWait() throws IOException {
+        TestCase.Action wait = withTimeout(action(TestCase.Action.Type.WAIT, null), 1L);
+        TestCase testCase = new TestCase(List.of(contains("ready"), wait, contains("done")), "test", 30L, false, null);
+        TestCaseRunner runner = runner(testCase);
+
+        assertEquals(TestCase.Result.MATCH, runner.runStep(process, "ready"));
+        assertEquals(List.of(31L, 30L), timeoutHandler.timeouts, "WAIT should get the test timeout on top of its duration");
+    }
+
+    @Test
     public void updateTimeoutOnEmptyTestRemovesTheTimeout() {
         timeoutHandler.setTimeout(10L);
         runner(testCase()).updateTimeout();
