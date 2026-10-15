@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-final class TestClasses {
+public final class TestClasses {
     private TestClasses() {
     }
 
-    static byte[] classBytes(String internalName, String superName, String... interfaces) {
+    public static byte[] classBytes(String internalName, String superName, String... interfaces) {
         ClassWriter writer = new ClassWriter(0);
         writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, internalName, null, superName,
             interfaces.length == 0 ? null : interfaces);
@@ -23,7 +23,7 @@ final class TestClasses {
         return writer.toByteArray();
     }
 
-    static Path writeJar(Path file, Map<String, byte[]> entries) throws IOException {
+    public static Path writeJar(Path file, Map<String, byte[]> entries) throws IOException {
         Files.createDirectories(file.getParent());
         try (OutputStream out = Files.newOutputStream(file);
              JarOutputStream jar = new JarOutputStream(out)) {

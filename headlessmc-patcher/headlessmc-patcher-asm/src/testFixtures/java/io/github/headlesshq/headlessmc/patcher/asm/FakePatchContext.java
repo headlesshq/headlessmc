@@ -19,13 +19,13 @@ import java.util.stream.Stream;
  * Minimal PatchContext for tests, patching jars below a base dir
  * like the real implementation does.
  */
-final class FakePatchContext implements PatchContext {
+public final class FakePatchContext implements PatchContext {
     private final List<HelperService> services;
     private final PatchResult initialPatchResult;
     private final Path baseDir;
     private PatchResult currentPatchResult;
 
-    FakePatchContext(Path baseDir, PatchResult patchResult, List<HelperService> services) {
+    public FakePatchContext(Path baseDir, PatchResult patchResult, List<HelperService> services) {
         this.baseDir = baseDir;
         this.initialPatchResult = patchResult;
         this.currentPatchResult = patchResult;

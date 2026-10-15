@@ -26,4 +26,7 @@ dependencies {
     implementation project(':headlessmc-auth:headlessmc-auth-cdi')
 
     implementation project(':headlessmc-console:headlessmc-console-cdi')
+
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+    testImplementation testFixtures(project(':headlessmc-console'))
 }

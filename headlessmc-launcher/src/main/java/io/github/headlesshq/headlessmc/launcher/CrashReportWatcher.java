@@ -52,7 +52,8 @@ public class CrashReportWatcher implements AutoCloseable {
 
                     for (WatchEvent<?> event : key.pollEvents()) {
                         if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())) {
-                            Path path = (Path) event.context();
+                            // the context is relative to the watched directory
+                            Path path = directory.toAbsolutePath().resolve((Path) event.context());
                             for (Consumer<Path> listener : listeners) {
                                 listener.accept(path);
                             }
@@ -69,6 +70,9 @@ public class CrashReportWatcher implements AutoCloseable {
         });
     }
 
+    /**
+     * @param listener receives the absolute path of each crash report created.
+     */
     public void addListener(Consumer<Path> listener) {
         listeners.add(listener);
     }

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 final class JavaDownloadBuilder extends AbstractDownloadBuilder {
@@ -119,30 +120,42 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
             throw new FileException("File " + file + " exists and is directory");
         }
 
-        start(download -> {
-            try (InputStream inputStream = download.getInputStream()) {
-                Path parent = file.getParent();
-                if (parent != null) {
-                    Files.createDirectories(parent);
-                }
-
-                try (OutputStream outputStream = Files.newOutputStream(file)) {
-                    inputStream.transferTo(outputStream);
-                } catch (IOException e) {
-                    if (config.deleteFailedFiles()) {
-                        try {
-                            Files.deleteIfExists(file);
-                        } catch (IOException deleteException) {
-                            e.addSuppressed(deleteException);
-                        }
+        // verification happens after the file has been written, so we also need to delete on failed verification
+        AtomicBoolean written = new AtomicBoolean(false);
+        try {
+            start(download -> {
+                try (InputStream inputStream = download.getInputStream()) {
+                    Path parent = file.getParent();
+                    if (parent != null) {
+                        Files.createDirectories(parent);
                     }
 
-                    throw e;
+                    try (OutputStream outputStream = Files.newOutputStream(file)) {
+                        // only now has an existing file been truncated, if opening fails we must not delete it
+                        written.set(true);
+                        inputStream.transferTo(outputStream);
+                    }
                 }
-            }
-        });
+            });
+        } catch (HeadlessMcException e) {
+            deleteFailedFile(file, written.get(), e);
+            throw e;
+        } catch (RuntimeException e) {
+            deleteFailedFile(file, written.get(), e);
+            throw e;
+        }
 
         return file;
+    }
+
+    private void deleteFailedFile(Path file, boolean written, Exception cause) {
+        if (written && config.deleteFailedFiles()) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException deleteException) {
+                cause.addSuppressed(deleteException);
+            }
+        }
     }
 
     private <T> T mapWithoutRetry(ExFunction<Download, T> action) throws Exception {

@@ -22,6 +22,7 @@ sourceSets.java9.compileClasspath += sourceSets.main.output
 sourceSets.java9.compileClasspath += sourceSets.main.compileClasspath
 
 sourceSets.main.compileClasspath += sourceSets.mock.output
+javadoc.classpath += sourceSets.mock.output
 
 dependencies {
     api libs.asm
@@ -67,6 +68,10 @@ jar {
 
 shadowJar {
     dependsOn compileModuleInfo
+    // https://github.com/headlesshq/headlessmc/issues/471
+    // Javaagent jars are appended to the end of the classpath, so an older ASM that comes with the game
+    // (vanilla 1.21.2 ships 9.3) would otherwise be used together with our newer asm-tree.
+    relocate 'org.objectweb.asm', 'io.github.headlesshq.headlessmc.lwjgl.shadow.asm'
     exclude { it.relativePath.pathString == 'module-info.class' }
     doLast {
         // TODO: don't use Ant for this...
@@ -100,19 +105,6 @@ tasks.register('macosMenuAgentJar', com.github.jengelman.gradle.plugins.shadow.t
 
     exclude { it.relativePath.pathString == 'module-info.class' }
 }
-
-// https://github.com/headlesshq/headlessmc/issues/199
-// fabric 0.16.2+ doesn't like multiple asm versions in the classpath
-tasks.register('noAsmJar', Copy) {
-    dependsOn jar
-    from jar.archiveFile
-    into layout.buildDirectory.dir('noasm')
-    rename { fileName ->
-        fileName.replace("-${version}.jar", "-${version}-no-asm.jar")
-    }
-}
-
-build.dependsOn(noAsmJar)
 
 tasks.register('testAgent', Test) {
     dependsOn jar

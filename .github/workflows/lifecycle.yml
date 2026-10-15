@@ -59,6 +59,11 @@ jobs:
       - name: Test, coverage and build
         run: ./gradlew jacocoRootReport build :headlessmc-application:quarkusBuild -PuberJar --stacktrace
 
+      # Builds the (unsigned) Maven Central bundle on PRs too,
+      # so problems with javadoc/sources/poms show up before a release.
+      - name: Check Maven Central bundle
+        run: ./gradlew nmcpZipAggregation --stacktrace
+
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
         id: jacoco
@@ -100,7 +105,6 @@ jobs:
           path: |
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
-            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
@@ -599,9 +603,60 @@ jobs:
           gh release upload "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --clobber \
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar \
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar \
-            ./headlessmc-lwjgl/build/noasm/headlessmc-lwjgl-*-no-asm.jar \
             ./headlessmc-launcher-linux-x64 \
             ./headlessmc-launcher-windows-x64.exe \
             ./headlessmc-launcher-macos-x64 \
             ./headlessmc-launcher-linux-arm64 \
             ./headlessmc-launcher-macos-arm64
+
+  maven-central:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+    # Releases on Maven Central are immutable, so this job runs last and only if every other job succeeded.
+    # Keep this list in sync with all jobs of this workflow!
+    needs:
+      - release-please
+      - build
+      - deploy-pages
+      - build-natives
+      - build-mc-runtime-test
+      - mc-runtime-test
+      - server-test
+      - docker-build
+      - docker-release
+      - merge
+      - release
+    if: >-
+      !cancelled()
+      && needs.release-please.outputs.release_created == 'true'
+      && !contains(needs.*.result, 'failure')
+      && !contains(needs.*.result, 'cancelled')
+      && !contains(needs.*.result, 'skipped')
+    # holds the secrets, can be protected with required reviewers
+    environment:
+      name: maven-central
+      url: https://central.sonatype.com/namespace/io.github.headlesshq
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Sign and upload to Maven Central
+        env:
+          SIGNING_KEY: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SIGNING_PASSWORD }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_CENTRAL_PUBLISHING_TYPE: ${{ vars.MAVEN_CENTRAL_PUBLISHING_TYPE || 'AUTOMATIC' }}
+        run: |
+          if [[ -z "$SIGNING_KEY" ]]; then
+            echo "MAVEN_CENTRAL_SIGNING_KEY is not set" >&2
+            exit 1
+          fi
+          ./gradlew publishAggregationToCentralPortal --stacktrace
