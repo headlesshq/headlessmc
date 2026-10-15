@@ -517,6 +517,9 @@ jobs:
       github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: [ release-please, docker-build, build, build-natives]
+    environment:
+      name: docker-hub
+      url: https://hub.docker.com/r/${{ env.REGISTRY_IMAGE }}
     steps:
       - name: Download digests
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
