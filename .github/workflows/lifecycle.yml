@@ -62,7 +62,7 @@ jobs:
       # Builds the (unsigned) Maven Central bundle on PRs too,
       # so problems with javadoc/sources/poms show up before a release.
       - name: Check Maven Central bundle
-        run: ./gradlew nmcpZipAggregation --stacktrace
+        run: ./gradlew nmcpZipAggregation -PuberJar --stacktrace
 
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
@@ -650,6 +650,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # publish the exact headlessmc.jar of the GitHub release as io.github.headlesshq:headlessmc-application
+      - name: Download release headlessmc.jar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: gh release download "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --pattern headlessmc.jar --dir build/release
+
       - name: Sign and upload to Maven Central
         env:
           SIGNING_KEY: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
@@ -662,4 +669,4 @@ jobs:
             echo "MAVEN_CENTRAL_SIGNING_KEY is not set" >&2
             exit 1
           fi
-          ./gradlew publishAggregationToCentralPortal --stacktrace
+          ./gradlew publishAggregationToCentralPortal -PapplicationJar=build/release/headlessmc.jar --stacktrace

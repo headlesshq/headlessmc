@@ -163,7 +163,7 @@ allprojects {
         failOnError = false
     }
 
-    def published = !['headlessmc-application', 'headlessmc-docs'].contains(project.name)
+    def published = project.name != 'headlessmc-docs'
 
     publishing {
         publications {
@@ -241,9 +241,16 @@ nmcpAggregation {
     }
 }
 
+// -PmavenCentralProjects=headlessmc-application,... only uploads these projects,
+// e.g. to publish an artifact that was missing from an already published (immutable) release
+def mavenCentralProjects = providers.gradleProperty('mavenCentralProjects')
+    .map { it.split(',').collect { it.trim() }.findAll { !it.isEmpty() } as Set<String> }
+
 dependencies {
     allprojects {
-        nmcpAggregation(project(path))
+        if (!mavenCentralProjects.present || mavenCentralProjects.get().contains(project.name)) {
+            nmcpAggregation(project(path))
+        }
     }
 }
 

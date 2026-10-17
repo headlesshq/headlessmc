@@ -24,6 +24,26 @@ tasks.register("runApp", JavaExec) {
     standardInput = System.in
 }
 
+// Attaches the uber-jar to the publication as io.github.headlesshq:headlessmc-application:<version>:runner.
+// -PapplicationJar=<path> attaches an already built jar, e.g. the headlessmc.jar of a GitHub release,
+// so that Maven Central and the GitHub release contain the same bytes.
+// Otherwise, -PuberJar attaches the uber-jar built by quarkusBuild.
+def applicationJar = providers.gradleProperty('applicationJar')
+if (applicationJar.present || providers.gradleProperty('uberJar').present) {
+    publishing.publications.named('mavenJava', MavenPublication) {
+        if (applicationJar.present) {
+            artifact(file(applicationJar.get())) {
+                classifier = 'runner'
+            }
+        } else {
+            artifact(layout.buildDirectory.file("headlessmc-application-${version}-runner.jar")) {
+                classifier = 'runner'
+                builtBy quarkusBuild
+            }
+        }
+    }
+}
+
 dependencies {
     implementation platform(libs.quarkus)
     implementation libs.quarkus.arc
