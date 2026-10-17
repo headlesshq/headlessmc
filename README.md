@@ -11,11 +11,11 @@
 <div align="center">
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8ac39920ba834d1991c512b83931554a)](https://app.codacy.com/gh/headlesshq/headlessmc/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![GitHub All Releases](https://img.shields.io/github/downloads/headlesshq/HeadlessMc/total.svg)](https://github.com/headlesshq/HeadlessMc/releases)
+[![GitHub All Releases](https://img.shields.io/github/downloads/headlesshq/headlessmc/total.svg)](https://github.com/headlesshq/headlessmc/releases)
 ![](https://github.com/headlesshq/HeadlessMc/actions/workflows/gradle-publish.yml/badge.svg)
 ![GitHub](https://img.shields.io/github/license/headlesshq/HeadlessMc)
 [![Docker Image Size](https://img.shields.io/docker/image-size/3arthqu4ke/headlessmc)](https://hub.docker.com/r/3arthqu4ke/headlessmc/)
-![Github last-commit](https://img.shields.io/github/last-commit/headlesshq/HeadlessMc)
+![Github last-commit](https://img.shields.io/github/last-commit/headlesshq/headlessmc)
 
 </div>
 
