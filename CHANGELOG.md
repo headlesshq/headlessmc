@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0-RC9](https://github.com/headlesshq/headlessmc/compare/3.0.0-RC8...3.0.0-RC9) (2026-10-17)
+
+
+### Features
+
+* **commands:** made login and install/download separate hidden commands ([#479](https://github.com/headlesshq/headlessmc/issues/479)) ([e29809e](https://github.com/headlesshq/headlessmc/commit/e29809edea8f201ee57d06a2ec8e247abddb0703))
+
+
+### Bug Fixes
+
+* **test:** fix test WAIT timeout ([#476](https://github.com/headlesshq/headlessmc/issues/476)) ([00cd6fb](https://github.com/headlesshq/headlessmc/commit/00cd6fb49f8755d4db162e3900bde3bb54d4cb38))
+
 ## [3.0.0-RC8](https://github.com/headlesshq/headlessmc/compare/3.0.0-RC7...3.0.0-RC8) (2026-10-15)
 
 
