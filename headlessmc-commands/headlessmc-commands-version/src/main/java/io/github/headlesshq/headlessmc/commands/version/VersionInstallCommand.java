@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Base class for {@link VersionCommand} and {@link InstallCommand},
+ * Base class for {@link InstallCommand} and {@link InstallShortcutCommand},
  * provides version installation capabilities for client/server.
  */
 @Getter

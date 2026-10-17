@@ -323,9 +323,7 @@ public class BetterAutoComplete {
         }
 
         for (Map.Entry<String, CommandLine> entry : commandSpec.subcommands().entrySet()) {
-            if (entry.getValue().getCommandSpec().usageMessage().hidden()) {
-                continue;
-            } // #887 skip hidden subcommands
+            // hidden subcommands are still suggested, they are only hidden from the usage help
             candidates.add(new Completions.Candidate(
                 entry.getKey(),
                 String.join(

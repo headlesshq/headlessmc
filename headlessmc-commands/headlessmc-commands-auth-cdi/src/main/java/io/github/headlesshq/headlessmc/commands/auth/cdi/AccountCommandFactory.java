@@ -17,7 +17,9 @@ import jakarta.inject.Named;
 // not sure if this is actually needed
 @RegisterForReflection(targets = {
     AccountCommandContext.class,
+    AbstractAccountCommand.class,
     AccountCommand.class,
+    LoginShortcutCommand.class,
     LoginCommand.class,
     ListCommand.class,
     RemoveCommand.class,
@@ -36,6 +38,19 @@ public class AccountCommandFactory {
         Console console
     ) {
         return new AccountCommand(lastUsedAccountService, tableProvider, authService, console);
+    }
+
+    @Produces
+    @Default
+    @Dependent
+    @Named("command:login") // prevent quarkus from removing
+    public LoginShortcutCommand loginShortcutCommand(
+        LastUsedAccountService lastUsedAccountService,
+        TableProvider tableProvider,
+        AuthService authService,
+        Console console
+    ) {
+        return new LoginShortcutCommand(lastUsedAccountService, tableProvider, authService, console);
     }
 
     @Produces
