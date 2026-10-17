@@ -152,12 +152,34 @@ class AccountCommandsTest {
     }
 
     @Test
-    void runningTheAccountCommandLogsIn() {
-        command.setProvider("offline");
+    void runningTheAccountCommandListsAccounts() {
         command.run();
+
+        assertTrue(lastUsed.isEmpty());
+        assertTrue(console.output().contains("Steve"));
+        assertTrue(console.output().contains("Alex"));
+    }
+
+    // -------------------------------------------------- LoginShortcutCommand
+
+    @Test
+    void runningTheLoginShortcutLogsIn() {
+        LoginShortcutCommand shortcut = new LoginShortcutCommand(lastUsedAccountService, tables, authService, console);
+        shortcut.setProvider("offline");
+        shortcut.run();
 
         assertEquals(1, lastUsed.size());
         assertTrue(console.output().contains("Logged in to account LoggedIn"));
+    }
+
+    @Test
+    void loginShortcutRejectsUnknownMethods() {
+        LoginShortcutCommand shortcut = new LoginShortcutCommand(lastUsedAccountService, tables, authService, console);
+        shortcut.setProvider("offline");
+        shortcut.setMethod("nope");
+
+        assertThrows(IllegalArgumentException.class, shortcut::run);
+        assertTrue(lastUsed.isEmpty());
     }
 
     // --------------------------------------------------- AccountCommandContext

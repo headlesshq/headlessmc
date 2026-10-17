@@ -4,12 +4,14 @@ import io.github.headlesshq.headlessmc.HeadlessMc;
 import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.commands.auth.AccountCommand;
+import io.github.headlesshq.headlessmc.commands.auth.LoginShortcutCommand;
 import io.github.headlesshq.headlessmc.commands.config.ConfigCommand;
 import io.github.headlesshq.headlessmc.commands.java.JavaCommand;
 import io.github.headlesshq.headlessmc.commands.launcher.LaunchCommand;
 import io.github.headlesshq.headlessmc.commands.mod.ModCommand;
 import io.github.headlesshq.headlessmc.commands.profile.ProfileCommand;
 import io.github.headlesshq.headlessmc.commands.server.ServerCommand;
+import io.github.headlesshq.headlessmc.commands.version.InstallShortcutCommand;
 import io.github.headlesshq.headlessmc.commands.version.VersionCommand;
 import io.github.headlesshq.headlessmc.console.*;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
@@ -49,7 +51,9 @@ import java.util.concurrent.Callable;
         ServerCommand.class,
         ModCommand.class,
         CommandLine.HelpCommand.class,
-        DebugCommand.class
+        DebugCommand.class,
+        InstallShortcutCommand.class,
+        LoginShortcutCommand.class
     }
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})

@@ -10,16 +10,16 @@ test
   -h, --help      Show this help message and exit.
   -V, --version   Print version information and exit.
 Commands:
-  config                      Configures HeadlessMc
-  account, auth, login        Manage your account.
-  java                        Manage java installations.
-  launch                      Launches the game.
-  version, download, install  Manage versions.
-  profile                     Manage launch profiles.
-  server                      Manage servers.
-  mod                         Manage mods.
-  help                        Display help information about the specified command.
-  exit, quit                  Exits the HeadlessMc shell
+  config        Configures HeadlessMc
+  account, auth Manage your account.
+  java          Manage java installations.
+  launch        Launches the game.
+  version       Manage versions.
+  profile       Manage launch profiles.
+  server        Manage servers.
+  mod           Manage mods.
+  help          Display help information about the specified command.
+  exit, quit    Exits the HeadlessMc shell
 ```
 
 ```

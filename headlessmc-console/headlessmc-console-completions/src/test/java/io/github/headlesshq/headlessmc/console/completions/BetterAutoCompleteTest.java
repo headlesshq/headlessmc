@@ -29,6 +29,30 @@ public class BetterAutoCompleteTest {
         );
     }
 
+    @Test
+    public void testHiddenSubcommandsAreCompleted() {
+        CommandLine commandLine = new CommandLine(Root.class);
+        List<Completions.Candidate> candidates = new ArrayList<>();
+        SimpleLine line = new SimpleLine(Arrays.asList("in"), 0, 2);
+        new BetterAutoComplete().complete(line, candidates, commandLine);
+
+        assertEquals(
+            List.of("stall"), candidates.stream().map(Completions.Candidate::getName).toList(), () -> "was: " + candidates
+        );
+    }
+
+    @CommandLine.Command(name = "root", subcommands = {Visible.class, Hidden.class})
+    static class Root {
+    }
+
+    @CommandLine.Command(name = "version", description = "visible")
+    static class Visible {
+    }
+
+    @CommandLine.Command(name = "install", hidden = true, description = "hidden")
+    static class Hidden {
+    }
+
     @SuppressWarnings({"unused"})
     @CommandLine.Command(name = "smart", description = "completes via Completions")
     static class Smart {

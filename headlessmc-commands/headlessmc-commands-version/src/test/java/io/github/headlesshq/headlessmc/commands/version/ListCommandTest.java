@@ -64,6 +64,16 @@ class ListCommandTest {
     }
 
     @Test
+    void versionCommandListsInstalledVersions() {
+        new VersionCommand(command()).run();
+
+        String output = console.output();
+        assertTrue(output.contains("1.21.1"));
+        assertTrue(output.contains("fabric-loader-0.16.9-1.21.1"));
+        assertTrue(output.contains("24w14a"));
+    }
+
+    @Test
     void filtersByType() {
         ListCommand command = command();
         command.setType("snapshot");
