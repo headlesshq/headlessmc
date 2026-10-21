@@ -31,13 +31,13 @@ public class PaperModReaderTest {
             assertTrue(modReadingResult.isPresent());
             List<Mod> mods = modReadingResult.get();
             assertEquals(1, mods.size());
-            Mod mod = mods.getFirst();
+            Mod mod = mods.get(0);
             assertEquals("Paper-Test-Plugin", mod.name());
             assertEquals("Paper-Test-Plugin", mod.id());
             assertTrue(mod.description().isPresent());
             assertEquals("Paper Test Plugin", mod.description().get());
             assertEquals(1, mod.authors().size());
-            assertEquals("PaperMC", mod.authors().getFirst());
+            assertEquals("PaperMC", mod.authors().get(0));
         }
     }
 
@@ -50,9 +50,9 @@ public class PaperModReaderTest {
             assertTrue(modReadingResult.isPresent());
             List<Mod> mods = modReadingResult.get();
             assertEquals(1, mods.size());
-            Mod mod = mods.getFirst();
+            Mod mod = mods.get(0);
             assertEquals(2, mod.authors().size());
-            assertEquals("PaperMC", mod.authors().getFirst());
+            assertEquals("PaperMC", mod.authors().get(0));
             assertEquals("TestAuthor", mod.authors().get(1));
         }
     }

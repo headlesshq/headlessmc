@@ -282,7 +282,7 @@ class FabricInstallationTest {
         );
 
         assertEquals("fabric-loader-0.16.9-1.21.1", version.getId());
-        RecordingBuilder builder = builders.getFirst();
+        RecordingBuilder builder = builders.get(0);
         assertEquals("fabric-installer", builder.getId());
         assertEquals(21, builder.getVersion());
         assertEquals(
@@ -301,8 +301,8 @@ class FabricInstallationTest {
         );
 
         assertEquals(21, installation.javaVersion());
-        assertEquals("server", builders.getFirst().getArgs().getFirst());
-        assertFalse(builders.getFirst().getArgs().contains("-noprofile"));
+        assertEquals("server", builders.get(0).getArgs().get(0));
+        assertFalse(builders.get(0).getArgs().contains("-noprofile"));
     }
 
     @Test

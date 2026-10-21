@@ -61,7 +61,7 @@ public class FakeVersionJsonService implements VersionJsonService {
         List<Version> hierarchy = new ArrayList<>();
         Version current = version;
         while (true) {
-            hierarchy.addFirst(current);
+            hierarchy.add(0, current);
             String parent = current.getInheritsFrom();
             if (parent == null) {
                 break;

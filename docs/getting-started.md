@@ -44,7 +44,7 @@ Download the executable for your Operating System from the latest
 
 ### Java
 
-HeadlessMc has been written in Java with the Quarkus Framework and runs on Java 25.
+HeadlessMc has been written in Java with the Quarkus Framework and runs on Java 17 or newer.
 You can also download the `headlessmc.jar` from GitHub, which will run on any operating system.
 ```shell
 java -jar headlessmc.jar

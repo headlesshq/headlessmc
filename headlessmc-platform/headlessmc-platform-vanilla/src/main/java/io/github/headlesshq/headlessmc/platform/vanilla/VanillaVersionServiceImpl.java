@@ -21,8 +21,8 @@ class VanillaVersionServiceImpl extends AbstractJsonVersionService<VanillaVersio
     }
 
     @Override
-    protected SequencedSet<VanillaVersion> map(VanillaManifest value, @Nullable SequencedSet<VanillaVersion> previous) {
-        SequencedSet<VanillaVersion> result = new LinkedHashSet<>();
+    protected Set<VanillaVersion> map(VanillaManifest value, @Nullable Set<VanillaVersion> previous) {
+        Set<VanillaVersion> result = new LinkedHashSet<>();
         for (VanillaManifest.Version version : value.versions()) {
             result.add(createVanillaVersion(version.id()));
         }
@@ -32,7 +32,7 @@ class VanillaVersionServiceImpl extends AbstractJsonVersionService<VanillaVersio
 
     @Override
     public VanillaVersion getLatest() throws HeadlessMcException {
-        return getVersions().getFirst();
+        return getVersions().iterator().next();
     }
 
     @Override
@@ -49,7 +49,7 @@ class VanillaVersionServiceImpl extends AbstractJsonVersionService<VanillaVersio
     }
 
     @Override
-    public SequencedSet<VanillaVersion> getBuilds(VanillaVersion version) {
+    public Set<VanillaVersion> getBuilds(VanillaVersion version) {
         return new LinkedHashSet<>(List.of(version));
     }
 

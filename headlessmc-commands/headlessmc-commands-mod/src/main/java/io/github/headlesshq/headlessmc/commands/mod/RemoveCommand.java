@@ -144,10 +144,10 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
         }
 
         try {
-            Files.delete(files.getFirst().file());
+            Files.delete(files.get(0).file());
             console.write("Deleted mod successfully.");
         } catch (IOException e) {
-            throw new HeadlessMcIOException("Failed to delete mod " + files.getFirst().name(), e);
+            throw new HeadlessMcIOException("Failed to delete mod " + files.get(0).name(), e);
         }
     }
 
@@ -208,7 +208,7 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
         }
 
         if (all) {
-            files.forEach((_, modFiles) -> {
+            files.forEach((unused, modFiles) -> {
                 for (ModFile modFile : modFiles) {
                     try {
                         Files.delete(modFile.file());

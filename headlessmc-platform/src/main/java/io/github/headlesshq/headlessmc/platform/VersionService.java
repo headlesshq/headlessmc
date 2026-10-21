@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * Each {@link Platform} has a VersionService.
@@ -24,15 +24,15 @@ import java.util.SequencedSet;
 public interface VersionService {
     String getPlatformName();
 
-    SequencedSet<? extends PlatformVersion> getVersions() throws HeadlessMcException;
+    Set<? extends PlatformVersion> getVersions() throws HeadlessMcException;
 
-    SequencedSet<? extends PlatformVersion> getBuilds(VanillaVersion version) throws HeadlessMcException;
+    Set<? extends PlatformVersion> getBuilds(VanillaVersion version) throws HeadlessMcException;
 
     Optional<? extends PlatformVersion> getLatestBuild(VanillaVersion version) throws HeadlessMcException;
 
     Optional<? extends PlatformVersion> getBuild(VanillaVersion version, String build) throws HeadlessMcException;
 
-    SequencedSet<PlatformVersion> sort(Collection<PlatformVersion> versions) throws HeadlessMcException, IllegalArgumentException;
+    Set<PlatformVersion> sort(Collection<PlatformVersion> versions) throws HeadlessMcException, IllegalArgumentException;
 
     // TODO: test
     default boolean isOlderThan(PlatformVersion version, PlatformVersion newerVersion) throws HeadlessMcException, IllegalArgumentException {
@@ -40,7 +40,7 @@ public interface VersionService {
             return false;
         }
 
-        return sort(List.of(version, newerVersion)).getFirst().equals(newerVersion);
+        return sort(List.of(version, newerVersion)).iterator().next().equals(newerVersion);
     }
 
 }

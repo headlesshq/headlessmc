@@ -38,7 +38,7 @@ public class PaperVersionService extends AbstractVersionService implements Versi
     }
 
     @Override
-    public SequencedSet<BoundPlatformVersion> getVersions() {
+    public Set<BoundPlatformVersion> getVersions() {
         return api.getVersions(projectName).versions()
             .stream()
             .flatMap(
@@ -50,7 +50,7 @@ public class PaperVersionService extends AbstractVersionService implements Versi
     }
 
     @Override
-    public SequencedSet<BoundPlatformVersion> getBuilds(VanillaVersion version) {
+    public Set<BoundPlatformVersion> getBuilds(VanillaVersion version) {
         return api.getBuilds(projectName, version.getName(), null)
             .stream()
             .sorted()
@@ -79,11 +79,11 @@ public class PaperVersionService extends AbstractVersionService implements Versi
     }
 
     @Override
-    public SequencedSet<PlatformVersion> sort(Collection<PlatformVersion> versions) throws IllegalArgumentException {
+    public Set<PlatformVersion> sort(Collection<PlatformVersion> versions) throws IllegalArgumentException {
         return sortByBuildAsInt(getPlatformName(), versions);
     }
 
-    public static SequencedSet<PlatformVersion> sortByBuildAsInt(
+    public static Set<PlatformVersion> sortByBuildAsInt(
         String platformName,
         Collection<PlatformVersion> versions
     ) throws IllegalArgumentException {

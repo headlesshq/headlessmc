@@ -102,15 +102,15 @@ class ModrinthPlatformTest {
         List<RemoteMod> result = platform.search("fast", Set.of(ModType.MOD));
 
         assertEquals(List.of(new RemoteMod("sodium", "Sodium", "Fast rendering")), result);
-        assertEquals("fast", queries.getFirst().query());
-        assertTrue(queries.getFirst().facets().contains("mod"));
+        assertEquals("fast", queries.get(0).query());
+        assertTrue(queries.get(0).facets().contains("mod"));
     }
 
     @Test
     void searchesScopedToAVersionIncludeLoaderAndVersionFacets() {
         platform.search("fast", VersionArg.parse("fabric", "1.21.1"), Set.of(ModType.MOD));
 
-        String facets = queries.getFirst().facets();
+        String facets = queries.get(0).facets();
         assertTrue(facets.contains("fabric"));
         assertTrue(facets.contains("1.21.1"));
     }
@@ -119,7 +119,7 @@ class ModrinthPlatformTest {
     void vanillaSearchesDoNotFilterByLoader() {
         platform.search("fast", VersionArg.parse("vanilla", "1.21.1"), Set.of(ModType.DATA_PACK));
 
-        assertFalse(queries.getFirst().facets().contains("vanilla"));
+        assertFalse(queries.get(0).facets().contains("vanilla"));
     }
 
     @Test
@@ -130,8 +130,8 @@ class ModrinthPlatformTest {
 
         assertEquals(root.resolve("mods").resolve("sodium.jar"), file);
         assertArrayEquals(MOD, Files.readAllBytes(file));
-        assertEquals("sodium", versionQueries.getFirst().project());
-        assertEquals("1.21.1", versionQueries.getFirst().gameVersions());
+        assertEquals("sodium", versionQueries.get(0).project());
+        assertEquals("1.21.1", versionQueries.get(0).gameVersions());
     }
 
     @Test

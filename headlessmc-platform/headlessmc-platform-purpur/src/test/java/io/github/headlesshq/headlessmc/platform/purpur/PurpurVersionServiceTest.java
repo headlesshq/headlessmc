@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SequencedSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,7 +32,7 @@ class PurpurVersionServiceTest {
         @Override
         public VersionResponse getVersion(String project, String version) {
             List<String> builds = buildsByVersion.get(version);
-            return new VersionResponse(version, new VersionResponse.Builds(builds.getLast(), builds));
+            return new VersionResponse(version, new VersionResponse.Builds(builds.get(builds.size() - 1), builds));
         }
 
         @Override
@@ -62,18 +62,18 @@ class PurpurVersionServiceTest {
 
     @Test
     void listsAllVersionsLatestBuildFirst() {
-        SequencedSet<BoundPlatformVersion> versions = service.getVersions();
+        Set<BoundPlatformVersion> versions = service.getVersions();
 
         assertEquals(List.of("2329", "2328", "2327"), versions.stream().map(PlatformVersion::getName).toList());
-        assertEquals("1.21.1", versions.getFirst().getVanillaVersion());
+        assertEquals("1.21.1", versions.iterator().next().getVanillaVersion());
     }
 
     @Test
     void listsBuildsLatestFirst() {
-        SequencedSet<BoundPlatformVersion> builds = service.getBuilds(vanilla("1.21.1"));
+        Set<BoundPlatformVersion> builds = service.getBuilds(vanilla("1.21.1"));
 
         assertEquals(List.of("2329", "2328", "2327"), builds.stream().map(PlatformVersion::getName).toList());
-        assertEquals("1.21.1", builds.getFirst().getVanillaVersion());
+        assertEquals("1.21.1", builds.iterator().next().getVanillaVersion());
     }
 
     @Test

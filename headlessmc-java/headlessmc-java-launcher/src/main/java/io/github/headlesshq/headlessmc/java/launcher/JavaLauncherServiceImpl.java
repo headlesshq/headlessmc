@@ -4,10 +4,16 @@ import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.files.FileSystemProvider;
 import io.github.headlesshq.headlessmc.java.JavaConfig;
 import io.github.headlesshq.headlessmc.java.JavaService;
+import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Launches Java processes with a {@link ProcessBuilder}.
+ * Replaced by the in-memory JavaLauncherService when building with the {@code in-memory} build profile.
+ */
+@DefaultBean
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class JavaLauncherServiceImpl implements JavaLauncherService {

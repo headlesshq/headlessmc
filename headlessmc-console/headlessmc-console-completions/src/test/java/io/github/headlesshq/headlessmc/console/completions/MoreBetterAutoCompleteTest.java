@@ -366,7 +366,7 @@ public class MoreBetterAutoCompleteTest {
         @Override
         public Iterable<Candidate> candidates(@Nullable Object spec, Line line) {
             return List.of(new Candidate(
-                line.words().getFirst() + ":" + line.wordIndex() + ":" + line.wordCursor(), "smart candidate"
+                line.words().get(0) + ":" + line.wordIndex() + ":" + line.wordCursor(), "smart candidate"
             ));
         }
 

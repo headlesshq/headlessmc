@@ -59,8 +59,8 @@ public class LibraryResolverTest {
         List<LibraryFile> files = resolve(mcFiles, library);
 
         assertEquals(1, files.size());
-        assertEquals(Artifact.of("com.example:lib:1.0").jar(mcFiles.getLibraryDir()), files.getFirst().path());
-        assertNull(files.getFirst().download());
+        assertEquals(Artifact.of("com.example:lib:1.0").jar(mcFiles.getLibraryDir()), files.get(0).path());
+        assertNull(files.get(0).download());
     }
 
     @Test
@@ -84,9 +84,9 @@ public class LibraryResolverTest {
         assertEquals(
             mcFiles.getLibraryDir().resolve("com").resolve("example").resolve("lib").resolve("1.0")
                 .resolve("lib-1.0.jar"),
-            files.getFirst().path()
+            files.get(0).path()
         );
-        assertEquals(artifact, files.getFirst().download());
+        assertEquals(artifact, files.get(0).download());
     }
 
     @Test
@@ -113,8 +113,8 @@ public class LibraryResolverTest {
         List<LibraryFile> files = resolve(mcFiles, library);
 
         assertEquals(1, files.size(), "empty artifact jar should be skipped, natives resolved");
-        assertEquals(natives, files.getFirst().download());
-        assertTrue(files.getFirst().path().endsWith("lwjgl-platform-2.9.4-natives-linux.jar"));
+        assertEquals(natives, files.get(0).download());
+        assertTrue(files.get(0).path().endsWith("lwjgl-platform-2.9.4-natives-linux.jar"));
     }
 
     @Test
@@ -130,7 +130,7 @@ public class LibraryResolverTest {
         List<LibraryFile> files = resolve(TestLibraries.mcFiles(root), templates, library);
 
         assertEquals(1, files.size());
-        assertEquals(natives, files.getFirst().download());
+        assertEquals(natives, files.get(0).download());
     }
 
     @Test

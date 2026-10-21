@@ -41,7 +41,7 @@ public class AnyAuthProviderTest {
 
     @Test
     public void removesAccountViaItsProvider() {
-        Account alex = msa.accounts.getFirst();
+        Account alex = msa.accounts.get(0);
         any.removeAccount(alex);
         assertTrue(msa.accounts.isEmpty());
         assertEquals(1, offline.accounts.size());

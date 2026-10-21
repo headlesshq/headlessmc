@@ -26,10 +26,10 @@ public class VersionArgCompletionHelper {
         if (values.size() == 1) {
             // first arg can be server/client/platform, or just a vanilla version
             List<Completions.Candidate> result = defaults();
-            result.addAll(vanillaVersions(values.getFirst()));
+            result.addAll(vanillaVersions(values.get(0)));
             return result;
         } if (values.size() == 2) {
-            Side side = getSide(values.getFirst());
+            Side side = getSide(values.get(0));
             if (side != null) {
                 // side/<platform/vanilla-version>
                 List<Completions.Candidate> result = platformService.getPlatforms().stream()
@@ -41,7 +41,7 @@ public class VersionArgCompletionHelper {
                 return result;
             }
 
-            Optional<Platform> platform = platformService.getPlatform(values.getFirst());
+            Optional<Platform> platform = platformService.getPlatform(values.get(0));
             if (platform.isPresent()) {
                 return vanillaVersions(null);
             } else {
@@ -49,7 +49,7 @@ public class VersionArgCompletionHelper {
             }
         } else if (values.size() == 3) {
             // side/platform/version
-            Side side = getSide(values.getFirst());
+            Side side = getSide(values.get(0));
             if (side != null) {
                 Optional<Platform> platform = platformService.getPlatform(values.get(1));
                 if (platform.isPresent() && platform.get().hasSupportFor(side)) {
@@ -63,7 +63,7 @@ public class VersionArgCompletionHelper {
             return getBuilds(values, null, 0);
         } else if (values.size() == 4) {
             // side/platform/version/build
-            Side side = getSide(values.getFirst());
+            Side side = getSide(values.get(0));
             if (side == null) {
                 return List.of(); // error
             }
@@ -93,7 +93,7 @@ public class VersionArgCompletionHelper {
         return platform.map(Platform::getVersionService)
             .map(versionService -> versionService.getBuilds(vanillaVersion.get()))
             .stream()
-            .flatMap(SequencedSet::stream)
+            .flatMap(Set::stream)
             .map(version -> new Completions.Candidate(version.getName(), null))
             .toList();
     }

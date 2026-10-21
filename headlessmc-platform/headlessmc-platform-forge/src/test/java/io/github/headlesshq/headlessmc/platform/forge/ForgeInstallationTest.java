@@ -168,7 +168,7 @@ class ForgeInstallationTest {
         var installation = installer().installServer(id("forge", "1.20.2", "48.1.0"), dir, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
-        RecordingBuilder builder = builders.getFirst();
+        RecordingBuilder builder = builders.get(0);
         assertEquals("forge-installer", builder.getId());
         assertEquals(dir, builder.getDirectory());
         assertEquals(List.of("--installServer", dir.toAbsolutePath().toString()), builder.getArgs());
@@ -192,7 +192,7 @@ class ForgeInstallationTest {
         Version version = installer.installClient(id("forge", "1.20.2", "48.1.0"), mcDir, new TypedMapImpl());
 
         assertEquals("1.20.2-forge-48.1.0", version.getId());
-        RecordingBuilder builder = builders.getFirst();
+        RecordingBuilder builder = builders.get(0);
         assertEquals("forge-cli-installer", builder.getId());
         assertEquals(ForgeCLIInstaller.MAIN_CLASS, builder.getMainClass());
         assertEquals(2, builder.getClassPath().size());

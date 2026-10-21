@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.java;
 
+import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -9,6 +10,11 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Finds Java installations with all {@link JavaSource}s.
+ * Replaced by the in-memory JavaService when building with the {@code in-memory} build profile.
+ */
+@DefaultBean
 @ApplicationScoped
 public class JavaServiceImpl implements JavaService {
     private final Instance<JavaSource> sources;

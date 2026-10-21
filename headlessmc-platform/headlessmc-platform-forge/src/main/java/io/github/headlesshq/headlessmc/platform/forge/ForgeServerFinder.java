@@ -53,7 +53,7 @@ public class ForgeServerFinder implements ServerFinder {
 
         if (jarFiles.size() == 1) {
             log.info("Only found one jar file in {}: {}", serverDir, jarFiles);
-            return jarFiles.getFirst();
+            return jarFiles.get(0);
         }
 
         List<Path> forgeJars = jarFiles.stream()
@@ -61,7 +61,7 @@ public class ForgeServerFinder implements ServerFinder {
             .toList();
 
         if (forgeJars.size() == 1) {
-            return forgeJars.getFirst();
+            return forgeJars.get(0);
         }
 
         log.warn("Found multiple forge jars: {}", forgeJars);

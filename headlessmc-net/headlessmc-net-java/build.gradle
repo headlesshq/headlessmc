@@ -1,4 +1,5 @@
 dependencies {
+    compileOnly libs.quarkus.arc
     implementation project(':headlessmc-net')
     implementation project(':headlessmc-net:headlessmc-net-hash')
 

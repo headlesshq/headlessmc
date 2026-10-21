@@ -91,7 +91,7 @@ public class JavaScannerServiceTest {
         List<Java> result = service.scanDirs(source, Stream.of(file, good, broken));
 
         assertEquals(1, result.size());
-        assertEquals(21, result.getFirst().version());
+        assertEquals(21, result.get(0).version());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class JavaScannerServiceTest {
         List<Java> result = service.scanSubDirsOf(source, dir, FakeJavaConfig.MAX_SCAN_DEPTH);
 
         assertEquals(1, result.size());
-        Java java = result.getFirst();
+        Java java = result.get(0);
         assertEquals(8, java.version());
         // the installation dir names the java, but its home is the nested dir
         assertEquals("jre-8", java.name());

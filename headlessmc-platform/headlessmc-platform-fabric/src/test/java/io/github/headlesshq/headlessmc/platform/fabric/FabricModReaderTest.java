@@ -24,7 +24,7 @@ public class FabricModReaderTest {
     public ModReader getReader() {
         List<ModReader> readers = platform.getModSupport().orElseThrow().modReaders();
         assertEquals(1, readers.size());
-        ModReader reader = readers.getFirst();
+        ModReader reader = readers.get(0);
         assertInstanceOf(FabricModReader.class, reader);
         return reader;
     }
@@ -35,7 +35,7 @@ public class FabricModReaderTest {
             assert inputStream != null;
             List<Mod> mods = getReader().readEntry(inputStream).orElseThrow();
             assertEquals(1, mods.size());
-            Mod mod = mods.getFirst();
+            Mod mod = mods.get(0);
             assertEquals("test", mod.id());
             assertEquals("Test", mod.name());
             assertEquals("test", mod.description().orElseThrow());
@@ -53,7 +53,7 @@ public class FabricModReaderTest {
             assert inputStream != null;
             List<Mod> mods = getReader().readEntry(inputStream).orElseThrow();
             assertEquals(2, mods.size());
-            Mod mod = mods.getFirst();
+            Mod mod = mods.get(0);
             assertEquals("test2", mod.id());
             assertEquals("Test2", mod.name());
             assertTrue(mod.authors().isEmpty());
@@ -75,7 +75,7 @@ public class FabricModReaderTest {
             assert inputStream != null;
             List<Mod> mods = getReader().readEntry(inputStream).orElseThrow();
             assertEquals(1, mods.size());
-            Mod mod = mods.getFirst();
+            Mod mod = mods.get(0);
             assertEquals("This is an expansion of the ETF mod, it adds support for OptiFine format Custom Entity Model (CEM) resource packs.\n" +
                              "  While still allowing you to disable this to use a different model mod :)", mod.description().orElseThrow());
             System.out.println(mod.description());

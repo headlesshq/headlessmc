@@ -195,7 +195,7 @@ public class ConfigServiceImpl implements ConfigService {
     @Override
     @SuppressWarnings("unchecked")
     public <V> V bind(Object key, Supplier<V> mapping) {
-        return (V) state.cache.computeIfAbsent(mapping, _ -> mapping.get());
+        return (V) state.cache.computeIfAbsent(mapping, unused -> mapping.get());
     }
 
     @Override

@@ -50,7 +50,7 @@ public class JavaSourcesTest {
         List<Java> javas = currentJavaSource.getJavas();
 
         assertEquals(1, javas.size());
-        Java java = javas.getFirst();
+        Java java = javas.get(0);
         assertEquals(Runtime.version().feature(), java.version());
         assertTrue(java.current());
         assertEquals(JavaSource.SORT_CURRENT, java.source());
@@ -66,8 +66,8 @@ public class JavaSourcesTest {
         List<Java> javas = source.getJavas();
 
         assertEquals(1, javas.size());
-        assertEquals(17, javas.getFirst().version());
-        assertEquals(JavaSource.SORT_CONFIG, javas.getFirst().source());
+        assertEquals(17, javas.get(0).version());
+        assertEquals(JavaSource.SORT_CONFIG, javas.get(0).source());
     }
 
     @Test
@@ -80,7 +80,7 @@ public class JavaSourcesTest {
         List<Java> javas = source.getJavas();
 
         assertEquals(1, javas.size());
-        assertEquals(jdk, javas.getFirst().home().getUnchecked().orElseThrow());
+        assertEquals(jdk, javas.get(0).home().getUnchecked().orElseThrow());
     }
 
     @Test
@@ -120,9 +120,9 @@ public class JavaSourcesTest {
         List<Java> javas = source.getJavas();
 
         assertEquals(1, javas.size());
-        assertEquals(21, javas.getFirst().version());
-        assertEquals("temurin-21", javas.getFirst().name());
-        assertEquals(JavaSource.SORT_HMC, javas.getFirst().source());
+        assertEquals(21, javas.get(0).version());
+        assertEquals("temurin-21", javas.get(0).name());
+        assertEquals(JavaSource.SORT_HMC, javas.get(0).source());
     }
 
     @Test

@@ -8,11 +8,11 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.SequencedMap;
+import java.util.Map;
 
 @With
 public record Arguments(
-    SequencedMap<String, @Nullable String> systemProperties,
+    Map<String, @Nullable String> systemProperties,
     List<String> vmArgs,
     List<String> gameArgs // eventually we might want to parse these into ArgPairs?
 ) {

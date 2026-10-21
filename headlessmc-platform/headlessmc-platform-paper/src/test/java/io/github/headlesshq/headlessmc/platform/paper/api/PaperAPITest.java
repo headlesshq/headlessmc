@@ -72,7 +72,7 @@ class PaperAPITest {
         assertFalse(all.isEmpty());
 
         // not every version has STABLE builds, 1.21.5 for example only has ALPHA builds
-        Channel channel = all.getFirst().getChannel();
+        Channel channel = all.get(0).getChannel();
         List<BuildResponse> filtered = paperAPI.getBuilds(PaperAPI.PAPER_PROJECT, VERSION, List.of(channel));
         assertFalse(filtered.isEmpty());
         assertTrue(filtered.stream().allMatch(build -> build.getChannel() == channel));

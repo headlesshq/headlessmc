@@ -25,7 +25,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Runs download-like tasks against a single API with bounded concurrency.
@@ -66,8 +68,8 @@ public class ParallelTaskService<T extends ParallelTask> implements AutoCloseabl
 
         this.tasks = order(tasks, config.parallelism());
         this.executor = Executors.newFixedThreadPool(
-            Math.clamp(this.tasks.size(), 1, config.parallelism() == 0 ? Integer.MAX_VALUE : config.parallelism()),
-            Thread.ofVirtual().name("parallel-download-", 0).factory()
+            Math.max(1, Math.min(this.tasks.size(), config.parallelism() == 0 ? Integer.MAX_VALUE : config.parallelism())),
+            threadFactory()
         );
 
         this.retry = createRetry(config);
@@ -169,12 +171,15 @@ public class ParallelTaskService<T extends ParallelTask> implements AutoCloseabl
             throw new UncheckedInterruptedException(e);
         } catch (ExecutionException e) {
             Throwable cause = Objects.requireNonNullElse(e.getCause(), e);
-            switch (cause) {
-                case UncheckedInterruptedException interrupted -> throw interrupted;
-                case HeadlessMcException headless -> throw headless;
-                case Error error -> throw error;
-                default -> throw new ParallelTaskException(cause);
+            if (cause instanceof UncheckedInterruptedException interrupted) {
+                throw interrupted;
+            } else if (cause instanceof HeadlessMcException headless) {
+                throw headless;
+            } else if (cause instanceof Error error) {
+                throw error;
             }
+
+            throw new ParallelTaskException(cause);
         }
     }
 
@@ -187,6 +192,16 @@ public class ParallelTaskService<T extends ParallelTask> implements AutoCloseabl
         List<T> ordered = new ArrayList<>(tasks);
         ordered.sort(parallelism == 1 ? bySize : bySize.reversed());
         return List.copyOf(ordered);
+    }
+
+    // virtual threads require Java 21, daemon threads do not keep the JVM alive either
+    private static ThreadFactory threadFactory() {
+        AtomicInteger counter = new AtomicInteger();
+        return runnable -> {
+            Thread thread = new Thread(runnable, "parallel-download-" + counter.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        };
     }
 
     private static Retry createRetry(ParallelConfig config) {

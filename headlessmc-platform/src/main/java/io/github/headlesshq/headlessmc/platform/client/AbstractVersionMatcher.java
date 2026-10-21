@@ -9,12 +9,12 @@ import org.jspecify.annotations.Nullable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.SequencedSet;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public abstract class AbstractVersionMatcher implements VersionMatcher {
     protected <V extends PlatformVersion> DefaultVersionMatcher.NameMatchResult<V> match(
-        SequencedSet<V> versions,
+        Set<V> versions,
         Version version
     ) {
         String id = version.getId().toLowerCase(Locale.ENGLISH);
@@ -22,7 +22,7 @@ public abstract class AbstractVersionMatcher implements VersionMatcher {
     }
 
     protected <V extends PlatformVersion> DefaultVersionMatcher.NameMatchResult<V> match(
-        SequencedSet<V> versions,
+        Set<V> versions,
         String id
     ) {
         List<V> result = versions.stream()

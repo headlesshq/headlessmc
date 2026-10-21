@@ -46,13 +46,13 @@ public class PurpurVersionService extends AbstractVersionService implements Vers
      */
     // TODO: caching, in-memory for an hour or something
     @Override
-    public SequencedSet<BoundPlatformVersion> getVersions() throws UncheckedInterruptedException {
-        SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
+    public Set<BoundPlatformVersion> getVersions() throws UncheckedInterruptedException {
+        Set<BoundPlatformVersion> result = new LinkedHashSet<>();
         try {
             for (String version : api.getProject(projectName).versions()) {
                 Thread.sleep(500); // sleep before getting builds
-                List<String> builds = api.getVersion(projectName, version).builds().all()
-                    .reversed(); // API returns builds in order, latest last
+                List<String> builds = new ArrayList<>(api.getVersion(projectName, version).builds().all());
+                Collections.reverse(builds); // API returns builds in order, latest last
 
                 for (String build : builds) {
                     result.add(createVersion(build, version));
@@ -68,14 +68,15 @@ public class PurpurVersionService extends AbstractVersionService implements Vers
     }
 
     @Override
-    public SequencedSet<BoundPlatformVersion> getBuilds(VanillaVersion version) {
-        return api.getVersion(projectName, version.getName())
+    public Set<BoundPlatformVersion> getBuilds(VanillaVersion version) {
+        List<BoundPlatformVersion> builds = api.getVersion(projectName, version.getName())
             .builds()
             .all()
             .stream()
             .map(build -> createVersion(build, version.getName()))
-            .collect(Collectors.toCollection(LinkedHashSet::new))
-            .reversed(); // API returns builds in order, latest last // TODO: check paper
+            .collect(Collectors.toCollection(ArrayList::new));
+        Collections.reverse(builds); // API returns builds in order, latest last // TODO: check paper
+        return new LinkedHashSet<>(builds);
     }
 
     @Override
@@ -98,7 +99,7 @@ public class PurpurVersionService extends AbstractVersionService implements Vers
     }
 
     @Override
-    public SequencedSet<PlatformVersion> sort(Collection<PlatformVersion> versions) throws IllegalArgumentException {
+    public Set<PlatformVersion> sort(Collection<PlatformVersion> versions) throws IllegalArgumentException {
         return PaperVersionService.sortByBuildAsInt(getPlatformName(), versions);
     }
 

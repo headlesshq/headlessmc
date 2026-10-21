@@ -23,8 +23,8 @@ public class EditFieldHelper {
     private final PlatformService platformService;
     private final ArgSplitter splitter;
 
-    SequencedMap<String, EditCommand.EditField<?>> fields(@Nullable Profile profile) {
-        SequencedMap<String, EditCommand.EditField<?>> result = new LinkedHashMap<>();
+    Map<String, EditCommand.EditField<?>> fields(@Nullable Profile profile) {
+        Map<String, EditCommand.EditField<?>> result = new LinkedHashMap<>();
 
         result.put("name", new EditCommand.EditField<>(Profile::name, Function.identity(), Function.identity(), Profile::withName));
         result.put(
@@ -54,7 +54,7 @@ public class EditFieldHelper {
                 string -> VmArgsUtil.parseArgs(splitter, string),
                 (p, args) -> {
                     List<String> vmArgs = new ArrayList<>(args);
-                    SequencedMap<String, @Nullable String> properties = VmArgsUtil.removeSystemProperties(vmArgs.iterator());
+                    Map<String, @Nullable String> properties = VmArgsUtil.removeSystemProperties(vmArgs.iterator());
                     return p.withVmArgs(vmArgs).withSystemProperties(properties);
                 }
             )

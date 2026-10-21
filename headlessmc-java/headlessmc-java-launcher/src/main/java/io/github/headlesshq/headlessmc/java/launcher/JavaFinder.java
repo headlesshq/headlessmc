@@ -54,7 +54,7 @@ public class JavaFinder {
             );
         }
 
-        JavaRuntime runtime = runtimes.getFirst();
+        JavaRuntime runtime = runtimes.get(0);
         Path path = appFiles.getJavaDir().resolve(runtime.name());
         provider.download(runtime, path);
         javaService.refresh();

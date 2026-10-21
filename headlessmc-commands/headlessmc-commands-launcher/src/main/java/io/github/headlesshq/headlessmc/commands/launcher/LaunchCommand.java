@@ -148,12 +148,12 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
         }
 
         if (versionArg.size() == 1) {
-            Profile profile = profileService.getProfile(versionArg.getFirst()).orElse(null);
+            Profile profile = profileService.getProfile(versionArg.get(0)).orElse(null);
             if (profile != null) {
                 return profile;
             }
 
-            Side side = Side.valueOf(versionArg.getFirst().toUpperCase(Locale.ENGLISH));
+            Side side = Side.valueOf(versionArg.get(0).toUpperCase(Locale.ENGLISH));
             if (ids.size() > 1) {
                 throw new IllegalArgumentException(
                     "Please specify the loader to use ("
@@ -165,16 +165,16 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
                 );
             }
 
-            return getProfileService().getProfile(ids.getFirst().asArg().withSide(side));
+            return getProfileService().getProfile(ids.get(0).asArg().withSide(side));
         }
 
         if (versionArg.size() == 2) {
-            if (getPlatformService().getPlatform(versionArg.getFirst()).isPresent()) {
+            if (getPlatformService().getPlatform(versionArg.get(0)).isPresent()) {
                 // fabric/26.3, side client is implicit
                 return getProfileResolver().resolve(versionArg, Side.BOTH);
             }
 
-            Side side = Side.valueOf(versionArg.getFirst().toUpperCase(Locale.ENGLISH));
+            Side side = Side.valueOf(versionArg.get(0).toUpperCase(Locale.ENGLISH));
             List<VersionID> filteredIds = ids.stream()
                 .filter(id -> id.getPlatform().getName().equalsIgnoreCase(versionArg.get(1)))
                 .toList();
@@ -192,7 +192,7 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
                 );
             }
 
-            return getProfileService().getProfile(filteredIds.getFirst().asArg().withSide(side));
+            return getProfileService().getProfile(filteredIds.get(0).asArg().withSide(side));
         }
 
         return getProfileResolver().resolve(versionArg, Side.BOTH);

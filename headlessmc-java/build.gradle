@@ -1,3 +1,4 @@
 dependencies {
+    compileOnly libs.quarkus.arc
     api project(':headlessmc-config')
 }

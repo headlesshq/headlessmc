@@ -1,6 +1,7 @@
 dependencies {
     api project(':headlessmc-java')
     api project(':headlessmc-java:headlessmc-java-launcher')
+    implementation project(':headlessmc-java:headlessmc-java-in-memory')
     api project(':headlessmc-java:headlessmc-java-distribution')
     api project(':headlessmc-java:headlessmc-java-version')
     implementation project(':headlessmc-java:headlessmc-java-sources')

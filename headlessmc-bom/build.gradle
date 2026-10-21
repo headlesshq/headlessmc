@@ -8,6 +8,8 @@ dependencies {
     api project(':headlessmc-java:headlessmc-java-distribution')
     api project(':headlessmc-java:headlessmc-java-distribution:headlessmc-java-distribution-foojay')
     implementation project(':headlessmc-java:headlessmc-java-sources')
+    // only active when building with -PinMemory, see headlessmc-application/build.gradle
+    implementation project(':headlessmc-java:headlessmc-java-in-memory')
 
     api project(':headlessmc-platform:headlessmc-platform-all')
 

@@ -8,7 +8,8 @@ import io.github.headlesshq.headlessmc.os.OSConfigurator;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
-import java.util.SequencedSet;
+import java.util.Set;
+
 
 @Dependent
 public class ConfigConfigurator implements OSConfigurator {
@@ -22,7 +23,7 @@ public class ConfigConfigurator implements OSConfigurator {
     }
 
     @Override
-    public OS configure(OS os, SequencedSet<OS> candidates) throws HeadlessMcException {
+    public OS configure(OS os, Set<OS> candidates) throws HeadlessMcException {
         OSConfig osConfig = this.osConfig.get();
         String name = osConfig.name().orElse(os.name());
         String version = osConfig.version().orElse(os.version());
@@ -35,7 +36,7 @@ public class ConfigConfigurator implements OSConfigurator {
     }
 
     @Override
-    public CPU configure(CPU cpu, SequencedSet<CPU> candidates) throws HeadlessMcException {
+    public CPU configure(CPU cpu, Set<CPU> candidates) throws HeadlessMcException {
         CPUConfig cpuConfig = this.cpuConfig.get();
         String arch = cpuConfig.arch().orElse(cpu.architecture());
         CPU.Bitness bitness = cpuConfig.bitness().map(CPU.Bitness::new).orElse(cpu.bitness());

@@ -97,7 +97,7 @@ class AccountCommandsTest {
     private final LastUsedAccountService lastUsedAccountService = new LastUsedAccountService() {
         @Override
         public Optional<Account> getLastUsedAccount() {
-            return lastUsed.isEmpty() ? Optional.empty() : Optional.of(lastUsed.getLast());
+            return lastUsed.isEmpty() ? Optional.empty() : Optional.of(lastUsed.get(lastUsed.size() - 1));
         }
 
         @Override
@@ -222,7 +222,7 @@ class AccountCommandsTest {
         command.setProvider("offline");
         login().run();
 
-        assertEquals("LoggedIn", lastUsed.getFirst().getName());
+        assertEquals("LoggedIn", lastUsed.get(0).getName());
     }
 
     @Test
@@ -325,7 +325,7 @@ class AccountCommandsTest {
         select.setName("Steve");
         select.run();
 
-        assertEquals("Steve", lastUsed.getFirst().getName());
+        assertEquals("Steve", lastUsed.get(0).getName());
     }
 
     // -------------------------------------------------------- RefreshCommand
@@ -338,7 +338,7 @@ class AccountCommandsTest {
         refresh.setName("Steve");
         refresh.run();
 
-        assertEquals("refreshed-token", lastUsed.getFirst().getToken());
+        assertEquals("refreshed-token", lastUsed.get(0).getToken());
     }
 
     // ----------------------------------------------------------- completions

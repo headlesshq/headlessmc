@@ -61,7 +61,7 @@ final class Worlds {
 
             List<Path> worlds = listDirectories(saves);
             if (worlds.size() == 1) {
-                return worlds.getFirst();
+                return worlds.get(0);
             }
 
             throw new IllegalArgumentException(

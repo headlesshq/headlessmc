@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 // could be useful to find out since which version the EULA needs to be accepted
 /**
@@ -20,7 +21,7 @@ public class Eula {
 
     public String read() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(file)))) {
-            return String.join("\n", reader.readAllLines());
+            return reader.lines().collect(Collectors.joining("\n"));
         } catch (IOException e) {
             throw new ServerException("Failed to read EULA", e);
         }

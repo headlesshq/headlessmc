@@ -55,8 +55,8 @@ class FileConfigTest {
 
         assertEquals(Optional.of("old"), result);
         assertEquals(1, warnings.size());
-        assertTrue(warnings.getFirst().contains("legacy"));
-        assertTrue(warnings.getFirst().contains("current"));
+        assertTrue(warnings.get(0).contains("legacy"));
+        assertTrue(warnings.get(0).contains("current"));
     }
 
     @Test

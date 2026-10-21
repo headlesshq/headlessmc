@@ -9,7 +9,7 @@ import io.quarkus.runtime.annotations.RegisterResources;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashSet;
-import java.util.SequencedSet;
+import java.util.Set;
 
 @RegisterResources(globs = "forge/forge-versions.json")
 public class ForgeVersionService extends AbstractJsonVersionService<BoundPlatformVersion, PrismIndex> {
@@ -18,11 +18,11 @@ public class ForgeVersionService extends AbstractJsonVersionService<BoundPlatfor
     }
 
     @Override
-    protected SequencedSet<BoundPlatformVersion> map(
+    protected Set<BoundPlatformVersion> map(
         PrismIndex value,
-        @Nullable SequencedSet<BoundPlatformVersion> previous
+        @Nullable Set<BoundPlatformVersion> previous
     ) {
-        SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
+        Set<BoundPlatformVersion> result = new LinkedHashSet<>();
         for (PrismIndex.Meta meta : value.versions()) {
             result.add(createVersion(meta.version(), meta.getMcVersion()));
         }
@@ -31,7 +31,7 @@ public class ForgeVersionService extends AbstractJsonVersionService<BoundPlatfor
     }
 
     @Override
-    public SequencedSet<BoundPlatformVersion> getBuilds(VanillaVersion version) throws HeadlessMcException {
+    public Set<BoundPlatformVersion> getBuilds(VanillaVersion version) throws HeadlessMcException {
         return filter(getVersions(), version);
     }
 

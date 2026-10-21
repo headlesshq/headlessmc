@@ -12,7 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,7 +20,7 @@ class AbstractCachedVersionServiceTest {
     /** A cached version service over a list of "vanillaVersion:build" strings. */
     private static final class TestService extends AbstractCachedVersionService<BoundPlatformVersion> {
         private final Cache<List<String>> cache;
-        private final View<SequencedSet<BoundPlatformVersion>> setView;
+        private final View<Set<BoundPlatformVersion>> setView;
         private final View<Map<String, BoundPlatformVersion>> mapView;
         private final View<Map<BoundPlatformVersion, Integer>> indices;
 
@@ -28,7 +28,7 @@ class AbstractCachedVersionServiceTest {
             super("fabric");
             this.cache = cache;
             this.setView = cache.view((value, previous) -> {
-                SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
+                Set<BoundPlatformVersion> result = new LinkedHashSet<>();
                 for (String entry : value) {
                     String[] parts = entry.split(":");
                     result.add(createVersion(parts[1], parts[0]));
@@ -41,7 +41,7 @@ class AbstractCachedVersionServiceTest {
         }
 
         @Override
-        protected View<SequencedSet<BoundPlatformVersion>> getSetView() {
+        protected View<Set<BoundPlatformVersion>> getSetView() {
             return setView;
         }
 
@@ -56,7 +56,7 @@ class AbstractCachedVersionServiceTest {
         }
 
         @Override
-        public SequencedSet<BoundPlatformVersion> getBuilds(VanillaVersion version) {
+        public Set<BoundPlatformVersion> getBuilds(VanillaVersion version) {
             return filter(getVersions(), version);
         }
 

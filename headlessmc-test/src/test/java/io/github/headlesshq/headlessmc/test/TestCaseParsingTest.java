@@ -66,16 +66,16 @@ public class TestCaseParsingTest {
         assertEquals(600L, testCase.getTotalTimeout());
         assertFalse(testCase.getImplicitWaitForEnd());
 
-        TestCase.Action action = testCase.getSteps().getFirst();
+        TestCase.Action action = testCase.getSteps().get(0);
         assertEquals(CONTAINS, action.getType());
         assertEquals("Done", action.getMessage());
         assertTrue(action.isIgnoreCase());
         assertEquals(5L, action.getTimeout());
 
         assertNotNull(action.getAnd());
-        assertEquals(ENDS_WITH, action.getAnd().getFirst().getType());
+        assertEquals(ENDS_WITH, action.getAnd().get(0).getType());
         assertNotNull(action.getOr());
-        assertEquals(REGEX, action.getOr().getFirst().getType());
+        assertEquals(REGEX, action.getOr().get(0).getType());
         assertNotNull(action.getThen());
         assertEquals(List.of(SEND, SUCCESS), action.getThen().stream().map(TestCase.Action::getType).toList());
     }
@@ -86,7 +86,7 @@ public class TestCaseParsingTest {
             { "name": "Minimal", "steps": [ { "type": "SUCCESS" } ] }
             """);
 
-        TestCase.Action action = testCase.getSteps().getFirst();
+        TestCase.Action action = testCase.getSteps().get(0);
         assertNull(action.getMessage());
         assertNull(action.getIgnoreCase());
         assertNull(action.getTimeout());
@@ -102,7 +102,7 @@ public class TestCaseParsingTest {
             """);
 
         assertEquals(1, testCase.getSteps().size());
-        assertEquals(SUCCESS, testCase.getSteps().getFirst().getType());
+        assertEquals(SUCCESS, testCase.getSteps().get(0).getType());
     }
 
     @Test

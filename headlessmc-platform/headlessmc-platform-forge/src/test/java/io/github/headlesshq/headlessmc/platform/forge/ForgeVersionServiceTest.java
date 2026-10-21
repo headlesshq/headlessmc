@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,13 +45,13 @@ class ForgeVersionServiceTest {
 
     @Test
     void mapsEveryIndexEntryToABoundVersion() {
-        SequencedSet<BoundPlatformVersion> versions = service.getVersions();
+        Set<BoundPlatformVersion> versions = service.getVersions();
 
         assertEquals(
             List.of("48.1.0", "48.0.0", "11.15.1.2318"),
             versions.stream().map(PlatformVersion::getName).toList()
         );
-        assertEquals("1.20.2", versions.getFirst().getVanillaVersion());
+        assertEquals("1.20.2", versions.iterator().next().getVanillaVersion());
         assertEquals(Forge.PLATFORM_NAME, service.getPlatformName());
     }
 

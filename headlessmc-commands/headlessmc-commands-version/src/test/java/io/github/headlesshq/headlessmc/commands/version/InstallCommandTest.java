@@ -92,7 +92,7 @@ class InstallCommandTest {
         command.run();
 
         assertEquals(1, clientInstalls.size());
-        ClientInstallation install = clientInstalls.getFirst();
+        ClientInstallation install = clientInstalls.get(0);
         assertEquals("1.21.1", install.id().getVersion().getName());
         assertEquals(mcFiles.getMcDir(), install.dir());
         assertEquals(false, install.args().get(ClientInstaller.FORCE_INSTALL));
@@ -108,7 +108,7 @@ class InstallCommandTest {
         command.setCustomDir(root.resolve("custom").toString());
         command.run();
 
-        ClientInstallation install = clientInstalls.getFirst();
+        ClientInstallation install = clientInstalls.get(0);
         assertEquals(true, install.args().get(ClientInstaller.FORCE_INSTALL));
         assertEquals(URI.create("https://example.com/installer.jar"),
             install.args().get(ClientInstaller.CUSTOM_INSTALLER_URL));
@@ -140,12 +140,12 @@ class InstallCommandTest {
         command.run();
 
         assertEquals(1, serverInstalls.size());
-        ServerInstallation install = serverInstalls.getFirst();
+        ServerInstallation install = serverInstalls.get(0);
         assertEquals("1.21.1", install.id().getVersion().getName());
 
         List<Profile> servers = serverService.listServers();
         assertEquals(1, servers.size());
-        Profile server = servers.getFirst();
+        Profile server = servers.get(0);
         assertEquals(21, server.javaVersion());
         assertEquals(Optional.of(Side.SERVER), server.version().side());
         assertEquals(install.dir(), server.path());
@@ -160,7 +160,7 @@ class InstallCommandTest {
         command.run();
 
         assertTrue(serverService.getServer("my-server").isPresent());
-        assertEquals(appFiles.getServerDir().resolve("my-server"), serverInstalls.getFirst().dir());
+        assertEquals(appFiles.getServerDir().resolve("my-server"), serverInstalls.get(0).dir());
     }
 
     @Test

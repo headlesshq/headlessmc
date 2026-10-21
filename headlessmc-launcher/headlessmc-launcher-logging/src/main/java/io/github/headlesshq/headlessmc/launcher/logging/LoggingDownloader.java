@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -77,7 +78,9 @@ public class LoggingDownloader {
             }
 
             try (BufferedReader br = new BufferedReader(new InputStreamReader(Files.newInputStream(configFile)))) {
-                String before = br.readAllAsString();
+                StringWriter writer = new StringWriter();
+                br.transferTo(writer);
+                String before = writer.toString();
                 String text = before.replace( // legacy client-1.7.xml
                     "<XMLLayout />",
                     "<PatternLayout pattern=\"[%d{HH:mm:ss}] [%t/%level]: %msg%n\" />"

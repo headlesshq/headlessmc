@@ -23,7 +23,7 @@ public class CommandTestServiceTest {
     public void noTestIsActiveByDefault() throws IOException {
         CommandTestService service = service(new Config(false, Optional.empty()));
         assertFalse(service.isTestActive());
-        assertNull(service.createCommandTest(FakeProcess.withLines(true), _ -> {}));
+        assertNull(service.createCommandTest(FakeProcess.withLines(true), unused -> {}));
     }
 
     @Test
@@ -40,7 +40,7 @@ public class CommandTestServiceTest {
     public void serverAndFileAreMutuallyExclusive() {
         CommandTestService service = service(new Config(true, Optional.of("test.json")));
         assertThrows(ConfigException.class, service::isTestActive);
-        assertThrows(ConfigException.class, () -> service.createCommandTest(FakeProcess.withLines(true), _ -> {}));
+        assertThrows(ConfigException.class, () -> service.createCommandTest(FakeProcess.withLines(true), unused -> {}));
     }
 
     @Test
@@ -48,7 +48,7 @@ public class CommandTestServiceTest {
         CommandTestService service = service(new Config(true, Optional.empty()));
         FakeProcess process = FakeProcess.withLines(true, "Starting", "Done (2.5s)! For help, type \"help\"");
 
-        try (CommandTest commandTest = service.createCommandTest(process, _ -> {})) {
+        try (CommandTest commandTest = service.createCommandTest(process, unused -> {})) {
             assertNotNull(commandTest);
             commandTest.run();
             assertTrue(commandTest.wasSuccessful());
@@ -75,7 +75,7 @@ public class CommandTestServiceTest {
         CommandTestService service = service(new Config(false, Optional.of(file.toString())));
         FakeProcess process = FakeProcess.withLines(false, "booting", "ready");
 
-        try (CommandTest commandTest = service.createCommandTest(process, _ -> {})) {
+        try (CommandTest commandTest = service.createCommandTest(process, unused -> {})) {
             assertNotNull(commandTest);
             commandTest.run();
             assertTrue(commandTest.wasSuccessful());
@@ -87,7 +87,7 @@ public class CommandTestServiceTest {
     @Test
     public void missingFileThrows() {
         CommandTestService service = service(new Config(false, Optional.of(tempDir.resolve("missing.json").toString())));
-        assertThrows(NoSuchFileException.class, () -> service.createCommandTest(FakeProcess.withLines(true), _ -> {}));
+        assertThrows(NoSuchFileException.class, () -> service.createCommandTest(FakeProcess.withLines(true), unused -> {}));
     }
 
     private static CommandTestService service(Config config) {

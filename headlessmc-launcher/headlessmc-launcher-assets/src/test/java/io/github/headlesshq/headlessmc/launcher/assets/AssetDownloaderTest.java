@@ -6,7 +6,7 @@ import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.net.hash.HashService;
-import io.github.headlesshq.headlessmc.progressbar.ProgressbarService;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarServiceManager;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.quarkus.test.junit.QuarkusTest;
@@ -34,7 +34,7 @@ public class AssetDownloaderTest {
     ConfigService configService;
 
     @Inject
-    ProgressbarService progressbarService;
+    ProgressBarServiceManager progressbarService;
 
     @Inject
     HashService hashService;

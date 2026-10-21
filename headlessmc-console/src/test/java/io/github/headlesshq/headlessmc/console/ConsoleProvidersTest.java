@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.console;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsoleProvider;
 import io.github.headlesshq.headlessmc.console.cache.ConsoleCachingService;
+import io.github.headlesshq.headlessmc.console.input.ConsoleInputProvider;
 import io.github.headlesshq.headlessmc.console.input.Input;
 import io.github.headlesshq.headlessmc.console.input.InputProvider;
 import io.github.headlesshq.headlessmc.console.input.SystemInputProvider;
@@ -260,6 +261,16 @@ class ConsoleProvidersTest {
             assertThrows(HeadlessMcIOException.class, input::readPassword);
         } finally {
             System.setIn(original);
+        }
+    }
+
+    @Test
+    void systemConsoleCanBeDisabled() {
+        System.setProperty(ConsoleInputProvider.ENABLED_PROPERTY, "false");
+        try {
+            assertThrows(ConsoleException.class, () -> new ConsoleInputProvider().get());
+        } finally {
+            System.clearProperty(ConsoleInputProvider.ENABLED_PROPERTY);
         }
     }
 

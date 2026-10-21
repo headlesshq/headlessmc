@@ -10,6 +10,25 @@ if (providers.gradleProperty('uberJar').present) {
     }
 }
 
+// Build profiles for platforms that cannot use everything HeadlessMc needs by default, e.g. CheerpJ or Android:
+// -PinMemory runs Java programs (installers, the game) inside the HeadlessMc JVM instead of starting processes,
+// see headlessmc-java-in-memory.
+// -PurlConnection downloads with HttpURLConnection instead of java.net.http.HttpClient, see headlessmc-net-java.
+def buildProfiles = ['prod'] // prod stays active, so %prod config still applies
+if (providers.gradleProperty('inMemory').present) {
+    buildProfiles.add('in-memory')
+}
+
+if (providers.gradleProperty('urlConnection').present) {
+    buildProfiles.add('url-connection')
+}
+
+if (buildProfiles.size() > 1) {
+    quarkus {
+        set('profile', buildProfiles.join(','))
+    }
+}
+
 // quarkusDev is not that great, especially if we want to debug from the shell
 // quarkusRun is not a JavaExec, so IntelliJ cannot attach a debugger
 // the gradle application plugin run task somehow also runs quarkusDev

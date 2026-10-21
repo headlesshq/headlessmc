@@ -100,7 +100,7 @@ public class ModrinthDistributionPlatform implements ModDistributionPlatform {
                 );
             }
 
-            ModrinthProjectVersion projectVersion = projectVersions.getFirst();
+            ModrinthProjectVersion projectVersion = projectVersions.get(0);
             ModrinthFile file = projectVersion.getPrimaryFile()
                 .orElseThrow(() -> new ModDistributionException(
                     "Failed to get primary download file for project %s for version %s (%s)".formatted(

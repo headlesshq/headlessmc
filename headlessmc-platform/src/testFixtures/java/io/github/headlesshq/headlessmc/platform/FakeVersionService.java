@@ -7,7 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * A {@link VersionService} for a modded platform over a fixed map of
@@ -32,16 +32,16 @@ public class FakeVersionService implements VersionService {
     }
 
     @Override
-    public SequencedSet<BoundPlatformVersion> getVersions() {
-        SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
+    public Set<BoundPlatformVersion> getVersions() {
+        Set<BoundPlatformVersion> result = new LinkedHashSet<>();
         builds.forEach((vanilla, names) ->
             names.forEach(name -> result.add(new BoundPlatformVersion(platformName, vanilla, name))));
         return result;
     }
 
     @Override
-    public SequencedSet<BoundPlatformVersion> getBuilds(VanillaVersion version) {
-        SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
+    public Set<BoundPlatformVersion> getBuilds(VanillaVersion version) {
+        Set<BoundPlatformVersion> result = new LinkedHashSet<>();
         for (String name : builds.getOrDefault(version.getName(), List.of())) {
             result.add(new BoundPlatformVersion(platformName, version.getName(), name));
         }
@@ -62,7 +62,7 @@ public class FakeVersionService implements VersionService {
     }
 
     @Override
-    public SequencedSet<PlatformVersion> sort(Collection<PlatformVersion> versions) {
+    public Set<PlatformVersion> sort(Collection<PlatformVersion> versions) {
         List<PlatformVersion> order = new ArrayList<>(getVersions());
         List<PlatformVersion> sorted = new ArrayList<>(versions);
         for (PlatformVersion version : sorted) {

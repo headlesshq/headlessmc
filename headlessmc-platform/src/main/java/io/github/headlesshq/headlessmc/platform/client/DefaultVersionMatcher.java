@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.version.VersionProcessor;
 import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -46,7 +47,7 @@ public class DefaultVersionMatcher extends AbstractVersionMatcher implements Ver
             return resolveAmbiguousMatch(match, platformService, version, processor);
         }
 
-        PlatformVersion first = match.versions().getFirst();
+        PlatformVersion first = match.versions().get(0);
         if (first instanceof VanillaVersion vanillaVersion) {
             return createVersionId(platformService, vanillaVersion, null);
         }
@@ -106,7 +107,7 @@ public class DefaultVersionMatcher extends AbstractVersionMatcher implements Ver
         }
 
         if (boundPlatformMatch.size() == 1) {
-            return createVersionId(platformService, vanillaVersion, boundPlatformMatch.getFirst());
+            return createVersionId(platformService, vanillaVersion, boundPlatformMatch.get(0));
         }
 
         return onAmbiguousPlatformMatches(match, platformService, version, processor, vanillaVersion, boundPlatformMatch);
@@ -137,24 +138,25 @@ public class DefaultVersionMatcher extends AbstractVersionMatcher implements Ver
         if (parent != null) {
             vanilla = match(vanillaVersionService.getVersions(), parent.toLowerCase(Locale.ENGLISH));
             if (vanilla.isValid()) {
-                return vanilla.versions().getFirst();
+                return vanilla.versions().get(0);
             }
         }
 
         ProcessedVersion processedVersion = processor.process(version);
-        List<Version> hierarchy = processedVersion.hierarchy().reversed();
+        List<Version> hierarchy = new ArrayList<>(processedVersion.hierarchy());
+        Collections.reverse(hierarchy);
         for (int i = 1; i < hierarchy.size(); i++) {
             Version current = hierarchy.get(i);
             vanilla = match(vanillaVersionService.getVersions(), current);
             if (vanilla.isValid()) {
-                return vanilla.versions().getFirst();
+                return vanilla.versions().get(0);
             }
         }
 
         // can be dangerous: neoforge-21.1.156 contains 1.15
         vanilla = match(vanillaVersionService.getVersions(), version);
         if (vanilla.isValid()) {
-            return vanilla.versions().getFirst();
+            return vanilla.versions().get(0);
         }
 
         throw new VersionMatchException("Failed to determine vanilla version for " + version.getId());

@@ -21,7 +21,7 @@ public class JavaScannerServiceTest {
     public void testScannerOrder() {
         List<JavaScanner> list = scanners.stream().toList();
         assertEquals(2, list.size());
-        assertInstanceOf(SettingsProcessScanner.class, list.getFirst());
+        assertInstanceOf(SettingsProcessScanner.class, list.get(0));
         assertInstanceOf(SimpleProcessScanner.class, list.get(1));
     }
 

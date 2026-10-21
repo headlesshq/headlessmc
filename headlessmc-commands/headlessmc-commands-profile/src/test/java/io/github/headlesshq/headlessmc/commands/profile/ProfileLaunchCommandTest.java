@@ -233,7 +233,7 @@ class ProfileLaunchCommandTest {
         assertThrows(Launched.class, command::call);
 
         assertEquals(1, eulaLaunches.size());
-        assertEquals("srv", eulaLaunches.getFirst().name());
+        assertEquals("srv", eulaLaunches.get(0).name());
     }
 
     @Test

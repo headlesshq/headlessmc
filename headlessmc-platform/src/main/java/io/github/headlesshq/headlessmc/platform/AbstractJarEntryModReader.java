@@ -20,7 +20,7 @@ public abstract class AbstractJarEntryModReader implements ModReader {
     private final Set<String> entryNames;
 
     public AbstractJarEntryModReader(String... names) {
-        this(Collections.unmodifiableSequencedSet(new LinkedHashSet<>(List.of(names))));
+        this(Collections.unmodifiableSet(new LinkedHashSet<>(List.of(names))));
     }
 
     @Override

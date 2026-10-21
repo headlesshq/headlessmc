@@ -9,7 +9,7 @@ import io.quarkus.runtime.annotations.RegisterResources;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashSet;
-import java.util.SequencedSet;
+import java.util.Set;
 
 @RegisterResources(globs = "neoforge/neoforge-versions.json")
 public class NeoForgeVersionService extends ForgeVersionService implements VersionService {
@@ -18,11 +18,11 @@ public class NeoForgeVersionService extends ForgeVersionService implements Versi
     }
 
     @Override
-    protected SequencedSet<BoundPlatformVersion> map(
+    protected Set<BoundPlatformVersion> map(
         PrismIndex value,
-        @Nullable SequencedSet<BoundPlatformVersion> previous
+        @Nullable Set<BoundPlatformVersion> previous
     ) {
-        SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
+        Set<BoundPlatformVersion> result = new LinkedHashSet<>();
         for (PrismIndex.Meta meta : value.versions()) {
             String metaVersion = meta.version();
             // in the prism index NeoForge versions look like this: 21.10.62-beta

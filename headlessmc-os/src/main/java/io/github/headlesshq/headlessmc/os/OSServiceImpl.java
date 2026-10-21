@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.SequencedSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -32,15 +32,15 @@ public class OSServiceImpl implements OSService {
     @Default
     @Dependent
     public OS getOS() {
-        SequencedSet<OS> candidates = os.handlesStream() // avoid StackOverflow, because Instance also contains this
+        Set<OS> candidates = os.handlesStream() // avoid StackOverflow, because Instance also contains this
             .filter(handle -> !handle.getBean().getBeanClass().isAssignableFrom(getClass()))
             .map(Instance.Handle::get)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        OS result = candidates.getFirst();
+        OS result = candidates.iterator().next();
         for (OSConfigurator configurator : configurators.stream().toList()) {
             result = configurator.configure(result, candidates);
-            candidates.addFirst(result);
+            candidates = moveToFront(candidates, result);
         }
 
         return result;
@@ -51,15 +51,15 @@ public class OSServiceImpl implements OSService {
     @Default
     @Dependent
     public CPU getCPU() {
-        SequencedSet<CPU> candidates = cpu.handlesStream() // avoid StackOverflow, because Instance also contains this
+        Set<CPU> candidates = cpu.handlesStream() // avoid StackOverflow, because Instance also contains this
             .filter(handle -> !handle.getBean().getBeanClass().isAssignableFrom(getClass()))
             .map(Instance.Handle::get)
             .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        CPU result = candidates.getFirst();
+        CPU result = candidates.iterator().next();
         for (OSConfigurator configurator : configurators.stream().toList()) {
             result = configurator.configure(result, candidates);
-            candidates.addFirst(result);
+            candidates = moveToFront(candidates, result);
         }
 
         return result;
@@ -71,4 +71,10 @@ public class OSServiceImpl implements OSService {
         return configurators.stream().toList();
     }
 
+    private static <T> Set<T> moveToFront(Set<T> candidates, T first) {
+        Set<T> result = new LinkedHashSet<>();
+        result.add(first);
+        result.addAll(candidates);
+        return result;
+    }
 }

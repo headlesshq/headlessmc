@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Data
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "ClassCanBeRecord"})
@@ -35,7 +36,7 @@ public class JavaProcessImpl implements JavaProcess {
                 if (duration == null) {
                     return process.waitFor();
                 } else {
-                    if (process.waitFor(duration)) {
+                    if (process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS)) {
                         return process.exitValue();
                     } else {
                         throw new JavaProcessException(

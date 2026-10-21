@@ -78,7 +78,7 @@ final class PatchContextImpl implements PatchContext {
                     fileService.deleteFileAndEmptyParentDirs(library);
                 }
 
-                SequencedSet<Path> classpath = new LinkedHashSet<>(currentPatchResult.files());
+                Set<Path> classpath = new LinkedHashSet<>(currentPatchResult.files());
                 classpath.remove(library);
                 classpath.add(patchedFile);
                 currentPatchResult = new PatchResult(

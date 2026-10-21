@@ -116,7 +116,7 @@ class ProbeResolverTest {
 
         assertEquals("a" + System.lineSeparator() + "b" + System.lineSeparator(),
             process.stdIn.toString(StandardCharsets.UTF_8));
-        AbstractJavaProcessBuilder builder = builders.getFirst();
+        AbstractJavaProcessBuilder builder = builders.get(0);
         assertEquals("probe-super-class", builder.getId());
         assertEquals(root.resolve("probe.jar"), builder.getJar());
         assertEquals(21, builder.getVersion());

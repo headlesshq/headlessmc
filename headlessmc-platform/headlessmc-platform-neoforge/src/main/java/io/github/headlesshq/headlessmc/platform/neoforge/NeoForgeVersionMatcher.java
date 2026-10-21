@@ -89,7 +89,7 @@ public class NeoForgeVersionMatcher implements VersionMatcher {
                     : boundPlatformVersion.getVanillaVersion();
 
                 if (version.getId().endsWith(vanillaVersionName + "." + boundPlatformVersion.getName())) {
-                    return createVersionId(platformService, vanillaVersion, boundPlatformMatch.getFirst());
+                    return createVersionId(platformService, vanillaVersion, boundPlatformMatch.get(0));
                 }
             }
 

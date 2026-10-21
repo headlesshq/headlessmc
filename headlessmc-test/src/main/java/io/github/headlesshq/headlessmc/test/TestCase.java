@@ -83,7 +83,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Sends the message as a command to the process.
              */
-            SEND((process, action, _) -> {
+            SEND((process, action, unused) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 log.info("Sending command: {}", action.getMessage());
                 process.getOutputStream().write(
@@ -95,7 +95,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Checks for log messages that end with the message.
              */
-            ENDS_WITH((_, action, message) -> {
+            ENDS_WITH((unused, action, message) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 requireNonNull(message, "Cannot execute CONTAINS in end step!");
 
@@ -108,7 +108,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Checks for log messages that match the given regex
              */
-            REGEX((_, action, message) -> {
+            REGEX((unused, action, message) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 requireNonNull(message, "Cannot execute CONTAINS in end step!");
                 Pattern pattern = action.isIgnoreCase()
@@ -122,7 +122,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Checks for messages that contain the message.
              */
-            CONTAINS((_, action, message) -> {
+            CONTAINS((unused, action, message) -> {
                 requireNonNull(action.getMessage(), "Message of action was null!");
                 requireNonNull(message, "Cannot execute CONTAINS in end step!");
 
@@ -135,7 +135,7 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Waits for the given timeout.
              */
-            WAIT((_, action, _) -> {
+            WAIT((unused1, action, unused2) -> {
                 requireNonNull(action.getTimeout(), "Timeout of action was null!");
 
                 try {
@@ -149,11 +149,11 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Match step.
              */
-            MATCH((_, _, _) -> Result.MATCH, true),
+            MATCH((unused1, unused2, unused3) -> Result.MATCH, true),
             /**
              * Pass step.
              */
-            PASS((_, _, _) -> Result.PASS, true),
+            PASS((unused1, unused2, unused3) -> Result.PASS, true),
             /**
              * Waits for the end of the process.
              */
@@ -172,11 +172,11 @@ public class TestCase implements ReflectionRegistered {
             /**
              * Ends the test successfully.
              */
-            SUCCESS((_, _, _) -> Result.END_SUCCESS, false),
+            SUCCESS((unused1, unused2, unused3) -> Result.END_SUCCESS, false),
             /**
              * Ends the test signaling failure.
              */
-            FAIL((_, _, _) -> Result.END_FAIL, false);
+            FAIL((unused1, unused2, unused3) -> Result.END_FAIL, false);
 
             private final ActionFunction function;
             private final boolean condition;

@@ -10,7 +10,7 @@ import io.github.headlesshq.headlessmc.net.NetConfig;
 import io.github.headlesshq.headlessmc.net.hash.HashService;
 import io.github.headlesshq.headlessmc.net.parallel.ParallelTaskService;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
-import io.github.headlesshq.headlessmc.progressbar.ProgressbarService;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarServiceManager;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
 import io.github.headlesshq.headlessmc.version.Version;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class AssetDownloader {
-    final ProgressbarService progressbarService;
+    final ProgressBarServiceManager progressbarService;
     final DownloadService downloadService;
     final FileService fileService;
     final HashService hashService;

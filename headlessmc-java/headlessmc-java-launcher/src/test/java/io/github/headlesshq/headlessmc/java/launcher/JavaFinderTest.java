@@ -185,7 +185,7 @@ class JavaFinderTest {
 
         assertEquals(installed, finder.findJava(21));
         assertEquals(1, refreshes);
-        assertEquals(appFiles.getJavaDir().resolve("temurin-21"), downloads.getFirst().path());
+        assertEquals(appFiles.getJavaDir().resolve("temurin-21"), downloads.get(0).path());
     }
 
     @Test

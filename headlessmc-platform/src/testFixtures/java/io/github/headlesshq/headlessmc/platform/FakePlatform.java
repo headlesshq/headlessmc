@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * A configurable {@link Platform} for tests.
@@ -67,7 +67,7 @@ public class FakePlatform implements Platform {
         return new BoundPlatformVersion(name, vanillaVersion, build);
     }
 
-    public SequencedSet<? extends PlatformVersion> versions() {
+    public Set<? extends PlatformVersion> versions() {
         return versionService.getVersions();
     }
 

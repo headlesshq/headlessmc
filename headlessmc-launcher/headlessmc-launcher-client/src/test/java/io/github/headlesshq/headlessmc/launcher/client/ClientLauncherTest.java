@@ -57,7 +57,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.SequencedMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -182,7 +181,7 @@ class ClientLauncherTest {
 
         Mockito.when(assetDownloader.download(any())).thenReturn(new AssetsLocation("17", assetsDir));
         Mockito.when(loggingDownloader.downloadLogging(any(), any())).thenReturn(Optional.empty());
-        Mockito.when(classpathService.buildClasspath(any(), any(), any(), anyList())).thenAnswer(_ -> classpath);
+        Mockito.when(classpathService.buildClasspath(any(), any(), any(), anyList())).thenAnswer(unused -> classpath);
     }
 
     private ClientLauncher launcher() {
@@ -357,7 +356,7 @@ class ClientLauncherTest {
             .withSystemProperty("from.version", "patcher")
             .withSystemProperty("user.property", "patcher");
 
-        SequencedMap<String, @Nullable String> userProperties = new LinkedHashMap<>();
+        Map<String, @Nullable String> userProperties = new LinkedHashMap<>();
         userProperties.put("user.property", "user");
         Profile profile = profile("vanilla", "1.21.1").withSystemProperties(userProperties);
 
@@ -375,7 +374,7 @@ class ClientLauncherTest {
     @Test
     void libraryDirectoryCanBeOverriddenByTheUser() {
         install(version("1.21.1"), "vanilla");
-        SequencedMap<String, @Nullable String> userProperties = new LinkedHashMap<>();
+        Map<String, @Nullable String> userProperties = new LinkedHashMap<>();
         userProperties.put("libraryDirectory", "custom");
         Profile profile = profile("vanilla", "1.21.1").withSystemProperties(userProperties);
 
@@ -395,7 +394,7 @@ class ClientLauncherTest {
 
         assertEquals(List.of("-Xss1M", "-Xmx4G"), builder.getJvmArgs());
         assertEquals("Steve", systemProperties(builder).get("profile.property"));
-        assertEquals("--demo", builder.getArgs().getLast());
+        assertEquals("--demo", builder.getArgs().get(builder.getArgs().size() - 1));
     }
 
     @Test
@@ -468,7 +467,7 @@ class ClientLauncherTest {
         List<VersionID> installed = new ArrayList<>();
         fabric.withClientSupport(new ClientSupport(
             Mockito.mock(VersionMatcher.class),
-            (id, mcDir, _) -> {
+            (id, mcDir, unused) -> {
                 assertEquals(mcFiles.getMcDir(), mcDir);
                 installed.add(id);
                 return version("fabric-loader-1.21.1");
@@ -478,7 +477,7 @@ class ClientLauncherTest {
         ProcessLauncher process = launcher().launcher(profile("fabric", "1.21.1"), ACCOUNT);
 
         assertEquals(1, installed.size());
-        assertEquals("fabric", installed.getFirst().getPlatform().getName());
+        assertEquals("fabric", installed.get(0).getPlatform().getName());
         assertEquals(MAIN_CLASS, builder(process).getMainClass());
     }
 

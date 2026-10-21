@@ -50,7 +50,7 @@ class ProfileServiceImplTest {
     }
 
     private Profile sampleProfile(String name, VersionArg version) {
-        SequencedMap<String, String> systemProperties = new LinkedHashMap<>();
+        Map<String, String> systemProperties = new LinkedHashMap<>();
         systemProperties.put("key", "value");
         return new Profile(
             name,

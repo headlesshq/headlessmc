@@ -1,4 +1,5 @@
 dependencies {
+    compileOnly libs.quarkus.arc
     api project(':headlessmc-java')
     implementation project(':headlessmc-java:headlessmc-java-distribution')
     implementation project(':headlessmc-files')

@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * Represents the result of patching a java process before it launches:
@@ -19,13 +19,13 @@ import java.util.SequencedSet;
  * @param systemProperties a map of key=value system properties the JVM should be launched with.
  */
 public record PatchResult(
-    @Unmodifiable SequencedSet<Path> files,
-    @Unmodifiable SequencedSet<Path> javaAgents,
+    @Unmodifiable Set<Path> files,
+    @Unmodifiable Set<Path> javaAgents,
     @Unmodifiable Map<String, @Nullable String> systemProperties
 ) {
     public PatchResult(
-        @Unmodifiable SequencedSet<Path> files,
-        @Unmodifiable SequencedSet<Path> javaAgents
+        @Unmodifiable Set<Path> files,
+        @Unmodifiable Set<Path> javaAgents
     ) {
         this(files, javaAgents, Map.of());
     }
@@ -37,7 +37,7 @@ public record PatchResult(
      * @return a new PatchResult also containing the given file.
      */
     public PatchResult withFile(Path file) {
-        SequencedSet<Path> newClasspath = new LinkedHashSet<>(files);
+        Set<Path> newClasspath = new LinkedHashSet<>(files);
         newClasspath.add(file);
         return new PatchResult(newClasspath, javaAgents, systemProperties);
     }
@@ -49,7 +49,7 @@ public record PatchResult(
      * @return a new PatchResult also containing the given agent.
      */
     public PatchResult withAgent(Path file) {
-        SequencedSet<Path> newAgents = new LinkedHashSet<>(javaAgents);
+        Set<Path> newAgents = new LinkedHashSet<>(javaAgents);
         newAgents.add(file);
         return new PatchResult(files, newAgents, systemProperties);
     }

@@ -28,12 +28,12 @@ public record ProcessedVersion(List<Version> hierarchy) implements Version {
 
     @Override
     public String getId() {
-        return hierarchy.getLast().getId();
+        return hierarchy.get(hierarchy.size() - 1).getId();
     }
 
     @Override
     public @Nullable String getInheritsFrom() {
-        return hierarchy.getLast().getInheritsFrom();
+        return hierarchy.get(hierarchy.size() - 1).getInheritsFrom();
     }
 
     @Override
@@ -110,7 +110,14 @@ public record ProcessedVersion(List<Version> hierarchy) implements Version {
     }
 
     private <T> @Nullable T lastNotNull(Function<Version, @Nullable T> map) {
-        return hierarchy.reversed().stream().map(map).filter(Objects::nonNull).findFirst().orElse(null);
+        for (int i = hierarchy.size() - 1; i >= 0; i--) {
+            T value = map.apply(hierarchy.get(i));
+            if (value != null) {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     private List<Library> mergeLibraries() {
@@ -120,7 +127,7 @@ public record ProcessedVersion(List<Version> hierarchy) implements Version {
             for (Library library : version.getLibraries()) {
                 Artifact coords = library.getArtifact();
                 String versionAgnosticId = coords.group() + ":" + coords.name() + ":" + coords.classifier();
-                versionLibraries.computeIfAbsent(versionAgnosticId, _ -> new ArrayList<>()).add(library);
+                versionLibraries.computeIfAbsent(versionAgnosticId, unused -> new ArrayList<>()).add(library);
             }
 
             // TODO: what if overridden library is same, but hash/size are missing?!

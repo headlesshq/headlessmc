@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcess;
 import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
 import io.github.headlesshq.headlessmc.launcher.process.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -168,6 +171,31 @@ class ProcessLifecycleTest {
 
         assertEquals(0, lifecycle(launcher, 3).call());
         assertEquals(List.of(false), launcher.launches);
+    }
+
+    @Test
+    void javaProcessWithoutProcessIsWaitedFor() {
+        // e.g. an in-memory process, which runs in this JVM and has no java.lang.Process
+        AtomicInteger waits = new AtomicInteger();
+        JavaProcess javaProcess = (JavaProcess) Proxy.newProxyInstance(
+            JavaProcess.class.getClassLoader(),
+            new Class<?>[] {JavaProcess.class},
+            (proxy, method, args) -> switch (method.getName()) {
+                case "waitFor" -> {
+                    waits.incrementAndGet();
+                    yield 3;
+                }
+                case "getProcess" -> Optional.empty();
+                case "getId" -> "in-memory";
+                default -> throw new UnsupportedOperationException(method.getName());
+            }
+        );
+
+        QueueProcessLauncher launcher = new QueueProcessLauncher(gameDir())
+            .then(() -> new McProcess("in-memory", Optional.of(javaProcess), Optional.empty()));
+
+        assertEquals(3, lifecycle(launcher, 0).call());
+        assertEquals(1, waits.get());
     }
 
     @Test

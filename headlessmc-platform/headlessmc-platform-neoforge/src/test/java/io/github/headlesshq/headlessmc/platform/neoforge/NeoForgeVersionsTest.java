@@ -59,7 +59,7 @@ class NeoForgeVersionsTest {
     void theMcVersionPrefixIsStrippedFromBuildNames() {
         metas.add(meta("21.10.62-beta", "1.21.10"));
 
-        BoundPlatformVersion version = service().getVersions().getFirst();
+        BoundPlatformVersion version = service().getVersions().iterator().next();
 
         assertEquals("62-beta", version.getName());
         assertEquals("1.21.10", version.getVanillaVersion());
@@ -70,14 +70,14 @@ class NeoForgeVersionsTest {
         // the neoforge version 20.4.195 belongs to mc 1.20.4
         metas.add(meta("20.4.195", "1.20.4"));
 
-        assertEquals("195", service().getVersions().getFirst().getName());
+        assertEquals("195", service().getVersions().iterator().next().getName());
     }
 
     @Test
     void unrelatedVersionNamesAreKeptAsIs() {
         metas.add(meta("47.1.104", "1.20.1"));
 
-        assertEquals("47.1.104", service().getVersions().getFirst().getName());
+        assertEquals("47.1.104", service().getVersions().iterator().next().getName());
     }
 
     @Test
@@ -85,7 +85,7 @@ class NeoForgeVersionsTest {
         PrismIndex index = new PrismIndex("net.neoforged", List.of(meta("47.1.104", "1.20.1")));
 
         Artifact artifact = new NeoForgeArtifactResolver()
-            .resolve(NeoForge.PLATFORM_NAME, index, index.versions().getFirst(), "installer");
+            .resolve(NeoForge.PLATFORM_NAME, index, index.versions().get(0), "installer");
 
         assertEquals(new Artifact("net.neoforged", Forge.PLATFORM_NAME, "1.20.1-47.1.104", "installer"), artifact);
     }
@@ -95,7 +95,7 @@ class NeoForgeVersionsTest {
         PrismIndex index = new PrismIndex("net.neoforged", List.of(meta("20.4.195", "1.20.4")));
 
         Artifact artifact = new NeoForgeArtifactResolver()
-            .resolve(NeoForge.PLATFORM_NAME, index, index.versions().getFirst(), "installer");
+            .resolve(NeoForge.PLATFORM_NAME, index, index.versions().get(0), "installer");
 
         assertEquals(new Artifact("net.neoforged", NeoForge.PLATFORM_NAME, "20.4.195", "installer"), artifact);
     }
@@ -158,7 +158,7 @@ class NeoForgeVersionsTest {
         NeoForgeVersionService service = service();
 
         List<PlatformVersion> shuffled = new ArrayList<>(List.of(
-            service.getVersions().getLast(), service.getVersions().getFirst()
+            new ArrayList<>(service.getVersions()).get(service.getVersions().size() - 1), service.getVersions().iterator().next()
         ));
 
         assertEquals(

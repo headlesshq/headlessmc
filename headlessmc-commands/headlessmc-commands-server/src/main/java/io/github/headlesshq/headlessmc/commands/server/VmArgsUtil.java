@@ -13,8 +13,8 @@ import java.util.*;
  */
 @UtilityClass
 public class VmArgsUtil {
-    public static SequencedMap<String, @Nullable String> removeSystemProperties(Iterator<String> jvmArgs) {
-        SequencedMap<String, @Nullable String> result = new LinkedHashMap<>();
+    public static Map<String, @Nullable String> removeSystemProperties(Iterator<String> jvmArgs) {
+        Map<String, @Nullable String> result = new LinkedHashMap<>();
         while (jvmArgs.hasNext()) {
             String next = jvmArgs.next();
             if (SystemPropertyUtil.isSystemProperty(next)) {

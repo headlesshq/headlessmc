@@ -368,7 +368,7 @@ class ModCommandsTest {
         profile("main", "fabric");
         command.run();
 
-        assertEquals(ModType.RESOURCE_PACK, downloads.getFirst().type());
+        assertEquals(ModType.RESOURCE_PACK, downloads.get(0).type());
     }
 
     @Test
@@ -393,7 +393,7 @@ class ModCommandsTest {
         command.setVersionArg(List.of("plain"));
         command.run();
 
-        assertEquals(profile.path(), downloads.getFirst().dir());
+        assertEquals(profile.path(), downloads.get(0).dir());
     }
 
     @Test
@@ -447,7 +447,7 @@ class ModCommandsTest {
         command.setVersionArg(List.of("main"));
         command.run();
 
-        Download download = downloads.getFirst();
+        Download download = downloads.get(0);
         assertEquals(profile.path(), download.dir());
         assertEquals(profile.path().resolve(Worlds.SAVES).resolve("New World"), download.worldDir());
         assertEquals(ModType.DATA_PACK, download.type());
@@ -733,7 +733,7 @@ class ModCommandsTest {
         command.run();
 
         assertEquals(1, searches.size());
-        Search search = searches.getFirst();
+        Search search = searches.get(0);
         assertEquals("fast render", search.query());
         assertEquals(Optional.empty(), search.version());
         assertEquals(Set.of(ModType.MOD), search.types());
@@ -747,7 +747,7 @@ class ModCommandsTest {
         command.setType("resourcepack");
         command.run();
 
-        assertEquals(Set.of(ModType.RESOURCE_PACK), searches.getFirst().types());
+        assertEquals(Set.of(ModType.RESOURCE_PACK), searches.get(0).types());
     }
 
     @Test
@@ -759,7 +759,7 @@ class ModCommandsTest {
         command.setVersionArg(List.of("main"));
         command.run();
 
-        Search search = searches.getFirst();
+        Search search = searches.get(0);
         assertEquals(Optional.of(profile.version()), search.version());
         assertEquals(Set.of(ModType.MOD, ModType.MOD_PACK), search.types());
     }

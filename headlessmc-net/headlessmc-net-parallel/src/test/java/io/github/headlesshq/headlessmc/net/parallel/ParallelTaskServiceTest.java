@@ -70,7 +70,7 @@ class ParallelTaskServiceTest {
 
         Duration elapsed = timed(() -> {
             try (ParallelTaskService<ParallelTask> service = new ParallelTaskService<>(config, sleepingTasks(6, 0))) {
-                service.run(_ -> completed.incrementAndGet());
+                service.run(unused -> completed.incrementAndGet());
             }
         });
 
@@ -114,7 +114,7 @@ class ParallelTaskServiceTest {
 
         assertEquals(1, attempts.get(), "permanent failures must not be retried");
         assertEquals(1, failures.size());
-        assertInstanceOf(VerificationException.class, failures.getFirst());
+        assertInstanceOf(VerificationException.class, failures.get(0));
     }
 
     @Test

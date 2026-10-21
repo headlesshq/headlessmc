@@ -72,7 +72,7 @@ public class VersionJsonServiceImpl implements VersionJsonService {
                 throw new NotFoundException("Circular versions: " + checked);
             }
 
-            hierarchy.addFirst(currentVersion);
+            hierarchy.add(0, currentVersion);
             if (currentVersion.getInheritsFrom() == null) {
                 break;
             }

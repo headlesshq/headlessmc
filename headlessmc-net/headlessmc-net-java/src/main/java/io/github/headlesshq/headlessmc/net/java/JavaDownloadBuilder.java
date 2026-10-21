@@ -17,16 +17,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -34,21 +30,21 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
     private final ProgressBarServiceManager progressBarService;
     private final JsonService jsonService;
     private final HashService hashService;
-    private final HttpClient client;
+    private final Transport transport;
     private final NetConfig config;
 
     public JavaDownloadBuilder(
         URI uri,
         ProgressBarServiceManager progressBarService, JsonService jsonService,
         HashService hashService,
-        HttpClient client,
+        Transport transport,
         NetConfig config
     ) {
         super(uri);
         this.progressBarService = progressBarService;
         this.jsonService = jsonService;
         this.hashService = hashService;
-        this.client = client;
+        this.transport = transport;
         this.config = config;
         if (config.retries() > 0) {
             retry(config.retries(), 1000, 2.0, 0.5);
@@ -163,21 +159,15 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
 
         URI uri = uri();
         log.debug("Requesting {} with user-agent '{}' and cookies {}", uri, config.userAgent(), config.cookies());
-        HttpRequest request = HttpRequest.newBuilder()
-            .GET()
-            .header("User-Agent", config.userAgent())
-            .uri(uri)
-            .build();
-
         StatusCodeHandler statusCodeHandler = statusCodeHandler();
         if (statusCodeHandler == null) {
-            statusCodeHandler = (_, __) -> {
+            statusCodeHandler = (unused1, unused2) -> {
             };
         }
 
-        HttpResponse<InputStream> response;
+        Transport.Response response;
         try {
-            response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            response = transport.send(uri, config.userAgent());
         } catch (IOException e) {
             throw new RequestException(e);
         } catch (InterruptedException e) {
@@ -192,8 +182,7 @@ final class JavaDownloadBuilder extends AbstractDownloadBuilder {
                 () -> new String(finalIn.readAllBytes(), StandardCharsets.UTF_8)
             );
 
-            OptionalLong contentLength = response.headers().firstValueAsLong("Content-Length");
-            Long potentialSize = contentLength.orElse(in.available());
+            Long potentialSize = response.contentLength().orElse(in.available());
             if (potentialSize <= 0) {
                 potentialSize = null;
             }

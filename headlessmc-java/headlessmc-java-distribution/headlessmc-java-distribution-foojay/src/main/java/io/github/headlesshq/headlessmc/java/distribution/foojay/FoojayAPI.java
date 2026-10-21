@@ -83,7 +83,7 @@ interface FoojayAPI {
         if (distributions.isEmpty()) {
             throw new ApiException("Failed to find Distribution " + distroName);
         } else if (distributions.size() == 1) {
-            return distributions.getFirst();
+            return distributions.get(0);
         } else {
             throw new ApiException("Multiple distributions found for " + distroName + ": " + distributions.stream()
                 .map(Distribution::name)
@@ -194,7 +194,7 @@ interface FoojayAPI {
         if (infos.isEmpty()) {
             throw new ApiException("Failed to find package info " + id);
         } else if (infos.size() == 1) {
-            return infos.getFirst();
+            return infos.get(0);
         } else {
             throw new ApiException("Multiple package infos found for " + id + ": " + infos.stream()
                 .map(PkgInfo::toString)

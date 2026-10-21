@@ -21,7 +21,7 @@ public class AnsiTable<T> extends SimpleTable<T> {
     protected String build(List<List<String>> columns, List<Integer> columnWidths) {
         AttributedStringBuilder builder = new AttributedStringBuilder();
 
-        for (int row = 0; !columns.isEmpty() && row < columns.getFirst().size(); row++) {
+        for (int row = 0; !columns.isEmpty() && row < columns.get(0).size(); row++) {
             for (int col = 0; col < columns.size(); col++) {
                 String entry = columns.get(col).get(row);
                 int width = columnWidths.get(col);
@@ -50,7 +50,7 @@ public class AnsiTable<T> extends SimpleTable<T> {
                 }
             }
 
-            if (row < columns.getFirst().size() - 1) {
+            if (row < columns.get(0).size() - 1) {
                 builder.append('\n');
             }
         }

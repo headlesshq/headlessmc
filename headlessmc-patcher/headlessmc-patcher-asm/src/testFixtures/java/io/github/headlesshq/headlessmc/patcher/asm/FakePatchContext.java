@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.SequencedSet;
+import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Stream;
@@ -70,7 +70,7 @@ public final class FakePatchContext implements PatchContext {
             }
 
             if (changed) {
-                SequencedSet<Path> files = new LinkedHashSet<>(currentPatchResult.files());
+                Set<Path> files = new LinkedHashSet<>(currentPatchResult.files());
                 files.remove(library);
                 files.add(out);
                 currentPatchResult = new PatchResult(files, currentPatchResult.javaAgents(), currentPatchResult.systemProperties());

@@ -27,13 +27,13 @@ public class ProfileResolver {
     public Profile resolve(List<String> args, Set<Side> sides) {
         Profile profile = null;
         if (args.size() == 1) {
-            profile = profileService.getProfile(args.getFirst()).orElse(null);
+            profile = profileService.getProfile(args.get(0)).orElse(null);
         }
 
         if (profile != null) {
             if (!sides.contains(profile.side())) {
                 throw new IllegalArgumentException(
-                    "Found profile for name " + args.getFirst() + " but it was for "
+                    "Found profile for name " + args.get(0) + " but it was for "
                         + profile.side().toString().toLowerCase(Locale.ENGLISH)
                 );
             }

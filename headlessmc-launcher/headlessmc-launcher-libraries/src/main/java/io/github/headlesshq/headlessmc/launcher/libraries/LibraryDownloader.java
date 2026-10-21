@@ -6,7 +6,7 @@ import io.github.headlesshq.headlessmc.net.DownloadService;
 import io.github.headlesshq.headlessmc.net.parallel.ParallelTaskService;
 import io.github.headlesshq.headlessmc.net.parallel.TaskObserver;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
-import io.github.headlesshq.headlessmc.progressbar.ProgressbarService;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarServiceManager;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class LibraryDownloader {
-    private final ProgressbarService progressbarService;
+    private final ProgressBarServiceManager progressbarService;
     private final DownloadService downloadService;
     private final Holder<LibraryConfig> config;
 

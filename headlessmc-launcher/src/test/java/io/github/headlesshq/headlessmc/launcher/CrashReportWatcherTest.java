@@ -58,7 +58,7 @@ class CrashReportWatcherTest {
 
     @Test
     void forGameDirCreatesTheCrashReportsDirectory() throws IOException {
-        try (CrashReportWatcher _ = CrashReportWatcher.forGameDir(gameDir)) {
+        try (CrashReportWatcher ignored = CrashReportWatcher.forGameDir(gameDir)) {
             assertTrue(Files.isDirectory(gameDir.resolve("crash-reports")));
         }
     }
@@ -68,7 +68,7 @@ class CrashReportWatcherTest {
         Files.createDirectories(gameDir.resolve("crash-reports"));
         Files.writeString(gameDir.resolve("crash-reports").resolve("old-crash.txt"), "old");
 
-        try (CrashReportWatcher _ = CrashReportWatcher.forGameDir(gameDir)) {
+        try (CrashReportWatcher ignored = CrashReportWatcher.forGameDir(gameDir)) {
             assertTrue(Files.exists(gameDir.resolve("crash-reports").resolve("old-crash.txt")));
         }
     }

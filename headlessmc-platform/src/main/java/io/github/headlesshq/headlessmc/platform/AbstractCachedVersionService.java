@@ -19,17 +19,17 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
 
     private final String platformName;
 
-    protected abstract View<SequencedSet<V>> getSetView();
+    protected abstract View<Set<V>> getSetView();
     protected abstract View<Map<String, V>> getMapView();
     protected abstract View<Map<V, Integer>> getIndices();
 
     @Override
-    public SequencedSet<V> getVersions() throws HeadlessMcException {
+    public Set<V> getVersions() throws HeadlessMcException {
         return getSetView().get().orElseThrow(() -> new NotFoundException("Failed to fetch versions")); // TODO: exception
     }
 
     @Override
-    public abstract SequencedSet<V> getBuilds(VanillaVersion version) throws HeadlessMcException;
+    public abstract Set<V> getBuilds(VanillaVersion version) throws HeadlessMcException;
 
     @Override
     public Optional<V> getLatestBuild(VanillaVersion version) throws HeadlessMcException {
@@ -43,7 +43,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
 
     // TODO: sort by VanillaVersion if BoundPlatformVersion?!
     @Override
-    public SequencedSet<PlatformVersion> sort(Collection<PlatformVersion> versions) throws HeadlessMcException {
+    public Set<PlatformVersion> sort(Collection<PlatformVersion> versions) throws HeadlessMcException {
         // by using the Cache View stream API we can check locally cached
         // versions first (resource, file) and if we have all versions stored
         // locally we can simply sort them like that without needing a lookup
@@ -53,7 +53,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
             .findFirst()
             .orElseThrow(() -> {
                 try {
-                    SequencedSet<V> allVersions = getSetView().get().orElseGet(LinkedHashSet::new);
+                    Set<V> allVersions = getSetView().get().orElseGet(LinkedHashSet::new);
                     //noinspection SuspiciousMethodCalls
                     List<PlatformVersion> notIn = versions.stream()
                         .filter(v -> !allVersions.contains(v))
@@ -81,7 +81,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
 
     // helper methods //
 
-    protected View<Map<String, V>> createMapView(View<SequencedSet<V>> setView) {
+    protected View<Map<String, V>> createMapView(View<Set<V>> setView) {
         return setView.view((value, previous) -> {
             Map<String, V> result = new HashMap<>();
             for (V version : value) {
@@ -93,7 +93,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
         });
     }
 
-    protected View<Map<V, Integer>> createIndices(View<SequencedSet<V>> setView) {
+    protected View<Map<V, Integer>> createIndices(View<Set<V>> setView) {
         return setView.view((value, previous) -> {
             Map<V, Integer> indices = new HashMap<>();
             int i = 0;
@@ -106,7 +106,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
         });
     }
 
-    protected <B extends BoundPlatformVersion> SequencedSet<B> filter(SequencedSet<B> versions, VanillaVersion bound) {
+    protected <B extends BoundPlatformVersion> Set<B> filter(Set<B> versions, VanillaVersion bound) {
         return versions.stream()
             .filter(version -> version.getVanillaVersion().equals(bound.getName()))
             .collect(Collectors.toCollection(LinkedHashSet::new));

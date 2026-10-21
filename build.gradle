@@ -88,18 +88,25 @@ allprojects {
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     compileJava {
         options.encoding = 'UTF-8'
+        options.release = 17
         options.compilerArgs << '-parameters'
     }
 
     compileTestJava {
         options.encoding = 'UTF-8'
-        options.release = 25
+        options.release = 17
+    }
+
+    // check every source set (integrationTest, testFixtures, ...) against the Java 17 API,
+    // modules that target Java 8 set options.release explicitly
+    tasks.withType(JavaCompile).configureEach {
+        options.release.convention(17)
     }
 
     test {
@@ -122,6 +129,8 @@ allprojects {
         jacoco {
             excludeClassLoaders = ["*QuarkusClassLoader"]
             includeNoLocationClasses = true
+            // with includeNoLocationClasses, JDKs before 22 crash on generated jdk.internal.reflect accessors
+            excludes = ['jdk.internal.*']
         }
 
         systemProperty 'quarkus.jacoco.data-file', layout.buildDirectory.file('jacoco/test.exec').get().asFile.absolutePath

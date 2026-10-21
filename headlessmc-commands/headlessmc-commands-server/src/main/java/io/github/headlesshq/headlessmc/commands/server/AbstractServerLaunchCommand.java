@@ -96,7 +96,7 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
         List<String> jvmArgs = new ArrayList<>(baseProfile.vmArgs());
         jvmArgs.addAll(parsedJvmArgs);
 
-        SequencedMap<String, @Nullable String> systemProperties = new LinkedHashMap<>(baseProfile.systemProperties());
+        Map<String, @Nullable String> systemProperties = new LinkedHashMap<>(baseProfile.systemProperties());
         systemProperties.putAll(parsedSystemProperties);
 
         // to make it completely right, game-args should override some of the provided ones

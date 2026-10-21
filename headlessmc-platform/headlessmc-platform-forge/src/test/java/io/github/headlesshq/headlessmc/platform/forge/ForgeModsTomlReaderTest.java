@@ -29,7 +29,7 @@ public class ForgeModsTomlReaderTest {
             List<Mod> mods = result.get();
             // TODO: multiple mods
             assertEquals(1, mods.size());
-            Mod mod = mods.getFirst();
+            Mod mod = mods.get(0);
             assertEquals("headlessmc", mod.id());
             assertEquals("HeadlessMc", mod.name());
             assertEquals(Optional.of("A Minecraft Launcher\n"), mod.description());

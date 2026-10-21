@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.exceptions.RequestException;
 import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
 import io.github.headlesshq.headlessmc.net.DownloadBuilder;
 import io.github.headlesshq.headlessmc.net.DownloadContext;
+import io.github.headlesshq.headlessmc.net.DownloadService;
 import io.github.headlesshq.headlessmc.net.HttpVersion;
 import io.github.headlesshq.headlessmc.net.NetConfig;
 import io.github.headlesshq.headlessmc.net.hash.DefaultHashAlgorithmProvider;
@@ -66,9 +67,9 @@ class JavaDownloadTest {
     private final List<HttpExchange> requests = new CopyOnWriteArrayList<>();
     private final List<RecordingProgressBar> progressBars = new CopyOnWriteArrayList<>();
     private final List<ProgressBar.Configuration> progressBarConfigurations = new CopyOnWriteArrayList<>();
-    private final JsonService jsonService = new DefaultJacksonJsonService();
+    final JsonService jsonService = new DefaultJacksonJsonService();
     private HttpServer server;
-    private HashService hashService;
+    HashService hashService;
 
     public record Message(String text, int number) implements ReflectionRegistered {
     }
@@ -135,7 +136,7 @@ class JavaDownloadTest {
         }
     }
 
-    private final ProgressBarServiceManager progressBarService = configuration -> {
+    final ProgressBarServiceManager progressBarService = configuration -> {
         progressBarConfigurations.add(configuration);
         RecordingProgressBar progressBar = new RecordingProgressBar();
         progressBars.add(progressBar);
@@ -163,14 +164,14 @@ class JavaDownloadTest {
     @SuppressWarnings("unchecked")
     void setup() throws IOException {
         Instance<HashAlgorithmProvider> providers = Mockito.mock(Instance.class);
-        Mockito.when(providers.stream()).thenAnswer(_ -> Stream.of(new DefaultHashAlgorithmProvider()));
+        Mockito.when(providers.stream()).thenAnswer(unused -> Stream.of(new DefaultHashAlgorithmProvider()));
         hashService = new HashServiceImpl(providers);
 
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext("/", exchange -> {
             requests.add(exchange);
             String path = exchange.getRequestURI().getPath();
-            int count = requestCounts.computeIfAbsent(path, _ -> new AtomicInteger()).incrementAndGet();
+            int count = requestCounts.computeIfAbsent(path, unused -> new AtomicInteger()).incrementAndGet();
             switch (path) {
                 case "/text" -> respond(exchange, 200, BODY);
                 case "/json" -> respond(exchange, 200, "{\"text\": \"hi\", \"number\": 3}");
@@ -208,11 +209,11 @@ class JavaDownloadTest {
         return count == null ? 0 : count.get();
     }
 
-    private JavaDownloadService service(Config config) {
+    DownloadService service(Config config) {
         return new JavaDownloadService(progressBarService, jsonService, hashService, () -> config);
     }
 
-    private JavaDownloadService service() {
+    DownloadService service() {
         return service(Config.defaults());
     }
 
@@ -238,9 +239,9 @@ class JavaDownloadTest {
 
     @Test
     void userAgentIsSent() {
-        service().download(uri("/text")).start(_ -> {});
+        service().download(uri("/text")).start(unused -> {});
 
-        assertEquals("hmc-test-agent", requests.getFirst().getRequestHeaders().getFirst("User-Agent"));
+        assertEquals("hmc-test-agent", requests.get(0).getRequestHeaders().getFirst("User-Agent"));
     }
 
     @Test
@@ -278,7 +279,7 @@ class JavaDownloadTest {
     void errorStatusCodesFailWithTheResponse() {
         RequestException e = assertThrows(
             RequestException.class,
-            () -> service().download(uri("/missing")).start(_ -> fail("action must not run"))
+            () -> service().download(uri("/missing")).start(unused -> fail("action must not run"))
         );
 
         assertTrue(e.getMessage().contains("Status code: 404"), e.getMessage());
@@ -309,7 +310,7 @@ class JavaDownloadTest {
     void hashesAreVerifiedEvenIfTheStreamIsNotRead() {
         assertThrows(
             HeadlessMcException.class,
-            () -> service().download(uri("/text")).sha1("0".repeat(40)).start(_ -> {})
+            () -> service().download(uri("/text")).sha1("0".repeat(40)).start(unused -> {})
         );
     }
 
@@ -335,7 +336,7 @@ class JavaDownloadTest {
     @Test
     void failedFilesAreKeptIfConfigured() throws IOException {
         Path file = root.resolve("file.txt");
-        JavaDownloadService service = service(Config.defaults().withDeleteFailedFiles(false));
+        DownloadService service = service(Config.defaults().withDeleteFailedFiles(false));
 
         assertThrows(HeadlessMcException.class, () -> service.download(uri("/text")).sha1("0".repeat(40)).toFile(file));
 
@@ -394,10 +395,10 @@ class JavaDownloadTest {
         service().download(uri("/text")).progressBar("Downloading text").start(download -> download.getInputStream().readAllBytes());
 
         assertEquals(1, progressBarConfigurations.size());
-        assertEquals("Downloading text", progressBarConfigurations.getFirst().taskName());
-        assertEquals(BODY.length(), progressBarConfigurations.getFirst().initialMax());
-        assertEquals(ProgressBar.Configuration.Unit.MB, progressBarConfigurations.getFirst().unit());
-        RecordingProgressBar progressBar = progressBars.getFirst();
+        assertEquals("Downloading text", progressBarConfigurations.get(0).taskName());
+        assertEquals(BODY.length(), progressBarConfigurations.get(0).initialMax());
+        assertEquals(ProgressBar.Configuration.Unit.MB, progressBarConfigurations.get(0).unit());
+        RecordingProgressBar progressBar = progressBars.get(0);
         assertEquals(BODY.length(), progressBar.steps.get());
         assertTrue(progressBar.closed);
     }
@@ -431,7 +432,7 @@ class JavaDownloadTest {
     void retriesAreExhausted() {
         RequestException e = assertThrows(
             RequestException.class,
-            () -> service().download(uri("/flaky")).retry(2, 1, 1.0, 0.0).start(_ -> {})
+            () -> service().download(uri("/flaky")).retry(2, 1, 1.0, 0.0).start(unused -> {})
         );
 
         assertTrue(e.getMessage().contains("503"), e.getMessage());
@@ -440,7 +441,7 @@ class JavaDownloadTest {
 
     @Test
     void requestsAreNotRetriedByDefault() {
-        assertThrows(RequestException.class, () -> service().download(uri("/flaky")).start(_ -> {}));
+        assertThrows(RequestException.class, () -> service().download(uri("/flaky")).start(unused -> {}));
 
         assertEquals(1, requestCount("/flaky"));
     }
@@ -450,14 +451,14 @@ class JavaDownloadTest {
         URI uri = uri("/text");
         server.stop(0);
 
-        assertThrows(RequestException.class, () -> service().download(uri).start(_ -> {}));
+        assertThrows(RequestException.class, () -> service().download(uri).start(unused -> {}));
     }
 
     @Test
     void exceptionsOfTheActionAreWrapped() {
         RequestException e = assertThrows(
             RequestException.class,
-            () -> service().download(uri("/text")).start(_ -> {
+            () -> service().download(uri("/text")).start(unused -> {
                 throw new IOException("action failed");
             })
         );
@@ -471,7 +472,7 @@ class JavaDownloadTest {
 
         HeadlessMcException e = assertThrows(
             HeadlessMcException.class,
-            () -> service().download(uri("/text")).start(_ -> {
+            () -> service().download(uri("/text")).start(unused -> {
                 throw exception;
             })
         );
@@ -482,7 +483,7 @@ class JavaDownloadTest {
     @Test
     void cookiesAreKeptWithinAContext() {
         try (DownloadContext context = service().context(Config.defaults())) {
-            context.download(uri("/cookie")).start(_ -> {});
+            context.download(uri("/cookie")).start(unused -> {});
             String cookie = context.download(uri("/echo-cookie")).map(d -> d.getAsString(StandardCharsets.UTF_8));
             assertEquals("session=abc", cookie);
         }
@@ -491,7 +492,7 @@ class JavaDownloadTest {
     @Test
     void cookiesCanBeDisabled() {
         try (DownloadContext context = service().context(Config.defaults().withCookies(false))) {
-            context.download(uri("/cookie")).start(_ -> {});
+            context.download(uri("/cookie")).start(unused -> {});
             String cookie = context.download(uri("/echo-cookie")).map(d -> d.getAsString(StandardCharsets.UTF_8));
             assertEquals("null", cookie);
         }

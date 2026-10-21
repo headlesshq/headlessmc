@@ -19,7 +19,7 @@ public record Profile(
     Path path, // TODO: should this be relative?
     LaunchOptions options,
     List<String> patchers,
-    SequencedMap<String, @Nullable String> systemProperties,
+    Map<String, @Nullable String> systemProperties,
     List<String> vmArgs,
     @Nullable List<String> gameArgs,
     @Nullable Integer javaVersion,

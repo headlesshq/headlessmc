@@ -48,20 +48,21 @@ public class ProcessLifecycle implements Callable<Integer> {
             AtomicReference<Process> processRef = new AtomicReference<>();
             AtomicReference<Path> crashReport = new AtomicReference<>();
             // CrashReportWatcher listens and kills process if crash-report appears
-            try (CrashReportWatcher _ = createCrashReportWatcher(processRef, crashReport, gameDir)) {
+            try (CrashReportWatcher ignored = createCrashReportWatcher(processRef, crashReport, gameDir)) {
                 McProcess process = processFactory.launch(testService.isTestActive());
                 process.process().ifPresent(javaProcess -> {
                     processRef.set(javaProcess);
                     runTest(javaProcess);
                 });
 
-                if (process.process().isEmpty()) {
+                // in-memory processes have a JavaProcess but no Process, they are waited for like processes
+                if (process.process().isEmpty() && process.javaProcess().isEmpty()) {
                     if (crashReport.get() != null) {
                         throw new io.github.headlesshq.headlessmc.launcher.process.LaunchException("CrashReport detected " + crashReport.get());
                     }
 
                     return 0;
-                } else if (i == retries) {
+                } else if (i == retries && process.process().isPresent()) {
                     garbageCollectHmc(process.process().get());
                 }
 

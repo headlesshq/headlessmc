@@ -138,9 +138,9 @@ class FoojayProviderTest {
         );
 
         assertEquals(1, runtimes.size());
-        assertEquals("OpenJDK21U-jre_x64_linux", runtimes.getFirst().name());
+        assertEquals("OpenJDK21U-jre_x64_linux", runtimes.get(0).name());
 
-        PackageQuery query = packageQueries.getFirst();
+        PackageQuery query = packageQueries.get(0);
         assertEquals("21", query.version());
         assertEquals(List.of("temurin"), query.distribution());
         assertEquals(List.of("linux"), query.operatingSystem());

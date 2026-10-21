@@ -22,7 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -114,12 +114,12 @@ class PaperVersionServiceTest {
 
     @Test
     void listsAllVersionsWithLatestBuildFirst() {
-        SequencedSet<BoundPlatformVersion> result = service.getVersions();
+        Set<BoundPlatformVersion> result = service.getVersions();
 
         assertEquals(
             List.of("130", "129", "100"), result.stream().map(PlatformVersion::getName).toList()
         );
-        assertEquals("1.21.1", result.getFirst().getVanillaVersion());
+        assertEquals("1.21.1", result.iterator().next().getVanillaVersion());
     }
 
     @Test
@@ -155,7 +155,7 @@ class PaperVersionServiceTest {
 
     @Test
     void sortsBuildsDescending() {
-        SequencedSet<PlatformVersion> sorted = service.sort(new ArrayList<>(
+        Set<PlatformVersion> sorted = service.sort(new ArrayList<>(
             new LinkedHashSet<>(service.getBuilds(vanilla("1.21.1")))
         ));
 

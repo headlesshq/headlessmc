@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.Locale;
 
 @Slf4j
@@ -46,7 +47,9 @@ public class XvfbService {
         // use ProcessHandle.allProcesses()?
         Process process = new ProcessBuilder().command("ps", "aux").start();
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String output = bufferedReader.readAllAsString();
+            StringWriter writer = new StringWriter();
+            bufferedReader.transferTo(writer);
+            String output = writer.toString();
             boolean result = output.toLowerCase(Locale.ENGLISH).contains("xvfb");
             log.info(result ? "Running with xvfb" : "Not running with xvfb");
             return result;

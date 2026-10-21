@@ -86,7 +86,7 @@ public class ForgeInstallerDownloader {
         }
 
         if (candidates.size() == 1 || id.getBuild().isEmpty()) {
-            return candidates.getFirst();
+            return candidates.get(0);
         }
 
         // we checked if the meta.version contains the platform version, sort by longest match
@@ -95,7 +95,7 @@ public class ForgeInstallerDownloader {
             throw new NotFoundException("Ambiguous versions for " + id + " in " + candidates);
         }
 
-        return candidates.getFirst();
+        return candidates.get(0);
     }
 
 }

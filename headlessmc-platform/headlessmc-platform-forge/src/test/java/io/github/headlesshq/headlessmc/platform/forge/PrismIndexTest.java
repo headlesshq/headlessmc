@@ -62,7 +62,7 @@ class PrismIndexTest {
         PrismIndex index = new PrismIndex("net.minecraftforge", List.of(meta("48.1.0", "1.20.2")));
 
         Artifact artifact = new ForgeArtifactResolverImpl()
-            .resolve("forge", index, index.versions().getFirst(), "installer");
+            .resolve("forge", index, index.versions().get(0), "installer");
 
         assertEquals(new Artifact("net.minecraftforge", "forge", "1.20.2-48.1.0", "installer"), artifact);
     }

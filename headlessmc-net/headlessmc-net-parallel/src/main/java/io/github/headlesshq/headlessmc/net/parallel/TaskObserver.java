@@ -9,7 +9,7 @@ public interface TaskObserver<T extends ParallelTask> {
     }
 
     static <T extends ParallelTask> TaskObserver<T> none() {
-        return _ -> {};
+        return unused -> {};
     }
 
 }

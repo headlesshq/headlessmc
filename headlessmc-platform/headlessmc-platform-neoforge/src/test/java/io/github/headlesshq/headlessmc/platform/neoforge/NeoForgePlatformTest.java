@@ -23,11 +23,11 @@ public class NeoForgePlatformTest {
         assertInstanceOf(NeoForgePlatform.class, platform);
         List<ModReader> modReaders = platform.getModSupport().orElseThrow().modReaders();
         assertEquals(1, modReaders.size());
-        assertInstanceOf(NeoForgeModReader.class, modReaders.getFirst());
+        assertInstanceOf(NeoForgeModReader.class, modReaders.get(0));
         // just making sure bean proxying did not destroy anything
         assertEquals(
             Set.of("META-INF/neoforge.mods.toml", "META-INF/forge.mods.toml"),
-            modReaders.getFirst().getEntryNames()
+            modReaders.get(0).getEntryNames()
         );
     }
 

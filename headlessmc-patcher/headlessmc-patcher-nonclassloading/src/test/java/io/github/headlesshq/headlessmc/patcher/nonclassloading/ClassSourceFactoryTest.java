@@ -231,7 +231,7 @@ class ClassSourceFactoryTest {
         List<ClassSource.Provider> providers = factory.jvmProviders(context());
 
         assertEquals(1, providers.size());
-        try (ClassSource source = providers.getFirst().open()) {
+        try (ClassSource source = providers.get(0).open()) {
             assertTrue(source.getClass(TYPE).isPresent());
         }
     }

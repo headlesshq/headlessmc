@@ -72,7 +72,7 @@ public class InstallCommand implements Runnable, CachedConsole.Enabled {
             );
         }
 
-        JavaRuntime runtime = runtimes.getFirst();
+        JavaRuntime runtime = runtimes.get(0);
         Path path = appFiles.getJavaDir().resolve(runtime.name());
         if (Files.exists(path) && !force) {
             throw new IllegalArgumentException(

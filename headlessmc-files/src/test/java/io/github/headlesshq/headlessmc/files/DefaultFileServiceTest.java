@@ -101,7 +101,7 @@ public class DefaultFileServiceTest {
         });
 
         assertEquals(1, seen.size());
-        assertTrue(Files.notExists(seen.getFirst()));
+        assertTrue(Files.notExists(seen.get(0)));
     }
 
     @Test
@@ -111,7 +111,7 @@ public class DefaultFileServiceTest {
             seen.add(path);
             throw new IOException("simulated failure");
         }));
-        assertTrue(Files.notExists(seen.getFirst()));
+        assertTrue(Files.notExists(seen.get(0)));
 
         assertThrows(UncheckedInterruptedException.class, () -> service.temp(path -> {
             throw new InterruptedException("simulated interrupt");

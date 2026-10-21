@@ -1,0 +1,12 @@
+// In-memory replacements for the JavaService and JavaLauncherService,
+// for environments that cannot start processes, like CheerpJ or Android.
+// The beans are only active when the application is built with the in-memory build profile (-PinMemory).
+dependencies {
+    api project(':headlessmc-java:headlessmc-java-launcher')
+    implementation project(':headlessmc-java:headlessmc-java-sources')
+    implementation project(':headlessmc-java:headlessmc-java-args')
+    compileOnly libs.quarkus.arc
+
+    testImplementation project(':headlessmc-os')
+    testImplementation project(':headlessmc-java:headlessmc-java-version')
+}

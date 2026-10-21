@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.SequencedSet;
+import java.util.Set;
 
 @Slf4j
 @RegisterResources(globs = "fabric/fabric-versions.json")
@@ -21,7 +21,7 @@ final class FabricVersionService extends AbstractJsonVersionService<PlatformVers
     }
 
     @Override
-    public SequencedSet<PlatformVersion> getBuilds(VanillaVersion version) throws HeadlessMcException {
+    public Set<PlatformVersion> getBuilds(VanillaVersion version) throws HeadlessMcException {
         // on fabric builds are just loader versions,
         // and we generally assume that all loaders can load all versions
         // this might not be true, but we don't care about old fabric versions that much.
@@ -29,11 +29,11 @@ final class FabricVersionService extends AbstractJsonVersionService<PlatformVers
     }
 
     @Override
-    protected SequencedSet<PlatformVersion> map(
+    protected Set<PlatformVersion> map(
         List<BuildData> value,
-        @Nullable SequencedSet<PlatformVersion> previous
+        @Nullable Set<PlatformVersion> previous
     ) {
-        SequencedSet<PlatformVersion> result = new LinkedHashSet<>();
+        Set<PlatformVersion> result = new LinkedHashSet<>();
         for (BuildData buildData : value) {
             result.add(createVersion(buildData.version()));
         }

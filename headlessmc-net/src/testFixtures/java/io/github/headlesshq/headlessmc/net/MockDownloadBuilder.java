@@ -160,17 +160,20 @@ public class MockDownloadBuilder extends AbstractDownloadBuilder implements Down
     }
 
     private static HeadlessMcException wrap(Exception e) {
-        switch (e) {
-            case HeadlessMcException headlessMcException -> throw headlessMcException;
-            case UncheckedInterruptedException interruptedException -> throw interruptedException;
-            case InterruptedException interruptedException -> {
-                Thread.currentThread().interrupt();
-                throw new UncheckedInterruptedException(interruptedException);
-            }
-            case IOException ioException -> throw new HeadlessMcIOException(ioException);
-            case RuntimeException runtimeException -> throw runtimeException;
-            default -> throw new HeadlessMcException(e);
+        if (e instanceof HeadlessMcException headlessMcException) {
+            throw headlessMcException;
+        } else if (e instanceof UncheckedInterruptedException interruptedException) {
+            throw interruptedException;
+        } else if (e instanceof InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            throw new UncheckedInterruptedException(interruptedException);
+        } else if (e instanceof IOException ioException) {
+            throw new HeadlessMcIOException(ioException);
+        } else if (e instanceof RuntimeException runtimeException) {
+            throw runtimeException;
         }
+
+        throw new HeadlessMcException(e);
     }
 
     private record VerifiedDownload(int statusCode, byte[] bytes) {

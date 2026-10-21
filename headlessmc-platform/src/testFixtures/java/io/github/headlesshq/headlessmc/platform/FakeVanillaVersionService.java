@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * A {@link VanillaVersionService} over a fixed list of version names,
@@ -20,7 +20,7 @@ public class FakeVanillaVersionService implements VanillaVersionService {
 
     @Override
     public VanillaVersion getLatest() {
-        return new VanillaVersion(namesLatestFirst.getFirst());
+        return new VanillaVersion(namesLatestFirst.get(0));
     }
 
     @Override
@@ -34,8 +34,8 @@ public class FakeVanillaVersionService implements VanillaVersionService {
     }
 
     @Override
-    public SequencedSet<VanillaVersion> getVersions() {
-        SequencedSet<VanillaVersion> result = new LinkedHashSet<>();
+    public Set<VanillaVersion> getVersions() {
+        Set<VanillaVersion> result = new LinkedHashSet<>();
         for (String name : namesLatestFirst) {
             result.add(new VanillaVersion(name));
         }
@@ -49,7 +49,7 @@ public class FakeVanillaVersionService implements VanillaVersionService {
     }
 
     @Override
-    public SequencedSet<VanillaVersion> getBuilds(VanillaVersion version) {
+    public Set<VanillaVersion> getBuilds(VanillaVersion version) {
         return new LinkedHashSet<>(List.of(version));
     }
 
@@ -59,7 +59,7 @@ public class FakeVanillaVersionService implements VanillaVersionService {
     }
 
     @Override
-    public SequencedSet<PlatformVersion> sort(Collection<PlatformVersion> versions) {
+    public Set<PlatformVersion> sort(Collection<PlatformVersion> versions) {
         List<PlatformVersion> sorted = new ArrayList<>(versions);
         for (PlatformVersion version : sorted) {
             if (!namesLatestFirst.contains(version.getName())) {

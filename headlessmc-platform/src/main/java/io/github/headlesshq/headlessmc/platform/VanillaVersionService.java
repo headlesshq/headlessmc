@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.platform;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 
 import java.util.Optional;
-import java.util.SequencedSet;
+import java.util.Set;
 
 public interface VanillaVersionService extends VersionService {
     VanillaVersion getLatest() throws HeadlessMcException;
@@ -13,13 +13,13 @@ public interface VanillaVersionService extends VersionService {
     Optional<VanillaVersion> getVersion(String name) throws HeadlessMcException;
 
     @Override
-    SequencedSet<VanillaVersion> getVersions() throws HeadlessMcException;
+    Set<VanillaVersion> getVersions() throws HeadlessMcException;
 
     @Override
     Optional<VanillaVersion> getLatestBuild(VanillaVersion version) throws HeadlessMcException;
 
     @Override
-    SequencedSet<VanillaVersion> getBuilds(VanillaVersion version) throws HeadlessMcException;
+    Set<VanillaVersion> getBuilds(VanillaVersion version) throws HeadlessMcException;
 
     @Override
     default String getPlatformName() {

@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public interface ProcessHandler {
     void handle(String process, int exitCode)
@@ -44,7 +45,7 @@ public interface ProcessHandler {
                 try {
                     process.destroy();
                     Duration duration = Duration.ofSeconds(30L);
-                    if (process.waitFor(duration)) {
+                    if (process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS)) {
                         throw new UncheckedInterruptedException(
                             "Process " + id + " was killed with exit code " + process.exitValue()
                         );

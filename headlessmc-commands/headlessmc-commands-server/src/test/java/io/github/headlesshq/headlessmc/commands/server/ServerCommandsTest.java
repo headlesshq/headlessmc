@@ -87,12 +87,12 @@ class ServerCommandsTest {
         command.run();
 
         assertEquals(1, installations.size());
-        Installation installation = installations.getFirst();
+        Installation installation = installations.get(0);
         assertEquals("1.21.1", installation.id().getVersion().getName());
 
         List<Profile> servers = serverService.listServers();
         assertEquals(1, servers.size());
-        Profile server = servers.getFirst();
+        Profile server = servers.get(0);
         assertEquals(appFiles.getServerDir().resolve(server.name()), installation.dir());
         assertEquals(21, server.javaVersion());
         assertEquals(Optional.of(Side.SERVER), server.version().side());
@@ -107,7 +107,7 @@ class ServerCommandsTest {
         command.setCustomDir(root.resolve("custom").toString());
         command.run();
 
-        assertEquals(root.resolve("custom"), installations.getFirst().dir());
+        assertEquals(root.resolve("custom"), installations.get(0).dir());
         assertTrue(serverService.getServer("my-server").isPresent());
     }
 

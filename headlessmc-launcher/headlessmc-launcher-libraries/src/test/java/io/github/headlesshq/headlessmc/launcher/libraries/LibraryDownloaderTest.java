@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
-import io.github.headlesshq.headlessmc.progressbar.ProgressbarService;
+import io.github.headlesshq.headlessmc.progressbar.ProgressBarServiceManager;
 import io.github.headlesshq.headlessmc.util.maven.Artifact;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
 import io.quarkus.test.junit.QuarkusTest;
@@ -28,7 +28,7 @@ public class LibraryDownloaderTest {
     ConfigService configService;
 
     @Inject
-    ProgressbarService progressbarService;
+    ProgressBarServiceManager progressbarService;
 
     private final MockDownloadService downloadService = new MockDownloadService();
 

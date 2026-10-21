@@ -130,7 +130,7 @@ public class PatchServiceImplTest {
         assertEquals(patchResult.files(), result.files());
         assertEquals(1, ((RecordingPatcher) a).contexts.size());
         assertEquals(1, ((RecordingPatcher) b).contexts.size());
-        assertEquals(21, ((RecordingPatcher) a).contexts.getFirst().getJavaVersion());
+        assertEquals(21, ((RecordingPatcher) a).contexts.get(0).getJavaVersion());
 
         // the second run is served from the cache
         service.patch(patchResult, 21, List.of(a, b));

@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -149,7 +150,7 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
         VersionProcessor processor
     ) throws HeadlessMcException {
         if (id.isAnyBuild()) {
-            SequencedMap<VersionID, Version> ids = new LinkedHashMap<>();
+            Map<VersionID, Version> ids = new LinkedHashMap<>();
             for (Version version : versions) {
                 Set<VersionID> matches = matchOrEmpty(version, processor);
                 for (VersionID match : matches) {
@@ -162,8 +163,9 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
                 }
             }
 
-            Map.Entry<VersionID, Version> result = ids.firstEntry();
-            if (result != null) {
+            Iterator<Map.Entry<VersionID, Version>> iterator = ids.entrySet().iterator();
+            if (iterator.hasNext()) {
+                Map.Entry<VersionID, Version> result = iterator.next();
                 return Optional.of(new MatchResult(result.getKey(), result.getValue()));
             }
         } else {

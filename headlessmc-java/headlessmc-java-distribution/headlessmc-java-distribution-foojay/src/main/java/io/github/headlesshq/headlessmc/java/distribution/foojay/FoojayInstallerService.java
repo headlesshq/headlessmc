@@ -10,6 +10,7 @@ import io.github.headlesshq.headlessmc.os.OS;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +41,7 @@ class FoojayInstallerService {
     }
 
     public void install(Path path, JavaRuntime.MetaData metaData, InputStream inputStream) throws FileException {
-        ArchiveType type = ArchiveType.fromApiString(metaData.archiveType());
+        ArchiveType type = fromApiString(metaData.archiveType());
         if (type == null) {
             throw new FileException("Unknown archive type " + metaData.archiveType());
         }
@@ -92,4 +93,14 @@ class FoojayInstallerService {
         }
     }
 
+    // jdktools 17 has no ArchiveType.fromApiString
+    private static @Nullable ArchiveType fromApiString(String apiString) {
+        for (ArchiveType type : ArchiveType.values()) {
+            if (type.getApiString().equals(apiString)) {
+                return type;
+            }
+        }
+
+        return null;
+    }
 }

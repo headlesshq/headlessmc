@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +38,7 @@ class VersionJsonServiceImplTest {
 
     private static String read(Reader reader) {
         try (BufferedReader buffered = new BufferedReader(reader)) {
-            return String.join("", buffered.readAllLines()).trim();
+            return buffered.lines().collect(Collectors.joining()).trim();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -73,7 +73,7 @@ public class ClassSourceFactory {
 
         // one problem is macOS, there might not be a rt.jar
         // https://stackoverflow.com/a/2776410
-        Path rtJar = javaHome.resolve("jre", "lib", "rt.jar");
+        Path rtJar = javaHome.resolve("jre").resolve("lib").resolve("rt.jar");
         if (Files.exists(rtJar)) {
             return Optional.of(List.of(ClassSource.Provider.jar(rtJar, java.version(), JarClassSource::new)));
         }

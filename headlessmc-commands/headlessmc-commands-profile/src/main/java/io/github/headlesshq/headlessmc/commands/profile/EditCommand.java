@@ -22,8 +22,8 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.SequencedMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -81,7 +81,7 @@ public class EditCommand implements Runnable, CachedConsole.Enabled {
         Profile profile = profileService.getProfile(name)
             .orElseThrow(() -> new IllegalArgumentException("Failed to find profile with name " + name));
 
-        SequencedMap<String, EditField<?>> fields = editFieldHelper.fields(profile);
+        Map<String, EditField<?>> fields = editFieldHelper.fields(profile);
         if (field == null) {
             console.write("Specify one of the fields to edit for profile " + profile.name() + ":");
             tableProvider.<String>get()

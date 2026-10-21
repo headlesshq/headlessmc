@@ -209,8 +209,8 @@ class JavaCommandsTest {
         command.run();
 
         assertEquals(1, downloads.size());
-        assertEquals(runtime, downloads.getFirst().runtime());
-        assertEquals(appFiles.getJavaDir().resolve("temurin-21"), downloads.getFirst().path());
+        assertEquals(runtime, downloads.get(0).runtime());
+        assertEquals(appFiles.getJavaDir().resolve("temurin-21"), downloads.get(0).path());
         assertEquals(1, refreshes);
         assertTrue(console.output().contains("Installed java 21 (temurin)"));
     }
