@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class YggdrasilAuthProviderTest {
     private static final String SERVER = "https://example.com";
+    private static final String API_PATH = YggdrasilClientFactory.DEFAULT_API_PATH;
 
     private final List<Throwable> logged = new ArrayList<>();
     private AuthStore<YggdrasilAccount> store;
@@ -23,7 +24,25 @@ class YggdrasilAuthProviderTest {
     @BeforeEach
     void setup() {
         store = new InMemoryAuthStore<>();
-        clientFactory = new YggdrasilClientFactory();
+        clientFactory = new YggdrasilClientFactory(() -> config(SERVER, API_PATH));
+    }
+
+    private static YggdrasilConfig config(String url, String apiPath) {
+        return config(Optional.ofNullable(url), apiPath);
+    }
+
+    private static YggdrasilConfig config(Optional<String> url, String apiPath) {
+        return new YggdrasilConfig() {
+            @Override
+            public Optional<String> url() {
+                return url;
+            }
+
+            @Override
+            public String apiPath() {
+                return apiPath;
+            }
+        };
     }
 
     private YggdrasilAuthProvider provider(Optional<String> url) {
@@ -34,12 +53,7 @@ class YggdrasilAuthProviderTest {
         return new YggdrasilAuthProvider(
             store,
             clientFactory,
-            () -> new YggdrasilConfig() {
-                @Override
-                public Optional<String> url() {
-                    return url;
-                }
-            },
+            () -> config(url, API_PATH),
             logged::add,
             YggdrasilAuthProvider.NAME,
             YggdrasilAuthProvider.VERSION
