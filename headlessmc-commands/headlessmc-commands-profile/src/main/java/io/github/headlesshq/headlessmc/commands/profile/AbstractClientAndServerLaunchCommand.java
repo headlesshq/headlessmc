@@ -107,6 +107,8 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
                 headless = true;
             }
 
+            warnIfYggdrasilAgentMissing(profile, account);
+
             profile = profile.withPatchers(resolvePatchers(profile, headless));
             return handle(getClientLauncher().launcher(profile, account));
         } else {
@@ -118,6 +120,35 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             // TODO: patchers for server
             return handle(getServerLauncher().launcher(profile));
         }
+    }
+
+    /**
+     * Warns when a Yggdrasil account is launched without authlib-injector in the vm args.
+     *
+     * <p>The client only talks to a third party authentication server when
+     * authlib-injector is injected as a java agent. Without it the client sends the
+     * {@code session/minecraft/join} request to Mojang, the Minecraft server never
+     * finds the session and kicks the player with "invalid session". Since the login
+     * itself succeeds, users would not know what is missing.</p>
+     */
+    private void warnIfYggdrasilAgentMissing(Profile profile, Account account) {
+        // hardcoding the provider name keeps this module independent of the yggdrasil module
+        if (!"yggdrasil".equalsIgnoreCase(account.getProvider())) {
+            return;
+        }
+
+        for (String arg : profile.vmArgs()) {
+            if (arg.contains("-javaagent") && arg.contains("authlib-injector")) {
+                return;
+            }
+        }
+
+        log.warn("This account uses third party Yggdrasil authentication. "
+            + "To join servers with online-mode enabled, authlib-injector has to be "
+            + "added as a java agent, otherwise the game will be kicked with "
+            + "\"invalid session\". Download it and add the following to the vm args "
+            + "of this profile using: profile edit {} vm-args \"...\"", profile.name());
+        log.warn("-javaagent:/path/to/authlib-injector.jar=<your yggdrasil api url>");
     }
 
     // TODO: improve?!

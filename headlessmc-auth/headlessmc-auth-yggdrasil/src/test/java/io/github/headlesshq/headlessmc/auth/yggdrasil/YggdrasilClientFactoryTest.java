@@ -44,4 +44,11 @@ class YggdrasilClientFactoryTest {
         assertThrows(IllegalArgumentException.class, () -> YggdrasilClientFactory.toApiUri(null));
     }
 
+    @Test
+    void metadataIsRequestedFromTheApiRoot() {
+        // the metadata lives at the API root, without the /authserver suffix
+        assertEquals(URI.create("https://littleskin.cn/api/yggdrasil"),
+            YggdrasilClientFactory.toApiUri("https://littleskin.cn"));
+    }
+
 }

@@ -105,7 +105,37 @@ final class YggdrasilAuthenticator implements Authenticator {
                 + account.getName() + "'.", e);
         }
 
+        printAgentHint(serverUrl, console);
         return account.asAccount();
+    }
+
+    /**
+     * Tells the user how to join servers that require the third party authentication.
+     *
+     * <p>Login alone is not enough: the game only talks to a third party auth server
+     * when authlib-injector is injected as a java agent. Since HeadlessMc deliberately
+     * does not handle the agent itself, we show the vm args the user has to add to
+     * their profile.</p>
+     *
+     * <p>The prefetched metadata is deliberately <b>not</b> printed here: it is a long
+     * blob that is easy to mistake for a credential, and people do share their
+     * terminal. It is optional anyway, authlib-injector fetches the metadata itself.</p>
+     */
+    private void printAgentHint(String serverUrl, Console console) {
+        if (console == null) {
+            return;
+        }
+
+        printLine(console, "");
+        printLine(console, "This account uses third party Yggdrasil authentication. "
+            + "To join servers with online-mode enabled, authlib-injector is required.");
+        printLine(console, "Add it to the vm args of the profile you use for this account:");
+        printLine(console, "  profile edit <profile> vm-args "
+            + "\"-javaagent:/path/to/authlib-injector.jar=" + serverUrl + "\"");
+    }
+
+    private static void printLine(Console console, String message) {
+        console.write(message, System.lineSeparator());
     }
 
     private YggdrasilSession.Response authenticate(
