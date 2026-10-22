@@ -76,17 +76,10 @@ public class YggdrasilAuthProvider implements AuthProvider {
 
         YggdrasilAPI api = clientFactory.create(stored.getServerUrl());
 
-        // the session may still be valid, in which case there is nothing to do
-        boolean valid;
-        try {
-            api.validate(new YggdrasilSession.Validate(stored.getAccessToken(), stored.getClientToken()));
-            valid = true;
-        } catch (ProcessingException | ApiException e) {
-            // validation failed, so the session needs to be refreshed
-            valid = false;
-        }
-
-        if (valid) {
+        // The session may still be valid, in which case there is nothing to do.
+        // Only a rejected token means it has to be refreshed, a connection problem
+        // must not be confused with an expired session.
+        if (isValid(api, stored)) {
             return account;
         }
 
@@ -94,14 +87,68 @@ public class YggdrasilAuthProvider implements AuthProvider {
         try {
             response = api.refresh(
                 new YggdrasilSession.Refresh(stored.getAccessToken(), stored.getClientToken()));
-        } catch (ProcessingException | ApiException e) {
+        } catch (ProcessingException e) {
+            throw new AuthException("Could not reach the Yggdrasil server " + stored.getServerUrl()
+                + " to refresh the session of '" + account.getName() + "'.", e);
+        } catch (ApiException e) {
             // The password is deliberately not stored, so an expired refresh token can
-            // only be recovered from by logging in again.
-            throw new AuthException("Failed to refresh the Yggdrasil session of '"
-                + account.getName() + "', please log in again.", e);
+            // only be recovered from by logging in again. Launching is not blocked,
+            // but the token is dropped so that the game behaves like an offline launch
+            // instead of sending a token the server will reject.
+            exceptionLogger.accept(new AuthException(expiredMessage(account), e));
+            return withoutToken(account);
         }
 
         return store(stored, response);
+    }
+
+    /**
+     * Drops the token, so that launching continues as an offline launch.
+     * The user has been warned via {@link #expiredMessage(Account)}.
+     */
+    static Account withoutToken(Account account) {
+        return new Account(
+            account.getProvider(),
+            account.getName(),
+            account.getUuid(),
+            "",
+            account.getType(),
+            account.getXuid()
+        );
+    }
+
+    /**
+     * Whether the stored token is still accepted by the server.
+     *
+     * @return {@code true} if the token is valid.
+     * @throws AuthException if the server could not be reached, as that is not a
+     *                       statement about the token.
+     */
+    private static boolean isValid(YggdrasilAPI api, YggdrasilAccount stored) throws AuthException {
+        try {
+            api.validate(new YggdrasilSession.Validate(
+                stored.getAccessToken(), stored.getClientToken()));
+            return true;
+        } catch (ProcessingException e) {
+            throw new AuthException("Could not reach the Yggdrasil server "
+                + stored.getServerUrl() + " to validate the session of '"
+                + stored.getName() + "'.", e);
+        } catch (ApiException e) {
+            return false;
+        }
+    }
+
+    /**
+     * The message shown when the stored session cannot be refreshed anymore.
+     *
+     * <p>Without a valid token the game does not authenticate against the third
+     * party server, so launching would silently behave like an offline launch.
+     * That is confusing, which is why this is spelled out.</p>
+     */
+    static String expiredMessage(Account account) {
+        return "The Yggdrasil session of '" + account.getName() + "' has expired! "
+            + "Launching now would behave like an offline launch, so the server will "
+            + "most likely reject you with 'invalid session'. Please log in again.";
     }
 
     /**

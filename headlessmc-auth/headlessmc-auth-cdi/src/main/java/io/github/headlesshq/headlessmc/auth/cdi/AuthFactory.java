@@ -88,7 +88,9 @@ public class AuthFactory {
             authStore,
             clientFactory,
             config,
-            throwable -> logger.error("Yggdrasil auth", throwable),
+            // logged as a warning, as these messages tell the user what to do and
+            // would be invisible on the default console log level otherwise
+            throwable -> logger.warn("Yggdrasil auth: {}", throwable.getMessage(), throwable),
             YggdrasilAuthProvider.NAME,
             YggdrasilAuthProvider.VERSION
         );

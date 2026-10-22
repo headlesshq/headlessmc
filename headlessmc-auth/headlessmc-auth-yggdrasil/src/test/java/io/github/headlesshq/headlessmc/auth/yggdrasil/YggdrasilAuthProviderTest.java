@@ -176,6 +176,31 @@ class YggdrasilAuthProviderTest {
         }
     }
 
+    @Test
+    void expiredSessionMessageExplainsTheOfflineBehaviour() {
+        // launching with an expired token silently behaves like an offline launch,
+        // so the message has to say so instead of just reporting a failure
+        String message = YggdrasilAuthProvider.expiredMessage(asAccount("Steve"));
+
+        assertTrue(message.contains("Steve"), message);
+        assertTrue(message.contains("expired"), message);
+        assertTrue(message.contains("offline"), message);
+        assertTrue(message.contains("log in again"), message);
+    }
+
+    @Test
+    void expiredSessionIsLoggedAndLaunchingContinues() {
+        // an expired token is not thrown, the game gets an empty one instead, which
+        // makes it behave like an offline launch as the warning says
+        Account expired = YggdrasilAuthProvider.withoutToken(asAccount("Steve"));
+
+        assertEquals("", expired.getToken(), "the game must not receive a stale token");
+        assertEquals(asAccount("Steve").getName(), expired.getName());
+        assertEquals(asAccount("Steve").getUuid(), expired.getUuid());
+        assertEquals(asAccount("Steve").getProvider(), expired.getProvider());
+        assertEquals(asAccount("Steve").getType(), expired.getType());
+    }
+
     /** An {@link AuthStore} whose every operation fails. */
     private static final class BrokenStore implements AuthStore<YggdrasilAccount> {
         @Override
