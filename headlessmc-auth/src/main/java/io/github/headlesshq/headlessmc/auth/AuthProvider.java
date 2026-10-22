@@ -6,6 +6,7 @@ import java.util.Optional;
 public interface AuthProvider {
     String OFFLINE = "offline";
     String DEFAULT = "default";
+    String YGGDRASIL = "yggdrasil";
 
     Account refresh(Account account) throws AuthException;
 

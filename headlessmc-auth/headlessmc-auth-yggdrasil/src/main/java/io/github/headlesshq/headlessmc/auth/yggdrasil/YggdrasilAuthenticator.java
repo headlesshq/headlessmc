@@ -1,5 +1,8 @@
 package io.github.headlesshq.headlessmc.auth.yggdrasil;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.auth.AuthException;
 import io.github.headlesshq.headlessmc.auth.AuthStoreException;
 import io.github.headlesshq.headlessmc.auth.Authenticator;
@@ -8,6 +11,7 @@ import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.Password;
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -74,7 +78,7 @@ final class YggdrasilAuthenticator implements Authenticator {
      *                may be {@code null} in which case the profile selected by the
      *                server is used.
      */
-    private io.github.headlesshq.headlessmc.auth.Account login(
+    private Account login(
         String serverUrl, String username, String password, Console console) throws AuthException {
         YggdrasilAPI api = provider.getClientFactory().create(serverUrl);
 
@@ -175,7 +179,7 @@ final class YggdrasilAuthenticator implements Authenticator {
      * The Yggdrasil spec requires an {@code errorMessage} field for business errors.
      */
     static String describe(ApiException e) {
-        jakarta.ws.rs.core.Response response = e.getResponse();
+        Response response = e.getResponse();
         if (response == null) {
             return e.getMessage();
         }
@@ -192,7 +196,7 @@ final class YggdrasilAuthenticator implements Authenticator {
         }
 
         try {
-            com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(body).getAsJsonObject();
+            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
             if (json.has("errorMessage")) {
                 return json.get("errorMessage").getAsString();
             }

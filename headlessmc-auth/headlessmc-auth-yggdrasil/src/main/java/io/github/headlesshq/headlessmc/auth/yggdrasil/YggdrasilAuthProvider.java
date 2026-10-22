@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
  */
 @Getter
 public class YggdrasilAuthProvider implements AuthProvider {
-    public static final String NAME = "yggdrasil";
-    public static final String TYPE = "legacy";
+    public static final String NAME = AuthProvider.YGGDRASIL;
+    public static final String TYPE = Account.TYPE_LEGACY;
     public static final long VERSION = 0L;
 
     private final AuthStore<YggdrasilAccount> authStore;

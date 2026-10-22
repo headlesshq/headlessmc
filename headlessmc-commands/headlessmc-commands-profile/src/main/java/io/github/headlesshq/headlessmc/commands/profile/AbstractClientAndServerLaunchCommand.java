@@ -132,8 +132,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
      * itself succeeds, users would not know what is missing.</p>
      */
     private void warnIfYggdrasilAgentMissing(Profile profile, Account account) {
-        // hardcoding the provider name keeps this module independent of the yggdrasil module
-        if (!"yggdrasil".equalsIgnoreCase(account.getProvider())) {
+        if (!AuthProvider.YGGDRASIL.equalsIgnoreCase(account.getProvider())) {
             return;
         }
 

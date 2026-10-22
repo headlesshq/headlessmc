@@ -7,6 +7,7 @@ public class Account implements Comparable<Account> {
     private static final String OFFLINE_UUID = "22689332a7fd41919600b0fe1135ee34";
     public static final long SCHEMA_VERSION = 0L;
     public static final String TYPE_MSA = "msa";
+    public static final String TYPE_LEGACY = "legacy";
 
     private final String provider;
     private final String name;
