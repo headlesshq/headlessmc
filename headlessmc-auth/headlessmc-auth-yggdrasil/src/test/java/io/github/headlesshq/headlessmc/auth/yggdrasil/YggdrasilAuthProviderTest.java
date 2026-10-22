@@ -7,8 +7,10 @@ import io.github.headlesshq.headlessmc.auth.InMemoryAuthStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,7 +65,7 @@ class YggdrasilAuthProviderTest {
     private YggdrasilAccount account(String name) {
         return new YggdrasilAccount(
             SERVER, "access-token", "client-token",
-            "0123456789abcdef0123456789abcdef", name, "login-name", "login-password");
+            "0123456789abcdef0123456789abcdef", name);
     }
 
     private Account asAccount(String name) {
@@ -161,6 +163,17 @@ class YggdrasilAuthProviderTest {
             .getAuthenticator()
             .loginWithInteractiveCredentials()
             .isPresent());
+    }
+
+    @Test
+    void doesNotStoreThePassword() {
+        // The password is not needed to refresh a session and storing it on disk
+        // would be a security risk, so the account must not expose it at all.
+        for (Method method : YggdrasilAccount.class.getDeclaredMethods()) {
+            String name = method.getName();
+            assertFalse(name.toLowerCase(Locale.ROOT).contains("password"),
+                "YggdrasilAccount must not expose a password: " + name);
+        }
     }
 
     /** An {@link AuthStore} whose every operation fails. */

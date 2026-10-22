@@ -92,14 +92,14 @@ final class YggdrasilAuthenticator implements Authenticator {
             response = selectProfileOnServer(api, response, profile);
         }
 
+        // The password is deliberately not stored: it is not needed to refresh a
+        // session, and keeping it on disk would be a security risk.
         YggdrasilAccount account = new YggdrasilAccount(
             serverUrl,
             response.getAccessToken(),
             response.getClientToken(),
             profile.getId(),
-            profile.getName(),
-            username,
-            password
+            profile.getName()
         );
 
         try {

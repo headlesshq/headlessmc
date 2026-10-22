@@ -12,10 +12,6 @@ public class YggdrasilAccount {
     private final String clientToken;
     private final String uuid;
     private final String name;
-    /** The name used to log in to the Yggdrasil server, may differ from {@link #name}. */
-    private final String username;
-    /** The password used to log in to the Yggdrasil server. */
-    private final String password;
 
     public Account asAccount() {
         return new Account(

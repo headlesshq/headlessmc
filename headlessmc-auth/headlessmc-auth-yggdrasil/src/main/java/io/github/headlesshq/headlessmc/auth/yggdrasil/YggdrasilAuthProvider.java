@@ -95,28 +95,13 @@ public class YggdrasilAuthProvider implements AuthProvider {
             response = api.refresh(
                 new YggdrasilSession.Refresh(stored.getAccessToken(), stored.getClientToken()));
         } catch (ProcessingException | ApiException e) {
-            // the refresh token expired, fall back to a full login if we still have the password
-            if (!hasCredentials(stored)) {
-                throw new AuthException("Failed to refresh the Yggdrasil session of '"
-                    + account.getName() + "'.", e);
-            }
-
-            return reauthenticate(stored);
+            // The password is deliberately not stored, so an expired refresh token can
+            // only be recovered from by logging in again.
+            throw new AuthException("Failed to refresh the Yggdrasil session of '"
+                + account.getName() + "', please log in again.", e);
         }
 
         return store(stored, response);
-    }
-
-    private Account reauthenticate(YggdrasilAccount stored) throws AuthException {
-        try {
-            YggdrasilSession.Response response = clientFactory
-                .create(stored.getServerUrl())
-                .authenticate(new YggdrasilSession.Authenticate(stored.getUsername(), stored.getPassword()));
-            return store(stored, response);
-        } catch (ProcessingException | ApiException e) {
-            throw new AuthException("Failed to authenticate the Yggdrasil account '"
-                + stored.getName() + "'.", e);
-        }
     }
 
     /**
@@ -136,9 +121,7 @@ public class YggdrasilAuthProvider implements AuthProvider {
             response.getAccessToken(),
             response.getClientToken(),
             profile.getId(),
-            profile.getName(),
-            stored.getUsername(),
-            stored.getPassword()
+            profile.getName()
         );
 
         try {
@@ -153,10 +136,6 @@ public class YggdrasilAuthProvider implements AuthProvider {
         }
 
         return refreshed.asAccount();
-    }
-
-    private static boolean hasCredentials(YggdrasilAccount account) {
-        return account.getUsername() != null && account.getPassword() != null;
     }
 
     private YggdrasilAccount storedAccount(String name) {
