@@ -8,10 +8,11 @@ import java.util.List;
 
 /**
  * The request and response bodies of the Yggdrasil authentication protocol.
+ *
+ * <p>This is an interface instead of a class holding constants, so that it cannot be
+ * instantiated and the nested types are implicitly public and static.</p>
  */
-public final class YggdrasilSession {
-    private YggdrasilSession() {
-    }
+public interface YggdrasilSession {
 
     /**
      * The request body of the {@code authenticate} endpoint.
