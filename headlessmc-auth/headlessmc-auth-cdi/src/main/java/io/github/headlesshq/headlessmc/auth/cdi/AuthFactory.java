@@ -7,6 +7,11 @@ import io.github.headlesshq.headlessmc.auth.offline.OfflineAuthProvider;
 import io.github.headlesshq.headlessmc.auth.store.gson.GsonCodec;
 import io.github.headlesshq.headlessmc.auth.store.gson.GsonCodecImpl;
 import io.github.headlesshq.headlessmc.auth.store.gson.GsonFileAuthStore;
+import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilAccount;
+import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilAuthProvider;
+import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilClientFactory;
+import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilConfig;
+import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.config.Holder;
@@ -25,7 +30,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ApplicationScoped
-@RegisterForReflection(targets = {Account.class, AccountInfo.class}) // for GSON to serialize
+@RegisterForReflection(targets = {Account.class, AccountInfo.class, YggdrasilAccount.class}) // for GSON to serialize
 public class AuthFactory {
     @Produces
     @Default
@@ -61,13 +66,52 @@ public class AuthFactory {
     }
 
     @Produces
+    @Yggdrasil
+    @ApplicationScoped
+    public YggdrasilConfig createYggdrasilConfig(ConfigService configService) {
+        return new YggdrasilConfigImpl(configService);
+    }
+
+    @Produces
+    @Yggdrasil
+    @ApplicationScoped
+    public AuthStore<YggdrasilAccount> createYggdrasilAccountStore(
+        FileService fileService, AppFiles appFiles) {
+        GsonCodec<YggdrasilAccount> codec = new GsonCodecImpl<>(YggdrasilAccount.class);
+        Path file = fileService.getPath(
+            appFiles.getAuthDir(), YggdrasilAuthProvider.NAME, ".accounts.json");
+        return new GsonFileAuthStore<>(
+            codec, new ReentrantLock(), YggdrasilAuthProvider.VERSION, file);
+    }
+
+    @Produces
+    @Yggdrasil
+    @ApplicationScoped
+    public AuthProvider createYggdrasilAuthProvider(
+        @Yggdrasil AuthStore<YggdrasilAccount> authStore,
+        @Yggdrasil YggdrasilConfig config,
+        YggdrasilClientFactory clientFactory) {
+        Logger logger = LoggerFactory.getLogger(YggdrasilAuthProvider.class);
+        return new YggdrasilAuthProvider(
+            authStore,
+            clientFactory,
+            config,
+            throwable -> logger.error("Yggdrasil auth", throwable),
+            YggdrasilAuthProvider.NAME,
+            YggdrasilAuthProvider.VERSION
+        );
+    }
+
+    @Produces
     @Default
     @ApplicationScoped
     public AuthService createAuthService(
         @Any Instance<AuthProvider> providers,
         @Default AuthProvider defaultProvider
     ) {
-        return new AuthServiceImpl(providers.stream().toList(), defaultProvider);
+        // providers that need configuration which has not been set are skipped
+        return new AuthServiceImpl(
+            providers.stream().filter(AuthProvider::isEnabled).toList(), defaultProvider);
     }
 
     @Produces

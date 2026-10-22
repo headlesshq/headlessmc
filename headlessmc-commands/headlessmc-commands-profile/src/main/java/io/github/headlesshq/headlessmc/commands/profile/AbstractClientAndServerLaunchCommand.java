@@ -99,10 +99,11 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             Account account = getAccount();
             boolean headless = Boolean.TRUE.equals(this.headless);
             if (!headless
-                && AuthProvider.OFFLINE.equalsIgnoreCase(account.getProvider())
+                && !AuthProvider.DEFAULT.equalsIgnoreCase(account.getProvider())
                 && !hasGame()
                 && !xvfbService.isRunningWithXvfb()) {
-                log.warn("You are offline without the game, forcing headless mode.");
+                log.warn("No account for a purchased copy of Minecraft found, "
+                    + "forcing headless mode. Log in with a Microsoft account to launch with a GUI.");
                 headless = true;
             }
 
@@ -176,7 +177,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
     private boolean hasGame() {
         return authService.getProviders()
             .stream()
-            .filter(provider -> !AuthProvider.OFFLINE.equalsIgnoreCase(provider.getName()))
+            .filter(provider -> AuthProvider.DEFAULT.equalsIgnoreCase(provider.getName()))
             .anyMatch(provider -> !provider.getAccounts().isEmpty());
     }
 
