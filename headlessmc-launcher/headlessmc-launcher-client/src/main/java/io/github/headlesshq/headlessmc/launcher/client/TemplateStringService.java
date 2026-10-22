@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.UUID;
 
 @Slf4j
 @ApplicationScoped
@@ -87,17 +88,31 @@ public class TemplateStringService {
      * Adds the dashes to an undashed uuid, as the game expects the dashed form.
      * Yggdrasil servers return uuids without dashes, while Microsoft accounts
      * already provide them.
+     *
+     * @param uuid the uuid, with or without dashes.
+     * @return the dashed uuid, or the given value if it is not a valid uuid,
+     * e.g. a placeholder that was configured by hand.
      */
     static String formatUuid(String uuid) {
-        if (uuid == null || uuid.length() != 32) {
-            return uuid;
+        if (uuid == null) {
+            return null;
         }
 
-        return uuid.substring(0, 8) + "-"
-            + uuid.substring(8, 12) + "-"
-            + uuid.substring(12, 16) + "-"
-            + uuid.substring(16, 20) + "-"
-            + uuid.substring(20, 32);
+        // UUID.fromString does not accept the undashed form, so add the dashes first
+        String dashed = uuid.length() == 32
+            ? uuid.substring(0, 8) + "-"
+                + uuid.substring(8, 12) + "-"
+                + uuid.substring(12, 16) + "-"
+                + uuid.substring(16, 20) + "-"
+                + uuid.substring(20, 32)
+            : uuid;
+
+        try {
+            // toString normalizes the case and validates the hex digits
+            return UUID.fromString(dashed).toString();
+        } catch (IllegalArgumentException e) {
+            return uuid;
+        }
     }
 
 }

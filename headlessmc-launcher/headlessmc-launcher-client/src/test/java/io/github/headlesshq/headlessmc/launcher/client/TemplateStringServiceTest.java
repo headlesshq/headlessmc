@@ -113,6 +113,29 @@ public class TemplateStringServiceTest {
         assertEquals("realm-id", realms.process("${quickPlayRealms}"));
     }
 
+    @Test
+    public void addsDashesToUndashedUuids() {
+        // Yggdrasil servers return uuids without dashes
+        assertEquals(
+            "b882c2ee-7132-43eb-a528-415cb26e151b",
+            TemplateStringService.formatUuid("b882c2ee713243eba528415cb26e151b"));
+    }
+
+    @Test
+    public void keepsDashedUuids() {
+        // Microsoft accounts already provide the dashed form
+        String uuid = "b882c2ee-7132-43eb-a528-415cb26e151b";
+        assertEquals(uuid, TemplateStringService.formatUuid(uuid));
+    }
+
+    @Test
+    public void keepsValuesThatAreNoUuids() {
+        // e.g. offline accounts, whose provider should not be broken by this
+        assertEquals("uuid-steve", TemplateStringService.formatUuid("uuid-steve"));
+        assertEquals("", TemplateStringService.formatUuid(""));
+        assertNull(TemplateStringService.formatUuid(null));
+    }
+
     private static final class FakeVersion implements Version {
         @Override
         public String getId() {
