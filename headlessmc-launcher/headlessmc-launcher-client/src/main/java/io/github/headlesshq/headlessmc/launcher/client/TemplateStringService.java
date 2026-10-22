@@ -44,7 +44,7 @@ public class TemplateStringService {
         result.add(TemplateString.AUTH_ACCESS_TOKEN, account.getToken());
         result.add(TemplateString.AUTH_SESSION, account.getToken()); // this is the legacy version of auth_access_token
         result.add(TemplateString.AUTH_PLAYER_NAME, account.getName());
-        result.add(TemplateString.AUTH_UUID, account.getUuid());
+        result.add(TemplateString.AUTH_UUID, formatUuid(account.getUuid()));
         result.add(TemplateString.AUTH_XUID, "");
         result.add(TemplateString.CLASSPATH_SEPARATOR, File.pathSeparator);
         result.add(TemplateString.CLIENT_ID, "");
@@ -56,7 +56,10 @@ public class TemplateStringService {
 
         result.add(TemplateString.PROFILE_PROPERTIES, "{}");
         result.add(TemplateString.USER_PROPERTIES, "{}");
-        result.add(TemplateString.USER_TYPE, "msa"); // TODO
+        // the user type is provider specific, e.g. "msa" for Microsoft accounts and
+        // "legacy" for third party Yggdrasil accounts, which the client treats like
+        // "mojang". Hardcoding "msa" made the client use the Microsoft auth flow.
+        result.add(TemplateString.USER_TYPE, account.getType());
         result.add(TemplateString.VERSION_NAME, version.getId());
         result.add(TemplateString.VERSION_TYPE, version.getType());
 
@@ -78,6 +81,23 @@ public class TemplateStringService {
         // result.add(TemplateString.NATIVES_DIRECTORY, ); done by NativeLibraryHandler
 
         return result;
+    }
+
+    /**
+     * Adds the dashes to an undashed uuid, as the game expects the dashed form.
+     * Yggdrasil servers return uuids without dashes, while Microsoft accounts
+     * already provide them.
+     */
+    static String formatUuid(String uuid) {
+        if (uuid == null || uuid.length() != 32) {
+            return uuid;
+        }
+
+        return uuid.substring(0, 8) + "-"
+            + uuid.substring(8, 12) + "-"
+            + uuid.substring(12, 16) + "-"
+            + uuid.substring(16, 20) + "-"
+            + uuid.substring(20, 32);
     }
 
 }
