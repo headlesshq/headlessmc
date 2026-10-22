@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.auth.AuthProvider;
 import io.github.headlesshq.headlessmc.auth.AuthStore;
 import io.github.headlesshq.headlessmc.auth.AuthStoreException;
 import io.github.headlesshq.headlessmc.auth.Authenticator;
+import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import jakarta.ws.rs.ProcessingException;
 import lombok.Getter;
@@ -30,7 +31,7 @@ public class YggdrasilAuthProvider implements AuthProvider {
 
     private final AuthStore<YggdrasilAccount> authStore;
     private final YggdrasilClientFactory clientFactory;
-    private final YggdrasilConfig config;
+    private final Holder<YggdrasilConfig> config;
     private final Consumer<Throwable> exceptionLogger;
     private final String name;
     private final long version;
@@ -38,7 +39,7 @@ public class YggdrasilAuthProvider implements AuthProvider {
     public YggdrasilAuthProvider(
         AuthStore<YggdrasilAccount> authStore,
         YggdrasilClientFactory clientFactory,
-        YggdrasilConfig config,
+        Holder<YggdrasilConfig> config,
         Consumer<Throwable> exceptionLogger,
         String name,
         long version) {
@@ -56,7 +57,7 @@ public class YggdrasilAuthProvider implements AuthProvider {
      */
     @Override
     public boolean isEnabled() {
-        Optional<String> url = config.url();
+        Optional<String> url = config.get().url();
         return url.isPresent() && !url.get().trim().isEmpty();
     }
 

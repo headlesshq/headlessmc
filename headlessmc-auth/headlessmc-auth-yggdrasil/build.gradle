@@ -1,4 +1,6 @@
 dependencies {
+    api project(':headlessmc-config')
+
     implementation project(':headlessmc-auth')
     implementation project(':headlessmc-auth:headlessmc-auth-store-gson')
 

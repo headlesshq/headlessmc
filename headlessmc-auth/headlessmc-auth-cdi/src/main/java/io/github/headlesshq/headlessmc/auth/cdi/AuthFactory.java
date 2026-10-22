@@ -11,7 +11,6 @@ import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilAccount;
 import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilAuthProvider;
 import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilClientFactory;
 import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilConfig;
-import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.config.Holder;
@@ -68,13 +67,6 @@ public class AuthFactory {
     @Produces
     @Yggdrasil
     @ApplicationScoped
-    public YggdrasilConfig createYggdrasilConfig(ConfigService configService) {
-        return new YggdrasilConfigImpl(configService);
-    }
-
-    @Produces
-    @Yggdrasil
-    @ApplicationScoped
     public AuthStore<YggdrasilAccount> createYggdrasilAccountStore(
         FileService fileService, AppFiles appFiles) {
         GsonCodec<YggdrasilAccount> codec = new GsonCodecImpl<>(YggdrasilAccount.class);
@@ -89,7 +81,7 @@ public class AuthFactory {
     @ApplicationScoped
     public AuthProvider createYggdrasilAuthProvider(
         @Yggdrasil AuthStore<YggdrasilAccount> authStore,
-        @Yggdrasil YggdrasilConfig config,
+        Holder<YggdrasilConfig> config,
         YggdrasilClientFactory clientFactory) {
         Logger logger = LoggerFactory.getLogger(YggdrasilAuthProvider.class);
         return new YggdrasilAuthProvider(

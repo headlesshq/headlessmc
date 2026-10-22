@@ -34,7 +34,12 @@ class YggdrasilAuthProviderTest {
         return new YggdrasilAuthProvider(
             store,
             clientFactory,
-            () -> url,
+            () -> new YggdrasilConfig() {
+                @Override
+                public Optional<String> url() {
+                    return url;
+                }
+            },
             logged::add,
             YggdrasilAuthProvider.NAME,
             YggdrasilAuthProvider.VERSION
