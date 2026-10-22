@@ -99,7 +99,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             Account account = getAccount();
             boolean headless = Boolean.TRUE.equals(this.headless);
             if (!headless
-                && !AuthProvider.DEFAULT.equalsIgnoreCase(account.getProvider())
+                && needsHeadless(account)
                 && !hasGame()
                 && !xvfbService.isRunningWithXvfb()) {
                 log.warn("No account for a purchased copy of Minecraft found, "
@@ -207,8 +207,21 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
     private boolean hasGame() {
         return authService.getProviders()
             .stream()
-            .filter(provider -> AuthProvider.DEFAULT.equalsIgnoreCase(provider.getName()))
+            .filter(provider -> !AuthProvider.OFFLINE.equalsIgnoreCase(provider.getName()))
             .anyMatch(provider -> !provider.getAccounts().isEmpty());
+    }
+
+    /**
+     * Whether an account of this provider cannot launch with a GUI.
+     *
+     * <p>Offline accounts may belong to a user who owns the game, see
+     * {@link #hasGame()}. Yggdrasil accounts do not, they only authenticate
+     * against a third party server.</p>
+     */
+    private static boolean needsHeadless(Account account) {
+        String provider = account.getProvider();
+        return AuthProvider.OFFLINE.equalsIgnoreCase(provider)
+            || AuthProvider.YGGDRASIL.equalsIgnoreCase(provider);
     }
 
 }
