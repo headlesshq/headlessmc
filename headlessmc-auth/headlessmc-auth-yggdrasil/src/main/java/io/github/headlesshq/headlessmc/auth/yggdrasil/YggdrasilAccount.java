@@ -18,8 +18,6 @@ public class YggdrasilAccount {
             YggdrasilAuthProvider.NAME,
             name,
             uuid,
-            // the game is handed the token, so it has to be the accessToken
-            // and not the clientToken
             accessToken,
             YggdrasilAuthProvider.TYPE,
             "" // xuid not supported

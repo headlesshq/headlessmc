@@ -15,9 +15,8 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
  *
  * <p>The base uri is not fixed, as every third party server has its own url.
  * Instances are therefore built via {@link YggdrasilClientFactory}, which reads the
- * configured server url.</p>
+ * configured server url and appends the path the api lives under.</p>
  */
-@Path("/authserver")
 @RegisterProvider(ApiExceptionMapper.class)
 @RegisterRestClient
 public interface YggdrasilAPI {

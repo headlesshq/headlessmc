@@ -44,4 +44,17 @@ public interface YggdrasilConfig extends DynamicConfig {
     @WithDefault(YggdrasilClientFactory.DEFAULT_API_PATH)
     String apiPath();
 
+    /**
+     * The path of the login endpoints, relative to {@link #apiPath()}.
+     * Corresponds to the {@code hmc.auth.yggdrasil.login-path} property and
+     * defaults to {@value YggdrasilClientFactory#DEFAULT_LOGIN_PATH}.
+     *
+     * <p>Like {@link #apiPath()} this is configurable, because the specification
+     * only defines the endpoints relative to the API root.</p>
+     *
+     * @return the path of the login endpoints, always starting with a slash.
+     */
+    @WithDefault(YggdrasilClientFactory.DEFAULT_LOGIN_PATH)
+    String loginPath();
+
 }

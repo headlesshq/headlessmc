@@ -91,10 +91,6 @@ public class YggdrasilAuthProvider implements AuthProvider {
             throw new AuthException("Could not reach the Yggdrasil server " + stored.getServerUrl()
                 + " to refresh the session of '" + account.getName() + "'.", e);
         } catch (ApiException e) {
-            // The password is deliberately not stored, so an expired refresh token can
-            // only be recovered from by logging in again. Launching is not blocked,
-            // but the token is dropped so that the game behaves like an offline launch
-            // instead of sending a token the server will reject.
             exceptionLogger.accept(new AuthException(expiredMessage(account), e));
             return withoutToken(account);
         }

@@ -63,12 +63,23 @@ final class YggdrasilAuthenticator implements Authenticator {
     @Override
     public Optional<Method<Credentials>> loginWithCredentials() {
         return Optional.of(credentials -> login(
-            YggdrasilClientFactory.DEFAULT_SERVER,
+            configuredOrDefaultServer(),
             credentials.getEmail(),
             credentials.getPassword(),
             // there is no console to ask for a profile, use the selected one
             null
         ));
+    }
+
+    /**
+     * The configured server url, or the default one if none has been set.
+     * Logging in without a console means there is no chance to ask for a url.
+     */
+    private String configuredOrDefaultServer() {
+        return provider.getConfig()
+            .get()
+            .url()
+            .orElse(YggdrasilClientFactory.DEFAULT_SERVER);
     }
 
     /**
@@ -92,8 +103,6 @@ final class YggdrasilAuthenticator implements Authenticator {
             response = selectProfileOnServer(api, response, profile);
         }
 
-        // The password is deliberately not stored: it is not needed to refresh a
-        // session, and keeping it on disk would be a security risk.
         YggdrasilAccount account = new YggdrasilAccount(
             serverUrl,
             response.getAccessToken(),

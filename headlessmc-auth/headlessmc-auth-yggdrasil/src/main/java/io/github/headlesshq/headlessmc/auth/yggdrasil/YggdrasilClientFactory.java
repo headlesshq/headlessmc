@@ -29,6 +29,15 @@ public class YggdrasilClientFactory {
     public static final String DEFAULT_API_PATH = "/api/yggdrasil";
 
     /**
+     * The path of the login endpoints, relative to the API root.
+     *
+     * <p>Like {@link #DEFAULT_API_PATH} this is configurable rather than baked into
+     * the {@code @Path} annotations of {@link YggdrasilAPI}, as the specification
+     * only defines them relative to the API root.</p>
+     */
+    public static final String DEFAULT_LOGIN_PATH = "/authserver";
+
+    /**
      * The server suggested to the user when no other url has been configured.
      */
     public static final String DEFAULT_SERVER = "https://littleskin.cn";
@@ -37,33 +46,39 @@ public class YggdrasilClientFactory {
 
     public YggdrasilAPI create(String serverUrl) {
         return RestClientBuilder.newBuilder()
-            .baseUri(toApiUri(serverUrl, config.get().apiPath()))
+            .baseUri(toApiUri(serverUrl, config.get().apiPath(), config.get().loginPath()))
             .build(YggdrasilAPI.class);
     }
 
     /**
      * Turns a server url into the base uri of the API by appending the given
-     * {@code apiPath}.
+     * {@code apiPath} and {@code loginPath}.
      *
-     * <p>Users may enter either the server root or the full api url, so the path
-     * is not appended if the url already ends with it.</p>
+     * <p>Users may enter either the server root or the full api url, so the api
+     * path is not appended if the url already ends with it.</p>
      *
      * @param serverUrl the url of the server, either its root or its api.
      * @param apiPath   the path of the api, relative to the server root.
-     * @return the base uri of the api.
+     * @param loginPath the path of the login endpoints, relative to the api root.
+     * @return the base uri of the login endpoints.
      */
-    static URI toApiUri(String serverUrl, String apiPath) {
+    static URI toApiUri(String serverUrl, String apiPath, String loginPath) {
         String url = stripTrailingSlashes(serverUrl);
         if (url.isEmpty()) {
             throw new IllegalArgumentException("The Yggdrasil server url must not be empty.");
         }
 
-        String path = normalizePath(apiPath);
-        if (!path.isEmpty() && !endsWithPath(url, path)) {
-            url = url + path;
+        url = appendPath(url, normalizePath(apiPath));
+        url = appendPath(url, normalizePath(loginPath));
+        return UriBuilder.fromUri(url).build();
+    }
+
+    private static String appendPath(String url, String path) {
+        if (path.isEmpty() || endsWithPath(url, path)) {
+            return url;
         }
 
-        return UriBuilder.fromUri(url).build();
+        return url + path;
     }
 
     private static String stripTrailingSlashes(String value) {
