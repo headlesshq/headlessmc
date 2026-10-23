@@ -57,9 +57,6 @@ public class TemplateStringService {
 
         result.add(TemplateString.PROFILE_PROPERTIES, "{}");
         result.add(TemplateString.USER_PROPERTIES, "{}");
-        // the user type is provider specific, e.g. "msa" for Microsoft accounts and
-        // "legacy" for third party Yggdrasil accounts, which the client treats like
-        // "mojang". Hardcoding "msa" made the client use the Microsoft auth flow.
         result.add(TemplateString.USER_TYPE, account.getType());
         result.add(TemplateString.VERSION_NAME, version.getId());
         result.add(TemplateString.VERSION_TYPE, version.getType());

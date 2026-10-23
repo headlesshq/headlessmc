@@ -188,7 +188,6 @@ final class YggdrasilAuthenticator implements Authenticator {
      * The Yggdrasil spec requires an {@code errorMessage} field for business errors.
      */
     static String describe(ApiException e) {
-        // the http response, not the YggdrasilSession.Response this file also uses
         Response httpResponse = e.getResponse();
         if (httpResponse == null) {
             return e.getMessage();

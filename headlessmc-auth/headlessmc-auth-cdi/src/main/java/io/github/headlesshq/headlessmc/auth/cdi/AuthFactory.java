@@ -103,8 +103,6 @@ public class AuthFactory {
         @Any Instance<AuthProvider> providers,
         @Default AuthProvider defaultProvider
     ) {
-        // AuthServiceImpl filters by isEnabled() on every access, as that can change
-        // at runtime when the user edits the config
         return new AuthServiceImpl(providers.stream().toList(), defaultProvider);
     }
 
