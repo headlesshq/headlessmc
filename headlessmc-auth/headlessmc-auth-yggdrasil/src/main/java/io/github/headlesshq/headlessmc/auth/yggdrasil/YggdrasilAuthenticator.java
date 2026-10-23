@@ -66,7 +66,6 @@ final class YggdrasilAuthenticator implements Authenticator {
             configuredOrDefaultServer(),
             credentials.getEmail(),
             credentials.getPassword(),
-            // there is no console to ask for a profile, use the selected one
             null
         ));
     }
@@ -210,7 +209,7 @@ final class YggdrasilAuthenticator implements Authenticator {
                 return json.get("errorMessage").getAsString();
             }
         } catch (RuntimeException notJson) {
-            // fall through and return the raw body
+            // ignore, the raw body is returned below
         }
 
         return body;
@@ -255,7 +254,7 @@ final class YggdrasilAuthenticator implements Authenticator {
                 return profiles.get(index - 1);
             }
         } catch (NumberFormatException e) {
-            // fall through to the error below
+            // handled below
         }
 
         throw new AuthException("Invalid profile selection: '" + input + "'.");

@@ -168,7 +168,6 @@ public class YggdrasilAuthProvider implements AuthProvider {
         );
 
         try {
-            // the name may change if the selected profile changed
             if (!refreshed.getName().equalsIgnoreCase(stored.getName())) {
                 authStore.remove(stored.getName());
             }
