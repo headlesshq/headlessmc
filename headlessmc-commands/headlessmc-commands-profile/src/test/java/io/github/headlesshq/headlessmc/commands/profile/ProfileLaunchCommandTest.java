@@ -356,6 +356,35 @@ class ProfileLaunchCommandTest {
     }
 
     @Test
+    void yggdrasilAccountsAreForcedHeadless() {
+        client("main");
+        Account yggdrasil = new Account(
+            "yggdrasil", "player", "uuid", "token", Account.TYPE_LEGACY, "");
+        Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.of(yggdrasil));
+
+        Launched launched = assertThrows(Launched.class, () -> command("main").call());
+
+        assertEquals(List.of("log4j", "lwjgl", "paulscode"), launched.profile.patchers());
+    }
+
+    @Test
+    void registeringAYggdrasilAccountDoesNotCountAsOwningTheGame() {
+        client("main");
+        Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.empty());
+        AuthProvider yggdrasil = Mockito.mock(AuthProvider.class);
+        Mockito.when(yggdrasil.getName()).thenReturn("yggdrasil");
+        Mockito.when(yggdrasil.getAccounts()).thenReturn(List.of(account));
+        Mockito.when(authService.getProviders()).thenReturn(List.of(yggdrasil));
+        ProfileLaunchCommand command = command("main");
+        command.setOffline(true);
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // a stored Yggdrasil account must not be mistaken for a purchased copy
+        assertEquals(List.of("log4j", "lwjgl", "paulscode"), launched.profile.patchers());
+    }
+
+    @Test
     void serversDoNotRequireAnAccount() {
         server("srv");
         Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.empty());

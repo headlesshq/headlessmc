@@ -6,6 +6,7 @@ import java.util.Optional;
 public interface AuthProvider {
     String OFFLINE = "offline";
     String DEFAULT = "default";
+    String YGGDRASIL = "yggdrasil";
 
     Account refresh(Account account) throws AuthException;
 
@@ -20,5 +21,16 @@ public interface AuthProvider {
     String getName();
 
     long getVersion();
+
+    /**
+     * Whether this provider is currently usable.
+     * Disabled providers are not exposed by the {@link AuthService}, e.g. because
+     * they require configuration that has not been set.
+     *
+     * @return {@code true} by default.
+     */
+    default boolean isEnabled() {
+        return true;
+    }
 
 }

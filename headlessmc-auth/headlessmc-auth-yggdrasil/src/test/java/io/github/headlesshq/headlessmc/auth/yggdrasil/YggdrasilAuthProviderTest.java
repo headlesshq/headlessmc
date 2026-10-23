@@ -1,0 +1,238 @@
+package io.github.headlesshq.headlessmc.auth.yggdrasil;
+
+import io.github.headlesshq.headlessmc.auth.Account;
+import io.github.headlesshq.headlessmc.auth.AuthStore;
+import io.github.headlesshq.headlessmc.auth.Authenticator;
+import io.github.headlesshq.headlessmc.auth.InMemoryAuthStore;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class YggdrasilAuthProviderTest {
+    private static final String SERVER = "https://example.com";
+    private static final String API_PATH = YggdrasilClientFactory.DEFAULT_API_PATH;
+    private static final String LOGIN_PATH = YggdrasilClientFactory.DEFAULT_LOGIN_PATH;
+
+    private final List<Throwable> logged = new ArrayList<>();
+    private AuthStore<YggdrasilAccount> store;
+    private YggdrasilClientFactory clientFactory;
+
+    @BeforeEach
+    void setup() {
+        store = new InMemoryAuthStore<>();
+        clientFactory = new YggdrasilClientFactory(() -> config(SERVER, API_PATH));
+    }
+
+    private static YggdrasilConfig config(String url, String apiPath) {
+        return config(Optional.ofNullable(url), apiPath);
+    }
+
+    private static YggdrasilConfig config(Optional<String> url, String apiPath) {
+        return new YggdrasilConfig() {
+            @Override
+            public Optional<String> url() {
+                return url;
+            }
+
+            @Override
+            public String apiPath() {
+                return apiPath;
+            }
+
+            @Override
+            public String loginPath() {
+                return LOGIN_PATH;
+            }
+        };
+    }
+
+    private YggdrasilAuthProvider provider(Optional<String> url) {
+        return provider(url, store);
+    }
+
+    private YggdrasilAuthProvider provider(Optional<String> url, AuthStore<YggdrasilAccount> store) {
+        return new YggdrasilAuthProvider(
+            store,
+            clientFactory,
+            () -> config(url, API_PATH),
+            logged::add,
+            YggdrasilAuthProvider.NAME,
+            YggdrasilAuthProvider.VERSION
+        );
+    }
+
+    private YggdrasilAccount account(String name) {
+        return new YggdrasilAccount(
+            SERVER, "access-token", "client-token",
+            "0123456789abcdef0123456789abcdef", name);
+    }
+
+    private Account asAccount(String name) {
+        return account(name).asAccount();
+    }
+
+    @Test
+    void exposesNameAndVersion() {
+        YggdrasilAuthProvider provider = provider(Optional.empty());
+
+        assertEquals(YggdrasilAuthProvider.NAME, provider.getName());
+        assertEquals(YggdrasilAuthProvider.VERSION, provider.getVersion());
+    }
+
+    @Test
+    void isDisabledWithoutConfiguredUrl() {
+        assertFalse(provider(Optional.empty()).isEnabled());
+    }
+
+    @Test
+    void isDisabledWithBlankUrl() {
+        assertFalse(provider(Optional.of("   ")).isEnabled());
+    }
+
+    @Test
+    void isEnabledWithConfiguredUrl() {
+        assertTrue(provider(Optional.of(SERVER)).isEnabled());
+    }
+
+    @Test
+    void handsTheAccessTokenToTheGame() {
+        Account account = asAccount("Steve");
+
+        // the game needs the accessToken, not the clientToken
+        assertEquals("access-token", account.getToken());
+        assertEquals(YggdrasilAuthProvider.NAME, account.getProvider());
+        assertEquals(YggdrasilAuthProvider.TYPE, account.getType());
+        assertEquals("", account.getXuid());
+    }
+
+    @Test
+    void readsAccountsFromTheStore() {
+        YggdrasilAuthProvider provider = provider(Optional.of(SERVER));
+        store.add("Steve", account("Steve"));
+
+        assertEquals(Optional.of(asAccount("Steve")), provider.getAccount("Steve"));
+        assertEquals(List.of(asAccount("Steve")), provider.getAccounts());
+    }
+
+    @Test
+    void unknownAccountIsEmpty() {
+        YggdrasilAuthProvider provider = provider(Optional.of(SERVER));
+
+        assertEquals(Optional.empty(), provider.getAccount("NotThere"));
+        assertEquals(List.of(), provider.getAccounts());
+    }
+
+    @Test
+    void removesAccountsFromTheStore() {
+        YggdrasilAuthProvider provider = provider(Optional.of(SERVER));
+        store.add("Steve", account("Steve"));
+
+        provider.removeAccount(asAccount("Steve"));
+
+        assertEquals(List.of(), provider.getAccounts());
+    }
+
+    @Test
+    void storeFailuresAreLoggedInsteadOfThrown() {
+        AuthStore<YggdrasilAccount> broken = new BrokenStore();
+        YggdrasilAuthProvider provider = provider(Optional.of(SERVER), broken);
+
+        assertEquals(Optional.empty(), provider.getAccount("Steve"));
+        assertEquals(List.of(), provider.getAccounts());
+        provider.removeAccount(asAccount("Steve"));
+
+        assertEquals(3, logged.size());
+    }
+
+    @Test
+    void exposesTheDefaultLoginMethod() {
+        Authenticator authenticator = provider(Optional.of(SERVER)).getAuthenticator();
+
+        assertTrue(authenticator.getMethods().containsKey(Authenticator.DEFAULT_METHOD));
+    }
+
+    @Test
+    void credentialsLoginIsSupported() {
+        assertTrue(provider(Optional.of(SERVER)).getAuthenticator().loginWithCredentials().isPresent());
+    }
+
+    @Test
+    void interactiveCredentialsAreAvailable() {
+        assertTrue(provider(Optional.of(SERVER))
+            .getAuthenticator()
+            .loginWithInteractiveCredentials()
+            .isPresent());
+    }
+
+    @Test
+    void doesNotStoreThePassword() {
+        // The password is not needed to refresh a session and storing it on disk
+        // would be a security risk, so the account must not expose it at all.
+        for (Method method : YggdrasilAccount.class.getDeclaredMethods()) {
+            String name = method.getName();
+            assertFalse(name.toLowerCase(Locale.ROOT).contains("password"),
+                "YggdrasilAccount must not expose a password: " + name);
+        }
+    }
+
+    @Test
+    void expiredSessionMessageExplainsTheOfflineBehaviour() {
+        // launching with an expired token silently behaves like an offline launch,
+        // so the message has to say so instead of just reporting a failure
+        String message = YggdrasilAuthProvider.expiredMessage(asAccount("Steve"));
+
+        assertTrue(message.contains("Steve"), message);
+        assertTrue(message.contains("expired"), message);
+        assertTrue(message.contains("offline"), message);
+        assertTrue(message.contains("log in again"), message);
+    }
+
+    @Test
+    void expiredSessionIsLoggedAndLaunchingContinues() {
+        // an expired token is not thrown, the game gets an empty one instead, which
+        // makes it behave like an offline launch as the warning says
+        Account expired = YggdrasilAuthProvider.withoutToken(asAccount("Steve"));
+
+        assertEquals("", expired.getToken(), "the game must not receive a stale token");
+        assertEquals(asAccount("Steve").getName(), expired.getName());
+        assertEquals(asAccount("Steve").getUuid(), expired.getUuid());
+        assertEquals(asAccount("Steve").getProvider(), expired.getProvider());
+        assertEquals(asAccount("Steve").getType(), expired.getType());
+    }
+
+    /** An {@link AuthStore} whose every operation fails. */
+    private static final class BrokenStore implements AuthStore<YggdrasilAccount> {
+        @Override
+        public java.util.SortedMap<String, YggdrasilAccount> read() {
+            throw new io.github.headlesshq.headlessmc.auth.AuthStoreException("broken");
+        }
+
+        @Override
+        public void add(String id, YggdrasilAccount value) {
+            throw new io.github.headlesshq.headlessmc.auth.AuthStoreException("broken");
+        }
+
+        @Override
+        public void save(java.util.Map<String, YggdrasilAccount> values) {
+            throw new io.github.headlesshq.headlessmc.auth.AuthStoreException("broken");
+        }
+
+        @Override
+        public void remove(String id) {
+            throw new io.github.headlesshq.headlessmc.auth.AuthStoreException("broken");
+        }
+
+        @Override
+        public Optional<YggdrasilAccount> getById(String id) {
+            throw new io.github.headlesshq.headlessmc.auth.AuthStoreException("broken");
+        }
+    }
+
+}

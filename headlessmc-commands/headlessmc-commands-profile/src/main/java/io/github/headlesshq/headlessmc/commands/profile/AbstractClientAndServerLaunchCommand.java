@@ -99,12 +99,15 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             Account account = getAccount();
             boolean headless = Boolean.TRUE.equals(this.headless);
             if (!headless
-                && AuthProvider.OFFLINE.equalsIgnoreCase(account.getProvider())
+                && needsHeadless(account)
                 && !hasGame()
                 && !xvfbService.isRunningWithXvfb()) {
-                log.warn("You are offline without the game, forcing headless mode.");
+                log.warn("No account for a purchased copy of Minecraft found, "
+                    + "forcing headless mode. Log in with a Microsoft account to launch with a GUI.");
                 headless = true;
             }
+
+            warnIfYggdrasilAgentMissing(profile, account);
 
             profile = profile.withPatchers(resolvePatchers(profile, headless));
             return handle(getClientLauncher().launcher(profile, account));
@@ -117,6 +120,34 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             // TODO: patchers for server
             return handle(getServerLauncher().launcher(profile));
         }
+    }
+
+    /**
+     * Warns when a Yggdrasil account is launched without authlib-injector in the vm args.
+     *
+     * <p>The client only talks to a third party authentication server when
+     * authlib-injector is injected as a java agent. Without it the client sends the
+     * {@code session/minecraft/join} request to Mojang, the Minecraft server never
+     * finds the session and kicks the player with "invalid session". Since the login
+     * itself succeeds, users would not know what is missing.</p>
+     */
+    private void warnIfYggdrasilAgentMissing(Profile profile, Account account) {
+        if (!AuthProvider.YGGDRASIL.equalsIgnoreCase(account.getProvider())) {
+            return;
+        }
+
+        for (String arg : profile.vmArgs()) {
+            if (arg.contains("-javaagent") && arg.contains("authlib-injector")) {
+                return;
+            }
+        }
+
+        log.warn("This account uses third party Yggdrasil authentication. "
+            + "To join servers with online-mode enabled, authlib-injector has to be "
+            + "added as a java agent, otherwise the game will be kicked with "
+            + "\"invalid session\". Download it and add the following to the vm args "
+            + "of this profile using: profile edit {} vm-args \"...\"", profile.name());
+        log.warn("-javaagent:/path/to/authlib-injector.jar=<your yggdrasil api url>");
     }
 
     // TODO: improve?!
@@ -173,11 +204,35 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         throw new IllegalStateException("You need an account to play the game. Use the login command.");
     }
 
+    /**
+     * Whether the user has an account that allows launching with a GUI.
+     *
+     * <p>Offline accounts are excluded because they carry no information about
+     * owning the game, which is why the account used for this launch is checked
+     * separately. Yggdrasil accounts are excluded for the same reason, they only
+     * authenticate against a third party server.</p>
+     */
     private boolean hasGame() {
         return authService.getProviders()
             .stream()
-            .filter(provider -> !AuthProvider.OFFLINE.equalsIgnoreCase(provider.getName()))
+            .filter(provider -> !needsHeadless(provider.getName()))
             .anyMatch(provider -> !provider.getAccounts().isEmpty());
+    }
+
+    /**
+     * Whether an account of this provider cannot launch with a GUI.
+     *
+     * <p>Offline accounts may belong to a user who owns the game, see
+     * {@link #hasGame()}. Yggdrasil accounts do not, they only authenticate
+     * against a third party server.</p>
+     */
+    private static boolean needsHeadless(String provider) {
+        return AuthProvider.OFFLINE.equalsIgnoreCase(provider)
+            || AuthProvider.YGGDRASIL.equalsIgnoreCase(provider);
+    }
+
+    private static boolean needsHeadless(Account account) {
+        return needsHeadless(account.getProvider());
     }
 
 }

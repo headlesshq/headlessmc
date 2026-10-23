@@ -40,6 +40,28 @@ public class AuthServiceImplTest {
     }
 
     @Test
+    public void disabledProvidersAreHidden() {
+        offline.enabled = false;
+
+        assertEquals(List.of(msa), service.getProviders());
+        assertEquals(List.of(account("msa", "Alex")), service.getAccounts());
+        assertTrue(service.getProvider("offline").isEmpty());
+    }
+
+    @Test
+    public void enabledIsCheckedOnEveryAccess() {
+        // the config can change at runtime, so a provider that becomes enabled
+        // later has to show up without rebuilding the service
+        msa.enabled = false;
+        assertTrue(service.getProvider("msa").isEmpty());
+        assertFalse(service.getAccounts().contains(account("msa", "Alex")));
+
+        msa.enabled = true;
+        assertEquals(Optional.of(msa), service.getProvider("msa"));
+        assertTrue(service.getAccounts().contains(account("msa", "Alex")));
+    }
+
+    @Test
     public void inMemoryStoreIsCaseInsensitiveAndSorted() {
         InMemoryAuthStore<String> store = new InMemoryAuthStore<>();
         store.add("Bob", "b");

@@ -8,6 +8,7 @@ final class FakeAuthProvider implements AuthProvider {
     private final String name;
     final List<Account> accounts = new ArrayList<>();
     boolean failOnGetAccount;
+    boolean enabled = true;
     Account refreshed;
 
     FakeAuthProvider(String name, Account... accounts) {
@@ -52,6 +53,11 @@ final class FakeAuthProvider implements AuthProvider {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Override

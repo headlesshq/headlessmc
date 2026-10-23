@@ -1,12 +1,12 @@
-compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-    options.release = 8
-}
-
 dependencies {
-    implementation project(':headlessmc-auth') // we want the http client
+    api project(':headlessmc-config')
+
+    implementation project(':headlessmc-auth')
     implementation project(':headlessmc-auth:headlessmc-auth-store-gson')
+
+    implementation project(':headlessmc-net:headlessmc-net-rest')
+
     implementation libs.auth
     implementation libs.gson
+    implementation libs.quarkus.rest.client.jackson
 }

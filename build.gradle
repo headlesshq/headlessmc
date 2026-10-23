@@ -65,7 +65,6 @@ allprojects {
         java8Projects.add('headlessmc-auth-impl')
         java8Projects.add('headlessmc-auth-offline')
         java8Projects.add('headlessmc-auth-store-gson')
-        java8Projects.add('headlessmc-auth-yggdrasil')
         java8Projects.add('headlessmc-auth-webview')
         java8Projects.add('headlessmc-commands-auth')
         if (!java8Projects.contains(project.name)) {
