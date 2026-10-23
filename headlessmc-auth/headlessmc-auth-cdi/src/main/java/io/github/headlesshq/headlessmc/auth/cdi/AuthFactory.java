@@ -103,9 +103,9 @@ public class AuthFactory {
         @Any Instance<AuthProvider> providers,
         @Default AuthProvider defaultProvider
     ) {
-        // providers that need configuration which has not been set are skipped
-        return new AuthServiceImpl(
-            providers.stream().filter(AuthProvider::isEnabled).toList(), defaultProvider);
+        // AuthServiceImpl filters by isEnabled() on every access, as that can change
+        // at runtime when the user edits the config
+        return new AuthServiceImpl(providers.stream().toList(), defaultProvider);
     }
 
     @Produces
