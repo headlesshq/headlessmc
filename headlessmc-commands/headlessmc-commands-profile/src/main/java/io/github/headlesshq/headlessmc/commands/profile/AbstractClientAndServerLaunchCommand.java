@@ -204,10 +204,18 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         throw new IllegalStateException("You need an account to play the game. Use the login command.");
     }
 
+    /**
+     * Whether the user has an account that allows launching with a GUI.
+     *
+     * <p>Offline accounts are excluded because they carry no information about
+     * owning the game, which is why the account used for this launch is checked
+     * separately. Yggdrasil accounts are excluded for the same reason, they only
+     * authenticate against a third party server.</p>
+     */
     private boolean hasGame() {
         return authService.getProviders()
             .stream()
-            .filter(provider -> !AuthProvider.OFFLINE.equalsIgnoreCase(provider.getName()))
+            .filter(provider -> !needsHeadless(provider.getName()))
             .anyMatch(provider -> !provider.getAccounts().isEmpty());
     }
 
@@ -218,10 +226,13 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
      * {@link #hasGame()}. Yggdrasil accounts do not, they only authenticate
      * against a third party server.</p>
      */
-    private static boolean needsHeadless(Account account) {
-        String provider = account.getProvider();
+    private static boolean needsHeadless(String provider) {
         return AuthProvider.OFFLINE.equalsIgnoreCase(provider)
             || AuthProvider.YGGDRASIL.equalsIgnoreCase(provider);
+    }
+
+    private static boolean needsHeadless(Account account) {
+        return needsHeadless(account.getProvider());
     }
 
 }
