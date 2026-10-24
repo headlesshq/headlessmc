@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.application;
 
+import io.github.headlesshq.headlessmc.config.I18nService;
 import io.quarkus.picocli.runtime.PicocliCommandLineFactory;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
@@ -24,13 +25,17 @@ public class CommandLineProducer {
      * Produces the {@link CommandLine} for the application and the shell.
      * Overrides the default Bean of quarkus-picocli.
      *
-     * @param factory the factory quarkus-picocli uses itself.
+     * @param factory     the factory quarkus-picocli uses itself.
+     * @param i18nService resolves the resource bundle holding localized descriptions.
      * @return a new {@link CommandLine}.
      */
     @Produces
     @Dependent
-    public CommandLine commandLine(PicocliCommandLineFactory factory) {
-        return factory.create().setExecutionExceptionHandler(CommandLineProducer::handleExecutionException);
+    public CommandLine commandLine(PicocliCommandLineFactory factory, I18nService i18nService) {
+        return factory.create()
+            .setExecutionExceptionHandler(CommandLineProducer::handleExecutionException)
+            // null if no translation is installed, picocli then uses the annotations.
+            .setResourceBundle(i18nService.bundle());
     }
 
     private static int handleExecutionException(
