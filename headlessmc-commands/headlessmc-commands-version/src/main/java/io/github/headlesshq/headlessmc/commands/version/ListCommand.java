@@ -59,6 +59,7 @@ public class ListCommand implements Runnable, VersionArgCommand, CachedConsole.E
     private boolean remote;
 
     @CommandLine.Parameters(
+        paramLabel = "SEARCH",
         description = "Search parameters (e.g. platform, version, build, ...)"
     )
     private List<String> parameters = new ArrayList<>();

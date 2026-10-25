@@ -33,6 +33,7 @@ public class RemoveCommand implements Runnable, CachedConsole.Enabled {
     private final Console console;
 
     @CommandLine.Parameters(
+        paramLabel = "SERVER",
         description = "The name of the server to remove.",
         completionCandidates = ServerCompletions.class
     )

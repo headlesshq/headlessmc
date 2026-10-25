@@ -69,6 +69,7 @@ public class EulaCommand implements CachedConsole.Enabled {
         private EulaCommand ctx;
 
         @CommandLine.Parameters(
+            paramLabel = "SERVER",
             description = "The name of the server to read the EULA of.",
             completionCandidates = ServerCompletions.class
         )
@@ -102,6 +103,7 @@ public class EulaCommand implements CachedConsole.Enabled {
         private EulaCommand ctx;
 
         @CommandLine.Parameters(
+            paramLabel = "SERVER",
             description = "The name of the server to accept the EULA of.",
             completionCandidates = ServerCompletions.class
         )

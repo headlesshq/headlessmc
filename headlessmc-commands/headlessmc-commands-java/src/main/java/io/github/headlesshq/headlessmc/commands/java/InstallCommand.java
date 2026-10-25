@@ -55,7 +55,7 @@ public class InstallCommand implements Runnable, CachedConsole.Enabled {
     )
     private boolean force;
 
-    @CommandLine.Parameters(description = "The major java version to install, e.g. 21.")
+    @CommandLine.Parameters(paramLabel = "VERSION", description = "The major java version to install, e.g. 21.")
     private int version;
 
     @Override

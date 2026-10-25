@@ -36,6 +36,7 @@ public class RemoveCommand implements Runnable, CachedConsole.Enabled {
     private final Console console;
 
     @CommandLine.Parameters(
+        paramLabel = "JAVA",
         description = "The name of the java installation to remove.",
         completionCandidates = InstalledJavaCompletions.class
     )
