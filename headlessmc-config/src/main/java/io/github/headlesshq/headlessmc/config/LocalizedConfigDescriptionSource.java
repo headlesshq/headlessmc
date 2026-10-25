@@ -51,8 +51,6 @@ public class LocalizedConfigDescriptionSource implements ConfigDescriptionSource
             }
 
             Properties properties = new Properties();
-            // Properties.load(InputStream) decodes as ISO-8859-1, which garbles
-            // non-latin texts. Reading a Reader lets us pick UTF-8 instead.
             properties.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
             return properties;
         } catch (IOException e) {

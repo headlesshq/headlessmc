@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.config;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
@@ -22,7 +23,16 @@ import java.util.ResourceBundle;
  */
 @Slf4j
 @ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class I18nService {
+    /**
+     * Prevents ResourceBundle from falling back to the default locale of the JVM,
+     * which would show e.g. Chinese to a user whose locale has no translation.
+     */
+    private static final ResourceBundle.Control CONTROL = ResourceBundle.Control.getNoFallbackControl(
+        ResourceBundle.Control.FORMAT_PROPERTIES
+    );
+
     /**
      * Base names of the bundles holding localized texts, in lookup order.
      */
@@ -30,12 +40,7 @@ public class I18nService {
         "io.github.headlesshq.headlessmc.i18n.Messages"
     );
 
-    private final ConfigService configService;
-
-    @Inject
-    public I18nService(ConfigService configService) {
-        this.configService = configService;
-    }
+    private final Holder<I18nConfig> config;
 
     /**
      * The configured locale, or the JVM default locale if none is configured.
@@ -43,10 +48,7 @@ public class I18nService {
      * @return the locale to localize texts for, never {@code null}.
      */
     public Locale locale() {
-        String configured = configService
-            .getHolder(I18nConfig.class)
-            .get()
-            .locale();
+        String configured = config.get().locale();
 
         if (I18nConfig.AUTO.equalsIgnoreCase(configured)) {
             return Locale.getDefault();
@@ -76,14 +78,6 @@ public class I18nService {
 
         return null;
     }
-
-    /**
-     * Prevents ResourceBundle from falling back to the default locale of the JVM,
-     * which would show e.g. Chinese to a user whose locale has no translation.
-     */
-    private static final ResourceBundle.Control CONTROL = ResourceBundle.Control.getNoFallbackControl(
-        ResourceBundle.Control.FORMAT_PROPERTIES
-    );
 
     private static @Nullable ResourceBundle getBundleOrNull(String name, Locale locale) {
         try {
