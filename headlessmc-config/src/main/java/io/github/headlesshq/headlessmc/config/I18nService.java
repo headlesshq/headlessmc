@@ -77,9 +77,17 @@ public class I18nService {
         return null;
     }
 
+    /**
+     * Prevents ResourceBundle from falling back to the default locale of the JVM,
+     * which would show e.g. Chinese to a user whose locale has no translation.
+     */
+    private static final ResourceBundle.Control CONTROL = ResourceBundle.Control.getNoFallbackControl(
+        ResourceBundle.Control.FORMAT_PROPERTIES
+    );
+
     private static @Nullable ResourceBundle getBundleOrNull(String name, Locale locale) {
         try {
-            return ResourceBundle.getBundle(name, locale);
+            return ResourceBundle.getBundle(name, locale, CONTROL);
         } catch (MissingResourceException e) {
             log.debug("No resource bundle {} for locale {}", name, locale);
             return null;
@@ -91,13 +99,13 @@ public class I18nService {
      * underscore form used by {@link ResourceBundle} ({@code zh_CN}).
      *
      * @param value the configured value.
-     * @return the parsed locale, or {@link Locale#getDefault()} if it cannot be parsed.
+     * @return the parsed locale, or {@link Locale#ROOT} if it cannot be parsed.
      */
     static Locale parseLocale(String value) {
         Locale locale = Locale.forLanguageTag(value.replace('_', '-'));
         if (locale.getLanguage().isEmpty()) {
-            log.warn("Failed to parse locale '{}', falling back to the default locale", value);
-            return Locale.getDefault();
+            log.warn("Failed to parse locale '{}', using the untranslated default", value);
+            return Locale.ROOT;
         }
 
         return locale;
