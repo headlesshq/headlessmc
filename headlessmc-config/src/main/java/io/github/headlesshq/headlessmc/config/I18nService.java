@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.config;
 
+import io.quarkus.runtime.annotations.RegisterResources;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,14 @@ import java.util.ResourceBundle;
 @Slf4j
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
+@RegisterResources(globs = I18nService.RESOURCE_PATTERN)
 public class I18nService {
+    /**
+     * ResourceBundle loads the bundles by name at runtime, which a native image
+     * cannot follow, so the files have to be registered explicitly.
+     */
+    static final String RESOURCE_PATTERN = "io/github/headlesshq/headlessmc/i18n/Messages*.properties";
+
     /**
      * Prevents ResourceBundle from falling back to the default locale of the JVM,
      * which would show e.g. Chinese to a user whose locale has no translation.
