@@ -46,6 +46,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -175,7 +177,7 @@ class ClientLauncherTest {
         assetsDir = root.resolve("assets");
         classpath = List.of(root.resolve("libs/a.jar"), root.resolve("versions/1.21.1.jar"));
 
-        vanilla = new FakeVanillaPlatform("1.21.1", "1.20.4");
+        vanilla = new FakeVanillaPlatform("1.21.1", "1.20.4", "23w14a", "23w13a", "1.12.2", "13w16a", "1.5.2");
         fabric = FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9"})
             .withRepository(MavenRepository.of("https://maven.fabricmc.net/"));
         platformService = new FakePlatformService(vanilla, fabric);
@@ -220,11 +222,26 @@ class ClientLauncherTest {
             ));
     }
 
-    /** Registers the given version as installed and matching {@code vanilla/<id>}. */
+    /** Registers the given version as installed and matching {@code <platform>/1.21.1}. */
     private FakeVersion install(FakeVersion version, String platform) {
+        return install(version, platform, "1.21.1");
+    }
+
+    /** Registers the given version as installed and matching {@code <platform>/<mcVersion>}. */
+    private FakeVersion install(FakeVersion version, String platform, String mcVersion) {
         versionJsonService.add(version);
-        versionMatcherService.withMatch(version.getId(), VersionID.resolve(platformService, VersionArg.parse(platform, "1.21.1")));
+        versionMatcherService.withMatch(version.getId(), VersionID.resolve(platformService, VersionArg.parse(platform, mcVersion)));
         return version;
+    }
+
+    private Profile joining(String mcVersion, LaunchOptions.Join.Type type, String target) {
+        return profile("vanilla", mcVersion).withOptions(new LaunchOptions(
+            Optional.empty(), Optional.empty(), Optional.of(new LaunchOptions.Join(type, target)), false
+        ));
+    }
+
+    private FakeVersion versionWithGameArgs(String id, String... gameArgs) {
+        return version(id).withArguments(Map.of(Version.GAME_ARGUMENTS, List.of(new Argument(List.of(gameArgs)))));
     }
 
     private Profile profile(String... versionArg) {
@@ -511,6 +528,117 @@ class ClientLauncherTest {
         install(version("1.21.1"), "vanilla");
 
         assertThrows(LaunchException.class, () -> launcher().launcher(profile("fabric", "1.21.1"), ACCOUNT));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"13w16a", "1.12.2", "23w13a"})
+    void serverArgumentsAreAddedForVersionsBeforeQuickPlay(String mcVersion) {
+        install(versionWithGameArgs(mcVersion, "--username", "${auth_player_name}"), "vanilla", mcVersion);
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining(mcVersion, LaunchOptions.Join.Type.SERVER, "example.com:25566"), ACCOUNT
+        ));
+
+        assertEquals(List.of("--username", "Steve", "--server", "example.com", "--port", "25566"), builder.getArgs());
+    }
+
+    @Test
+    void serverArgumentsAreAddedForLegacyMinecraftArguments() {
+        install(version("1.12.2").withArguments(null).withMinecraftArguments("--username ${auth_player_name}"), "vanilla", "1.12.2");
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining("1.12.2", LaunchOptions.Join.Type.SERVER, "example.com"), ACCOUNT
+        ));
+
+        assertEquals(List.of("--username", "Steve", "--server", "example.com", "--port", "25565"), builder.getArgs());
+    }
+
+    @Test
+    void serverIsNotJoinedForVersionsBeforeServerArguments() {
+        install(version("1.5.2").withArguments(null).withMinecraftArguments("${auth_player_name} ${auth_session}"), "vanilla", "1.5.2");
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining("1.5.2", LaunchOptions.Join.Type.SERVER, "example.com"), ACCOUNT
+        ));
+
+        assertEquals(List.of("Steve", "token-123"), builder.getArgs());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"23w14a", "1.21.1"})
+    void quickPlayVersionsJoinServersViaTheirVersionJson(String mcVersion) {
+        install(versionWithGameArgs(mcVersion, "--quickPlayMultiplayer", "${quickPlayMultiplayer}"), "vanilla", mcVersion);
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining(mcVersion, LaunchOptions.Join.Type.SERVER, "example.com:25566"), ACCOUNT
+        ));
+
+        assertEquals(List.of("--quickPlayMultiplayer", "example.com:25566"), builder.getArgs());
+    }
+
+    @Test
+    void quickPlayArgumentsOfTheVersionJsonArePreferredForVersionsBeforeQuickPlay() {
+        install(versionWithGameArgs("1.12.2", "--quickPlayMultiplayer", "${quickPlayMultiplayer}"), "vanilla", "1.12.2");
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining("1.12.2", LaunchOptions.Join.Type.SERVER, "example.com"), ACCOUNT
+        ));
+
+        assertEquals(List.of("--quickPlayMultiplayer", "example.com"), builder.getArgs());
+    }
+
+    @Test
+    void serverArgumentsAreNotAddedForQuickPlayVersionsWithoutQuickPlayArguments() {
+        install(versionWithGameArgs("1.21.1", "--username", "${auth_player_name}"), "vanilla");
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining("1.21.1", LaunchOptions.Join.Type.SERVER, "example.com"), ACCOUNT
+        ));
+
+        assertEquals(List.of("--username", "Steve"), builder.getArgs());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = LaunchOptions.Join.Type.class, names = {"SINGLEPLAYER", "REALMS"})
+    void singleplayerAndRealmsAreNotJoinedWithoutQuickPlayArguments(LaunchOptions.Join.Type type) {
+        install(versionWithGameArgs("1.12.2", "--username", "${auth_player_name}"), "vanilla", "1.12.2");
+
+        RecordingBuilder builder = builder(launcher().launcher(joining("1.12.2", type, "target"), ACCOUNT));
+
+        assertEquals(List.of("--username", "Steve"), builder.getArgs());
+    }
+
+    @Test
+    void singleplayerWorldsAreJoinedViaTheVersionJson() {
+        install(versionWithGameArgs("1.21.1", "--quickPlaySingleplayer", "${quickPlaySingleplayer}"), "vanilla");
+
+        RecordingBuilder builder = builder(launcher().launcher(
+            joining("1.21.1", LaunchOptions.Join.Type.SINGLEPLAYER, "world"), ACCOUNT
+        ));
+
+        assertEquals(List.of("--quickPlaySingleplayer", "world"), builder.getArgs());
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "example.com|example.com|25565",
+        "example.com:25566|example.com|25566",
+        " example.com:25566 |example.com|25566",
+        "127.0.0.1:1|127.0.0.1|1",
+        "[::1]|::1|25565",
+        "[::1]:25566|::1|25566",
+        "::1|::1|25565",
+        "2001:db8::1|2001:db8::1|25565"
+    })
+    void serverAddressesAreParsed(String address, String host, int port) {
+        assertEquals(new ClientLauncher.ServerAddress(host, port), ClientLauncher.ServerAddress.parse(address));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"example.com:", "example.com:port", "example.com:65536", "example.com:-1", "[::1]:x"})
+    void invalidServerPortsFail(String address) {
+        LaunchException e = assertThrows(LaunchException.class, () -> ClientLauncher.ServerAddress.parse(address));
+        assertTrue(e.getMessage().contains(address), e.getMessage());
     }
 
 }

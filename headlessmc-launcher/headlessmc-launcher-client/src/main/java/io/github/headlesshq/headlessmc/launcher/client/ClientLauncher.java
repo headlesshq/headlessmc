@@ -21,6 +21,8 @@ import io.github.headlesshq.headlessmc.patcher.PatchResult;
 import io.github.headlesshq.headlessmc.patcher.PatchService;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
+import io.github.headlesshq.headlessmc.platform.VanillaVersion;
+import io.github.headlesshq.headlessmc.platform.VanillaVersionService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherService;
@@ -38,6 +40,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -51,6 +54,11 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ClientLauncher {
+    /** The first version accepting {@code --server <host> --port <port>}. */
+    static final String FIRST_SERVER_ARG_VERSION = "13w16a";
+    /** The first version with quick play, which replaced {@code --server} and {@code --port}. */
+    static final String FIRST_QUICK_PLAY_VERSION = "23w14a";
+
     private final ArgumentTemplateService argumentTemplateService;
     private final LastUsedAccountService lastUsedAccountService;
     private final SpecificsPropertiesService specificsPropertiesService;
@@ -117,6 +125,7 @@ public class ClientLauncher {
         specificsPropertiesService.getSystemProperties().forEach(arguments.systemProperties()::putIfAbsent);
 
         arguments = argumentTemplateService.process(arguments, templates);
+        handleJoin(id, options, templates, arguments);
 
         List<String> jvmArgs = new ArrayList<>(arguments.vmArgs());
         for (Path javaAgent : patchResult.javaAgents()) {
@@ -162,6 +171,56 @@ public class ClientLauncher {
         return result.orElseThrow(() -> new LaunchException("Failed to get version for " + id)).version();
     }
 
+    /**
+     * Makes the game join the target of {@link LaunchOptions#join()}.
+     * If the version.json declares the matching quick play argument, see {@link TemplateStringService},
+     * nothing else has to be done. Otherwise, versions from {@value #FIRST_SERVER_ARG_VERSION}
+     * until {@value #FIRST_QUICK_PLAY_VERSION} support joining servers via {@code --server <host> --port <port>},
+     * which no version.json declares, so we add them. Older versions cannot join anything on launch.
+     */
+    private void handleJoin(VersionID id, LaunchOptions options, TemplateStrings templates, Arguments arguments) {
+        Optional<LaunchOptions.Join> join = options.join();
+        if (join.isEmpty()) {
+            return;
+        }
+
+        String target = join.get().target();
+        switch (join.get().type()) {
+            case SERVER -> handleServerJoin(id, target, templates, arguments);
+            case SINGLEPLAYER -> warnIfUnsupported(id, templates, TemplateString.QUICK_PLAY_SINGLEPLAYER, target);
+            case REALMS -> warnIfUnsupported(id, templates, TemplateString.QUICK_PLAY_REALMS, target);
+        }
+    }
+
+    private void handleServerJoin(VersionID id, String server, TemplateStrings templates, Arguments arguments) {
+        if (templates.hasProcessed(TemplateString.QUICK_PLAY_MULTIPLAYER)) {
+            return;
+        }
+
+        if (isOlderThan(id, FIRST_SERVER_ARG_VERSION)) {
+            log.warn("{} does not support joining a server on launch, not joining {}", id, server);
+        } else if (isOlderThan(id, FIRST_QUICK_PLAY_VERSION)) {
+            ServerAddress address = ServerAddress.parse(server);
+            arguments.gameArgs().addAll(List.of("--server", address.host(), "--port", String.valueOf(address.port())));
+        } else {
+            log.warn("The version.json of {} does not support {}, not joining {}",
+                id, TemplateString.QUICK_PLAY_MULTIPLAYER.getTemplateString(), server);
+        }
+    }
+
+    private void warnIfUnsupported(VersionID id, TemplateStrings templates, TemplateString quickPlay, String target) {
+        if (!templates.hasProcessed(quickPlay)) {
+            log.warn("The version.json of {} does not support {}, not joining {}", id, quickPlay.getTemplateString(), target);
+        }
+    }
+
+    private boolean isOlderThan(VersionID id, String versionName) {
+        VanillaVersionService versionService = platformService.getVanillaPlatform().getVersionService();
+        VanillaVersion version = versionService.getVersion(versionName)
+            .orElseThrow(() -> new IllegalStateException("Failed to find vanilla version " + versionName));
+        return versionService.isOlderThan(id.getVersion(), version);
+    }
+
     private static boolean containsClasspathArg(List<String> jvmArgs) {
         return jvmArgs.stream().anyMatch(arg -> arg.equals("-cp")
             || arg.equals("-classpath")
@@ -173,6 +232,58 @@ public class ClientLauncher {
         return profile.patchers().stream()
             .map(patchService::requirePatcher)
             .toList();
+    }
+
+    /**
+     * A server address for the legacy {@code --server <host> --port <port>} arguments.
+     *
+     * @param host the host, IPv6 addresses without brackets.
+     * @param port the port, {@value #DEFAULT_PORT} if none was specified.
+     */
+    @VisibleForTesting
+    record ServerAddress(String host, int port) {
+        static final int DEFAULT_PORT = 25565;
+
+        /**
+         * Parses {@code host}, {@code host:port}, {@code [ipv6]}, {@code [ipv6]:port} or an IPv6 address without port.
+         *
+         * @param address the address to parse.
+         * @return the parsed address.
+         * @throws LaunchException if the port is not a valid port.
+         */
+        static ServerAddress parse(String address) throws LaunchException {
+            String trimmed = address.trim();
+            String host = trimmed;
+            String port = null;
+            if (trimmed.startsWith("[") && trimmed.contains("]")) {
+                int end = trimmed.indexOf(']');
+                host = trimmed.substring(1, end);
+                String rest = trimmed.substring(end + 1);
+                if (rest.startsWith(":")) {
+                    port = rest.substring(1);
+                }
+            } else if (trimmed.indexOf(':') != -1 && trimmed.indexOf(':') == trimmed.lastIndexOf(':')) {
+                host = trimmed.substring(0, trimmed.indexOf(':'));
+                port = trimmed.substring(trimmed.indexOf(':') + 1);
+            }
+
+            return new ServerAddress(host, port == null ? DEFAULT_PORT : parsePort(address, port));
+        }
+
+        private static int parsePort(String address, String port) throws LaunchException {
+            int result;
+            try {
+                result = Integer.parseInt(port);
+            } catch (NumberFormatException e) {
+                throw new LaunchException("Invalid port in server address " + address, e);
+            }
+
+            if (result < 0 || result > 65535) {
+                throw new LaunchException("Invalid port in server address " + address);
+            }
+
+            return result;
+        }
     }
 
 }
