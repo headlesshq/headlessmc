@@ -19,6 +19,7 @@ public class RefreshCommand implements AccountSubCommand, CachedConsole.Enabled 
     private AccountCommandContext context;
 
     @CommandLine.Parameters(
+        paramLabel = "ACCOUNT",
         description = "The name of the account to refresh.",
         completionCandidates = AccountCompletions.class
     )

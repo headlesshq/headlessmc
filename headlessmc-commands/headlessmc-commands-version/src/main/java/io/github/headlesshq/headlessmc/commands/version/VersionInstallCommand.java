@@ -75,6 +75,7 @@ public class VersionInstallCommand implements Runnable, VersionArgCommand {
     private @Nullable String name;
 
     @CommandLine.Parameters(
+        paramLabel = "VERSION",
         description = "The version to install, e.g. 'fabric 1.21.1'.",
         completionCandidates = VersionCompletions.class
     )

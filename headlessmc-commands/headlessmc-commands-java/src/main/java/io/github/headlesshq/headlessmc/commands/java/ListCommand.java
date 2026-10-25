@@ -61,6 +61,7 @@ public class ListCommand implements Runnable, CachedConsole.Enabled {
     private boolean providers;
 
     @CommandLine.Parameters(
+        paramLabel = "MAJOR_VERSION",
         description = "The major java version to list remote runtimes for, e.g. 21.",
         arity = "0..1"
     )
