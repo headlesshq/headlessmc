@@ -28,7 +28,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DeleteCommandTest {
+class RemoveCommandTest {
     private static final String FABRIC = "fabric-loader-0.16.9-1.21.1";
 
     @TempDir
@@ -65,8 +65,8 @@ class DeleteCommandTest {
         return mcFiles.getVersionsDir().resolve(id);
     }
 
-    private DeleteCommand command(String... versionArg) {
-        DeleteCommand command = new DeleteCommand(new VersionRemoveService(
+    private RemoveCommand command(String... versionArg) {
+        RemoveCommand command = new RemoveCommand(new VersionRemoveService(
             matcherService,
             versionService,
             platformService,
@@ -90,7 +90,7 @@ class DeleteCommandTest {
 
     @Test
     void dryRunOnlyListsFiles() {
-        DeleteCommand command = command(FABRIC);
+        RemoveCommand command = command(FABRIC);
         command.setDryRun(true);
         command.run();
 
@@ -109,7 +109,7 @@ class DeleteCommandTest {
         IllegalArgumentException version = assertThrows(IllegalArgumentException.class, () -> command("1.21.1").run());
         assertTrue(version.getMessage().contains("versions inheriting from it: [" + FABRIC + "]"));
 
-        DeleteCommand command = command(FABRIC);
+        RemoveCommand command = command(FABRIC);
         command.setForce(true);
         command.run();
         assertFalse(Files.exists(versionDir(FABRIC)));

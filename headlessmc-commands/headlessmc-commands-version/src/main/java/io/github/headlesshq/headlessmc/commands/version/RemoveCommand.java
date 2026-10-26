@@ -25,15 +25,15 @@ import java.util.List;
 @Setter
 @Default
 @Dependent
-@Named("command:version:delete")
+@Named("command:version:remove")
 @CommandLine.Command(
-    name = "delete",
-    aliases = {"remove", "rm", "uninstall"},
+    name = "remove",
+    aliases = {"delete", "rm", "uninstall"},
     mixinStandardHelpOptions = true,
     description = "Deletes an installed version and the libraries and assets no other version needs."
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
-public class DeleteCommand implements Runnable, VersionArgCommand, CachedConsole.Enabled {
+public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole.Enabled {
     private final VersionRemoveService versionRemoveService;
     private final Console console;
 

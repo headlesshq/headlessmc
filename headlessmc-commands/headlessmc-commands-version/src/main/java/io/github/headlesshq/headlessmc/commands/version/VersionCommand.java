@@ -20,7 +20,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     description = "Manage versions.",
     subcommands = {
-        DeleteCommand.class,
+        RemoveCommand.class,
         InstallCommand.class,
         ListCommand.class
     }
