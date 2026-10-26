@@ -186,17 +186,17 @@ public class VersionMatcherServiceImpl implements VersionMatcherService {
         return match.isSamePlatformVersion(id) && match.getBuild().equals(id.getBuild());
     }
 
-    // TODO: check?
     /**
      * Like {@link #match(Version, VersionProcessor)}, but returns an empty set for versions no platform can match.
      * When searching through versions, e.g. all installed versions, one we do not understand
      * (installed by another launcher, or by a platform that is not available) should not abort the search.
+     * Such versions are expected, e.g. a version installed under a custom name, so this only logs on debug.
      */
     private Set<VersionID> matchOrEmpty(Version version, VersionProcessor processor) throws HeadlessMcException {
         try {
             return match(version, processor);
         } catch (VersionMatchException e) {
-            log.error("Skipping version {}", version.getId(), e);
+            log.debug("Skipping version {}, it does not match any platform", version.getId(), e);
             return Set.of();
         }
     }

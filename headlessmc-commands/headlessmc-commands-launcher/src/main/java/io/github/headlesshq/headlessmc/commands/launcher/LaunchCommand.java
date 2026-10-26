@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.commands.profile.AbstractClientAndServerLaunchCommand;
 import io.github.headlesshq.headlessmc.commands.profile.XvfbService;
-import io.github.headlesshq.headlessmc.commands.util.ProfileVersionCompletions;
+import io.github.headlesshq.headlessmc.commands.util.ProfileVersionJsonCompletions;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
@@ -21,7 +21,10 @@ import io.github.headlesshq.headlessmc.mods.packwiz.PackwizService;
 import io.github.headlesshq.headlessmc.platform.Platform;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.version.service.VersionJsonService;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -37,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -54,6 +58,7 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
 
     private final PackwizService packwizService;
     private final ProfileService profileService;
+    private final VersionJsonService versionJsonService;
 
     @CommandLine.Option(
         names = {"--packwiz"},
@@ -62,10 +67,10 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
     private @Nullable String packwiz;
 
     @CommandLine.Parameters(
-        description = "The profile/server/version to launch",
+        description = "The profile/server/version/version.json name to launch",
         paramLabel = "profile",
         arity = "0..*",
-        completionCandidates = ProfileVersionCompletions.class
+        completionCandidates = ProfileVersionJsonCompletions.class
     )
     private List<String> versionArg = new ArrayList<>();
 
@@ -84,7 +89,8 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
         XvfbService xvfbService,
         AuthService authService,
         PackwizService packwizService,
-        ProfileService profileService
+        ProfileService profileService,
+        VersionJsonService versionJsonService
     ) {
         super(
             lifecycleService,
@@ -102,6 +108,7 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
         );
         this.packwizService = packwizService;
         this.profileService = profileService;
+        this.versionJsonService = versionJsonService;
     }
 
     @Override
@@ -124,7 +131,30 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
             throw new IllegalArgumentException("Specify version to launch.");
         }
 
+        if (getVersionJson().isPresent()) {
+            return profileService.getProfile(VersionArg.builder().version(versionArg.getFirst()).build());
+        }
+
         return getProfileResolver().resolve(versionArg, Side.BOTH);
+    }
+
+    /**
+     * A single argument that does not name a profile, but an installed version.json,
+     * launches that version.json, even if its name is not a valid version, e.g. a version
+     * installed by another launcher under a custom name.
+     */
+    @Override
+    protected Optional<Version> getVersionJson() {
+        if (packwiz != null || versionArg.size() != 1) {
+            return Optional.empty();
+        }
+
+        String name = versionArg.getFirst();
+        if (profileService.getProfile(name).isPresent()) {
+            return Optional.empty();
+        }
+
+        return versionJsonService.tryGetVersion(name);
     }
 
     private Profile getPackwizProfile(Path packwizFile, String packwiz) {

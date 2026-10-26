@@ -25,6 +25,7 @@ import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VanillaVersionService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
+import io.github.headlesshq.headlessmc.platform.client.VersionMatchException;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherService;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
@@ -41,6 +42,7 @@ import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -48,6 +50,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -75,7 +78,42 @@ public class ClientLauncher {
     private final LauncherConfig config;
     private final McFiles mcFiles;
 
+    /**
+     * Launches the installed version matching {@link Profile#currentVersion()}.
+     *
+     * @param profile the profile to launch.
+     * @param account the account to launch with.
+     * @return a launcher for the client process.
+     * @throws HeadlessMcException if the version cannot be found or something else goes wrong.
+     */
     public ProcessLauncher launcher(Profile profile, Account account) throws HeadlessMcException {
+        VersionID id = VersionID.resolve(platformService, profile.currentVersion());
+        return launcher(profile, account, resolveVersion(id), id);
+    }
+
+    /**
+     * Launches the given version.json, ignoring {@link Profile#currentVersion()}.
+     * The version does not have to match a {@link VersionID}, e.g. a version installed by another launcher
+     * under a custom name, without a parent. If it matches one, its platform is used like for
+     * {@link #launcher(Profile, Account)}, otherwise libraries are resolved against the vanilla repositories
+     * and joining a server on launch only works if the version.json declares quick play.
+     *
+     * @param profile the profile to launch.
+     * @param account the account to launch with.
+     * @param version the version.json to launch.
+     * @return a launcher for the client process.
+     * @throws HeadlessMcException if something goes wrong.
+     */
+    public ProcessLauncher launcher(Profile profile, Account account, Version version) throws HeadlessMcException {
+        return launcher(profile, account, version, matchVersionId(version).orElse(null));
+    }
+
+    private ProcessLauncher launcher(
+        Profile profile,
+        Account account,
+        Version resolvedVersion,
+        @Nullable VersionID id
+    ) throws HeadlessMcException {
         if (!Side.CLIENT.equals(profile.side())) {
             log.warn("Launching {} profile {} with client launcher", profile.side(), profile.name());
         }
@@ -83,9 +121,8 @@ public class ClientLauncher {
         Path gameDir = profile.path();
         LaunchOptions options = profile.options();
         List<Patcher> patchers = getPatchers(profile);
+        String name = id == null ? resolvedVersion.getId() : id.toString();
 
-        VersionID id = VersionID.resolve(platformService, profile.currentVersion());
-        Version resolvedVersion = resolveVersion(id);
         ProcessedVersion version = versionJsonService.process(resolvedVersion);
 
         // library overrides?
@@ -99,7 +136,9 @@ public class ClientLauncher {
         Optional<String> loggingArg = loggingDownloader.downloadLogging(templates, version);
 
         List<MavenRepository> repositories = new ArrayList<>(platformService.getVanillaPlatform().getRepositories());
-        repositories.addAll(id.getPlatform().getRepositories());
+        if (id != null) {
+            repositories.addAll(id.getPlatform().getRepositories());
+        }
         List<Path> unpatchedClasspath = classpathService.buildClasspath(templates, features, version, repositories);
 
         int javaVersion = profile.javaVersion() == null ? version.requireJavaVersion() : profile.javaVersion();
@@ -125,7 +164,7 @@ public class ClientLauncher {
         specificsPropertiesService.getSystemProperties().forEach(arguments.systemProperties()::putIfAbsent);
 
         arguments = argumentTemplateService.process(arguments, templates);
-        handleJoin(id, options, templates, arguments);
+        handleJoin(id, name, options, templates, arguments);
 
         List<String> jvmArgs = new ArrayList<>(arguments.vmArgs());
         for (Path javaAgent : patchResult.javaAgents()) {
@@ -134,7 +173,7 @@ public class ClientLauncher {
 
         return ProcessLauncher.of(
             launcherService.buildProcess()
-                .id("mc-client-" + id)
+                .id("mc-client-" + name)
                 .version(javaVersion)
                 .systemProperties(arguments.systemProperties())
                 .jvmArg(jvmArgs.toArray(String[]::new))
@@ -145,6 +184,23 @@ public class ClientLauncher {
                 .classpathArgProvided(containsClasspathArg(jvmArgs)),
             gameDir
         );
+    }
+
+    /**
+     * Finds the {@link VersionID} of a version.json launched directly, preferring a mod-loading platform
+     * over vanilla, so that its repositories are used.
+     */
+    private Optional<VersionID> matchVersionId(Version version) {
+        try {
+            Set<VersionID> ids = versionMatcherService.match(version, versionJsonService);
+            return ids.stream()
+                .filter(id -> !id.isVanilla())
+                .findFirst()
+                .or(() -> ids.stream().findFirst());
+        } catch (VersionMatchException e) {
+            log.debug("Version {} does not match any platform", version.getId(), e);
+            return Optional.empty();
+        }
     }
 
     private Version resolveVersion(VersionID id) {
@@ -177,8 +233,15 @@ public class ClientLauncher {
      * nothing else has to be done. Otherwise, versions from {@value #FIRST_SERVER_ARG_VERSION}
      * until {@value #FIRST_QUICK_PLAY_VERSION} support joining servers via {@code --server <host> --port <port>},
      * which no version.json declares, so we add them. Older versions cannot join anything on launch.
+     * If the id is unknown, we cannot tell the Minecraft version, so only quick play is supported.
      */
-    private void handleJoin(VersionID id, LaunchOptions options, TemplateStrings templates, Arguments arguments) {
+    private void handleJoin(
+        @Nullable VersionID id,
+        String name,
+        LaunchOptions options,
+        TemplateStrings templates,
+        Arguments arguments
+    ) {
         Optional<LaunchOptions.Join> join = options.join();
         if (join.isEmpty()) {
             return;
@@ -186,18 +249,27 @@ public class ClientLauncher {
 
         String target = join.get().target();
         switch (join.get().type()) {
-            case SERVER -> handleServerJoin(id, target, templates, arguments);
-            case SINGLEPLAYER -> warnIfUnsupported(id, templates, TemplateString.QUICK_PLAY_SINGLEPLAYER, target);
-            case REALMS -> warnIfUnsupported(id, templates, TemplateString.QUICK_PLAY_REALMS, target);
+            case SERVER -> handleServerJoin(id, name, target, templates, arguments);
+            case SINGLEPLAYER -> warnIfUnsupported(name, templates, TemplateString.QUICK_PLAY_SINGLEPLAYER, target);
+            case REALMS -> warnIfUnsupported(name, templates, TemplateString.QUICK_PLAY_REALMS, target);
         }
     }
 
-    private void handleServerJoin(VersionID id, String server, TemplateStrings templates, Arguments arguments) {
+    private void handleServerJoin(
+        @Nullable VersionID id,
+        String name,
+        String server,
+        TemplateStrings templates,
+        Arguments arguments
+    ) {
         if (templates.hasProcessed(TemplateString.QUICK_PLAY_MULTIPLAYER)) {
             return;
         }
 
-        if (isOlderThan(id, FIRST_SERVER_ARG_VERSION)) {
+        if (id == null) {
+            log.warn("The version.json of {} does not support {} and its Minecraft version is unknown, not joining {}",
+                name, TemplateString.QUICK_PLAY_MULTIPLAYER.getTemplateString(), server);
+        } else if (isOlderThan(id, FIRST_SERVER_ARG_VERSION)) {
             log.warn("{} does not support joining a server on launch, not joining {}", id, server);
         } else if (isOlderThan(id, FIRST_QUICK_PLAY_VERSION)) {
             ServerAddress address = ServerAddress.parse(server);
@@ -208,9 +280,9 @@ public class ClientLauncher {
         }
     }
 
-    private void warnIfUnsupported(VersionID id, TemplateStrings templates, TemplateString quickPlay, String target) {
+    private void warnIfUnsupported(String name, TemplateStrings templates, TemplateString quickPlay, String target) {
         if (!templates.hasProcessed(quickPlay)) {
-            log.warn("The version.json of {} does not support {}, not joining {}", id, quickPlay.getTemplateString(), target);
+            log.warn("The version.json of {} does not support {}, not joining {}", name, quickPlay.getTemplateString(), target);
         }
     }
 

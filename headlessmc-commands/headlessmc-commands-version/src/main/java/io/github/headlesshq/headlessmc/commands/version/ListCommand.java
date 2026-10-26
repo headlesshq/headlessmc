@@ -136,7 +136,7 @@ public class ListCommand implements Runnable, VersionArgCommand, CachedConsole.E
                     id.getSide().map(Side::name).ifPresent(searchables::add);
                 });
             } catch (HeadlessMcException e) {
-                log.error("Failed to match VersionIDs for {}", version.getId());
+                log.debug("Failed to match VersionIDs for {}", version.getId(), e);
             }
 
             List<String> searchableStrings = searchables.stream()

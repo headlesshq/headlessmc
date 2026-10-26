@@ -16,6 +16,7 @@ import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import lombok.Getter;
 import lombok.Setter;
@@ -91,6 +92,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
     @Override
     public Integer call() {
         LaunchOptions options = getLaunchOptions();
+        Optional<Version> versionJson = getVersionJson();
         Profile baseProfile = getProfile();
         Profile profile = prepareProfile(baseProfile)
             .withOptions(options.mergeWithDefaults(baseProfile.options()));
@@ -110,6 +112,10 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             warnIfYggdrasilAgentMissing(profile, account);
 
             profile = profile.withPatchers(resolvePatchers(profile, headless));
+            if (versionJson.isPresent()) {
+                return handle(getClientLauncher().launcher(profile, account, versionJson.get()));
+            }
+
             return handle(getClientLauncher().launcher(profile, account));
         } else {
             if (!options.isEmpty()) {
@@ -120,6 +126,17 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             // TODO: patchers for server
             return handle(getServerLauncher().launcher(profile));
         }
+    }
+
+    /**
+     * A version.json to launch directly instead of the version of the {@link #getProfile() profile},
+     * e.g. a version installed by another launcher whose name is not a valid version.
+     * Called before {@link #getProfile()}, which may create the profile.
+     *
+     * @return the version.json to launch, or none to launch the version of the profile.
+     */
+    protected Optional<Version> getVersionJson() {
+        return Optional.empty();
     }
 
     /**

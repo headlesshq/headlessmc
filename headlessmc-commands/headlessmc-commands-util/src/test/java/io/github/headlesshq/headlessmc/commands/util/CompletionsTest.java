@@ -5,7 +5,9 @@ import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
+import io.github.headlesshq.headlessmc.version.FakeVersion;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.version.service.FakeVersionJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -65,6 +67,33 @@ class CompletionsTest {
 
         assertEquals(List.of("main", "1.21.1"), result);
         assertFalse(completions.iterator().hasNext());
+    }
+
+    @Test
+    void profileVersionJsonCompletionsAddInstalledVersionJsonsForTheFirstArg() {
+        profileService.createDefault("main", VersionArg.parse("fabric", "1.21.1"));
+        FakeVersionJsonService versionJsonService = new FakeVersionJsonService(
+            new FakeVersion("Aeromania"), new FakeVersion("1.21.1"), new FakeVersion("main")
+        );
+
+        ProfileVersionJsonCompletions completions = new ProfileVersionJsonCompletions(
+            new ProfileVersionCompletions(helper, profileService), versionJsonService
+        );
+        List<String> result = names(completions.candidates(new Command(List.of("1.")), null));
+
+        assertEquals(List.of("main", "vanilla", "fabric", "client", "server", "1.21.1", "Aeromania"), result);
+    }
+
+    @Test
+    void profileVersionJsonCompletionsOnlyCompleteVersionJsonsForTheFirstArg() {
+        FakeVersionJsonService versionJsonService = new FakeVersionJsonService(new FakeVersion("Aeromania"));
+
+        ProfileVersionJsonCompletions completions = new ProfileVersionJsonCompletions(
+            new ProfileVersionCompletions(helper, profileService), versionJsonService
+        );
+
+        assertEquals(List.of("1.21.1"), names(completions.candidates(new Command(List.of("fabric", "1.")), null)));
+        assertEquals(List.of(), names(completions.candidates("not a command", null)));
     }
 
     @Test

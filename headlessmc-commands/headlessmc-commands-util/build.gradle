@@ -16,4 +16,6 @@ dependencies {
 dependencies {
     testImplementation testFixtures(project(':headlessmc-platform'))
     testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+    testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
 }
