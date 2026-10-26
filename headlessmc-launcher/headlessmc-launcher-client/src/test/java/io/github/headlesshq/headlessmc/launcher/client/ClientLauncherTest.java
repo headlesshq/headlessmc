@@ -151,6 +151,11 @@ class ClientLauncherTest {
         }
 
         @Override
+        public boolean autoDownloadSpecifics() {
+            return false;
+        }
+
+        @Override
         public boolean free() {
             return false;
         }
@@ -192,6 +197,7 @@ class ClientLauncherTest {
             new ArgumentTemplateService(),
             Mockito.mock(LastUsedAccountService.class),
             Mockito.mock(SpecificsPropertiesService.class),
+            Mockito.mock(SpecificsDownloader.class),
             versionMatcherService,
             versionJsonService,
             new TemplateStringService(mcFiles, CPU.X64),

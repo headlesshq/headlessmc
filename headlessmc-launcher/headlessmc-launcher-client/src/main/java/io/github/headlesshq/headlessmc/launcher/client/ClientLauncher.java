@@ -62,6 +62,7 @@ public class ClientLauncher {
     private final ArgumentTemplateService argumentTemplateService;
     private final LastUsedAccountService lastUsedAccountService;
     private final SpecificsPropertiesService specificsPropertiesService;
+    private final SpecificsDownloader specificsDownloader;
     private final VersionMatcherService versionMatcherService;
     private final VersionJsonService versionJsonService;
     private final TemplateStringService templateService;
@@ -87,6 +88,7 @@ public class ClientLauncher {
         VersionID id = VersionID.resolve(platformService, profile.currentVersion());
         Version resolvedVersion = resolveVersion(id);
         ProcessedVersion version = versionJsonService.process(resolvedVersion);
+        specificsDownloader.download(profile);
 
         // library overrides?
         // configuration???

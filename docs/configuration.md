@@ -35,6 +35,7 @@ hmc.java.max-scan-depth                                    6                    
 hmc.jline.ansi-colors                                      false                                      Allows you to enable colored terminal output, even if the Jline terminal is disabled.
 hmc.jline.enabled                                          true                                       If Jline terminal support is enabled. Might need to be disabled on termux or in IDE terminals.
 hmc.jline.persistent-completions                           true                                       Always displays completions when the HeadlessMc shell is used.
+hmc.launcher.auto-download-specifics                       false                                      Whether hmc-specifics is downloaded from GitHub into the mods folder when launching a client, if it is not already there.
 hmc.launcher.auto-install                                  true                                       -
 hmc.launcher.crash-report-watcher                          false                                      -
 hmc.launcher.free                                          true                                       -
