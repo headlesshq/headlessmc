@@ -82,7 +82,7 @@ public class UpdateService {
      * @return {@code true} if the tag of the latest release differs from the running version.
      */
     @VisibleForTesting
-    static boolean isUpdate(String currentVersion, GitHubRelease latest) {
+    boolean isUpdate(String currentVersion, GitHubRelease latest) {
         return latest.tagName() != null && !latest.tagName().trim().equalsIgnoreCase(currentVersion.trim());
     }
 
@@ -95,7 +95,7 @@ public class UpdateService {
      * @return the name of the asset, or {@code null} if no asset is published for this installation.
      */
     @VisibleForTesting
-    static @Nullable String getAssetName(Installation.Type type, OS.Type osType, CPU cpu) {
+    @Nullable String getAssetName(Installation.Type type, OS.Type osType, CPU cpu) {
         return switch (type) {
             case JAR -> JAR_ASSET;
             case NATIVE -> {
