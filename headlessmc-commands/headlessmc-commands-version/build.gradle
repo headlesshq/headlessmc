@@ -9,6 +9,7 @@ dependencies {
 
     implementation project(':headlessmc-launcher')
     implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-client')
     implementation project(':headlessmc-launcher:headlessmc-launcher-server')
 
     implementation project(':headlessmc-version')
@@ -27,4 +28,5 @@ dependencies {
     testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
     testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-server'))
     testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }

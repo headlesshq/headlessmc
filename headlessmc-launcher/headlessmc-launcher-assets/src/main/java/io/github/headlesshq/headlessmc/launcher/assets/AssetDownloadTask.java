@@ -92,6 +92,7 @@ final class AssetDownloadTask implements ParallelTask {
         // we map_to_resources.
         try {
             Path legacy = ctx.fileService.getPath(ctx.getVirtualDir(versionAssetIndex), fileName);
+            Files.createDirectories(legacy.getParent());
             Files.copy(file, legacy, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new HeadlessMcIOException(e);
@@ -106,6 +107,7 @@ final class AssetDownloadTask implements ParallelTask {
         try {
             // TODO: this should probably be the game dir?
             Path resources = ctx.fileService.getPath(ctx.mcFiles.getResourcesDir(), fileName);
+            Files.createDirectories(resources.getParent());
             Files.copy(file, resources, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new HeadlessMcIOException(e);

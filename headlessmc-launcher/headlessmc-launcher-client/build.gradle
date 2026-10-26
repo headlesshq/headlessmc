@@ -13,6 +13,8 @@ dependencies {
     implementation rootProject
     implementation project(':headlessmc-os')
     implementation project(':headlessmc-util:headlessmc-util-maven')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    implementation project(':headlessmc-files')
 
     api project(':headlessmc-launcher')
     api project(':headlessmc-launcher:headlessmc-launcher-profile')
@@ -28,4 +30,6 @@ dependencies {
     testImplementation testFixtures(project(':headlessmc-platform'))
     testImplementation testFixtures(project(':headlessmc-version'))
     testImplementation testFixtures(project(':headlessmc-version:headlessmc-version-service'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }

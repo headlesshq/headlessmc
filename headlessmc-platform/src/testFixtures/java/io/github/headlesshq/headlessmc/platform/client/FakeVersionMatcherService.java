@@ -15,6 +15,8 @@ import java.util.Set;
 /**
  * A {@link VersionMatcherService} over a fixed map
  * of version id to matching {@link VersionID}s.
+ * Like the real implementation, a {@link VersionID} for any build matches every build,
+ * a VersionID with a build only matches that build.
  */
 public class FakeVersionMatcherService implements VersionMatcherService {
     private final Map<String, Set<VersionID>> matches = new LinkedHashMap<>();
@@ -33,7 +35,8 @@ public class FakeVersionMatcherService implements VersionMatcherService {
     public Optional<MatchResult> match(VersionID id, Collection<Version> versions, VersionProcessor processor) {
         for (Version version : versions) {
             for (VersionID candidate : matches.getOrDefault(version.getId(), Set.of())) {
-                if (candidate.isSamePlatformVersion(id)) {
+                if (candidate.isSamePlatformVersion(id)
+                    && (id.isAnyBuild() || candidate.getBuild().equals(id.getBuild()))) {
                     return Optional.of(new MatchResult(candidate, version));
                 }
             }
