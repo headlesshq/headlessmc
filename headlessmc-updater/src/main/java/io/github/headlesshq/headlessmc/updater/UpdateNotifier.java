@@ -1,56 +1,79 @@
 package io.github.headlesshq.headlessmc.updater;
 
+import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.LongRunningCommand;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
- * Tells the user about newer releases of HeadlessMc and how to update to them.
+ * Runs all {@link Updater}s and tells the user about the updates they found.
  */
 @Slf4j
 @ApplicationScoped
-@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class UpdateNotifier {
-    private final UpdateService updateService;
+    private final Instance<Updater> updaters;
+    private final Holder<UpdaterConfig> config;
     private final Console console;
 
-    /**
-     * Checks GitHub on a daemon thread, so that the shell does not have to wait for GitHub.
-     * Whether the check is enabled is decided by the {@link UpdateService}.
-     */
-    public void checkAsync() {
-        Thread thread = new Thread(() -> check(updateService::checkForUpdate), "HeadlessMc-UpdateCheck");
-        thread.setDaemon(true);
-        thread.start();
+    @Inject
+    public UpdateNotifier(@Any Instance<Updater> updaters, Holder<UpdaterConfig> config, Console console) {
+        this.updaters = updaters;
+        this.config = config;
+        this.console = console;
     }
 
     /**
-     * Notifies about a newer release before a {@link LongRunningCommand} is run.
-     * GitHub is only requested if the cached release is stale,
-     * see {@link UpdateService#checkForUpdateIfStale()}.
+     * Runs every updater on its own daemon thread, requesting remote sources,
+     * so that the shell does not have to wait for them.
+     */
+    public void checkAsync() {
+        for (Updater updater : getUpdaters()) {
+            Thread thread = new Thread(() -> check(updater, Updater::checkForUpdates), "HeadlessMc-Updater-" + updater.getName());
+            thread.setDaemon(true);
+            thread.start();
+        }
+    }
+
+    /**
+     * Runs every updater before a {@link LongRunningCommand} is run.
+     * Remote sources are only requested if the cached results are stale, see {@link Updater#checkForUpdatesIfStale()}.
      *
      * @param command the command that is about to run, may be {@code null} if it could not be determined.
      */
     public void checkBefore(@Nullable Object command) {
         if (command instanceof LongRunningCommand) {
-            check(updateService::checkForUpdateIfStale);
+            for (Updater updater : getUpdaters()) {
+                check(updater, Updater::checkForUpdatesIfStale);
+            }
         }
     }
 
-    void check(Supplier<Optional<Update>> check) {
+    List<Updater> getUpdaters() {
+        if (!config.get().enabled()) {
+            return List.of();
+        }
+
+        return updaters.stream()
+            .filter(Updater::isEnabled)
+            .sorted(Comparator.comparing(Updater::getName))
+            .toList();
+    }
+
+    private void check(Updater updater, Function<Updater, Optional<String>> check) {
         try {
-            check.get()
-                .map(update -> String.join(System.lineSeparator(), update.getMessage()))
-                .ifPresent(console::write);
+            check.apply(updater).ifPresent(console::write);
         } catch (Exception e) {
-            log.debug("Failed to check for updates", e);
+            log.debug("Updater {} failed to check for updates", updater.getName(), e);
         }
     }
 

@@ -62,6 +62,13 @@ public record Update(
         return lines;
     }
 
+    /**
+     * @return the lines of {@link #getMessage()}, joined by line separators.
+     */
+    public String getMessageString() {
+        return String.join(System.lineSeparator(), getMessage());
+    }
+
     private static String shellQuote(String value) {
         return "'" + value.replace("'", "'\\''") + "'";
     }

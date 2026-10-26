@@ -40,7 +40,7 @@ public class UpdateService {
 
     private final Holder<UpdaterConfig> config;
     private final GitHubReleaseClient client;
-    private final UpdateCacheService cache;
+    private final LatestReleaseCache cache;
     private final OSService osService;
 
     /**
@@ -57,11 +57,8 @@ public class UpdateService {
         }
 
         Optional<GitHubRelease> latest = client.getLatestRelease(updaterConfig);
-        latest.ifPresent(release -> cache.set(
-            new UpdateCache(updaterConfig.repository(), Instant.now().toEpochMilli(), release)
-        ));
-
-        return latest.or(() -> getCache(updaterConfig).map(UpdateCache::release)).flatMap(this::toUpdate);
+        latest.ifPresent(release -> cache.set(new LatestRelease(updaterConfig.repository(), release)));
+        return latest.or(() -> getCache(updaterConfig).map(check -> check.value().release())).flatMap(this::toUpdate);
     }
 
     /**
@@ -77,16 +74,16 @@ public class UpdateService {
             return Optional.empty();
         }
 
-        Optional<UpdateCache> cached = getCache(updaterConfig);
+        Optional<UpdateCheck<LatestRelease>> cached = getCache(updaterConfig);
         if (cached.isEmpty() || cached.get().isStale(Instant.now(), Duration.ofHours(updaterConfig.intervalHours()))) {
             return checkForUpdate();
         }
 
-        return cached.flatMap(updateCache -> toUpdate(updateCache.release()));
+        return cached.flatMap(check -> toUpdate(check.value().release()));
     }
 
-    private Optional<UpdateCache> getCache(UpdaterConfig updaterConfig) {
-        return cache.get().filter(updateCache -> updaterConfig.repository().equals(updateCache.repository()));
+    private Optional<UpdateCheck<LatestRelease>> getCache(UpdaterConfig updaterConfig) {
+        return cache.get().filter(check -> updaterConfig.repository().equals(check.value().repository()));
     }
 
     /**

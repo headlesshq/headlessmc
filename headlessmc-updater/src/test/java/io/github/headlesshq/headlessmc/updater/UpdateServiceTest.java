@@ -37,7 +37,7 @@ public class UpdateServiceTest {
     GitHubReleaseClient client;
 
     @InjectMock
-    UpdateCacheService cache;
+    LatestReleaseCache cache;
 
     @InjectMock
     OSService osService;
@@ -153,8 +153,8 @@ public class UpdateServiceTest {
         assertNull(updateService.getAssetName(Installation.Type.UNKNOWN, OS.Type.LINUX, CPU.X64));
     }
 
-    private static UpdateCache cached(String repository, Duration age, GitHubRelease release) {
-        return new UpdateCache(repository, Instant.now().minus(age).toEpochMilli(), release);
+    private static UpdateCheck<LatestRelease> cached(String repository, Duration age, GitHubRelease release) {
+        return new UpdateCheck<>(Instant.now().minus(age).toEpochMilli(), new LatestRelease(repository, release));
     }
 
     private static GitHubRelease release(String tag) {
