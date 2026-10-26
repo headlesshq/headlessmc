@@ -30,6 +30,11 @@ public class FakeVersionJsonService implements VersionJsonService {
         return this;
     }
 
+    public FakeVersionJsonService remove(String id) {
+        versions.remove(id);
+        return this;
+    }
+
     @Override
     public Set<String> getInstalledFileNames() {
         Set<String> result = new LinkedHashSet<>();
