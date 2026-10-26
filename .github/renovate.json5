@@ -13,6 +13,10 @@
     'prIgnoreNotification',
   ],
   rebaseWhen: 'conflicted',
+  // the lifecycle workflow pushes updated fabric lock files to renovate branches
+  gitIgnoredAuthors: [
+    '41898282+github-actions[bot]@users.noreply.github.com',
+  ],
   enabledManagers: [
     'gradle',
     'gradle-wrapper',

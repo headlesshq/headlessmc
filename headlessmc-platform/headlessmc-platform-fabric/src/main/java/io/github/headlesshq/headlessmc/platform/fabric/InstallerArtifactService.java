@@ -15,7 +15,7 @@ import java.util.Objects;
 /**
  * Handles {@link InstallerArtifact}.
  * See {@code build.gradle} for how they are created.
- * The resource can also be found under {@code build/fabric-artifacts.json}.
+ * The resource is a lock file committed under {@code src/main/resources/fabric/fabric-artifacts.json}.
  */
 @ApplicationScoped
 @RegisterResources(globs = {InstallerArtifactService.RESOURCE_NAME})
