@@ -35,7 +35,7 @@ public class JacksonVersionParser implements VersionParser {
         }
     }
 
-    final Version parse(JsonNode node) throws HeadlessMcException {
+    Version parse(JsonNode node) throws HeadlessMcException {
         try {
             return mapper.treeToValue(node, JacksonVersion.class);
         } catch (JacksonException e) {
@@ -43,7 +43,7 @@ public class JacksonVersionParser implements VersionParser {
         }
     }
 
-    final String format(JsonNode node) {
+    String format(JsonNode node) {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
     }
 
