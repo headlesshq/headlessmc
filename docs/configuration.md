@@ -29,6 +29,7 @@ hmc.assets.parallel.retry-max-attempts                     4                    
 hmc.assets.parallel.retry-max-interval-ms                  2000                                       -
 hmc.assets.url                                             https://resources.download.minecraft.net   Base URL of the asset CDN.
 hmc.files.game-for-each-version                            true                                       Whether each version gets its own game directory.
+hmc.java.check-for-updates                                 true                                       Whether the java updater checks the Java installations installed by HeadlessMc for updates, see hmc.updater.enabled.
 hmc.java.download                                          true                                       Whether missing Java versions may be downloaded automatically.
 hmc.java.fail-on-parsing-failure                           false                                      Whether parsing a Java installation that fails should abort instead of being skipped.
 hmc.java.max-scan-depth                                    6                                          How deep to scan Java installation directories.

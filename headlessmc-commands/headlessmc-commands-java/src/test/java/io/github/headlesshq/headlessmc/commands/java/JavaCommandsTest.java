@@ -14,15 +14,19 @@ import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.java.Java;
+import io.github.headlesshq.headlessmc.java.JavaConfig;
 import io.github.headlesshq.headlessmc.java.JavaService;
 import io.github.headlesshq.headlessmc.java.JavaSource;
 import io.github.headlesshq.headlessmc.java.SafePath;
 import io.github.headlesshq.headlessmc.os.CPU;
 import io.github.headlesshq.headlessmc.os.OS;
+import io.github.headlesshq.headlessmc.updater.UpdateCheckCacheFactory;
+import io.github.headlesshq.headlessmc.updater.UpdaterConfig;
 import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -491,22 +495,86 @@ class JavaCommandsTest {
         assertTrue(console.output().contains("All java installations are up-to-date."));
     }
 
-    @Test
-    void notifierSuggestsUpdateCommand() {
+    // --------------------------------------------------------- JavaUpdater
+
+    private boolean checkForUpdates = true;
+    private int intervalHours = 24;
+
+    private JavaUpdater updater() {
+        UpdaterConfig updaterConfig = Mockito.mock(UpdaterConfig.class);
+        Mockito.when(updaterConfig.intervalHours()).thenAnswer(invocation -> intervalHours);
+        JavaConfig javaConfig = Mockito.mock(JavaConfig.class);
+        Mockito.when(javaConfig.checkForUpdates()).thenAnswer(invocation -> checkForUpdates);
+        UpdateCheckCacheFactory cacheFactory = new UpdateCheckCacheFactory(
+            appFiles, new DefaultFileService(new DefaultFileSystemProvider()), new DefaultJacksonJsonService()
+        );
+
+        return new JavaUpdater(updateService(), () -> javaConfig, () -> updaterConfig, cacheFactory, appFiles);
+    }
+
+    private Path addOutdatedJava() {
         Java java = hmcJava("temurin-21.0.3", 21);
         javas.add(java);
-        installedRuntimes.write(appFiles.getJavaDir().resolve(java.name()), runtime("temurin-21.0.3", "21.0.3+9"));
+        Path installation = appFiles.getJavaDir().resolve(java.name());
+        installedRuntimes.write(installation, runtime("temurin-21.0.3", "21.0.3+9"));
         updates.add(runtime("temurin-21.0.5", "21.0.5+11"));
-
-        new JavaUpdateNotifier(updateService(), () -> null, console).check();
-
-        assertTrue(console.output().contains("1 java installation can be updated, run 'java update' to update it."));
+        return installation;
     }
 
     @Test
-    void notifierIsSilentWithoutUpdates() {
-        new JavaUpdateNotifier(updateService(), () -> null, console).check();
-        assertEquals("", console.output());
+    void updaterSuggestsUpdateCommand() {
+        addOutdatedJava();
+        assertEquals(
+            Optional.of("1 java installation can be updated, run 'java update' to update it."),
+            updater().checkForUpdates()
+        );
+    }
+
+    @Test
+    void updaterIsSilentWithoutUpdates() {
+        assertEquals(Optional.empty(), updater().checkForUpdates());
+        assertEquals(Optional.empty(), updater().checkForUpdatesIfStale());
+    }
+
+    @Test
+    void updaterUsesFreshCache() {
+        addOutdatedJava();
+        updater().checkForUpdates();
+        updates.clear();
+        updateQueries.clear();
+
+        assertTrue(updater().checkForUpdatesIfStale().isPresent());
+        assertEquals(List.of(), updateQueries);
+    }
+
+    @Test
+    void updaterChecksAgainIfCacheIsStale() {
+        addOutdatedJava();
+        updater().checkForUpdates();
+        updates.clear();
+        updateQueries.clear();
+        intervalHours = 0;
+
+        assertEquals(Optional.empty(), updater().checkForUpdatesIfStale());
+        assertEquals(1, updateQueries.size());
+    }
+
+    @Test
+    void updaterIgnoresCachedUpdatesThatHaveBeenInstalled() throws IOException {
+        Path installation = addOutdatedJava();
+        updater().checkForUpdates();
+        new DefaultFileService(new DefaultFileSystemProvider()).delete(installation);
+
+        assertEquals(Optional.empty(), updater().checkForUpdatesIfStale());
+    }
+
+    @Test
+    void updaterIsEnabledByConfig() {
+        JavaUpdater updater = updater();
+        assertEquals(JavaUpdater.NAME, updater.getName());
+        assertTrue(updater.isEnabled());
+        checkForUpdates = false;
+        assertFalse(updater.isEnabled());
     }
 
     // -------------------------------------------------------- completions
