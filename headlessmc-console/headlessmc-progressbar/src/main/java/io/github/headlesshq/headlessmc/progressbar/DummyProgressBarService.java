@@ -4,7 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @Dummy
 @ApplicationScoped
-final class DummyProgressBarService implements ProgressbarService {
+class DummyProgressBarService implements ProgressbarService {
     public static final ProgressBar DUMMY = new ProgressBar() {
         @Override
         public boolean isDummy() {
