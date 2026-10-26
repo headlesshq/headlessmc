@@ -11,39 +11,64 @@ import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
 class JlineConsole implements Console, ConsoleExtensions {
     private final Holder<JlineConfig> config;
+    /**
+     * Guards {@link #activeReader}. The read lock is held while printing through the active reader,
+     * so that the reader cannot finish reading and its terminal cannot be closed in the meantime.
+     * Printing only needs the read lock, so a completer that writes while the reader is reading
+     * does not deadlock with another thread waiting in {@link LineReader#printAbove(String)}.
+     */
+    final ReadWriteLock readerLock = new ReentrantReadWriteLock();
+    /**
+     * The reader currently waiting for input, while it is reading {@link #wrap(Function)} is locked,
+     * so messages from other threads have to be printed above its prompt through this reader directly.
+     */
+    private @Nullable LineReader activeReader;
 
     @Override
     public String read() {
-        return wrap(state -> state.reader().readLine());
+        return wrap(state -> reading(state.reader(), LineReader::readLine));
     }
 
     @Override
     public Password readPassword() {
-        return wrap(state -> Password.of(state.reader().readLine(null, '*')));
+        return wrap(state -> Password.of(reading(state.reader(), reader -> reader.readLine(null, '*'))));
     }
 
     @Override
     public String read(String message) {
-        return wrap(state -> state.reader().readLine(message));
+        return wrap(state -> reading(state.reader(), reader -> reader.readLine(message)));
     }
 
     @Override
     public Password readPassword(String message) {
-        return wrap(state -> Password.of(state.reader().readLine(message, '*')));
+        return wrap(state -> Password.of(reading(state.reader(), reader -> reader.readLine(message, '*'))));
     }
 
     @Override
     public void write(String message) {
+        readerLock.readLock().lock();
+        try {
+            if (activeReader != null) {
+                activeReader.printAbove(message);
+                return;
+            }
+        } finally {
+            readerLock.readLock().unlock();
+        }
+
         wrap(state -> {
             state.reader().printAbove(message);
             return 0;
@@ -70,10 +95,10 @@ class JlineConsole implements Console, ConsoleExtensions {
             if (Terminal.TYPE_DUMB.equalsIgnoreCase(state.terminal.getType())
                 || Terminal.TYPE_DUMB_COLOR.equalsIgnoreCase(state.terminal.getType())
             ) {
-                return state.reader().readLine("[" + initialString + "]:");
+                return reading(state.reader(), reader -> reader.readLine("[" + initialString + "]:"));
             }
 
-            return state.reader().readLine(null, null, initialString);
+            return reading(state.reader(), reader -> reader.readLine(null, null, initialString));
         });
     }
 
@@ -116,7 +141,7 @@ class JlineConsole implements Console, ConsoleExtensions {
             }
 
             try {
-                return reader.readLine(prompt, null, (MaskingCallback) null, null);
+                return reading(reader, lineReader -> lineReader.readLine(prompt, null, (MaskingCallback) null, null));
             } catch (UserInterruptException e) {
                 throw new ConsoleException.Interrupted();
             }
@@ -138,6 +163,29 @@ class JlineConsole implements Console, ConsoleExtensions {
             TerminalBuilder.builder().build().close();
         } catch (IOException e) {
             throw new ConsoleException("Failed to open Jline console", e);
+        }
+    }
+
+    /**
+     * Makes the given reader the {@link #activeReader} while it reads.
+     * The terminal of the reader is only closed after this method returns,
+     * so {@link #write(String)} never prints through a reader with a closed terminal.
+     */
+    private <T> T reading(LineReader reader, Function<LineReader, T> read) {
+        setActiveReader(reader);
+        try {
+            return read.apply(reader);
+        } finally {
+            setActiveReader(null);
+        }
+    }
+
+    private void setActiveReader(@Nullable LineReader reader) {
+        readerLock.writeLock().lock();
+        try {
+            activeReader = reader;
+        } finally {
+            readerLock.writeLock().unlock();
         }
     }
 
@@ -219,7 +267,12 @@ class JlineConsole implements Console, ConsoleExtensions {
         @Override
         public void close() throws ConsoleException {
             try {
-                state.close();
+                readerLock.writeLock().lock();
+                try {
+                    state.close();
+                } finally {
+                    readerLock.writeLock().unlock();
+                }
             } catch (IOException e) {
                 throw new ConsoleException(e);
             }
