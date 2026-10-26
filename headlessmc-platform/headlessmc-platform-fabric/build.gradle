@@ -22,7 +22,7 @@ configurations {
 }
 
 dependencies {
-    // these configurations are here because they can be updated by dependabot
+    // declared here so renovate can update them, updateFabricArtifacts refreshes the lock file (CI does this on renovate PRs)
     fabric "net.fabricmc:fabric-installer:1.1.2"
     fabric "net.legacyfabric:fabric-installer:1.1.1"
 
@@ -45,6 +45,7 @@ dependencies {
 
 
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
 import java.security.MessageDigest
 
@@ -63,8 +64,16 @@ static def hash(File file, String algorithm) {
     digest.digest().collect { String.format("%02x", it) }.join()
 }
 
-tasks.register('generateFabricArtifactMetadata') {
-    outputs.file(layout.buildDirectory.file("fabric-artifacts.json"))
+def fabricArtifactsLockFile = layout.projectDirectory.file("src/main/resources/fabric/fabric-artifacts.json")
+
+/**
+ * Resolves the fabric configuration and rewrites the committed lock file.
+ * This is the only task that downloads the installers, run it after changing their versions.
+ */
+tasks.register('updateFabricArtifacts') {
+    group = "fabric"
+    description = "Resolves the fabric installers and rewrites ${fabricArtifactsLockFile.asFile.name}."
+    outputs.upToDateWhen { false }
 
     doLast {
         def repositoryUrls = repositories
@@ -101,19 +110,42 @@ tasks.register('generateFabricArtifactMetadata') {
             ]
         }
 
-        File output = layout.buildDirectory.file("fabric-artifacts.json").get().asFile
+        File output = fabricArtifactsLockFile.asFile
         output.parentFile.mkdirs()
-        output.text = JsonOutput.prettyPrint(JsonOutput.toJson(result))
+        output.text = JsonOutput.prettyPrint(JsonOutput.toJson(result)) + "\n"
+    }
+}
+
+/**
+ * Checks that the committed lock file matches the declared fabric dependencies without resolving them.
+ */
+tasks.register('verifyFabricArtifacts') {
+    group = "verification"
+    description = "Checks that ${fabricArtifactsLockFile.asFile.name} matches the declared fabric installers."
+
+    def declared = configurations.fabric.dependencies.collectEntries {
+        [("$it.group:$it.name".toString()): it.version]
+    }
+
+    inputs.property("declared", declared)
+    inputs.file(fabricArtifactsLockFile)
+
+    doLast {
+        def locked = new JsonSlurper().parse(fabricArtifactsLockFile.asFile).collectEntries { key, value ->
+            [(key): value.version]
+        }
+
+        if (declared != locked) {
+            throw new GradleException("""${fabricArtifactsLockFile.asFile} is out of date.
+  declared: $declared
+  locked:   $locked
+Run './gradlew ${project.path}:updateFabricArtifacts' and commit the result.""")
+        }
     }
 }
 
 tasks.named("processResources") {
-    dependsOn("generateFabricArtifactMetadata")
-
-    from(generateFabricArtifactMetadata) {
-        into("fabric")
-        rename { "fabric-artifacts.json" }
-    }
+    dependsOn("verifyFabricArtifacts")
 }
 
 dependencies {

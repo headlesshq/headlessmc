@@ -1,0 +1,20 @@
+{
+    "net.fabricmc:fabric-installer": {
+        "group": "net.fabricmc",
+        "name": "fabric-installer",
+        "version": "1.1.2",
+        "fileName": "fabric-installer-1.1.2.jar",
+        "size": 212123,
+        "sha256": "61e035bf7bf70153e127440ce34de47c9036f0a2d0c65d1529454bd35ceefe4f",
+        "repository": "https://maven.fabricmc.net"
+    },
+    "net.legacyfabric:fabric-installer": {
+        "group": "net.legacyfabric",
+        "name": "fabric-installer",
+        "version": "1.1.1",
+        "fileName": "fabric-installer-1.1.1.jar",
+        "size": 193716,
+        "sha256": "5923d75fd549943deedd79ec209e98fbfc100b03194e529661e15193b3dcfebd",
+        "repository": "https://maven.legacyfabric.net"
+    }
+}
