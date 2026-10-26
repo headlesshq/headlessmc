@@ -3,7 +3,10 @@ package io.github.headlesshq.headlessmc.updater;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
+import java.security.CodeSource;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,11 +23,6 @@ public record Installation(Type type, @Nullable Path path) {
      * Set to {@code runtime} by GraalVM inside a native image.
      */
     private static final String IMAGE_CODE_PROPERTY = "org.graalvm.nativeimage.imagecode";
-    /**
-     * The jar Quarkus fast-jar builds, e.g. from {@code gradlew runApp}, are started with.
-     * It is not the {@code headlessmc.jar} that is published to GitHub.
-     */
-    private static final String QUARKUS_RUN_JAR = "quarkus-run.jar";
 
     /**
      * Detects the installation of the running HeadlessMc.
@@ -32,16 +30,26 @@ public record Installation(Type type, @Nullable Path path) {
      * @return the installation of the running HeadlessMc.
      */
     public static Installation detect() {
-        return detect(System::getProperty, ProcessHandle.current().info().command());
+        return detect(System::getProperty, ProcessHandle.current().info().command(), getCodeSource());
     }
 
+    /**
+     * Detects the installation from the given process information.
+     *
+     * @param properties the system properties of the process.
+     * @param command    the executable of the process.
+     * @param codeSource the jar or directory the classes of HeadlessMc have been loaded from.
+     * @return the detected installation.
+     */
     @VisibleForTesting
-    static Installation detect(Function<String, @Nullable String> properties, Optional<String> command) {
+    static Installation detect(Function<String, @Nullable String> properties, Optional<String> command, Optional<Path> codeSource) {
         if ("runtime".equals(properties.apply(IMAGE_CODE_PROPERTY))) {
             return new Installation(Type.NATIVE, command.map(Installation::toPath).orElse(null));
         }
 
-        // java -jar headlessmc.jar puts only the jar on the class path
+        // java -jar headlessmc.jar puts only the jar on the class path.
+        // It is only the uber jar if HeadlessMc itself has been loaded from it, the quarkus-run.jar
+        // of a fast-jar build is on the class path, too, but only references the jars in its lib directory.
         String classPath = properties.apply("java.class.path");
         String separator = Optional.ofNullable(properties.apply("path.separator")).orElse(":");
         if (classPath != null
@@ -49,7 +57,7 @@ public record Installation(Type type, @Nullable Path path) {
             && !classPath.contains(separator)
             && classPath.toLowerCase(Locale.ROOT).endsWith(".jar")) {
             Path jar = toPath(classPath);
-            if (!QUARKUS_RUN_JAR.equals(String.valueOf(jar.getFileName()))) {
+            if (codeSource.map(Installation::normalize).filter(jar::equals).isPresent()) {
                 return new Installation(Type.JAR, jar);
             }
         }
@@ -58,7 +66,24 @@ public record Installation(Type type, @Nullable Path path) {
     }
 
     private static Path toPath(String path) {
-        return Path.of(path).toAbsolutePath().normalize();
+        return normalize(Path.of(path));
+    }
+
+    private static Path normalize(Path path) {
+        return path.toAbsolutePath().normalize();
+    }
+
+    private static Optional<Path> getCodeSource() {
+        try {
+            CodeSource codeSource = Installation.class.getProtectionDomain().getCodeSource();
+            if (codeSource == null || codeSource.getLocation() == null) {
+                return Optional.empty();
+            }
+
+            return Optional.of(Path.of(codeSource.getLocation().toURI()));
+        } catch (URISyntaxException | IllegalArgumentException | FileSystemNotFoundException | SecurityException e) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -74,7 +99,8 @@ public record Installation(Type type, @Nullable Path path) {
          */
         JAR,
         /**
-         * Neither, e.g. when running from an IDE.
+         * Neither, e.g. when running from an IDE, or from the {@code quarkus-run.jar} of a fast-jar build,
+         * which cannot be replaced by the published {@code headlessmc.jar}.
          */
         UNKNOWN
     }

@@ -4,6 +4,7 @@ dependencies {
 
     implementation project(':headlessmc-os')
     implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
     implementation project(':headlessmc-files')
     implementation project(':headlessmc-files:headlessmc-files-cache')
     implementation project(':headlessmc-util:headlessmc-util-json')
