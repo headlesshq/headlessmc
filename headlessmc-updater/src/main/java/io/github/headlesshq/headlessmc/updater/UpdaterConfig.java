@@ -18,4 +18,7 @@ public interface UpdaterConfig extends DynamicConfig {
     @WithDefault("3000")
     int timeoutMs();
 
+    @WithDefault("24")
+    int intervalHours();
+
 }

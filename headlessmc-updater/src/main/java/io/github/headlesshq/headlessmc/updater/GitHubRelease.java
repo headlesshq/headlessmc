@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.updater;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.Optional;
  * https://docs.github.com/en/rest/releases/releases#get-the-latest-release
  * </a>
  */
+@RegisterForReflection
 public record GitHubRelease(
     @JsonProperty("tag_name") String tagName,
     @JsonProperty("html_url") String htmlUrl,
@@ -38,6 +40,7 @@ public record GitHubRelease(
      * @param name        the name of the file.
      * @param downloadUrl the url to download the file from.
      */
+    @RegisterForReflection
     public record Asset(String name, @JsonProperty("browser_download_url") String downloadUrl) {
 
     }

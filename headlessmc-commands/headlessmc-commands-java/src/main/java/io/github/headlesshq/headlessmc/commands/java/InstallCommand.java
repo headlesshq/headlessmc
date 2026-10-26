@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.commands.java;
 
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.console.LongRunningCommand;
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProvider;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProviderService;
@@ -36,7 +37,7 @@ import java.util.List;
     description = "Downloads and installs a java version."
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
-public class InstallCommand implements Runnable, CachedConsole.Enabled {
+public class InstallCommand implements Runnable, CachedConsole.Enabled, LongRunningCommand {
     private final JavaDistributionProviderService distributionServiceManager;
     private final FileService fileService;
     private final JavaService javaService;

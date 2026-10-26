@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.commands.version;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.commands.util.VersionCompletions;
 import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.console.LongRunningCommand;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
@@ -40,7 +41,7 @@ import java.util.List;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class VersionInstallCommand implements Runnable, VersionArgCommand {
+public class VersionInstallCommand implements Runnable, VersionArgCommand, LongRunningCommand {
     private final PlatformService platformService;
     private final ProfileService profileService;
     private final ServerService serverService;

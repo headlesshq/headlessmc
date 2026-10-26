@@ -2,28 +2,23 @@ package io.github.headlesshq.headlessmc.updater;
 
 import io.github.headlesshq.headlessmc.HeadlessMc;
 import io.github.headlesshq.headlessmc.config.Holder;
-import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import io.github.headlesshq.headlessmc.os.CPU;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.os.OSService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.ProcessingException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 
-import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Checks GitHub for newer releases of HeadlessMc.
  */
-@Slf4j
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class UpdateService {
@@ -44,14 +39,16 @@ public class UpdateService {
     );
 
     private final Holder<UpdaterConfig> config;
+    private final GitHubReleaseClient client;
+    private final UpdateCacheService cache;
     private final OSService osService;
 
     /**
-     * Checks GitHub for a newer release of HeadlessMc.
+     * Checks GitHub for a newer release of HeadlessMc and caches the latest release.
      * The latest release on GitHub is considered newer if its tag differs from the running version.
-     * This check never fails, if GitHub cannot be reached it is just logged.
+     * This check never fails, if GitHub cannot be reached the cached release is used.
      *
-     * @return the latest release, or empty if it is the running version, the check is disabled or failed.
+     * @return the newer release, or empty if the running version is the latest, the check is disabled or failed.
      */
     public Optional<Update> checkForUpdate() {
         UpdaterConfig updaterConfig = config.get();
@@ -59,19 +56,37 @@ public class UpdateService {
             return Optional.empty();
         }
 
-        String[] repository = updaterConfig.repository().split("/");
-        if (repository.length != 2) {
-            log.warn("Invalid repository for the updater, expected owner/repo, but got {}", updaterConfig.repository());
+        Optional<GitHubRelease> latest = client.getLatestRelease(updaterConfig);
+        latest.ifPresent(release -> cache.set(
+            new UpdateCache(updaterConfig.repository(), Instant.now().toEpochMilli(), release)
+        ));
+
+        return latest.or(() -> getCache(updaterConfig).map(UpdateCache::release)).flatMap(this::toUpdate);
+    }
+
+    /**
+     * Like {@link #checkForUpdate()}, but only requests GitHub if the cached release is older than
+     * {@link UpdaterConfig#intervalHours()}. Otherwise, the cached release is used,
+     * so a user who has not updated yet is still notified about the update.
+     *
+     * @return the newer release, or empty if the running version is the latest, the check is disabled or failed.
+     */
+    public Optional<Update> checkForUpdateIfStale() {
+        UpdaterConfig updaterConfig = config.get();
+        if (!updaterConfig.enabled()) {
             return Optional.empty();
         }
 
-        try {
-            GitHubRelease latest = createApi(updaterConfig).getLatestRelease(repository[0], repository[1]);
-            return isUpdate(HeadlessMc.VERSION, latest) ? Optional.of(toUpdate(latest)) : Optional.empty();
-        } catch (ApiException | ProcessingException e) {
-            log.debug("Failed to check for updates", e);
-            return Optional.empty();
+        Optional<UpdateCache> cached = getCache(updaterConfig);
+        if (cached.isEmpty() || cached.get().isStale(Instant.now(), Duration.ofHours(updaterConfig.intervalHours()))) {
+            return checkForUpdate();
         }
+
+        return cached.flatMap(updateCache -> toUpdate(updateCache.release()));
+    }
+
+    private Optional<UpdateCache> getCache(UpdaterConfig updaterConfig) {
+        return cache.get().filter(updateCache -> updaterConfig.repository().equals(updateCache.repository()));
     }
 
     /**
@@ -109,20 +124,16 @@ public class UpdateService {
         };
     }
 
-    private Update toUpdate(GitHubRelease release) {
+    private Optional<Update> toUpdate(GitHubRelease release) {
+        if (!isUpdate(HeadlessMc.VERSION, release)) {
+            return Optional.empty();
+        }
+
         Installation installation = Installation.detect();
         OS.Type osType = osService.getOS().type();
         String assetName = getAssetName(installation.type(), osType, osService.getCPU());
         GitHubRelease.Asset asset = assetName == null ? null : release.getAsset(assetName).orElse(null);
-        return new Update(HeadlessMc.VERSION, release, installation, asset, OS.Type.WINDOWS.equals(osType));
-    }
-
-    private GitHubAPI createApi(UpdaterConfig updaterConfig) {
-        return RestClientBuilder.newBuilder()
-            .baseUri(URI.create(GitHubAPI.API_URL))
-            .connectTimeout(updaterConfig.timeoutMs(), TimeUnit.MILLISECONDS)
-            .readTimeout(updaterConfig.timeoutMs(), TimeUnit.MILLISECONDS)
-            .build(GitHubAPI.class);
+        return Optional.of(new Update(HeadlessMc.VERSION, release, installation, asset, OS.Type.WINDOWS.equals(osType)));
     }
 
 }
