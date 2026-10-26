@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.commands.server;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.FinalCommand;
+import io.github.headlesshq.headlessmc.console.LongRunningCommand;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
@@ -25,7 +26,7 @@ import java.util.concurrent.Callable;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public abstract class AbstractServerLaunchCommand implements Callable<Integer>, Runnable, FinalCommand {
+public abstract class AbstractServerLaunchCommand implements Callable<Integer>, Runnable, FinalCommand, LongRunningCommand {
     private final LifecycleService lifecycleService;
     private final ProfileResolver profileResolver;
     private final PlatformService platformService;

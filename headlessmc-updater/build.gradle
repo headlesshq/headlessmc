@@ -1,0 +1,20 @@
+dependencies {
+    api project(':headlessmc-config')
+    implementation rootProject
+
+    implementation project(':headlessmc-os')
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-console:headlessmc-console-cdi')
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-files:headlessmc-files-cache')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    implementation project(':headlessmc-util:headlessmc-util-reflection')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+    implementation project(':headlessmc-net:headlessmc-net-rest')
+
+    implementation libs.quarkus.rest.client.jackson
+}
+
+dependencies {
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+}

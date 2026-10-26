@@ -83,6 +83,10 @@ hmc.server.script.timeout                                  60                   
 hmc.test.leave                                             true                                       -
 hmc.test.no-timeout                                        false                                      -
 hmc.test.server                                            false                                      -
+hmc.updater.enabled                                        true                                       Whether updaters, e.g. for HeadlessMc releases, check for updates when the shell starts, the version is printed or a long running command runs.
+hmc.updater.interval-hours                                 24                                         Hours after which updaters check remote sources again before a long running command, like launch or install, instead of using their cached result.
+hmc.updater.repository                                     headlesshq/headlessmc                      GitHub repository (owner/repo) to check for newer releases.
+hmc.updater.timeout-ms                                     3000                                       Timeout in milliseconds for the check for newer releases.
 hmc.xvfb.check                                             false                                      Whether to check if HeadlessMc is running with XVFB. For CI/CD pipelines.
 ```
 

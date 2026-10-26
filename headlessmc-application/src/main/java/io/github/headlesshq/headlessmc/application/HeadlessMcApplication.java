@@ -3,10 +3,12 @@ package io.github.headlesshq.headlessmc.application;
 import io.github.headlesshq.headlessmc.config.ConfigFileProvider;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
+import io.github.headlesshq.headlessmc.updater.UpdateNotifier;
 import io.quarkus.runtime.QuarkusApplication;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -20,12 +22,38 @@ public class HeadlessMcApplication implements QuarkusApplication {
     private final FileService fileService;
     private final AppFiles appFiles;
     private final ConfigFileProvider configFileProvider;
+    private final UpdateNotifier updateNotifier;
 
     @Override
     public int run(String... args) throws Exception {
         initFiles();
         commandLine.setUsageHelpAutoWidth(true);
+        updateNotifier.checkBefore(getCommand(args));
         return commandLine.execute(args);
+    }
+
+    /**
+     * Determines the command that the given arguments select, without executing it.
+     *
+     * @param args the arguments HeadlessMc has been started with.
+     * @return the selected (sub)command, or {@code null} if the arguments could not be parsed
+     * or only ask for the usage help or the version.
+     */
+    private @Nullable Object getCommand(String... args) {
+        try {
+            CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
+            while (true) {
+                if (parseResult.isUsageHelpRequested() || parseResult.isVersionHelpRequested()) {
+                    return null;
+                } else if (!parseResult.hasSubcommand()) {
+                    return parseResult.commandSpec().userObject();
+                }
+
+                parseResult = parseResult.subcommand();
+            }
+        } catch (CommandLine.ParameterException e) {
+            return null;
+        }
     }
 
     private void initFiles() {
