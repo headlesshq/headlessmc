@@ -108,7 +108,8 @@ interface FoojayAPI {
         @Nullable @QueryParam("archive_type") List<ArchiveType> archiveType,
         @Nullable @QueryParam("package_type") String packageType,
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
-        @Nullable @QueryParam("libc_type") List<String> libcType
+        @Nullable @QueryParam("libc_type") List<String> libcType,
+        @Nullable @QueryParam("latest") String latest
         /*
         Other unneeded parameters from swagger
 
@@ -121,7 +122,6 @@ interface FoojayAPI {
         @Nullable @QueryParam("fpu") List<String> fpu,
         @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled,
         @Nullable @QueryParam("with_javafx_if_available") Boolean withJavafxIfAvailable,
-        @Nullable @QueryParam("latest") String latest,
         @Nullable @QueryParam("feature") List<String> feature,
         @Nullable @QueryParam("signature_available") Boolean signatureAvailable,
         @Nullable @QueryParam("free_to_use_in_production") Boolean freeToUseInProduction,
@@ -154,7 +154,8 @@ interface FoojayAPI {
         @Nullable @QueryParam("archive_type") List<ArchiveType> archiveType,
         @Nullable @QueryParam("package_type") String packageType,
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
-        @Nullable @QueryParam("libc_type") List<String> libcType
+        @Nullable @QueryParam("libc_type") List<String> libcType,
+        @Nullable @QueryParam("latest") String latest
     ) throws ApiException, ProcessingException {
         //noinspection Convert2Diamond
         return resolve(
@@ -167,7 +168,8 @@ interface FoojayAPI {
                 archiveType,
                 packageType,
                 directlyDownloadable,
-                libcType
+                libcType,
+                latest
             )
         );
     }

@@ -42,14 +42,20 @@ import org.jspecify.annotations.Nullable;
  * }
  * </pre>
  *
- * @param id       the id of the package.
- * @param filename the filename of the package.
+ * @param id           the id of the package.
+ * @param filename     the filename of the package.
+ * @param size         the size of the package in bytes.
+ * @param archive_type the archive type of the package, e.g. tar.gz.
+ * @param java_version the full java version of the package, e.g. 25+36.
+ * @param package_type the type of the package, e.g. jre or jdk.
  */
 record Pkg(
     String id,
     String filename,
     @Nullable Long size,
-    @Nullable String archive_type
+    @Nullable String archive_type,
+    @Nullable String java_version,
+    @Nullable String package_type
 ) {
     public JavaRuntime toRuntime(String provider, int version, String distribution) {
         String name = filename;
@@ -63,7 +69,7 @@ record Pkg(
             id(),
             name,
             version,
-            new JavaRuntime.MetaData(size, archive_type)
+            new JavaRuntime.MetaData(size, archive_type, java_version, package_type)
         );
     }
 

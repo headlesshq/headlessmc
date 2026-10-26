@@ -16,4 +16,5 @@ dependencies {
     testImplementation testFixtures(project(':headlessmc-console'))
     testImplementation testFixtures(project(':headlessmc-files'))
     testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }

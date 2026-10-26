@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.commands.auth.AccountCommand;
 import io.github.headlesshq.headlessmc.commands.auth.LoginShortcutCommand;
 import io.github.headlesshq.headlessmc.commands.config.ConfigCommand;
 import io.github.headlesshq.headlessmc.commands.java.JavaCommand;
+import io.github.headlesshq.headlessmc.commands.java.JavaUpdateNotifier;
 import io.github.headlesshq.headlessmc.commands.launcher.LaunchCommand;
 import io.github.headlesshq.headlessmc.commands.mod.ModCommand;
 import io.github.headlesshq.headlessmc.commands.profile.ProfileCommand;
@@ -60,6 +61,7 @@ import java.util.concurrent.Callable;
 public class HeadlessMcCommand implements Callable<Integer> {
     private final Provider<CommandLine> commandLineProvider;
     private final ConsoleCachingService cachingService;
+    private final JavaUpdateNotifier javaUpdateNotifier;
     private final ArgSplitter argSplitter;
     private final Console console;
     private final UpdateNotifier updateNotifier;
@@ -67,6 +69,7 @@ public class HeadlessMcCommand implements Callable<Integer> {
     @Override
     public Integer call() {
         CachedConsole console = cachingService.cache(this.console);
+        javaUpdateNotifier.checkAsync();
         updateNotifier.checkAsync();
         try {
             while (true) {

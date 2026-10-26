@@ -19,7 +19,7 @@ class FoojayModelTest {
 
     @Test
     void packageStripsTheArchiveTypeFromTheName() {
-        Pkg pkg = new Pkg("id", "OpenJDK25U-jre_x64_linux.tar.gz", 42L, "tar.gz");
+        Pkg pkg = new Pkg("id", "OpenJDK25U-jre_x64_linux.tar.gz", 42L, "tar.gz", "25+36", "jre");
 
         JavaRuntime runtime = pkg.toRuntime("foojay.io", 25, "temurin");
 
@@ -27,13 +27,13 @@ class FoojayModelTest {
         assertEquals("id", runtime.id());
         assertEquals(25, runtime.version());
         assertEquals("temurin", runtime.distribution());
-        assertEquals(new JavaRuntime.MetaData(42L, "tar.gz"), runtime.metaData());
+        assertEquals(new JavaRuntime.MetaData(42L, "tar.gz", "25+36", "jre"), runtime.metaData());
     }
 
     @Test
     void packageKeepsTheNameWithoutMatchingArchiveType() {
-        assertEquals("archive.zip", new Pkg("id", "archive.zip", null, null).toRuntime("p", 21, "d").name());
-        assertEquals("archive.zip", new Pkg("id", "archive.zip", null, "tar.gz").toRuntime("p", 21, "d").name());
+        assertEquals("archive.zip", new Pkg("id", "archive.zip", null, null, null, null).toRuntime("p", 21, "d").name());
+        assertEquals("archive.zip", new Pkg("id", "archive.zip", null, "tar.gz", null, null).toRuntime("p", 21, "d").name());
     }
 
     @Test

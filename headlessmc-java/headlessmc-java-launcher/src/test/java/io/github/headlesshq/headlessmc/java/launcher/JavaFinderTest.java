@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.java.launcher;
 
 import io.github.headlesshq.headlessmc.config.Holder;
+import io.github.headlesshq.headlessmc.distribution.InstalledJavaRuntimeService;
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProvider;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProviderService;
@@ -14,10 +15,14 @@ import io.github.headlesshq.headlessmc.java.JavaSource;
 import io.github.headlesshq.headlessmc.java.SafePath;
 import io.github.headlesshq.headlessmc.os.CPU;
 import io.github.headlesshq.headlessmc.os.OS;
+import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JavaFinderTest {
     private record Downloaded(JavaRuntime runtime, Path path) {}
+
+    private final InstalledJavaRuntimeService installedRuntimes =
+        new InstalledJavaRuntimeService(new DefaultJacksonJsonService());
 
     @TempDir
     Path root;
@@ -90,13 +98,14 @@ class JavaFinderTest {
         }
 
         @Override
-        public List<JavaRuntime> getUpdates(JavaRuntime runtime) {
+        public List<JavaRuntime> getUpdates(JavaRuntime runtime, OS os, CPU cpu) {
             return List.of();
         }
 
         @Override
         public void download(JavaRuntime runtime, Path path) {
             downloads.add(new Downloaded(runtime, path));
+            createDir(path);
         }
     };
 
@@ -143,9 +152,14 @@ class JavaFinderTest {
             public int maxScanDepth() {
                 return 6;
             }
+
+            @Override
+            public boolean checkForUpdates() {
+                return false;
+            }
         };
 
-        finder = new JavaFinder(providerService, javaService, config, appFiles, CPU.X64,
+        finder = new JavaFinder(providerService, installedRuntimes, javaService, config, appFiles, CPU.X64,
             new OS("linux", OS.Type.LINUX, "6.0"));
     }
 
@@ -196,6 +210,14 @@ class JavaFinderTest {
             JavaProcessException.InstallationException.class, () -> finder.findJava(21)
         );
         assertTrue(e.getMessage().contains("even after installing"));
+    }
+
+    private static void createDir(Path path) {
+        try {
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 }

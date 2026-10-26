@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.commands.java;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.console.format.SimpleTableProvider;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
+import io.github.headlesshq.headlessmc.distribution.InstalledJavaRuntimeService;
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProvider;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProviderService;
@@ -18,6 +19,7 @@ import io.github.headlesshq.headlessmc.java.JavaSource;
 import io.github.headlesshq.headlessmc.java.SafePath;
 import io.github.headlesshq.headlessmc.os.CPU;
 import io.github.headlesshq.headlessmc.os.OS;
+import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -41,11 +43,15 @@ class JavaCommandsTest {
     Path root;
 
     private final RecordingConsole console = new RecordingConsole();
+    private final InstalledJavaRuntimeService installedRuntimes =
+        new InstalledJavaRuntimeService(new DefaultJacksonJsonService());
     private final TableProvider tables = new SimpleTableProvider();
 
     private final List<Downloaded> downloads = new ArrayList<>();
     private final List<JavaRuntime> runtimes = new ArrayList<>();
     private final List<Java> javas = new ArrayList<>();
+    private final List<JavaRuntime> updates = new ArrayList<>();
+    private final List<JavaRuntime> updateQueries = new ArrayList<>();
 
     private int refreshes;
 
@@ -99,13 +105,15 @@ class JavaCommandsTest {
         }
 
         @Override
-        public List<JavaRuntime> getUpdates(JavaRuntime runtime) {
-            return List.of();
+        public List<JavaRuntime> getUpdates(JavaRuntime runtime, OS os, CPU cpu) {
+            updateQueries.add(runtime);
+            return updates;
         }
 
         @Override
         public void download(JavaRuntime runtime, Path path) {
             downloads.add(new Downloaded(runtime, path));
+            createDir(path);
         }
     };
 
@@ -184,7 +192,8 @@ class JavaCommandsTest {
 
     private InstallCommand install() {
         InstallCommand command = new InstallCommand(
-            providerService, new DefaultFileService(new DefaultFileSystemProvider()), javaService, appFiles, console, OS_LINUX, CPU.X64
+            providerService, installedRuntimes, new DefaultFileService(new DefaultFileSystemProvider()), javaService, appFiles, console,
+            OS_LINUX, CPU.X64
         );
         command.context = context;
         return command;
@@ -363,6 +372,141 @@ class JavaCommandsTest {
         command.setName("broken");
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::run);
         assertTrue(e.getMessage().contains("Failed to resolve path"));
+    }
+
+    // ------------------------------------------------------- UpdateCommand
+
+    private JavaUpdateService updateService() {
+        return new JavaUpdateService(
+            providerService, installedRuntimes, javaService, new DefaultFileService(new DefaultFileSystemProvider()), appFiles,
+            OS_LINUX, CPU.X64
+        );
+    }
+
+    private UpdateCommand update() {
+        return new UpdateCommand(updateService(), tables, console);
+    }
+
+    private Java hmcJava(String name, int version) {
+        Path home = appFiles.getJavaDir().resolve(name).resolve("jdk");
+        createDir(home.resolve("bin"));
+        return new Java(name, version, new SafePath(home), new SafePath(home.resolve("bin/java")), false, JavaSource.SORT_HMC);
+    }
+
+    private JavaRuntime runtime(String name, String javaVersion) {
+        return new JavaRuntime(
+            "foojay.io", "temurin", "id-" + name, name, 21, new JavaRuntime.MetaData(null, "tar.gz", javaVersion, "jre")
+        );
+    }
+
+    @Test
+    void updateFindsRecordedInstallations() {
+        Java java = hmcJava("temurin-21.0.3", 21);
+        javas.add(java);
+        JavaRuntime installed = runtime("temurin-21.0.3", "21.0.3+9");
+        installedRuntimes.write(appFiles.getJavaDir().resolve(java.name()), installed);
+        updates.add(runtime("temurin-21.0.5", "21.0.5+11"));
+
+        JavaUpdateService.Result result = updateService().check();
+
+        assertEquals(List.of(installed), updateQueries);
+        assertEquals(1, result.updates().size());
+        assertEquals("temurin-21.0.5", result.updates().getFirst().latest().name());
+        assertTrue(result.skipped().isEmpty());
+    }
+
+    @Test
+    void updateInfersLegacyInstallationsFromReleaseFile() throws IOException {
+        Java java = hmcJava("OpenJDK21U-jre_x64_linux_hotspot_21_35", 21);
+        javas.add(java);
+        Files.writeString(
+            java.home().getUnchecked().orElseThrow().resolve("release"),
+            "IMPLEMENTOR=\"Eclipse Adoptium\"\nJAVA_RUNTIME_VERSION=\"21+35-LTS\"\nJAVA_VERSION=\"21\"\n"
+        );
+
+        updateService().check();
+
+        JavaRuntime inferred = updateQueries.getFirst();
+        assertEquals("foojay.io", inferred.provider());
+        assertEquals("temurin", inferred.distribution());
+        assertEquals(21, inferred.version());
+        assertEquals("21+35-LTS", inferred.javaVersion());
+        assertEquals("jre", inferred.packageType());
+    }
+
+    @Test
+    void updateSkipsUnknownAndIgnoresForeignInstallations() {
+        javas.add(hmcJava("unknown", 21));
+        javas.add(java("system-21", 21, JavaSource.SORT_GENERAL));
+
+        JavaUpdateService.Result result = updateService().check();
+
+        assertTrue(updateQueries.isEmpty());
+        assertTrue(result.updates().isEmpty());
+        assertEquals(1, result.skipped().size());
+        assertEquals("unknown", result.skipped().getFirst().java().name());
+    }
+
+    @Test
+    void updateDryRunOnlyLists() {
+        Java java = hmcJava("temurin-21.0.3", 21);
+        javas.add(java);
+        installedRuntimes.write(appFiles.getJavaDir().resolve(java.name()), runtime("temurin-21.0.3", "21.0.3+9"));
+        updates.add(runtime("temurin-21.0.5", "21.0.5+11"));
+
+        UpdateCommand command = update();
+        command.setDryRun(true);
+        command.run();
+
+        assertTrue(downloads.isEmpty());
+        assertTrue(Files.exists(appFiles.getJavaDir().resolve(java.name())));
+        String output = console.output();
+        assertTrue(output.contains("21.0.3+9"));
+        assertTrue(output.contains("21.0.5+11"));
+        assertTrue(output.contains("1 java installation(s) can be updated."));
+    }
+
+    @Test
+    void updateInstallsNewerRuntimeAndRemovesOldOne() {
+        Java java = hmcJava("temurin-21.0.3", 21);
+        javas.add(java);
+        Path oldInstallation = appFiles.getJavaDir().resolve(java.name());
+        installedRuntimes.write(oldInstallation, runtime("temurin-21.0.3", "21.0.3+9"));
+        JavaRuntime latest = runtime("temurin-21.0.5", "21.0.5+11");
+        updates.add(latest);
+
+        update().run();
+
+        Path newInstallation = appFiles.getJavaDir().resolve("temurin-21.0.5");
+        assertEquals(List.of(new Downloaded(latest, newInstallation)), downloads);
+        assertFalse(Files.exists(oldInstallation));
+        assertEquals(Optional.of(latest.name()), installedRuntimes.read(newInstallation).map(JavaRuntime::name));
+        assertEquals(1, refreshes);
+        assertTrue(console.output().contains("Updated temurin-21.0.3 to 21.0.5+11"));
+    }
+
+    @Test
+    void updateWithoutUpdates() {
+        update().run();
+        assertTrue(console.output().contains("All java installations are up-to-date."));
+    }
+
+    @Test
+    void notifierSuggestsUpdateCommand() {
+        Java java = hmcJava("temurin-21.0.3", 21);
+        javas.add(java);
+        installedRuntimes.write(appFiles.getJavaDir().resolve(java.name()), runtime("temurin-21.0.3", "21.0.3+9"));
+        updates.add(runtime("temurin-21.0.5", "21.0.5+11"));
+
+        new JavaUpdateNotifier(updateService(), () -> null, console).check();
+
+        assertTrue(console.output().contains("1 java installation can be updated, run 'java update' to update it."));
+    }
+
+    @Test
+    void notifierIsSilentWithoutUpdates() {
+        new JavaUpdateNotifier(updateService(), () -> null, console).check();
+        assertEquals("", console.output());
     }
 
     // -------------------------------------------------------- completions

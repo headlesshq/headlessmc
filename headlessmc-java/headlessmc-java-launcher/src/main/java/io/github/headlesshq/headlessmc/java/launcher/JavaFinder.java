@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.java.launcher;
 
+import io.github.headlesshq.headlessmc.distribution.InstalledJavaRuntimeService;
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProvider;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProviderService;
@@ -25,6 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class JavaFinder {
     private final JavaDistributionProviderService distributionService;
+    private final InstalledJavaRuntimeService installedRuntimeService;
     private final JavaService javaService;
     private final Holder<JavaConfig> config;
     private final AppFiles appFiles;
@@ -56,7 +58,7 @@ public class JavaFinder {
 
         JavaRuntime runtime = runtimes.getFirst();
         Path path = appFiles.getJavaDir().resolve(runtime.name());
-        provider.download(runtime, path);
+        installedRuntimeService.install(provider, runtime, path);
         javaService.refresh();
         Optional<Java> result = javaService.getJava(version);
         if (result.isPresent()) {
