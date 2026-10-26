@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 
 // TODO:
-//  - CurseForge
 //  - FTB
 //  - FTB Legacy
 //  - ATLauncher

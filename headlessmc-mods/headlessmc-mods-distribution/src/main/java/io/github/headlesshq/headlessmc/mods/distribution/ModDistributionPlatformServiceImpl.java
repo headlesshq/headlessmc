@@ -2,7 +2,6 @@ package io.github.headlesshq.headlessmc.mods.distribution;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
-import jakarta.enterprise.inject.Default;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
@@ -23,7 +22,8 @@ public class ModDistributionPlatformServiceImpl implements ModDistributionPlatfo
 
     @Override
     public ModDistributionPlatform defaultPlatform() {
-        return platforms.select(Default.Literal.INSTANCE).get();
+        return byName(ModDistributionPlatform.DEFAULT)
+            .orElseThrow(() -> new IllegalStateException("Failed to find default mod distribution platform"));
     }
 
     @Override
