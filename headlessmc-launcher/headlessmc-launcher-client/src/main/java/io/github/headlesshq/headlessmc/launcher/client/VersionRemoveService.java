@@ -92,24 +92,49 @@ public class VersionRemoveService {
      * @return the removal, which can be passed to {@link #remove(VersionRemoval)}.
      */
     public VersionRemoval plan(Version version) throws HeadlessMcException {
+        return plan(version, false);
+    }
+
+    /**
+     * Determines what removing the given version would delete and what it would break.
+     *
+     * @param version        the installed version to remove.
+     * @param withDependents also removes the versions inheriting from the version
+     *                       and the profiles that could no longer be launched.
+     * @return the removal, which can be passed to {@link #remove(VersionRemoval)}.
+     */
+    public VersionRemoval plan(Version version, boolean withDependents) throws HeadlessMcException {
         Map<String, Version> installed = new LinkedHashMap<>();
         versionJsonService.getInstalledVersions().forEach(v -> installed.put(v.getId(), v));
         installed.put(version.getId(), version);
 
-        List<Version> others = installed.values().stream()
+        List<Version> dependents = installed.values().stream()
             .filter(other -> !other.getId().equals(version.getId()))
-            .toList();
-        List<Version> dependents = others.stream()
             .filter(other -> hierarchy(other, installed).stream().anyMatch(v -> v.getId().equals(version.getId())))
             .toList();
-        List<List<Version>> needed = others.stream().map(other -> hierarchy(other, installed)).toList();
-        List<Version> removed = hierarchy(version, installed);
+        List<Version> removedVersions = new ArrayList<>();
+        removedVersions.add(version);
+        if (withDependents) {
+            removedVersions.addAll(dependents);
+        }
+
+        Set<String> removedIds = removedVersions.stream().map(Version::getId).collect(Collectors.toSet());
+        List<List<Version>> needed = installed.values().stream()
+            .filter(other -> !removedIds.contains(other.getId()))
+            .map(other -> hierarchy(other, installed))
+            .toList();
 
         Set<Path> files = new LinkedHashSet<>();
-        files.addAll(unusedLibraries(removed, needed));
-        files.addAll(unusedAssets(removed, needed));
-        files.addAll(unusedLoggingConfigs(removed, needed));
-        files.add(fileService.getPath(mcFiles.getVersionsDir(), version.getId()));
+        for (Version removedVersion : removedVersions) {
+            List<Version> removed = hierarchy(removedVersion, installed);
+            files.addAll(unusedLibraries(removed, needed));
+            files.addAll(unusedAssets(removed, needed));
+            files.addAll(unusedLoggingConfigs(removed, needed));
+        }
+
+        for (Version removedVersion : removedVersions.reversed()) {
+            files.add(fileService.getPath(mcFiles.getVersionsDir(), removedVersion.getId()));
+        }
 
         Path mcDir = mcFiles.getMcDir().toAbsolutePath().normalize();
         List<Path> existing = files.stream()
@@ -117,21 +142,36 @@ public class VersionRemoveService {
             .filter(Files::exists)
             .toList();
 
-        return new VersionRemoval(version, dependents, blockingProfiles(dependents, version, installed), existing);
+        List<Profile> blockingProfiles = blockingProfiles(dependents, version, installed);
+        return new VersionRemoval(
+            version,
+            dependents,
+            blockingProfiles,
+            List.copyOf(removedVersions),
+            withDependents ? blockingProfiles : List.of(),
+            existing
+        );
     }
 
     /**
-     * Deletes the files of the given removal, regardless of {@link VersionRemoval#isBlocked()}.
+     * Deletes the files and removes the profiles of the given removal, regardless of {@link VersionRemoval#isBlocked()}.
      *
-     * @param removal the removal created by {@link #plan(Version)}.
+     * @param removal the removal created by {@link #plan(Version, boolean)}.
      */
     public void remove(VersionRemoval removal) throws HeadlessMcException {
+        for (Profile profile : removal.removedProfiles()) {
+            profileService.remove(profile);
+        }
+
         for (Path file : removal.files()) {
             fileService.delete(file);
             deleteEmptyParents(file);
         }
 
-        log.info("Removed version {}, deleted {} files", removal.version().getId(), removal.files().size());
+        log.info("Removed versions {} and profiles {}, deleted {} files",
+            removal.removedVersions().stream().map(Version::getId).toList(),
+            removal.removedProfiles().stream().map(Profile::name).toList(),
+            removal.files().size());
     }
 
     /**

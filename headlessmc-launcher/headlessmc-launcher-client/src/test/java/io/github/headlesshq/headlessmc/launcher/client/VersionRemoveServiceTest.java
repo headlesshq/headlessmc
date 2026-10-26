@@ -394,6 +394,30 @@ class VersionRemoveServiceTest {
     }
 
     @Test
+    void removesDependentVersionsAndProfilesWithDependents() {
+        profileService.save(new Profile("fabric", VersionArg.parse("fabric", "1.21.1"), root));
+        profileService.save(new Profile("vanilla-old", VersionArg.parse("1.20.4"), root));
+        VersionRemoveService service = service();
+
+        VersionRemoval removal = service.plan(versionJsonService.getVersion("1.21.1"), true);
+        assertFalse(removal.isBlocked());
+        assertEquals(List.of("1.21.1", FABRIC_9, FABRIC_5), removal.removedVersions().stream().map(Version::getId).toList());
+        assertEquals(List.of("fabric"), removal.removedProfiles().stream().map(Profile::name).toList());
+        assertEquals(mcFiles.getVersionsDir().resolve("1.21.1"), removal.files().getLast());
+
+        service.remove(removal);
+
+        assertFalse(Files.exists(mcFiles.getVersionsDir().resolve(FABRIC_9)));
+        assertFalse(Files.exists(mcFiles.getVersionsDir().resolve(FABRIC_5)));
+        assertFalse(Files.exists(library("net.fabricmc:sponge-mixin:0.15.0")));
+        assertFalse(Files.exists(library("com.example:vanilla-only:1.0")));
+        assertTrue(Files.exists(library("com.example:shared:1.0")), "1.20.4 still needs it");
+        assertFalse(Files.exists(object(ONLY_17)));
+        assertTrue(Files.exists(object(SHARED)));
+        assertEquals(List.of("vanilla-old"), profileService.getProfiles().stream().map(Profile::name).toList());
+    }
+
+    @Test
     void profilesThatNeedTheVersionBlockTheRemoval() {
         profileService.save(new Profile("specific", VersionArg.parse("fabric", "1.21.1", "0.16.9"), root));
         profileService.save(new Profile("any", VersionArg.parse("fabric", "1.21.1"), root));

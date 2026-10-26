@@ -85,7 +85,7 @@ class RemoveCommandTest {
 
         assertFalse(Files.exists(versionDir(FABRIC)));
         assertTrue(Files.exists(versionDir("1.21.1")));
-        assertTrue(console.output().contains("Deleted version " + FABRIC));
+        assertTrue(console.output().contains("Deleted versions [" + FABRIC + "]"));
     }
 
     @Test
@@ -113,6 +113,49 @@ class RemoveCommandTest {
         command.setForce(true);
         command.run();
         assertFalse(Files.exists(versionDir(FABRIC)));
+    }
+
+    @Test
+    void allRequiresForce() {
+        RemoveCommand command = command("1.21.1");
+        command.setAll(true);
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::run);
+        assertTrue(e.getMessage().contains("--force"));
+        assertTrue(Files.exists(versionDir("1.21.1")));
+    }
+
+    @Test
+    void allDeletesDependentVersionsAndProfilesAfterConfirmation() {
+        profileService.save(new Profile("fabric", VersionArg.parse("fabric", "1.21.1"), root));
+        profileService.save(new Profile("vanilla", VersionArg.parse("1.21.1"), root));
+        console.addInput("y");
+
+        RemoveCommand command = command("1.21.1");
+        command.setForce(true);
+        command.setAll(true);
+        command.run();
+
+        assertTrue(console.output().contains("This will delete versions [1.21.1, " + FABRIC + "] and profiles [fabric, vanilla]"));
+        assertFalse(Files.exists(versionDir("1.21.1")));
+        assertFalse(Files.exists(versionDir(FABRIC)));
+        assertTrue(profileService.getProfiles().isEmpty());
+    }
+
+    @Test
+    void allDeletesNothingWithoutConfirmation() {
+        profileService.save(new Profile("fabric", VersionArg.parse("fabric", "1.21.1"), root));
+        console.addInput("n");
+
+        RemoveCommand command = command("1.21.1");
+        command.setForce(true);
+        command.setAll(true);
+        command.run();
+
+        assertTrue(console.output().contains("Aborted"));
+        assertTrue(Files.exists(versionDir("1.21.1")));
+        assertTrue(Files.exists(versionDir(FABRIC)));
+        assertEquals(1, profileService.getProfiles().size());
     }
 
 }

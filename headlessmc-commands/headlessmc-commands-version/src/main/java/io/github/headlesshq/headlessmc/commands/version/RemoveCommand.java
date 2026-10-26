@@ -20,6 +20,7 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Getter
 @Setter
@@ -51,6 +52,13 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
     )
     private boolean dryRun;
 
+    @CommandLine.Option(
+        names = {"-a", "--all"},
+        description = "Also deletes the versions inheriting from the version and the profiles that need it, requires --force.",
+        defaultValue = "false"
+    )
+    private boolean all;
+
     @CommandLine.Parameters(
         paramLabel = "VERSION",
         description = "The version to delete, e.g. 'fabric 1.21.1 0.16.9', or the name of its version.json.",
@@ -60,20 +68,44 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
 
     @Override
     public void run() {
+        if (all && !force) {
+            throw new IllegalArgumentException("--all deletes other versions and profiles, it can only be used together with --force.");
+        }
+
         Version version = versionRemoveService.findVersion(versionArg);
-        VersionRemoval removal = versionRemoveService.plan(version);
+        VersionRemoval removal = versionRemoveService.plan(version, all);
         if (removal.isBlocked() && !force) {
             throw new IllegalArgumentException(blockedMessage(removal));
         }
 
         if (dryRun) {
-            console.write("Deleting version " + version.getId() + " would delete " + removal.files().size() + " files:");
+            console.write("Would delete " + summary(removal) + ":");
             removal.files().stream().map(Path::toString).forEach(console::write);
             return;
         }
 
+        if (all && !confirm(removal)) {
+            console.write("Aborted, nothing was deleted.");
+            return;
+        }
+
         versionRemoveService.remove(removal);
-        console.write("Deleted version " + version.getId() + " (" + removal.files().size() + " files)");
+        console.write("Deleted " + summary(removal));
+    }
+
+    private boolean confirm(VersionRemoval removal) {
+        String answer = console.read("This will delete " + summary(removal) + ". Continue? [y/N] ");
+        return answer != null && List.of("y", "yes").contains(answer.trim().toLowerCase(Locale.ENGLISH));
+    }
+
+    private static String summary(VersionRemoval removal) {
+        StringBuilder summary = new StringBuilder("versions ")
+            .append(removal.removedVersions().stream().map(Version::getId).toList());
+        if (!removal.removedProfiles().isEmpty()) {
+            summary.append(" and profiles ").append(removal.removedProfiles().stream().map(Profile::name).toList());
+        }
+
+        return summary.append(" (").append(removal.files().size()).append(" files)").toString();
     }
 
     private String blockedMessage(VersionRemoval removal) {
@@ -88,7 +120,7 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
                 .append(removal.blockingProfiles().stream().map(Profile::name).toList());
         }
 
-        return message.append(". Delete them first or use --force.").toString();
+        return message.append(". Delete them first, use --force to delete it anyway, or --force --all to delete them too.").toString();
     }
 
 }
