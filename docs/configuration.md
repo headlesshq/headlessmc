@@ -83,6 +83,9 @@ hmc.server.script.timeout                                  60                   
 hmc.test.leave                                             true                                       -
 hmc.test.no-timeout                                        false                                      -
 hmc.test.server                                            false                                      -
+hmc.updater.enabled                                        true                                       Whether to check GitHub for a newer HeadlessMc release when the shell starts or the version is printed.
+hmc.updater.repository                                     headlesshq/headlessmc                      GitHub repository (owner/repo) to check for newer releases.
+hmc.updater.timeout-ms                                     3000                                       Timeout in milliseconds for the check for newer releases.
 hmc.xvfb.check                                             false                                      Whether to check if HeadlessMc is running with XVFB. For CI/CD pipelines.
 ```
 

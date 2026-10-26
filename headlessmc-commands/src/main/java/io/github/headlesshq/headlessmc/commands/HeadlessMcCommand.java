@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.commands;
 
-import io.github.headlesshq.headlessmc.HeadlessMc;
 import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.commands.auth.AccountCommand;
@@ -18,6 +17,7 @@ import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.cache.ConsoleCachingService;
 import io.github.headlesshq.headlessmc.console.completions.PicocliCompletions;
 import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
+import io.github.headlesshq.headlessmc.updater.UpdateNotifier;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -39,7 +39,7 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(
     name = "headlessmc",
     description = "test",
-    version = HeadlessMc.VERSION,
+    versionProvider = HeadlessMcVersionProvider.class,
     mixinStandardHelpOptions = true,
     subcommands = {
         ConfigCommand.class,
@@ -62,10 +62,12 @@ public class HeadlessMcCommand implements Callable<Integer> {
     private final ConsoleCachingService cachingService;
     private final ArgSplitter argSplitter;
     private final Console console;
+    private final UpdateNotifier updateNotifier;
 
     @Override
     public Integer call() {
         CachedConsole console = cachingService.cache(this.console);
+        updateNotifier.checkAsync();
         try {
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {

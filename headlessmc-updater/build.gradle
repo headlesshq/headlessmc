@@ -1,0 +1,10 @@
+dependencies {
+    api project(':headlessmc-config')
+    implementation rootProject
+
+    implementation project(':headlessmc-os')
+    implementation project(':headlessmc-console')
+    implementation project(':headlessmc-net:headlessmc-net-rest')
+
+    implementation libs.quarkus.rest.client.jackson
+}

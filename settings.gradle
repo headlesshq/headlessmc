@@ -99,6 +99,8 @@ include 'headlessmc-launcher:headlessmc-launcher-client'
 include 'headlessmc-launcher:headlessmc-launcher-server'
 include 'headlessmc-launcher:headlessmc-launcher-process'
 
+include 'headlessmc-updater'
+
 include 'headlessmc-commands'
 include 'headlessmc-commands:headlessmc-commands-auth'
 include 'headlessmc-commands:headlessmc-commands-auth-cdi'

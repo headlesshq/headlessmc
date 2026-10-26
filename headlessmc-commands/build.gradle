@@ -4,6 +4,7 @@ dependencies {
     implementation rootProject
 
     implementation project(':headlessmc-files')
+    implementation project(':headlessmc-updater')
     implementation project(':headlessmc-console:headlessmc-console-cdi')
     implementation project(':headlessmc-console:headlessmc-console-completions')
     implementation project(':headlessmc-commands:headlessmc-commands-auth-cdi')
