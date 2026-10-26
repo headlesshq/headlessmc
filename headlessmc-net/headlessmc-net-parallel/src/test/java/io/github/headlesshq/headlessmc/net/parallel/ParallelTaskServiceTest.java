@@ -29,13 +29,13 @@ class ParallelTaskServiceTest {
     void runsTasksInParallel() {
         int tasks = 8;
         long sleepMs = 300;
+        ParallelConfig config = config(Map.of("hmc.parallel.parallelism", String.valueOf(tasks)));
         AtomicInteger completed = new AtomicInteger();
 
-        Duration elapsed = timed(() -> {
-            try (ParallelTaskService<ParallelTask> service = new ParallelTaskService<>(config(), sleepingTasks(tasks, sleepMs))) {
-                service.run(task -> completed.incrementAndGet());
-            }
-        });
+        Duration elapsed;
+        try (ParallelTaskService<ParallelTask> service = new ParallelTaskService<>(config, sleepingTasks(tasks, sleepMs))) {
+            elapsed = timed(() -> service.run(task -> completed.incrementAndGet()));
+        }
 
         assertEquals(tasks, completed.get());
         assertTrue(elapsed.toMillis() < tasks * sleepMs / 2,
