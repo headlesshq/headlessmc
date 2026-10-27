@@ -14,6 +14,7 @@ dependencies {
     implementation project(':headlessmc-net:headlessmc-net-rest')
 
     runtimeOnly project(':headlessmc-net:headlessmc-net-java')
+    runtimeOnly project(':headlessmc-platform:headlessmc-platform-vanilla')
 
     implementation libs.quarkus.rest.client.jackson
 }
@@ -21,5 +22,4 @@ dependencies {
 dependencies {
     testImplementation testFixtures(project(':headlessmc-net'))
     testImplementation testFixtures(project(':headlessmc-files'))
-    testRuntimeOnly project(':headlessmc-platform:headlessmc-platform-vanilla')
 }
