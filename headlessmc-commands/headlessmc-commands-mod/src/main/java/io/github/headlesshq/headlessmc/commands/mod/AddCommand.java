@@ -50,7 +50,7 @@ public class AddCommand implements Runnable, VersionArgCommand, CachedConsole.En
 
     @CommandLine.Option(
         names = {"--platform"},
-        description = "The mod distribution platform to use.",
+        description = "The mod distribution platform to use, 'default' (GitHub and Modrinth), 'all', or a specific platform.",
         completionCandidates = ModDistributionPlatformCompletions.class
     )
     private @Nullable String platform;

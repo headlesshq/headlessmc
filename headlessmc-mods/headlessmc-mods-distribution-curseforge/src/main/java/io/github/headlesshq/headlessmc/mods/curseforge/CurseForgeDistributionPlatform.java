@@ -22,7 +22,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A {@link ModDistributionPlatform} for <a href=https://www.curseforge.com>CurseForge</a>.
@@ -45,34 +44,31 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
     private final ModCache modCache;
 
     @Override
-    public List<RemoteMod> search(String query, Set<ModType> types) throws HeadlessMcException {
-        return search(query, null, null, types);
+    public List<RemoteMod> search(String query, ModType type) throws HeadlessMcException {
+        return search(query, null, null, type);
     }
 
     @Override
-    public List<RemoteMod> search(String query, VersionArg version, Set<ModType> types) throws HeadlessMcException {
-        Integer modLoaderType = types.contains(ModType.MOD) ? CurseForgeIds.modLoaderType(version.platform()) : null;
-        return search(query, version.version(), modLoaderType, types);
+    public List<RemoteMod> search(String query, VersionArg version, ModType type) throws HeadlessMcException {
+        return search(query, version.version(), modLoaderType(version, type), type);
     }
 
     private List<RemoteMod> search(
         String query,
         @Nullable String gameVersion,
         @Nullable Integer modLoaderType,
-        Set<ModType> types
+        ModType type
     ) throws HeadlessMcException {
-        String apiKey = apiKey();
-        List<Integer> classIds = types.stream().map(CurseForgeIds::classId).distinct().toList();
-        try {
-            if (classIds.isEmpty()) {
-                return api.search(apiKey, CurseForgeIds.MINECRAFT, null, query, null, null, gameVersion, modLoaderType, PAGE_SIZE)
-                    .data().stream().map(CurseForgeMod::toMod).toList();
-            }
+        Integer classId = CurseForgeIds.classId(type);
+        if (classId == null) {
+            return List.of();
+        }
 
-            return classIds.stream()
-                .flatMap(classId -> api.search(
-                    apiKey, CurseForgeIds.MINECRAFT, classId, query, null, null, gameVersion, modLoaderType, PAGE_SIZE
-                ).data().stream())
+        String apiKey = apiKey();
+        try {
+            return api.search(apiKey, CurseForgeIds.MINECRAFT, classId, query, null, null, gameVersion, modLoaderType, PAGE_SIZE)
+                .data()
+                .stream()
                 .map(CurseForgeMod::toMod)
                 .toList();
         } catch (ApiException | ProcessingException e) {
@@ -95,7 +91,7 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
         String apiKey = apiKey();
         try {
             CurseForgeMod mod = findMod(apiKey, id, type);
-            Integer modLoaderType = ModType.MOD.equals(type) ? CurseForgeIds.modLoaderType(version.platform()) : null;
+            Integer modLoaderType = modLoaderType(version, type);
             CurseForgeFile file = api.getFiles(apiKey, mod.id(), version.version(), modLoaderType)
                 .data()
                 .stream()
@@ -145,12 +141,21 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
             return api.getMod(apiKey, Long.parseLong(id)).data();
         }
 
-        return api.search(apiKey, CurseForgeIds.MINECRAFT, CurseForgeIds.classId(type), null, id, null, null, null, null)
+        Integer classId = CurseForgeIds.classId(type);
+        if (classId == null) {
+            throw new ModDistributionException("CurseForge does not support mods of type " + type.name());
+        }
+
+        return api.search(apiKey, CurseForgeIds.MINECRAFT, classId, null, id, null, null, null, null)
             .data()
             .stream()
             .filter(mod -> id.equalsIgnoreCase(mod.slug()))
             .findFirst()
             .orElseThrow(() -> new ModDistributionException("Failed to find CurseForge project " + id));
+    }
+
+    private static @Nullable Integer modLoaderType(VersionArg version, ModType type) {
+        return ModType.MOD.equals(type) ? CurseForgeIds.modLoaderType(version.platform()) : null;
     }
 
     private String apiKey() throws ModDistributionException {
@@ -160,6 +165,11 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
             .orElseThrow(() -> new ModDistributionException(
                 "CurseForge requires an api key, please configure " + CurseForgeConfig.PREFIX + ".api-key"
             ));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return config.get().apiKey().filter(key -> !key.isBlank()).isPresent();
     }
 
     @Override

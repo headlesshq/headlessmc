@@ -50,7 +50,7 @@ public class CurseForgeDistributionPlatformTest {
     @EnabledIfEnvironmentVariable(named = API_KEY_ENV, matches = ".+")
     @ValueSource(strings = {"hmc-specifics", "hmc-optimizations", "hmc-prometheus", "hmc-mcp-bridge", "mc-runtime-check"})
     public void testFindsAndDownloadsHeadlessHqMods(String slug) throws Exception {
-        assertTrue(platform.search(slug, Set.of(ModType.MOD)).stream().anyMatch(mod -> slug.equals(mod.id())),
+        assertTrue(platform.search(slug, ModType.MOD).stream().anyMatch(mod -> slug.equals(mod.id())),
             "search did not find " + slug);
 
         String apiKey = System.getenv(API_KEY_ENV);

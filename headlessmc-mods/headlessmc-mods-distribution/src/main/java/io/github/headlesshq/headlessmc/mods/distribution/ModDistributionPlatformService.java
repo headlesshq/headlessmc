@@ -10,17 +10,20 @@ import java.util.stream.Stream;
  */
 public interface ModDistributionPlatformService {
     /**
-     * @return the default (modrinth) {@link ModDistributionPlatform}.
+     * @return the {@link ModDistributionPlatform#DEFAULT} platform, which combines the
+     * {@link ModDistributionPlatform#DEFAULT_PLATFORMS}.
      */
     ModDistributionPlatform defaultPlatform();
 
     /**
-     * @return a Stream of {@link ModDistributionPlatform}s supported by HeadlessMc.
+     * @return a Stream of {@link ModDistributionPlatform}s supported by HeadlessMc,
+     * without the combined {@link ModDistributionPlatform#DEFAULT} and {@link ModDistributionPlatform#ALL} platforms.
      */
     Stream<ModDistributionPlatform> platforms();
 
     /**
      * Finds a {@link ModDistributionPlatform} by name.
+     * {@link ModDistributionPlatform#DEFAULT} and {@link ModDistributionPlatform#ALL} return combined platforms.
      *
      * @param name the name of the ModDistributionPlatform to find.
      * @return the ModDistributionPlatform with the given name, or an empty Optional.

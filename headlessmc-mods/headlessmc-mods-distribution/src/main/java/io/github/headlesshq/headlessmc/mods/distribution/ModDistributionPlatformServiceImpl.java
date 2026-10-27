@@ -22,8 +22,12 @@ public class ModDistributionPlatformServiceImpl implements ModDistributionPlatfo
 
     @Override
     public ModDistributionPlatform defaultPlatform() {
-        return byName(ModDistributionPlatform.DEFAULT)
-            .orElseThrow(() -> new IllegalStateException("Failed to find default mod distribution platform"));
+        return new CompositeDistributionPlatform(
+            ModDistributionPlatform.DEFAULT,
+            ModDistributionPlatform.DEFAULT_PLATFORMS.stream()
+                .flatMap(name -> findPlatform(name).stream())
+                .toList()
+        );
     }
 
     @Override
@@ -33,6 +37,18 @@ public class ModDistributionPlatformServiceImpl implements ModDistributionPlatfo
 
     @Override
     public Optional<ModDistributionPlatform> byName(String name) {
+        if (ModDistributionPlatform.DEFAULT.equalsIgnoreCase(name)) {
+            return Optional.of(defaultPlatform());
+        }
+
+        if (ModDistributionPlatform.ALL.equalsIgnoreCase(name)) {
+            return Optional.of(new CompositeDistributionPlatform(ModDistributionPlatform.ALL, platforms().toList()));
+        }
+
+        return findPlatform(name);
+    }
+
+    private Optional<ModDistributionPlatform> findPlatform(String name) {
         return platforms.stream()
             .filter(platform -> platform.getName().equalsIgnoreCase(name))
             .findFirst();

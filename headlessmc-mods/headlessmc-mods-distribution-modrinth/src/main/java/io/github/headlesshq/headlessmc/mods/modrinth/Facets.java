@@ -131,7 +131,7 @@ class Facets {
         List<String> projectTypes = modTypes.stream()
             .map(ModType::distributionNames)
             .map(types -> types.getOrDefault(
-                ModrinthDistributionPlatform.DEFAULT,
+                ModrinthDistributionPlatform.NAME,
                 types.get(ModType.DISTRIBUTION_DEFAULT))
             ).filter(Objects::nonNull)
             .toList();

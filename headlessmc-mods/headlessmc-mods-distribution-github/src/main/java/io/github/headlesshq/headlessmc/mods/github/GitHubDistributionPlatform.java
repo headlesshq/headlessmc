@@ -30,7 +30,6 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -76,17 +75,17 @@ public class GitHubDistributionPlatform implements ModDistributionPlatform {
     }
 
     @Override
-    public List<RemoteMod> search(String query, Set<ModType> types) throws HeadlessMcException {
-        return search(query, types, repository -> true);
+    public List<RemoteMod> search(String query, ModType type) throws HeadlessMcException {
+        return search(query, type, repository -> true);
     }
 
     @Override
-    public List<RemoteMod> search(String query, VersionArg version, Set<ModType> types) throws HeadlessMcException {
-        return search(query, types, repository -> repository.supports(version));
+    public List<RemoteMod> search(String query, VersionArg version, ModType type) throws HeadlessMcException {
+        return search(query, type, repository -> repository.supports(version));
     }
 
-    private List<RemoteMod> search(String query, Set<ModType> types, Predicate<ModRepository> filter) {
-        if (!types.isEmpty() && !types.contains(ModType.MOD)) {
+    private List<RemoteMod> search(String query, ModType type, Predicate<ModRepository> filter) {
+        if (!ModType.MOD.equals(type)) {
             return List.of();
         }
 

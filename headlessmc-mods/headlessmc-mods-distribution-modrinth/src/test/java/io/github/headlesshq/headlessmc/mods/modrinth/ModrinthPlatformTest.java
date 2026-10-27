@@ -6,7 +6,6 @@ import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.distribution.ModCache;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionException;
-import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.RemoteMod;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
@@ -93,13 +92,13 @@ class ModrinthPlatformTest {
     }
 
     @Test
-    void nameIsTheDefaultPlatform() {
-        assertEquals(ModDistributionPlatform.DEFAULT, platform.getName());
+    void nameIsModrinth() {
+        assertEquals("modrinth", platform.getName());
     }
 
     @Test
     void searchesWithModTypeFacets() {
-        List<RemoteMod> result = platform.search("fast", Set.of(ModType.MOD));
+        List<RemoteMod> result = platform.search("fast", ModType.MOD);
 
         assertEquals(List.of(new RemoteMod("sodium", "Sodium", "Fast rendering")), result);
         assertEquals("fast", queries.getFirst().query());
@@ -108,7 +107,7 @@ class ModrinthPlatformTest {
 
     @Test
     void searchesScopedToAVersionIncludeLoaderAndVersionFacets() {
-        platform.search("fast", VersionArg.parse("fabric", "1.21.1"), Set.of(ModType.MOD));
+        platform.search("fast", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
 
         String facets = queries.getFirst().facets();
         assertTrue(facets.contains("fabric"));
@@ -117,7 +116,7 @@ class ModrinthPlatformTest {
 
     @Test
     void vanillaSearchesDoNotFilterByLoader() {
-        platform.search("fast", VersionArg.parse("vanilla", "1.21.1"), Set.of(ModType.DATA_PACK));
+        platform.search("fast", VersionArg.parse("vanilla", "1.21.1"), ModType.DATA_PACK);
 
         assertFalse(queries.getFirst().facets().contains("vanilla"));
     }

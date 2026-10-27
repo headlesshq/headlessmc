@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 @Default
 @Dependent
@@ -23,16 +24,19 @@ public class ModDistributionPlatformCompletions implements Completions {
 
     @Override
     public Iterable<Candidate> candidates(@Nullable Object spec, Line line) {
-        return modDistributionPlatformService.platforms()
-            .map(platform -> new Candidate(platform.getName(), null))
-            .toList();
+        return names().map(name -> new Candidate(name, null)).toList();
     }
 
     @Override
     public Iterator<String> iterator() {
-        return modDistributionPlatformService.platforms()
-            .map(ModDistributionPlatform::getName)
-            .iterator();
+        return names().iterator();
+    }
+
+    private Stream<String> names() {
+        return Stream.concat(
+            Stream.of(ModDistributionPlatform.DEFAULT, ModDistributionPlatform.ALL),
+            modDistributionPlatformService.platforms().map(ModDistributionPlatform::getName)
+        );
     }
 
 }

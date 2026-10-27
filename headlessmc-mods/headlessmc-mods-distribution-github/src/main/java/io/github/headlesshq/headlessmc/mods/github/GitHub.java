@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * Qualifier for the {@link GitHubDistributionPlatform},
- * so that it does not compete with the default {@code Modrinth} platform.
+ * so that it can be injected directly, e.g. to download the headlesshq mods.
  */
 @Qualifier
 @Documented

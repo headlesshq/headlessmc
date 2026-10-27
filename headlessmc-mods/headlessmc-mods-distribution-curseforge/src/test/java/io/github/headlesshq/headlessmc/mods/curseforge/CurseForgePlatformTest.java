@@ -100,7 +100,7 @@ class CurseForgePlatformTest {
 
     @Test
     void searchesWithClassIdAndApiKey() {
-        List<RemoteMod> result = platform.search("hmc", Set.of(ModType.MOD));
+        List<RemoteMod> result = platform.search("hmc", ModType.MOD);
 
         assertEquals(List.of(new RemoteMod("hmc-specifics", "hmc-specifics", "Minecraft API")), result);
         assertEquals(new Search(API_KEY, 6, "hmc", null, null, null), searches.getFirst());
@@ -108,16 +108,34 @@ class CurseForgePlatformTest {
 
     @Test
     void searchesScopedToAVersionIncludeLoaderAndVersion() {
-        platform.search("hmc", VersionArg.parse("fabric", "1.21.1"), Set.of(ModType.MOD));
+        platform.search("hmc", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
 
         assertEquals(new Search(API_KEY, 6, "hmc", null, "1.21.1", 4), searches.getFirst());
     }
 
     @Test
     void resourcePackSearchesDoNotFilterByLoader() {
-        platform.search("faithful", VersionArg.parse("fabric", "1.21.1"), Set.of(ModType.RESOURCE_PACK));
+        platform.search("faithful", VersionArg.parse("fabric", "1.21.1"), ModType.RESOURCE_PACK);
 
         assertEquals(new Search(API_KEY, 12, "faithful", null, "1.21.1", null), searches.getFirst());
+    }
+
+    @Test
+    void modPackSearchesDoNotFilterByLoader() {
+        platform.search("fabulously", VersionArg.parse("fabric", "1.21.1"), ModType.MOD_PACK);
+
+        assertEquals(new Search(API_KEY, 4471, "fabulously", null, "1.21.1", null), searches.getFirst());
+    }
+
+    @Test
+    void isEnabledOnlyWithApiKey() {
+        assertTrue(platform.isEnabled());
+
+        apiKey = " ";
+        assertFalse(platform.isEnabled());
+
+        apiKey = null;
+        assertFalse(platform.isEnabled());
     }
 
     @Test
@@ -125,7 +143,7 @@ class CurseForgePlatformTest {
         apiKey = null;
 
         ModDistributionException e = assertThrows(ModDistributionException.class,
-            () -> platform.search("hmc", Set.of(ModType.MOD)));
+            () -> platform.search("hmc", ModType.MOD));
         assertTrue(e.getMessage().contains(CurseForgeConfig.PREFIX + ".api-key"));
         assertTrue(searches.isEmpty());
     }

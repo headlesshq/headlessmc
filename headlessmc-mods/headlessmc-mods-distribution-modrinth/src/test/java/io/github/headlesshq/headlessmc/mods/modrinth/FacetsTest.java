@@ -54,7 +54,7 @@ class FacetsTest {
             "custom",
             Map.of(
                 ModType.DISTRIBUTION_DEFAULT, "custom_default",
-                ModrinthDistributionPlatform.DEFAULT, "custom_modrinth"
+                ModrinthDistributionPlatform.NAME, "custom_modrinth"
             ),
             ModDirectory.of("custom")
         );

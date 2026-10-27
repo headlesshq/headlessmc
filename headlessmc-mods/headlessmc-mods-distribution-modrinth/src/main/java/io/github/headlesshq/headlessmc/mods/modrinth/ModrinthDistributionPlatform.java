@@ -28,14 +28,19 @@ import java.util.Set;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ModrinthDistributionPlatform implements ModDistributionPlatform {
+    /**
+     * The name of this platform.
+     */
+    public static final String NAME = "modrinth";
+
     private final ModpackDownloader modpackDownloader;
     private final DownloadService downloadService;
     private final @RestClient ModrinthAPI api;
     private final ModCache modCache;
 
     @Override
-    public List<RemoteMod> search(String query, Set<ModType> types) throws HeadlessMcException {
-        String facets = Facets.builder().modTypes(types).build().toQuery();
+    public List<RemoteMod> search(String query, ModType type) throws HeadlessMcException {
+        String facets = Facets.builder().modTypes(Set.of(type)).build().toQuery();
         try {
             ModrinthSearchResult result = api.search(query, facets);
             return result.hits().stream().map(ModrinthProject::toMod).toList();
@@ -45,11 +50,11 @@ public class ModrinthDistributionPlatform implements ModDistributionPlatform {
     }
 
     @Override
-    public List<RemoteMod> search(String query, VersionArg version, Set<ModType> types) throws HeadlessMcException {
+    public List<RemoteMod> search(String query, VersionArg version, ModType type) throws HeadlessMcException {
         List<String> loaders = List.of(version.platform());
-        if (types.contains(ModType.DATA_PACK) || version.isVanilla()) {
+        if (ModType.DATA_PACK.equals(type) || version.isVanilla()) {
             loaders = List.of();
-        } else if (types.contains(ModType.SHADER)) {
+        } else if (ModType.SHADER.equals(type)) {
             // TODO: this is just a quick and dirty fix,
             //  check what Shader platforms there actually are and which are supported
             loaders = "fabric".equalsIgnoreCase(version.platform())
@@ -61,7 +66,7 @@ public class ModrinthDistributionPlatform implements ModDistributionPlatform {
             .loaders(loaders)
             .sides(version.side().stream().toList())
             .versions(List.of(version.version()))
-            .modTypes(types)
+            .modTypes(Set.of(type))
             .build()
             .toQuery();
 
@@ -169,7 +174,7 @@ public class ModrinthDistributionPlatform implements ModDistributionPlatform {
 
     @Override
     public String getName() {
-        return ModDistributionPlatform.DEFAULT;
+        return NAME;
     }
 
 }

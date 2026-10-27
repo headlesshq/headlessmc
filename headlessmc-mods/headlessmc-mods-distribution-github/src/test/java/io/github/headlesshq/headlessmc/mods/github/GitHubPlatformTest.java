@@ -281,12 +281,12 @@ class GitHubPlatformTest {
     @Test
     void searchesByNameAndDescription() {
         assertEquals(List.of("hmc-specifics", "hmc-optimizations", "hmc-mcp", "hmc-prometheus"),
-            platform.search("hmc", Set.of(ModType.MOD)).stream().map(RemoteMod::id).toList());
+            platform.search("hmc", ModType.MOD).stream().map(RemoteMod::id).toList());
         assertEquals(List.of("hmc-prometheus"),
-            platform.search("PROMETHEUS", Set.of()).stream().map(RemoteMod::id).toList());
-        assertEquals(List.of(), platform.search("hmc", Set.of(ModType.SHADER)));
-        assertEquals(List.of(), platform.search("hmc", VersionArg.parse("vanilla", "1.21.1"), Set.of(ModType.MOD)));
-        assertEquals(5, platform.search("", VersionArg.parse("fabric", "1.21.1"), Set.of(ModType.MOD)).size());
+            platform.search("PROMETHEUS", ModType.MOD).stream().map(RemoteMod::id).toList());
+        assertEquals(List.of(), platform.search("hmc", ModType.SHADER));
+        assertEquals(List.of(), platform.search("hmc", VersionArg.parse("vanilla", "1.21.1"), ModType.MOD));
+        assertEquals(5, platform.search("", VersionArg.parse("fabric", "1.21.1"), ModType.MOD).size());
     }
 
     @Test
