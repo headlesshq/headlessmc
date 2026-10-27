@@ -3,7 +3,6 @@ package io.github.headlesshq.headlessmc.commands.java;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
-import io.github.headlesshq.headlessmc.distribution.JavaRuntime;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.Objects;
 
 @Slf4j
 @Getter
@@ -57,9 +55,9 @@ public class UpdateCommand implements Runnable, CachedConsole.Enabled {
 
         tableProvider.<JavaUpdateService.Update>get()
             .withColumn("name", update -> update.java().name())
-            .withColumn("distribution", update -> update.installed().distribution())
-            .withColumn("installed", update -> versionOf(update.installed()))
-            .withColumn("latest", update -> versionOf(update.latest()))
+            .withColumn("distribution", update -> update.installed() == null ? "unknown" : update.installed().distribution())
+            .withColumn("installed", JavaUpdateService.Update::installedVersion)
+            .withColumn("latest", update -> update.latest().distribution() + " " + update.latestVersion())
             .addAll(result.updates())
             .log(console::write);
 
@@ -72,7 +70,7 @@ public class UpdateCommand implements Runnable, CachedConsole.Enabled {
         for (JavaUpdateService.Update update : result.updates()) {
             try {
                 Path path = updateService.update(update);
-                console.write("Updated " + update.java().name() + " to " + versionOf(update.latest()) + " at " + path);
+                console.write("Updated " + update.java().name() + " to " + update.latestVersion() + " at " + path);
             } catch (HeadlessMcException e) {
                 log.error("Failed to update {}", update.java().name(), e);
                 console.write("Failed to update " + update.java().name() + ": " + e.getMessage());
@@ -83,10 +81,6 @@ public class UpdateCommand implements Runnable, CachedConsole.Enabled {
         if (failed > 0) {
             throw new IllegalStateException("Failed to update " + failed + " java installation(s).");
         }
-    }
-
-    private static String versionOf(JavaRuntime runtime) {
-        return Objects.requireNonNullElse(runtime.javaVersion(), String.valueOf(runtime.version()));
     }
 
 }

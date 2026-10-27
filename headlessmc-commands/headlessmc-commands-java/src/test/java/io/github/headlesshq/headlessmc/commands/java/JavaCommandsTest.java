@@ -109,17 +109,22 @@ class JavaCommandsTest {
         }
 
         @Override
-        public List<JavaRuntime> getUpdates(JavaRuntime runtime, OS os, CPU cpu) {
+        public Optional<JavaRuntime> getUpdate(JavaRuntime runtime, OS os, CPU cpu) {
             updateQueries.add(runtime);
-            return updates;
+            return updates.stream().findFirst();
         }
 
         @Override
         public void download(JavaRuntime runtime, Path path) {
             downloads.add(new Downloaded(runtime, path));
             createDir(path);
+            if (downloadContainsJava) {
+                javas.add(hmcJava(runtime.name(), runtime.version()));
+            }
         }
     };
+
+    private boolean downloadContainsJava = true;
 
     private final JavaDistributionProviderService providerService = new JavaDistributionProviderService() {
         @Override
@@ -323,7 +328,7 @@ class JavaCommandsTest {
     // ------------------------------------------------------- RemoveCommand
 
     private RemoveCommand remove() {
-        return new RemoveCommand(javaService, new DefaultFileService(new DefaultFileSystemProvider()), console);
+        return new RemoveCommand(javaService, new DefaultFileService(new DefaultFileSystemProvider()), appFiles, console);
     }
 
     @Test
@@ -340,16 +345,17 @@ class JavaCommandsTest {
     }
 
     @Test
-    void removeDeletesInstallation() {
-        Java java = java("temurin-21", 21, JavaSource.SORT_HMC);
+    void removeDeletesWholeInstallation() {
+        Java java = hmcJava("temurin-21", 21);
         javas.add(java);
-        createDir(java.home().getUnchecked().orElseThrow());
+        Path installation = appFiles.getJavaDir().resolve("temurin-21");
+        installedRuntimes.write(installation, runtime("temurin-21", "21.0.5+11"));
 
         RemoveCommand command = remove();
         command.setName("TEMURIN-21");
         command.run();
 
-        assertFalse(Files.exists(java.home().getUnchecked().orElseThrow()));
+        assertFalse(Files.exists(installation));
         assertEquals(1, refreshes);
         assertTrue(console.output().contains("Removed java installation TEMURIN-21"));
         assertFalse(console.output().contains("Warning"));
@@ -366,11 +372,12 @@ class JavaCommandsTest {
         command.run();
 
         assertTrue(console.output().contains("was not installed by HeadlessMc"));
+        assertFalse(Files.exists(java.home().getUnchecked().orElseThrow()));
     }
 
     @Test
     void removeInstallationWithoutPathThrows() {
-        javas.add(new Java("broken", 21, new SafePath(null), new SafePath(null), false, JavaSource.SORT_HMC));
+        javas.add(new Java("broken", 21, new SafePath(null), new SafePath(null), false, JavaSource.SORT_GENERAL));
 
         RemoveCommand command = remove();
         command.setName("broken");
@@ -420,26 +427,23 @@ class JavaCommandsTest {
     }
 
     @Test
-    void updateInfersLegacyInstallationsFromReleaseFile() throws IOException {
+    void updateReplacesUnrecordedInstallationsWithTheDefaultDistribution() {
         Java java = hmcJava("OpenJDK21U-jre_x64_linux_hotspot_21_35", 21);
         javas.add(java);
-        Files.writeString(
-            java.home().getUnchecked().orElseThrow().resolve("release"),
-            "IMPLEMENTOR=\"Eclipse Adoptium\"\nJAVA_RUNTIME_VERSION=\"21+35-LTS\"\nJAVA_VERSION=\"21\"\n"
-        );
+        runtimes.add(runtime("temurin-21.0.5", "21.0.5+11"));
 
-        updateService().check();
+        JavaUpdateService.Result result = updateService().check();
 
-        JavaRuntime inferred = updateQueries.getFirst();
-        assertEquals("foojay.io", inferred.provider());
-        assertEquals("temurin", inferred.distribution());
-        assertEquals(21, inferred.version());
-        assertEquals("21+35-LTS", inferred.javaVersion());
-        assertEquals("jre", inferred.packageType());
+        assertTrue(updateQueries.isEmpty());
+        assertEquals(1, result.updates().size());
+        JavaUpdateService.Update update = result.updates().getFirst();
+        assertNull(update.installed());
+        assertEquals("21", update.installedVersion());
+        assertEquals("temurin-21.0.5", update.latest().name());
     }
 
     @Test
-    void updateSkipsUnknownAndIgnoresForeignInstallations() {
+    void updateSkipsUnrecordedInstallationsWithoutRuntimeAndIgnoresForeignInstallations() {
         javas.add(hmcJava("unknown", 21));
         javas.add(java("system-21", 21, JavaSource.SORT_GENERAL));
 
@@ -449,6 +453,21 @@ class JavaCommandsTest {
         assertTrue(result.updates().isEmpty());
         assertEquals(1, result.skipped().size());
         assertEquals("unknown", result.skipped().getFirst().java().name());
+    }
+
+    @Test
+    void updateOfUnrecordedInstallationRecordsIt() {
+        Java java = hmcJava("temurin-21.0.5", 21);
+        javas.add(java);
+        JavaRuntime latest = runtime("temurin-21.0.5", "21.0.5+11");
+        runtimes.add(latest);
+
+        update().run();
+
+        Path installation = appFiles.getJavaDir().resolve(java.name());
+        assertTrue(downloads.isEmpty());
+        assertTrue(Files.exists(installation));
+        assertEquals(Optional.of(latest.javaVersion()), installedRuntimes.read(installation).map(JavaRuntime::javaVersion));
     }
 
     @Test
@@ -485,8 +504,60 @@ class JavaCommandsTest {
         assertEquals(List.of(new Downloaded(latest, newInstallation)), downloads);
         assertFalse(Files.exists(oldInstallation));
         assertEquals(Optional.of(latest.name()), installedRuntimes.read(newInstallation).map(JavaRuntime::name));
-        assertEquals(1, refreshes);
+        assertEquals(2, refreshes);
         assertTrue(console.output().contains("Updated temurin-21.0.3 to 21.0.5+11"));
+    }
+
+    @Test
+    void updateReinstallsIntoLeftoverDirectory() {
+        Path oldInstallation = addOutdatedJava();
+        Path leftover = appFiles.getJavaDir().resolve("temurin-21.0.5");
+        createDir(leftover);
+
+        update().run();
+
+        assertEquals(1, downloads.size());
+        assertEquals(leftover, downloads.getFirst().path());
+        assertFalse(Files.exists(oldInstallation));
+    }
+
+    @Test
+    void updateKeepsOldInstallationIfNewOneIsMissing() {
+        Path oldInstallation = addOutdatedJava();
+        createDir(appFiles.getJavaDir().resolve("temurin-21.0.5"));
+        downloadContainsJava = false;
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, update()::run);
+
+        assertTrue(e.getMessage().contains("Failed to update 1 java installation(s)."));
+        assertTrue(Files.exists(oldInstallation));
+        assertTrue(console.output().contains("Failed to find a java installation"));
+    }
+
+    @Test
+    void updateToAlreadyInstalledRuntimeOnlyRemovesOldOne() {
+        Path oldInstallation = addOutdatedJava();
+        javas.add(hmcJava("temurin-21.0.5", 21));
+
+        update().run();
+
+        assertTrue(downloads.isEmpty());
+        assertFalse(Files.exists(oldInstallation));
+        assertTrue(installedRuntimes.read(appFiles.getJavaDir().resolve("temurin-21.0.5")).isPresent());
+    }
+
+    @Test
+    void updateOfTwoInstallationsToTheSameRuntimeDownloadsOnce() {
+        Path first = addOutdatedJava();
+        Java second = hmcJava("temurin-21.0.4", 21);
+        javas.add(second);
+        installedRuntimes.write(appFiles.getJavaDir().resolve(second.name()), runtime("temurin-21.0.4", "21.0.4+7"));
+
+        update().run();
+
+        assertEquals(1, downloads.size());
+        assertFalse(Files.exists(first));
+        assertFalse(Files.exists(appFiles.getJavaDir().resolve(second.name())));
     }
 
     @Test
@@ -509,7 +580,7 @@ class JavaCommandsTest {
             appFiles, new DefaultFileService(new DefaultFileSystemProvider()), new DefaultJacksonJsonService()
         );
 
-        return new JavaUpdater(updateService(), () -> javaConfig, () -> updaterConfig, cacheFactory, appFiles);
+        return new JavaUpdater(updateService(), () -> javaConfig, () -> updaterConfig, cacheFactory);
     }
 
     private Path addOutdatedJava() {
@@ -560,12 +631,30 @@ class JavaCommandsTest {
     }
 
     @Test
-    void updaterIgnoresCachedUpdatesThatHaveBeenInstalled() throws IOException {
-        Path installation = addOutdatedJava();
+    void updaterIgnoresCachedUpdatesThatHaveBeenInstalled() {
+        addOutdatedJava();
         updater().checkForUpdates();
-        new DefaultFileService(new DefaultFileSystemProvider()).delete(installation);
+        javas.add(hmcJava("temurin-21.0.5", 21));
 
         assertEquals(Optional.empty(), updater().checkForUpdatesIfStale());
+    }
+
+    @Test
+    void updaterReportsCachedUpdatesWithLeftoverDirectory() {
+        addOutdatedJava();
+        updater().checkForUpdates();
+        createDir(appFiles.getJavaDir().resolve("temurin-21.0.5"));
+
+        assertTrue(updater().checkForUpdatesIfStale().isPresent());
+    }
+
+    @Test
+    void updaterDoesNotCacheFailedChecks() {
+        javas.add(hmcJava("unknown", 21));
+        assertEquals(Optional.empty(), updater().checkForUpdates());
+
+        runtimes.add(runtime("temurin-21.0.5", "21.0.5+11"));
+        assertTrue(updater().checkForUpdatesIfStale().isPresent());
     }
 
     @Test

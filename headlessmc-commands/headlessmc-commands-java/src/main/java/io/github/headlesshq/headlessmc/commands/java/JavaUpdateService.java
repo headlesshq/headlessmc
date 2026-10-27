@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.commands.java;
 
 import io.github.headlesshq.headlessmc.distribution.InstalledJavaRuntime;
 import io.github.headlesshq.headlessmc.distribution.InstalledJavaRuntimeService;
+import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProvider;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProviderService;
 import io.github.headlesshq.headlessmc.distribution.JavaRuntime;
@@ -19,37 +20,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 
 /**
  * Checks the Java installations inside the HeadlessMc java directory for updates and installs them.
+ * Installations without a recorded {@link InstalledJavaRuntime} are always outdated,
+ * they get replaced with the latest runtime of the default distribution for their major version.
  */
 @Slf4j
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class JavaUpdateService {
-    /**
-     * Maps the {@code IMPLEMENTOR} of a {@code release} file to the distribution it belongs to.
-     * Used for installations made before HeadlessMc recorded the {@link InstalledJavaRuntime}.
-     */
-    private static final Map<String, String> IMPLEMENTORS = Map.of(
-        "Eclipse Adoptium", "temurin",
-        "Azul Systems, Inc.", "zulu",
-        "Amazon.com Inc.", "corretto",
-        "BellSoft", "liberica",
-        "Microsoft", "microsoft",
-        "SAP SE", "sap_machine"
-    );
-
     private final JavaDistributionProviderService providerService;
     private final InstalledJavaRuntimeService installedRuntimeService;
     private final JavaService javaService;
@@ -73,19 +58,14 @@ public class JavaUpdateService {
 
             try {
                 Path installation = appFiles.getJavaDir().resolve(java.name());
-                Optional<JavaRuntime> installed = getInstalledRuntime(java, installation);
-                if (installed.isEmpty()) {
-                    skipped.add(new Skipped(java, "unknown distribution"));
-                    continue;
-                }
-
-                JavaDistributionProvider provider = getProvider(installed.get());
-                provider.getUpdates(installed.get(), os, cpu)
-                    .stream()
-                    .findFirst()
-                    .ifPresent(latest -> updates.add(new Update(java, installation, installed.get(), latest)));
+                Optional<JavaRuntime> installed = installedRuntimeService.read(installation);
+                Optional<JavaRuntime> latest = installed.isPresent()
+                    ? getProvider(installed.get()).getUpdate(installed.get(), os, cpu)
+                    : Optional.of(getLatestDefaultRuntime(java.version()));
+                latest.ifPresent(runtime -> updates.add(new Update(java, installation, installed.orElse(null), runtime)));
             } catch (HeadlessMcException e) {
-                log.error("Failed to check {} for updates", java.name(), e);
+                log.warn("Failed to check {} for updates: {}", java.name(), e.getMessage());
+                log.debug("Failed to check {} for updates", java.name(), e);
                 skipped.add(new Skipped(java, String.valueOf(e.getMessage())));
             }
         }
@@ -94,82 +74,61 @@ public class JavaUpdateService {
     }
 
     /**
-     * Installs the newer runtime of the given update and removes the outdated installation.
+     * Installs the newer runtime of the given update and removes the outdated installation,
+     * but only after the newer runtime has been verified to be installed.
      *
      * @param update the update to install.
      * @return the directory the newer runtime has been installed to.
      * @throws HeadlessMcException if the installation fails.
      */
     public Path update(Update update) throws HeadlessMcException {
-        JavaDistributionProvider provider = getProvider(update.latest());
-        Path target = appFiles.getJavaDir().resolve(update.latest().name());
-        if (Files.exists(target)) {
-            log.info("{} is already installed at {}", update.latest().name(), target);
+        JavaRuntime latest = update.latest();
+        Path target = appFiles.getJavaDir().resolve(latest.name());
+        if (isInstalled(latest.name())) {
+            log.info("{} is already installed at {}", latest.name(), target);
+            if (installedRuntimeService.read(target).isEmpty()) {
+                installedRuntimeService.write(target, latest);
+            }
         } else {
-            installedRuntimeService.install(provider, update.latest(), target);
+            installedRuntimeService.install(getProvider(latest), latest, target);
+            javaService.refresh();
+            if (!isInstalled(latest.name())) {
+                throw new HeadlessMcException("Failed to find a java installation in " + target + " after installing it");
+            }
         }
 
         if (!target.equals(update.installation())) {
             fileService.delete(update.installation());
+            javaService.refresh();
         }
 
-        javaService.refresh();
         return target;
+    }
+
+    /**
+     * @param name the name of a directory inside the HeadlessMc java directory.
+     * @return {@code true} if a Java installation has been found in the directory.
+     */
+    public boolean isInstalled(String name) {
+        return javaService.getJavaVersions()
+            .stream()
+            .anyMatch(java -> java.source() == JavaSource.SORT_HMC && java.name().equals(name));
+    }
+
+    private JavaRuntime getLatestDefaultRuntime(int version) throws HeadlessMcException {
+        JavaDistributionProvider provider = providerService.getDefaultProvider();
+        JavaDistribution distribution = provider.getDistributionByName(JavaDistribution.DEFAULT);
+        return provider.getRuntimes(distribution, version, os, cpu)
+            .stream()
+            .findFirst()
+            .orElseThrow(() -> new HeadlessMcException(
+                "Failed to find a java %s runtime for distribution %s".formatted(version, distribution.name())
+            ));
     }
 
     private JavaDistributionProvider getProvider(JavaRuntime runtime) {
         return providerService.getProviderByName(runtime.provider())
             .orElseThrow(() -> new HeadlessMcException("Unknown java distribution provider " + runtime.provider()));
-    }
-
-    private Optional<JavaRuntime> getInstalledRuntime(Java java, Path installation) throws HeadlessMcException {
-        Optional<JavaRuntime> recorded = installedRuntimeService.read(installation);
-        if (recorded.isPresent()) {
-            return recorded;
-        }
-
-        return java.home().getUnchecked().flatMap(home -> readReleaseFile(java, home));
-    }
-
-    private Optional<JavaRuntime> readReleaseFile(Java java, Path home) {
-        Path releaseFile = home.resolve("release");
-        if (!Files.isRegularFile(releaseFile)) {
-            return Optional.empty();
-        }
-
-        Properties release = new Properties();
-        try (Reader reader = Files.newBufferedReader(releaseFile, StandardCharsets.UTF_8)) {
-            release.load(reader);
-        } catch (IOException | IllegalArgumentException e) {
-            log.warn("Failed to read {}", releaseFile, e);
-            return Optional.empty();
-        }
-
-        String implementor = unquote(release.getProperty("IMPLEMENTOR"));
-        String distribution = implementor == null ? null : IMPLEMENTORS.get(implementor);
-        String javaVersion = unquote(release.getProperty("JAVA_RUNTIME_VERSION", release.getProperty("JAVA_VERSION")));
-        if (distribution == null || javaVersion == null) {
-            return Optional.empty();
-        }
-
-        boolean jdk = Files.exists(home.resolve("bin").resolve("javac"))
-            || Files.exists(home.resolve("bin").resolve("javac.exe"));
-        return Optional.of(new JavaRuntime(
-            JavaDistributionProvider.DEFAULT,
-            distribution,
-            "",
-            java.name(),
-            java.version(),
-            new JavaRuntime.MetaData(null, null, javaVersion, jdk ? "jdk" : "jre")
-        ));
-    }
-
-    private static @Nullable String unquote(@Nullable String value) {
-        if (value != null && value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
-            return value.substring(1, value.length() - 1);
-        }
-
-        return value;
     }
 
     /**
@@ -181,10 +140,28 @@ public class JavaUpdateService {
     /**
      * @param java         the installed Java.
      * @param installation the directory inside the HeadlessMc java directory containing the installation.
-     * @param installed    the installed runtime.
-     * @param latest       the newest runtime available.
+     * @param installed    the installed runtime, or {@code null} if it has not been recorded.
+     * @param latest       the latest stable runtime available.
      */
-    public record Update(Java java, Path installation, JavaRuntime installed, JavaRuntime latest) {}
+    public record Update(Java java, Path installation, @Nullable JavaRuntime installed, JavaRuntime latest) {
+        /**
+         * @return the full version of the installed runtime, or its major version if it has not been recorded.
+         */
+        public String installedVersion() {
+            return installed == null ? String.valueOf(java.version()) : versionOf(installed);
+        }
+
+        /**
+         * @return the full version of the latest runtime.
+         */
+        public String latestVersion() {
+            return versionOf(latest);
+        }
+
+        private static String versionOf(JavaRuntime runtime) {
+            return Objects.requireNonNullElse(runtime.javaVersion(), String.valueOf(runtime.version()));
+        }
+    }
 
     /**
      * @param java   the installed Java.

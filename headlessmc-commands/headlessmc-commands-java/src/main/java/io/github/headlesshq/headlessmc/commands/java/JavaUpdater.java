@@ -1,7 +1,6 @@
 package io.github.headlesshq.headlessmc.commands.java;
 
 import io.github.headlesshq.headlessmc.config.Holder;
-import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.java.JavaConfig;
 import io.github.headlesshq.headlessmc.updater.UpdateCheck;
 import io.github.headlesshq.headlessmc.updater.UpdateCheckCache;
@@ -12,8 +11,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.util.TypeLiteral;
 import jakarta.inject.Inject;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -36,21 +33,18 @@ public class JavaUpdater implements Updater {
     private final Holder<JavaConfig> javaConfig;
     private final Holder<UpdaterConfig> updaterConfig;
     private final UpdateCheckCache<JavaUpdates> cache;
-    private final AppFiles appFiles;
 
     @Inject
     public JavaUpdater(
         JavaUpdateService updateService,
         Holder<JavaConfig> javaConfig,
         Holder<UpdaterConfig> updaterConfig,
-        UpdateCheckCacheFactory cacheFactory,
-        AppFiles appFiles
+        UpdateCheckCacheFactory cacheFactory
     ) {
         this.updateService = updateService;
         this.javaConfig = javaConfig;
         this.updaterConfig = updaterConfig;
         this.cache = cacheFactory.create(NAME, CACHE_VERSION, new TypeLiteral<UpdateCheck<JavaUpdates>>() {});
-        this.appFiles = appFiles;
     }
 
     @Override
@@ -63,12 +57,20 @@ public class JavaUpdater implements Updater {
         return javaConfig.get().checkForUpdates();
     }
 
+    /**
+     * Checks for updates and caches them, unless an installation could not be checked,
+     * so that it gets checked again next time instead of after the update interval.
+     */
     @Override
     public Optional<String> checkForUpdates() {
-        JavaUpdates updates = new JavaUpdates(updateService.check().updates().stream()
+        JavaUpdateService.Result result = updateService.check();
+        JavaUpdates updates = new JavaUpdates(result.updates().stream()
             .map(update -> new JavaUpdates.Entry(String.valueOf(update.installation().getFileName()), update.latest().name()))
             .toList());
-        cache.set(updates);
+        if (result.skipped().isEmpty()) {
+            cache.set(updates);
+        }
+
         return getMessage(updates.updates().size());
     }
 
@@ -91,8 +93,7 @@ public class JavaUpdater implements Updater {
     }
 
     private boolean isPending(JavaUpdates.Entry entry) {
-        Path javaDir = appFiles.getJavaDir();
-        return Files.exists(javaDir.resolve(entry.installation())) && !Files.exists(javaDir.resolve(entry.latest()));
+        return updateService.isInstalled(entry.installation()) && !updateService.isInstalled(entry.latest());
     }
 
     private Optional<String> getMessage(int updates) {

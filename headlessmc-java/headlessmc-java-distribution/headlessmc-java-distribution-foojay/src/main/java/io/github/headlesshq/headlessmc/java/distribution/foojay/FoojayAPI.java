@@ -109,7 +109,8 @@ interface FoojayAPI {
         @Nullable @QueryParam("package_type") String packageType,
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
         @Nullable @QueryParam("libc_type") List<String> libcType,
-        @Nullable @QueryParam("latest") String latest
+        @Nullable @QueryParam("latest") String latest,
+        @Nullable @QueryParam("release_status") List<String> releaseStatus
         /*
         Other unneeded parameters from swagger
 
@@ -117,7 +118,6 @@ interface FoojayAPI {
         @Nullable @QueryParam("jdk_version") Integer jdkVersion,
         @Nullable @QueryParam("version_by_definition") String versionByDefinition,
         @Nullable @QueryParam("distro") List<String> distro,
-        @Nullable @QueryParam("release_status") List<String> releaseStatus,
         @Nullable @QueryParam("term_of_support") List<String> termOfSupport,
         @Nullable @QueryParam("fpu") List<String> fpu,
         @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled,
@@ -155,7 +155,8 @@ interface FoojayAPI {
         @Nullable @QueryParam("package_type") String packageType,
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
         @Nullable @QueryParam("libc_type") List<String> libcType,
-        @Nullable @QueryParam("latest") String latest
+        @Nullable @QueryParam("latest") String latest,
+        @Nullable @QueryParam("release_status") List<String> releaseStatus
     ) throws ApiException, ProcessingException {
         //noinspection Convert2Diamond
         return resolve(
@@ -169,7 +170,8 @@ interface FoojayAPI {
                 packageType,
                 directlyDownloadable,
                 libcType,
-                latest
+                latest,
+                releaseStatus
             )
         );
     }

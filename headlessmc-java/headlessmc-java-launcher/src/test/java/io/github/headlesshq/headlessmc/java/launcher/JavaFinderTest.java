@@ -98,8 +98,8 @@ class JavaFinderTest {
         }
 
         @Override
-        public List<JavaRuntime> getUpdates(JavaRuntime runtime, OS os, CPU cpu) {
-            return List.of();
+        public Optional<JavaRuntime> getUpdate(JavaRuntime runtime, OS os, CPU cpu) {
+            return Optional.empty();
         }
 
         @Override
