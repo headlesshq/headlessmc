@@ -49,7 +49,9 @@ public class GetCommand implements Runnable, CachedConsole.Enabled {
 
         tableProvider.<String>get()
             .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class).orElse("-"))
+            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class)
+                .map(value -> SecretConfigValues.mask(name, value))
+                .orElse("-"))
             .withColumn("description", name -> descriptionService.getDescription(name).orElse("-"))
             .addAll(List.of(property))
             .log(console::write);

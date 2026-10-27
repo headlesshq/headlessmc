@@ -65,12 +65,14 @@ public class SetCommand implements Runnable {
                     "Please specify the value to set " + property + " to, or use another terminal."
                 ));
 
-            String before = configService.getConfig().getValue(property, String.class);
+            String before = SecretConfigValues.isSecret(property)
+                ? ""
+                : configService.getConfig().getValue(property, String.class);
             value = extensions.edit(before);
         }
 
         configService.set(property, value, !temp);
-        console.write("Set " + property + " to " + value + (temp ? " temporarily" : ""));
+        console.write("Set " + property + " to " + SecretConfigValues.mask(property, value) + (temp ? " temporarily" : ""));
     }
     
 }

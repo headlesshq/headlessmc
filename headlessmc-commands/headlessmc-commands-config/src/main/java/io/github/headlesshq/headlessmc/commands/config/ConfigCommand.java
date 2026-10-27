@@ -43,7 +43,7 @@ public class ConfigCommand implements Runnable, CachedConsole.Enabled {
 
         tableProvider.<String>get()
             .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getValue(name, String.class))
+            .withColumn("value", name -> SecretConfigValues.mask(name, configService.getConfig().getValue(name, String.class)))
             .withColumn("description", name -> descriptionService.getDescription(name).orElse("-"))
             .addAll(properties)
             .log(console::write);

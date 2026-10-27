@@ -80,6 +80,38 @@ public class ConfigCommandsTest {
     }
 
     @Test
+    public void secretValuesAreMasked() {
+        String secret = "ghp_secret";
+        String token = "hmc.test.commands.token";
+        ConfigService fork = configService.fork();
+        SetCommand set = new SetCommand(descriptionService, fork, tables, console);
+        set.setTemp(true);
+        set.setProperty(token);
+        set.setValue(secret);
+        set.run();
+
+        GetCommand get = new GetCommand(descriptionService, fork, tables, console);
+        get.setProperty(token);
+        get.run();
+        new ListCommand(descriptionService, fork, tables, console).run();
+        new ConfigCommand(descriptionService, fork, tables, console).run();
+
+        assertEquals(secret, fork.getConfig().getValue(token, String.class));
+        assertFalse(output().contains(secret), () -> "was: " + output());
+        assertTrue(output().contains("Set " + token + " to " + SecretConfigValues.MASK), () -> "was: " + output());
+        assertTrue(output().contains(SecretConfigValues.MASK + " "), () -> "was: " + output());
+    }
+
+    @Test
+    public void secretsAreRecognizedByTheirName() {
+        assertTrue(SecretConfigValues.isSecret("hmc.github.token"));
+        assertTrue(SecretConfigValues.isSecret("hmc.curseforge.API-KEY"));
+        assertFalse(SecretConfigValues.isSecret("hmc.github.cache-minutes"));
+        assertEquals("", SecretConfigValues.mask("hmc.github.token", ""));
+        assertEquals("true", SecretConfigValues.mask(PROPERTY, "true"));
+    }
+
+    @Test
     public void getWithoutPropertyThrows() {
         GetCommand command = new GetCommand(descriptionService, configService.fork(), tables, console);
         assertThrows(IllegalArgumentException.class, command::run);

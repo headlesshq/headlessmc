@@ -95,6 +95,7 @@ hmc.xvfb.check                                             false                
 `hmc.github.token` is not listed above because it has no default.
 Set it, or the `HMC_GITHUB_TOKEN` environment variable, to a GitHub token
 to authenticate requests to the GitHub API, which are otherwise limited to 60 per hour.
+The config commands show properties that hold secrets, like tokens, as `********`.
 
 ```
 > debug
