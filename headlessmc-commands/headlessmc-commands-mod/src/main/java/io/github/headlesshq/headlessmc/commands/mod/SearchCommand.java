@@ -59,7 +59,7 @@ public class SearchCommand implements Runnable, VersionArgCommand, CachedConsole
 
     @CommandLine.Option(
         names = {"--platform"},
-        description = "The mod distribution platform to use, 'default' (GitHub and Modrinth), 'all', or a specific platform.",
+        description = "The mod distribution platform to use, e.g. 'all', 'modrinth' or 'curseforge'.",
         completionCandidates = ModDistributionPlatformCompletions.class
     )
     private @Nullable String platform;
