@@ -13,7 +13,6 @@ import lombok.Setter;
 import picocli.CommandLine;
 
 import java.util.List;
-import java.util.function.Function;
 
 @Getter
 @Setter
@@ -41,12 +40,7 @@ public class ConfigCommand implements Runnable, CachedConsole.Enabled {
             .filter(property -> property.startsWith("hmc."))
             .toList();
 
-        tableProvider.<String>get()
-            .withColumn("name", Function.identity())
-            .withColumn("value", name -> SecretConfigValues.mask(name, configService.getConfig().getValue(name, String.class)))
-            .withColumn("description", name -> descriptionService.getDescription(name).orElse("-"))
-            .addAll(properties)
-            .log(console::write);
+        ConfigTable.log(properties, configService, descriptionService, tableProvider, console);
     }
 
 }

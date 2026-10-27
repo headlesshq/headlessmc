@@ -5,6 +5,8 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.configuration.QuarkusConfigBuilderCustomizer;
 import io.smallrye.config.Config;
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.ConfigMappingInterface;
+import io.smallrye.config.ConfigMappings;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
@@ -51,6 +53,7 @@ public class ConfigServiceImpl implements ConfigService {
     private final org.eclipse.microprofile.config.Config baseConfig;
 
     private volatile State state;
+    private volatile @Nullable SortedSet<String> optionalPropertyNames;
 
     @Inject
     public ConfigServiceImpl(
@@ -205,7 +208,29 @@ public class ConfigServiceImpl implements ConfigService {
             propertyNames.add(propertyName);
         }
 
+        propertyNames.addAll(getOptionalPropertyNames());
         return propertyNames;
+    }
+
+    @Override
+    public SortedSet<String> getOptionalPropertyNames() {
+        SortedSet<String> names = optionalPropertyNames;
+        if (names == null) {
+            names = new TreeSet<>();
+            for (Instance.Handle<DynamicConfig> handle : dynamicConfigs.handles()) {
+                ConfigMappings.ConfigClass configClass = ConfigMappings.ConfigClass.configClass(handle.getBean().getBeanClass());
+                for (Map.Entry<String, ConfigMappingInterface.Property> entry : ConfigMappings.getProperties(configClass).entrySet()) {
+                    if (entry.getValue().isOptional() && entry.getValue().isLeaf() && !entry.getKey().contains("*")) {
+                        names.add(entry.getKey());
+                    }
+                }
+            }
+
+            names = Collections.unmodifiableSortedSet(names);
+            optionalPropertyNames = names;
+        }
+
+        return names;
     }
 
     @Produces

@@ -313,6 +313,19 @@ public class ConfigCommandsTest {
     }
 
     @Test
+    public void optionalPropertiesAreListedWithoutValue() {
+        String token = "hmc.test.commands.token";
+        new ConfigCommand(descriptionService, configService.fork(), tables, console).run();
+        new ListCommand(descriptionService, configService.fork(), tables, console).run();
+
+        List<String> lines = output().lines().filter(line -> line.startsWith(token)).toList();
+        assertEquals(2, lines.size(), () -> "was: " + output());
+        for (String line : lines) {
+            assertTrue(line.matches(token + " +- +Optional.*"), () -> "was: " + line);
+        }
+    }
+
+    @Test
     public void listAllShowsMoreProperties() {
         ListCommand hmcOnly = new ListCommand(descriptionService, configService.fork(), tables, console);
         hmcOnly.run();

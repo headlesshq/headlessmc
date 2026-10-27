@@ -14,7 +14,6 @@ import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.util.List;
-import java.util.function.Function;
 
 @Getter
 @Setter
@@ -47,13 +46,6 @@ public class GetCommand implements Runnable, CachedConsole.Enabled {
             throw new IllegalArgumentException("Please specify a config property to get!");
         }
 
-        tableProvider.<String>get()
-            .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class)
-                .map(value -> SecretConfigValues.mask(name, value))
-                .orElse("-"))
-            .withColumn("description", name -> descriptionService.getDescription(name).orElse("-"))
-            .addAll(List.of(property))
-            .log(console::write);
+        ConfigTable.log(List.of(property), configService, descriptionService, tableProvider, console);
     }
 }

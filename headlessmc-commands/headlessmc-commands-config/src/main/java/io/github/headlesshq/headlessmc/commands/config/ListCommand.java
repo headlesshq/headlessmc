@@ -14,7 +14,6 @@ import picocli.CommandLine;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 @Getter
 @Setter
@@ -48,14 +47,7 @@ public class ListCommand implements Runnable, CachedConsole.Enabled {
             .filter(property -> all || property.startsWith("hmc."))
             .toList();
 
-        tableProvider.<String>get()
-            .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class)
-                .map(value -> SecretConfigValues.mask(name, value))
-                .orElse("-"))
-            .withColumn("description", name -> descriptionService.getDescription(name).orElse("-"))
-            .addAll(properties)
-            .log(console::write);
+        ConfigTable.log(properties, configService, descriptionService, tableProvider, console);
     }
 
 }
