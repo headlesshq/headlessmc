@@ -9,6 +9,7 @@ import lombok.experimental.UtilityClass;
 import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -33,23 +34,10 @@ final class Mods {
     }
 
     /**
-     * Resolves the {@link ModSupport} of the given profile's platform.
-     *
-     * @param platformService the service to look the platform up on.
-     * @param profile         the profile to resolve the mod support of.
-     * @return the mod support of the profile's platform.
-     * @throws IllegalArgumentException if the platform does not support mods.
-     */
-    static ModSupport getModSupport(PlatformService platformService, Profile profile) {
-        Platform platform = getPlatform(platformService, profile);
-        return platform.getModSupport().orElseThrow(() -> new IllegalArgumentException(
-            "Platform " + platform.getName() + " does not support mods."
-        ));
-    }
-
-    /**
-     * Resolves the {@link ModType} for the given name, or falls back to the default
-     * mod type of the profile's platform if no name is given.
+     * Resolves the {@link ModType} for the given name, or falls back to a default if no name is given.
+     * The default is the first mod type of the profile's platform,
+     * {@link ModType#RESOURCE_PACK} for platforms without mod support
+     * and {@link ModType#MOD} if no profile is given.
      *
      * @param platformService the service to look the platform up on.
      * @param modTypes        all known mod types.
@@ -58,7 +46,7 @@ final class Mods {
      * @return the resolved mod type.
      * @throws IllegalArgumentException if the mod type cannot be resolved.
      */
-    static Set<ModType> resolveType(
+    static ModType resolveType(
         PlatformService platformService,
         Set<ModType> modTypes,
         @Nullable Profile profile,
@@ -68,22 +56,24 @@ final class Mods {
             return modTypes.stream()
                 .filter(type -> type.name().equalsIgnoreCase(name))
                 .findFirst()
-                .map(Set::of)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown mod type '" + name + "'."));
         }
 
         if (profile == null) {
-            return Set.of(ModType.MOD);
+            return ModType.MOD;
         }
 
-        ModType type = getModSupport(platformService, profile).modTypes().stream()
+        Optional<ModSupport> modSupport = getPlatform(platformService, profile).getModSupport();
+        if (modSupport.isEmpty()) {
+            return ModType.RESOURCE_PACK;
+        }
+
+        return modSupport.get().modTypes().stream()
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException(
                 "Platform " + profile.version().platform() + " does not declare a default mod type, "
                     + "please specify one with --type."
             ));
-
-        return Set.of(type, ModType.MOD_PACK);
     }
 
     /**

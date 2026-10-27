@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.mods.modrinth;
 
-import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,7 @@ public class ModrinthDistributionPlatformTest {
     @Test
     public void testModrinthDistributionPlatform() {
         assertNotNull(modrinthDistributionPlatform);
-        assertEquals(ModDistributionPlatform.DEFAULT, modrinthDistributionPlatform.getName());
+        assertEquals("modrinth", modrinthDistributionPlatform.getName());
     }
 
 }

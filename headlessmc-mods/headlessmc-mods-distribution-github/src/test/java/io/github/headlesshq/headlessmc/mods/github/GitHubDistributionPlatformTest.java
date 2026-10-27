@@ -1,10 +1,13 @@
 package io.github.headlesshq.headlessmc.mods.github;
 
+import io.github.headlesshq.headlessmc.mods.distribution.CompositeDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatformService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +40,18 @@ public class GitHubDistributionPlatformTest {
             GitHubDistributionPlatform.class,
             modDistributionPlatformService.byName(GitHub.PLATFORM_NAME).orElseThrow()
         );
-        assertTrue(modDistributionPlatformService.byName(ModDistributionPlatform.DEFAULT).isEmpty());
+    }
+
+    @Test
+    public void testPlatformIsPartOfTheDefaultPlatform() {
+        CompositeDistributionPlatform defaultPlatform = assertInstanceOf(
+            CompositeDistributionPlatform.class,
+            modDistributionPlatformService.byName(ModDistributionPlatform.DEFAULT).orElseThrow()
+        );
+        assertEquals(
+            List.of(GitHub.PLATFORM_NAME),
+            defaultPlatform.getPlatforms().stream().map(ModDistributionPlatform::getName).toList()
+        );
     }
 
 }

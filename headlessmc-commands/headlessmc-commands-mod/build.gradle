@@ -18,6 +18,7 @@ dependencies {
     implementation project(':headlessmc-mods:headlessmc-mods-distribution')
     implementation project(':headlessmc-mods:headlessmc-mods-distribution-modrinth')
     implementation project(':headlessmc-mods:headlessmc-mods-distribution-github')
+    implementation project(':headlessmc-mods:headlessmc-mods-distribution-curseforge')
 
     implementation libs.picocli
 }

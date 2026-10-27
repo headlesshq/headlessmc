@@ -7,10 +7,8 @@ import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 // TODO:
-//  - CurseForge
 //  - FTB
 //  - FTB Legacy
 //  - ATLauncher
@@ -22,33 +20,41 @@ import java.util.Set;
  */
 public interface ModDistributionPlatform {
     /**
-     * By default, we use {@code Modrinth}, the only other platform is {@code github} for the headlesshq mods.
+     * Name of the platform that combines the {@link #DEFAULT_PLATFORMS}.
      */
-    String DEFAULT = "modrinth";
+    String DEFAULT = "default";
 
-    // TODO: this should just take one ModType!
     /**
-     * Searches the platform for mods that match the given query and are of the given {@link ModType}s.
+     * Name of the platform that combines all {@link #isEnabled() enabled} platforms.
+     */
+    String ALL = "all";
+
+    /**
+     * Names of the platforms used by {@link #DEFAULT}, in the order in which they are tried when downloading.
+     */
+    List<String> DEFAULT_PLATFORMS = List.of("github", "modrinth");
+
+    /**
+     * Searches the platform for mods that match the given query and are of the given {@link ModType}.
      *
      * @param query the query to search for.
-     * @param types the types of mods to search for.
+     * @param type  the type of mods to search for.
      * @return a list of {@link RemoteMod} that are related to the search query.
      * @throws HeadlessMcException if something goes wrong.
      */
-    List<RemoteMod> search(String query, Set<ModType> types) throws HeadlessMcException;
+    List<RemoteMod> search(String query, ModType type) throws HeadlessMcException;
 
-    // TODO: this should just take one ModType!
     /**
      * Searches the platform for mods that match the given query,
-     * match the given version and are of the given {@link ModType}s.
+     * match the given version and are of the given {@link ModType}.
      *
      * @param query   the query to search for.
      * @param version the mc version the mods should be for.
-     * @param types   the types of mods to search for.
+     * @param type    the type of mods to search for.
      * @return a list of {@link RemoteMod} that are related to the search query.
      * @throws HeadlessMcException if something goes wrong.
      */
-    List<RemoteMod> search(String query, VersionArg version, Set<ModType> types) throws HeadlessMcException;
+    List<RemoteMod> search(String query, VersionArg version, ModType type) throws HeadlessMcException;
 
     /**
      * Downloads a Mod to the specified location.
@@ -57,7 +63,7 @@ public interface ModDistributionPlatform {
      * @param worldDir the world to download datapacks to.
      * @param id       the id/slug of the mod ({@link RemoteMod#id()}).
      * @param version  the game version the mod should be for.
-     * @param types    the {@link ModType}s the mod should be of.
+     * @param type     the {@link ModType} the mod should be of.
      * @return the file the mod has been downloaded to.
      * @throws HeadlessMcException if something goes wrong.
      */
@@ -70,6 +76,16 @@ public interface ModDistributionPlatform {
     ) throws HeadlessMcException;
 
     // Optional<RemoteMod> findByHash(Map<String, String> hashes, long size);
+
+    /**
+     * Platforms that need configuration, e.g. an api key, can be disabled.
+     * Disabled platforms are skipped by {@link #DEFAULT} and {@link #ALL}.
+     *
+     * @return {@code true} if this platform can be used.
+     */
+    default boolean isEnabled() {
+        return true;
+    }
 
     /**
      * @return the name of this {@link ModDistributionPlatform}.

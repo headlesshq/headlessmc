@@ -11,6 +11,7 @@ import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
 import io.github.headlesshq.headlessmc.mods.distribution.ModCache;
+import io.github.headlesshq.headlessmc.mods.distribution.CompositeDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatformService;
 import io.github.headlesshq.headlessmc.mods.distribution.RemoteMod;
@@ -44,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ModCommandsTest {
     private record Download(Path dir, @Nullable Path worldDir, String id, VersionArg version, ModType type) {}
 
-    private record Search(String query, Optional<VersionArg> version, Set<ModType> types) {}
+    private record Search(String query, Optional<VersionArg> version, ModType type) {}
 
     @TempDir
     Path root;
@@ -102,14 +103,14 @@ class ModCommandsTest {
 
     private final ModDistributionPlatform distributionPlatform = new ModDistributionPlatform() {
         @Override
-        public List<RemoteMod> search(String query, Set<ModType> types) {
-            searches.add(new Search(query, Optional.empty(), types));
+        public List<RemoteMod> search(String query, ModType type) {
+            searches.add(new Search(query, Optional.empty(), type));
             return searchResults;
         }
 
         @Override
-        public List<RemoteMod> search(String query, VersionArg version, Set<ModType> types) {
-            searches.add(new Search(query, Optional.of(version), types));
+        public List<RemoteMod> search(String query, VersionArg version, ModType type) {
+            searches.add(new Search(query, Optional.of(version), type));
             return searchResults;
         }
 
@@ -122,6 +123,28 @@ class ModCommandsTest {
         @Override
         public String getName() {
             return "fake";
+        }
+    };
+
+    private final ModDistributionPlatform otherDistributionPlatform = new ModDistributionPlatform() {
+        @Override
+        public List<RemoteMod> search(String query, ModType type) {
+            return List.of(new RemoteMod("iris", "Iris", "Shaders"));
+        }
+
+        @Override
+        public List<RemoteMod> search(String query, VersionArg version, ModType type) {
+            return search(query, type);
+        }
+
+        @Override
+        public Path download(Path dir, @Nullable Path worldDir, String id, VersionArg version, ModType type) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String getName() {
+            return "other";
         }
     };
 
@@ -138,6 +161,12 @@ class ModCommandsTest {
 
         @Override
         public Optional<ModDistributionPlatform> byName(String name) {
+            if (ModDistributionPlatform.ALL.equalsIgnoreCase(name)) {
+                return Optional.of(new CompositeDistributionPlatform(ModDistributionPlatform.ALL, List.of(
+                    distributionPlatform, otherDistributionPlatform
+                )));
+            }
+
             return platforms().filter(platform -> platform.getName().equalsIgnoreCase(name)).findFirst();
         }
     };
@@ -736,8 +765,9 @@ class ModCommandsTest {
         Search search = searches.getFirst();
         assertEquals("fast render", search.query());
         assertEquals(Optional.empty(), search.version());
-        assertEquals(Set.of(ModType.MOD), search.types());
+        assertEquals(ModType.MOD, search.type());
         assertTrue(console.output().contains("Fast rendering"));
+        assertFalse(console.output().contains("platform"));
     }
 
     @Test
@@ -747,7 +777,7 @@ class ModCommandsTest {
         command.setType("resourcepack");
         command.run();
 
-        assertEquals(Set.of(ModType.RESOURCE_PACK), searches.getFirst().types());
+        assertEquals(ModType.RESOURCE_PACK, searches.getFirst().type());
     }
 
     @Test
@@ -761,7 +791,49 @@ class ModCommandsTest {
 
         Search search = searches.getFirst();
         assertEquals(Optional.of(profile.version()), search.version());
-        assertEquals(Set.of(ModType.MOD, ModType.MOD_PACK), search.types());
+        assertEquals(ModType.MOD, search.type());
+    }
+
+    @Test
+    void searchWithVanillaProfileSearchesResourcePacks() {
+        profile("main", "vanilla");
+
+        SearchCommand command = search();
+        command.setQuery("faithful");
+        command.setVersionArg(List.of("main"));
+        command.run();
+
+        assertEquals(ModType.RESOURCE_PACK, searches.getFirst().type());
+    }
+
+    @Test
+    void searchWithModPackTypeOnlySearchesModPacks() {
+        profile("main", "fabric");
+
+        SearchCommand command = search();
+        command.setQuery("fabulously");
+        command.setType("modpack");
+        command.setVersionArg(List.of("main"));
+        command.run();
+
+        assertEquals(ModType.MOD_PACK, searches.getFirst().type());
+    }
+
+    @Test
+    void searchOnAllPlatformsShowsThePlatformOfEachResult() {
+        searchResults.add(new RemoteMod("sodium", "Sodium", "Fast rendering"));
+
+        SearchCommand command = search();
+        command.setQuery("render");
+        command.setPlatform(ModDistributionPlatform.ALL);
+        command.run();
+
+        String output = console.output();
+        assertTrue(output.contains("platform"));
+        assertTrue(output.contains("Sodium"));
+        assertTrue(output.contains("fake"));
+        assertTrue(output.contains("Iris"));
+        assertTrue(output.contains("other"));
     }
 
 }

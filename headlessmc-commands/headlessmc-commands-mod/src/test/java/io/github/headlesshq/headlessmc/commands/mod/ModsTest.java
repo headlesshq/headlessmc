@@ -55,21 +55,8 @@ class ModsTest {
     }
 
     @Test
-    void getModSupportOfSupportingPlatform() {
-        assertEquals(List.of(ModType.MOD, ModType.RESOURCE_PACK), Mods.getModSupport(platformService, profile("fabric")).modTypes());
-    }
-
-    @Test
-    void getModSupportOfUnsupportingPlatformThrows() {
-        IllegalArgumentException e = assertThrows(
-            IllegalArgumentException.class, () -> Mods.getModSupport(platformService, profile("vanilla"))
-        );
-        assertTrue(e.getMessage().contains("does not support mods"));
-    }
-
-    @Test
     void resolveTypeByName() {
-        assertEquals(Set.of(ModType.DATA_PACK), Mods.resolveType(platformService, allTypes, profile("fabric"), "DataPack"));
+        assertEquals(ModType.DATA_PACK, Mods.resolveType(platformService, allTypes, profile("fabric"), "DataPack"));
     }
 
     @Test
@@ -80,8 +67,18 @@ class ModsTest {
     }
 
     @Test
-    void resolveDefaultTypeUsesFirstOfPlatformAndModPacks() {
-        assertEquals(Set.of(ModType.MOD, ModType.MOD_PACK), Mods.resolveType(platformService, allTypes, profile("fabric"), null));
+    void resolveDefaultTypeUsesFirstOfPlatform() {
+        assertEquals(ModType.MOD, Mods.resolveType(platformService, allTypes, profile("fabric"), null));
+    }
+
+    @Test
+    void resolveDefaultTypeWithoutProfileIsMod() {
+        assertEquals(ModType.MOD, Mods.resolveType(platformService, allTypes, null, null));
+    }
+
+    @Test
+    void resolveDefaultTypeOfPlatformWithoutModSupportIsResourcePack() {
+        assertEquals(ModType.RESOURCE_PACK, Mods.resolveType(platformService, allTypes, profile("vanilla"), null));
     }
 
     @Test

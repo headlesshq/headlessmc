@@ -4,16 +4,19 @@ import io.github.headlesshq.headlessmc.commands.util.ProfileVersionCompletions;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
+import io.github.headlesshq.headlessmc.console.format.TableBuilder;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
+import io.github.headlesshq.headlessmc.mods.distribution.CompositeDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatformService;
 import io.github.headlesshq.headlessmc.mods.distribution.RemoteMod;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.version.arg.Side;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
@@ -26,7 +29,7 @@ import picocli.CommandLine;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -56,7 +59,7 @@ public class SearchCommand implements Runnable, VersionArgCommand, CachedConsole
 
     @CommandLine.Option(
         names = {"--platform"},
-        description = "The mod distribution platform to use.",
+        description = "The mod distribution platform to use, e.g. 'all', 'modrinth' or 'curseforge'.",
         completionCandidates = ModDistributionPlatformCompletions.class
     )
     private @Nullable String platform;
@@ -86,23 +89,42 @@ public class SearchCommand implements Runnable, VersionArgCommand, CachedConsole
         }
 
         ModDistributionPlatform distributionPlatform = modDistributionPlatformService.getByArg(platform);
-        List<RemoteMod> results;
+        VersionArg version = null;
+        ModType modType;
         if (versionArg.isEmpty()) {
-            Set<ModType> types = Mods.resolveType(platformService, modTypeService.getAllModTypes(), null, type);
-            results = distributionPlatform.search(query, types);
+            modType = Mods.resolveType(platformService, modTypeService.getAllModTypes(), null, type);
         } else {
             Profile resolved = profileResolver.resolve(versionArg, Side.BOTH);
-            Set<ModType> types = Mods.resolveType(platformService, modTypeService.getAllModTypes(), resolved, type);
-            results = distributionPlatform.search(query, resolved.version(), types);
+            modType = Mods.resolveType(platformService, modTypeService.getAllModTypes(), resolved, type);
+            version = resolved.version();
         }
 
-        tableProvider.<RemoteMod>get()
-            .withColumn("id", RemoteMod::id)
-            .withColumn("name", RemoteMod::name)
-            //.withColumn("authors", mod -> String.join(", ", mod.authors()))
-            .withColumn("description", RemoteMod::description)
-            .addAll(results)
+        Map<String, List<RemoteMod>> results;
+        if (distributionPlatform instanceof CompositeDistributionPlatform composite) {
+            results = composite.searchByPlatform(query, version, modType);
+        } else {
+            results = Map.of(distributionPlatform.getName(), version == null
+                ? distributionPlatform.search(query, modType)
+                : distributionPlatform.search(query, version, modType));
+        }
+
+        TableBuilder<Result> table = tableProvider.<Result>get()
+            .withColumn("id", result -> result.mod().id())
+            .withColumn("name", result -> result.mod().name());
+        if (results.size() > 1) {
+            table = table.withColumn("platform", Result::platform);
+        }
+
+        table.withColumn("description", result -> result.mod().description())
+            .addAll(results.entrySet()
+                .stream()
+                .flatMap(entry -> entry.getValue().stream().map(mod -> new Result(entry.getKey(), mod)))
+                .toList())
             .log(console::write);
+    }
+
+    private record Result(String platform, RemoteMod mod) {
+
     }
 
 }
