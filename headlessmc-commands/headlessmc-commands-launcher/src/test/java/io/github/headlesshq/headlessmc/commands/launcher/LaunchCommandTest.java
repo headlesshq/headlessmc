@@ -20,8 +20,12 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
+import io.github.headlesshq.headlessmc.version.FakeVersion;
+import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.version.service.FakeVersionJsonService;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,17 +41,23 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LaunchCommandTest {
-    /** Thrown instead of actually launching, carrying the profile the command built. */
+    /** Thrown instead of actually launching, carrying the profile the command built and the version.json to launch. */
     private static final class Launched extends RuntimeException {
         private final transient Profile profile;
+        private final transient @Nullable Version version;
 
-        Launched(Profile profile) {
+        Launched(Profile profile, @Nullable Version version) {
             this.profile = profile;
+            this.version = version;
         }
     }
 
     private static Profile launched(InvocationOnMock invocation) {
-        throw new Launched(invocation.getArgument(0));
+        throw new Launched(invocation.getArgument(0), null);
+    }
+
+    private static Profile launchedVersionJson(InvocationOnMock invocation) {
+        throw new Launched(invocation.getArgument(0), invocation.getArgument(2));
     }
 
     @TempDir
@@ -62,6 +72,7 @@ class LaunchCommandTest {
     private final LastUsedAccountService lastUsedAccountService = Mockito.mock(LastUsedAccountService.class);
     private final XvfbService xvfbService = Mockito.mock(XvfbService.class);
     private final AuthService authService = Mockito.mock(AuthService.class);
+    private final FakeVersionJsonService versionJsonService = new FakeVersionJsonService();
     private final Account account = new Account("microsoft", "player", "uuid", "token", Account.TYPE_MSA, "xuid");
 
     private FakePlatformService platformService;
@@ -73,6 +84,8 @@ class LaunchCommandTest {
     void setup() {
         // the launchers report the profile the command built instead of launching it
         Mockito.when(clientLauncher.launcher(Mockito.any(), Mockito.any())).thenAnswer(LaunchCommandTest::launched);
+        Mockito.when(clientLauncher.launcher(Mockito.any(), Mockito.any(), Mockito.any()))
+            .thenAnswer(LaunchCommandTest::launchedVersionJson);
         Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.of(account));
         Mockito.when(authService.refresh(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
         Mockito.when(serverLauncher.launcher(Mockito.any())).thenAnswer(LaunchCommandTest::launched);
@@ -96,7 +109,7 @@ class LaunchCommandTest {
         return new LaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService, clientLauncher,
             line -> line.split(" "), console, mcFiles, lastUsedAccountService, xvfbService, authService,
-            new PackwizService(platformService), profileService
+            new PackwizService(platformService), profileService, versionJsonService
         );
     }
 
@@ -124,6 +137,79 @@ class LaunchCommandTest {
         command.setVersionArg(List.of("main"));
 
         assertEquals(List.of("main"), command.getVersionArg());
+    }
+
+    @Test
+    void launchesAVersionJsonWithACustomName() {
+        FakeVersion aeromania = new FakeVersion("Aeromania");
+        versionJsonService.add(aeromania);
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("Aeromania"));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertSame(aeromania, launched.version);
+        assertEquals("Aeromania", launched.profile.name());
+        assertEquals(Side.CLIENT, launched.profile.side());
+        assertTrue(launched.profile.patchers().contains("log4j"));
+    }
+
+    @Test
+    void profilesArePreferredOverVersionJsons() {
+        client("main");
+        versionJsonService.add(new FakeVersion("main"));
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("main"));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertNull(launched.version);
+        assertEquals("main", launched.profile.name());
+    }
+
+    @Test
+    void versionJsonsArePreferredOverVersionArgs() {
+        FakeVersion version = new FakeVersion("1.21.1");
+        versionJsonService.add(version);
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("1.21.1"));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertSame(version, launched.version);
+        assertEquals(VersionArg.parse("1.21.1"), launched.profile.version());
+    }
+
+    @Test
+    void versionArgsAreUsedWithoutAMatchingVersionJson() {
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("1.21.1"));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertNull(launched.version);
+        assertEquals(VersionArg.parse("vanilla", "1.21.1"), launched.profile.version());
+    }
+
+    @Test
+    void multipleArgsNeverLaunchAVersionJson() {
+        versionJsonService.add(new FakeVersion("fabric"));
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("fabric", "1.21.1"));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertNull(launched.version);
+        assertEquals("fabric", launched.profile.version().platform());
+    }
+
+    @Test
+    void unknownNamesStillFail() {
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("Aeromania"));
+
+        assertThrows(RuntimeException.class, command::call);
+        Mockito.verifyNoInteractions(clientLauncher);
     }
 
     @Test

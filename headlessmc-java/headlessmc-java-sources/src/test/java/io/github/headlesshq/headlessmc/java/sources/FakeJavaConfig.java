@@ -39,6 +39,11 @@ final class FakeJavaConfig {
             public int maxScanDepth() {
                 return MAX_SCAN_DEPTH;
             }
+
+            @Override
+            public boolean checkForUpdates() {
+                return false;
+            }
         };
         return () -> config;
     }

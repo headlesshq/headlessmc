@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.commands.java;
 
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaService;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 public class RemoveCommand implements Runnable, CachedConsole.Enabled {
     private final JavaService javaService;
     private final FileService fileService;
+    private final AppFiles appFiles;
     private final Console console;
 
     @CommandLine.Parameters(
@@ -59,8 +61,10 @@ public class RemoveCommand implements Runnable, CachedConsole.Enabled {
             );
         }
 
-        Path path = java.home().getUnchecked()
-            .orElseThrow(() -> new IllegalArgumentException("Failed to resolve path of java installation " + name));
+        Path path = java.source() == JavaSource.SORT_HMC
+            ? appFiles.getJavaDir().resolve(java.name())
+            : java.home().getUnchecked()
+                .orElseThrow(() -> new IllegalArgumentException("Failed to resolve path of java installation " + name));
 
         fileService.delete(path);
         javaService.refresh();

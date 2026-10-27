@@ -21,10 +21,20 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class FoojayProvider implements JavaDistributionProvider {
+    /**
+     * Without this the foojay API interprets a major version like {@code 21} as exactly {@code 21+35}.
+     */
+    static final String LATEST_AVAILABLE = "available";
+    /**
+     * Only general availability releases, no early access builds.
+     */
+    static final String RELEASE_STATUS_GA = "ga";
+
     private final FoojayInstallerService archiveService;
     private final DownloadService downloadService;
     private final @RestClient FoojayAPI api;
@@ -76,7 +86,10 @@ public class FoojayProvider implements JavaDistributionProvider {
                     archiveService.getSupportedArchiveTypes(),
                     null,
                     null, // true?
-                    List.of(operatingSystem.getLibCType().getApiString())
+                    List.of(operatingSystem.getLibCType().getApiString()),
+                    LATEST_AVAILABLE,
+                    List.of(RELEASE_STATUS_GA),
+                    false
                 )
                 .stream()
                 .map(pkg -> pkg.toRuntime(getName(), version, distribution.id()))
@@ -87,10 +100,14 @@ public class FoojayProvider implements JavaDistributionProvider {
     }
 
     @Override
-    public List<JavaRuntime> getUpdates(JavaRuntime runtime) throws JavaDistributionException {
-        //List<JavaRuntime> runtimes = getRuntimes(runtime.distribution())
-        // use SemVer
-        throw new UnsupportedOperationException(); // TODO?
+    public Optional<JavaRuntime> getUpdate(JavaRuntime runtime, OS os, CPU cpu) throws JavaDistributionException {
+        JavaDistribution distribution = new JavaDistribution(getName(), runtime.distribution(), runtime.distribution());
+        String packageType = runtime.packageType();
+        return getRuntimes(distribution, runtime.version(), os, cpu)
+            .stream()
+            .filter(candidate -> packageType == null || packageType.equalsIgnoreCase(candidate.packageType()))
+            .findFirst()
+            .filter(latest -> latest.javaVersion() == null || !latest.javaVersion().equals(runtime.javaVersion()));
     }
 
     @Override

@@ -58,7 +58,7 @@ class FoojayInstallerServiceTest {
     void installsKeepingTheArchiveLayout() throws IOException {
         Path target = root.resolve("java-21");
         service(LINUX).install(
-            target, new JavaRuntime.MetaData(0L, "zip"), new ByteArrayInputStream(jdkZip())
+            target, new JavaRuntime.MetaData(0L, "zip", null, null), new ByteArrayInputStream(jdkZip())
         );
 
         Path home = target.resolve("jdk-21");
@@ -76,7 +76,7 @@ class FoojayInstallerServiceTest {
         entries.put(home + "bin/java", "binary");
         entries.put(home + "lib/jspawnhelper", "helper");
         service(LINUX).install(
-            target, new JavaRuntime.MetaData(0L, "zip"), new ByteArrayInputStream(Archives.zip(entries))
+            target, new JavaRuntime.MetaData(0L, "zip", null, null), new ByteArrayInputStream(Archives.zip(entries))
         );
 
         Path javaHome = target.resolve(home);
@@ -88,7 +88,7 @@ class FoojayInstallerServiceTest {
     void installsWithoutChangingPermissionsOnWindows() {
         Path target = root.resolve("java-21");
         service(WINDOWS).install(
-            target, new JavaRuntime.MetaData(0L, "zip"), new ByteArrayInputStream(jdkZip("java.exe"))
+            target, new JavaRuntime.MetaData(0L, "zip", null, null), new ByteArrayInputStream(jdkZip("java.exe"))
         );
 
         assertTrue(Files.exists(target.resolve("jdk-21").resolve("bin").resolve("java.exe")));
@@ -98,7 +98,7 @@ class FoojayInstallerServiceTest {
     void archiveWithBinDirAtTheRootIsInstalledAsIs() throws IOException {
         Path target = root.resolve("java-21");
         service(LINUX).install(
-            target, new JavaRuntime.MetaData(0L, "zip"),
+            target, new JavaRuntime.MetaData(0L, "zip", null, null),
             new ByteArrayInputStream(Archives.zip(Map.of("bin/java", "binary")))
         );
 
@@ -110,7 +110,7 @@ class FoojayInstallerServiceTest {
         // apk is a known ArchiveType, but has no extractor
         FileException e = assertThrows(FileException.class, () -> service(LINUX).install(
             root.resolve("java-21"),
-            new JavaRuntime.MetaData(0L, ArchiveType.APK.getApiString()),
+            new JavaRuntime.MetaData(0L, ArchiveType.APK.getApiString(), null, null),
             new ByteArrayInputStream(new byte[0])
         ));
         assertTrue(e.getMessage().contains("Unsupported Archive Type"));
@@ -119,7 +119,7 @@ class FoojayInstallerServiceTest {
     @Test
     void archiveWithoutInstallationDirThrows() {
         assertThrows(FileException.class, () -> service(LINUX).install(
-            root.resolve("java-21"), new JavaRuntime.MetaData(0L, "zip"),
+            root.resolve("java-21"), new JavaRuntime.MetaData(0L, "zip", null, null),
             new ByteArrayInputStream(Archives.zip(Map.of("readme.txt", "no jdk here")))
         ));
     }

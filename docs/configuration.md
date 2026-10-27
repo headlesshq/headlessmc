@@ -38,6 +38,7 @@ hmc.files.location                                         -                    
 hmc.files.mc                                               -                                          Optional: Path to the Minecraft directory. Defaults to the OS-specific location.
 hmc.github.cache-minutes                                   60                                         How many minutes releases fetched from the GitHub API are cached for, 0 disables the cache.
 hmc.github.token                                           -                                          Optional: GitHub token to authenticate requests to the GitHub API with, which raises the rate limit of 60 requests per hour.
+hmc.java.check-for-updates                                 true                                       Whether the java updater checks the Java installations installed by HeadlessMc for updates, see hmc.updater.enabled.
 hmc.java.download                                          true                                       Whether missing Java versions may be downloaded automatically.
 hmc.java.fail-on-parsing-failure                           false                                      Whether parsing a Java installation that fails should abort instead of being skipped.
 hmc.java.max-scan-depth                                    6                                          How deep to scan Java installation directories.

@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -42,7 +43,8 @@ class FoojayProviderTest {
         @Override
         public Response getPackages(String version, List<String> distribution, List<String> operatingSystem,
                                     List<String> architecture, Integer bitness, List<ArchiveType> archiveType,
-                                    String packageType, Boolean directlyDownloadable, List<String> libcType) {
+                                    String packageType, Boolean directlyDownloadable, List<String> libcType,
+                                    String latest, List<String> releaseStatus, Boolean javafxBundled) {
             throw new UnsupportedOperationException();
         }
 
@@ -67,8 +69,11 @@ class FoojayProviderTest {
         @Override
         public List<Pkg> packages(String version, List<String> distribution, List<String> operatingSystem,
                                   List<String> architecture, Integer bitness, List<ArchiveType> archiveType,
-                                  String packageType, Boolean directlyDownloadable, List<String> libcType) {
-            packageQueries.add(new PackageQuery(version, distribution, operatingSystem, architecture, bitness));
+                                  String packageType, Boolean directlyDownloadable, List<String> libcType,
+                                  String latest, List<String> releaseStatus, Boolean javafxBundled) {
+            packageQueries.add(new PackageQuery(
+                version, distribution, operatingSystem, architecture, bitness, latest, releaseStatus, javafxBundled
+            ));
             return packages;
         }
 
@@ -84,7 +89,7 @@ class FoojayProviderTest {
 
     private record PackageQuery(
         String version, List<String> distribution, List<String> operatingSystem,
-        List<String> architecture, Integer bitness
+        List<String> architecture, Integer bitness, String latest, List<String> releaseStatus, Boolean javafxBundled
     ) {}
 
     @TempDir
@@ -131,7 +136,7 @@ class FoojayProviderTest {
 
     @Test
     void listsRuntimesForTheGivenPlatform() {
-        packages.add(new Pkg("pkg-id", "OpenJDK21U-jre_x64_linux.zip", 100L, "zip"));
+        packages.add(new Pkg("pkg-id", "OpenJDK21U-jre_x64_linux.zip", 100L, "zip", "21.0.5+11", "jre"));
 
         List<JavaRuntime> runtimes = provider.getRuntimes(
             new JavaDistribution(provider.getName(), "Temurin", "temurin"), 21, LINUX, CPU.X64
@@ -146,11 +151,47 @@ class FoojayProviderTest {
         assertEquals(List.of("linux"), query.operatingSystem());
         assertEquals(List.of("x64"), query.architecture());
         assertEquals(64, query.bitness());
+        assertEquals(FoojayProvider.LATEST_AVAILABLE, query.latest());
+        assertEquals(List.of(FoojayProvider.RELEASE_STATUS_GA), query.releaseStatus());
+        assertEquals(false, query.javafxBundled());
     }
 
     @Test
-    void updatesAreNotSupported() {
-        assertThrows(UnsupportedOperationException.class, () -> provider.getUpdates(runtime("zip")));
+    void updateIsTheLatestRuntimeOfTheSamePackageType() {
+        packages.add(new Pkg("latest-jdk", "latest-jdk.zip", 1L, "zip", "21.0.7+6", "jdk"));
+        packages.add(new Pkg("latest", "latest.zip", 1L, "zip", "21.0.7+6", "jre"));
+
+        Optional<JavaRuntime> update = provider.getUpdate(installed("21.0.5+11", "jre"), LINUX, CPU.X64);
+
+        assertEquals(Optional.of("latest"), update.map(JavaRuntime::id));
+        assertEquals(List.of("temurin"), packageQueries.getFirst().distribution());
+        assertEquals("21", packageQueries.getFirst().version());
+    }
+
+    @Test
+    void updateOfAnyPackageTypeIfUnknown() {
+        packages.add(new Pkg("latest-jdk", "latest-jdk.zip", 1L, "zip", "21.0.6+7", "jdk"));
+
+        Optional<JavaRuntime> update = provider.getUpdate(installed("21.0.5+11", null), LINUX, CPU.X64);
+
+        assertEquals(Optional.of("latest-jdk"), update.map(JavaRuntime::id));
+    }
+
+    @Test
+    void updateIfInstalledVersionIsUnknown() {
+        packages.add(new Pkg("latest", "latest.zip", 1L, "zip", "21.0.5+11", "jre"));
+        assertTrue(provider.getUpdate(installed(null, "jre"), LINUX, CPU.X64).isPresent());
+    }
+
+    @Test
+    void noUpdateIfLatest() {
+        packages.add(new Pkg("same", "same.zip", 1L, "zip", "21.0.5+11", "jre"));
+        assertEquals(Optional.empty(), provider.getUpdate(installed("21.0.5+11", "jre"), LINUX, CPU.X64));
+    }
+
+    @Test
+    void noUpdateWithoutRuntimes() {
+        assertEquals(Optional.empty(), provider.getUpdate(installed("21.0.5+11", "jre"), LINUX, CPU.X64));
     }
 
     @Test
@@ -196,7 +237,13 @@ class FoojayProviderTest {
 
     private JavaRuntime runtime(String archiveType) {
         return new JavaRuntime(
-            provider.getName(), "temurin", "pkg-id", "jdk-21", 21, new JavaRuntime.MetaData(null, archiveType)
+            provider.getName(), "temurin", "pkg-id", "jdk-21", 21, new JavaRuntime.MetaData(null, archiveType, null, null)
+        );
+    }
+
+    private JavaRuntime installed(String javaVersion, String packageType) {
+        return new JavaRuntime(
+            provider.getName(), "temurin", "pkg-id", "jdk-21", 21, new JavaRuntime.MetaData(null, "zip", javaVersion, packageType)
         );
     }
 

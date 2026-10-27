@@ -37,9 +37,7 @@ public class FakeVersionJsonService implements VersionJsonService {
 
     @Override
     public Set<String> getInstalledFileNames() {
-        Set<String> result = new LinkedHashSet<>();
-        versions.keySet().forEach(id -> result.add(id + ".json"));
-        return result;
+        return new LinkedHashSet<>(versions.keySet());
     }
 
     @Override
