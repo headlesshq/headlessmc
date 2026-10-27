@@ -1,10 +1,8 @@
 package io.github.headlesshq.headlessmc.commands.config;
 
-import io.github.headlesshq.headlessmc.config.ConfigDescriptionService;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.console.format.TableProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -25,9 +23,8 @@ import java.util.List;
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class GetCommand implements Runnable, CachedConsole.Enabled {
-    private final ConfigDescriptionService descriptionService;
     private final ConfigService configService;
-    private final TableProvider tableProvider;
+    private final ConfigTable configTable;
     private final Console console;
 
     @CommandLine.Parameters(
@@ -46,6 +43,6 @@ public class GetCommand implements Runnable, CachedConsole.Enabled {
             throw new IllegalArgumentException("Please specify a config property to get!");
         }
 
-        ConfigTable.log(List.of(property), configService, descriptionService, tableProvider, console);
+        configTable.log(configService, List.of(property), console);
     }
 }

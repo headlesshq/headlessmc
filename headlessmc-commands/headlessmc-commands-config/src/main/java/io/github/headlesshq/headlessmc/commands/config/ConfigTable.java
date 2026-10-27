@@ -4,6 +4,9 @@ import io.github.headlesshq.headlessmc.config.ConfigDescriptionService;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Set;
@@ -14,41 +17,34 @@ import java.util.function.Function;
  * Properties without a value are shown as {@code -},
  * the descriptions of optional properties start with {@value #OPTIONAL}.
  */
-final class ConfigTable {
+@ApplicationScoped
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
+public class ConfigTable {
     static final String OPTIONAL = "Optional: ";
 
-    private ConfigTable() {
-        throw new AssertionError();
-    }
+    private final ConfigDescriptionService descriptionService;
+    private final TableProvider tableProvider;
 
     /**
      * Writes a table of the given properties to the console.
      *
-     * @param properties         the names of the properties to print.
-     * @param configService      the service to get values from.
-     * @param descriptionService the service to get descriptions from.
-     * @param tableProvider      provides the table.
-     * @param console            the console to write the table to.
+     * @param configService the service to get values from.
+     * @param properties    the names of the properties to print.
+     * @param console       the console to write the table to.
      */
-    static void log(
-        List<String> properties,
-        ConfigService configService,
-        ConfigDescriptionService descriptionService,
-        TableProvider tableProvider,
-        Console console
-    ) {
+    public void log(ConfigService configService, List<String> properties, Console console) {
         Set<String> optional = configService.getOptionalPropertyNames();
         tableProvider.<String>get()
             .withColumn("name", Function.identity())
             .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class)
                 .map(value -> SecretConfigValues.mask(name, value))
                 .orElse("-"))
-            .withColumn("description", name -> describe(name, optional.contains(name), descriptionService))
+            .withColumn("description", name -> describe(name, optional.contains(name)))
             .addAll(properties)
             .log(console::write);
     }
 
-    private static String describe(String name, boolean optional, ConfigDescriptionService descriptionService) {
+    private String describe(String name, boolean optional) {
         String description = descriptionService.getDescription(name).orElse(null);
         if (!optional) {
             return description == null ? "-" : description;
