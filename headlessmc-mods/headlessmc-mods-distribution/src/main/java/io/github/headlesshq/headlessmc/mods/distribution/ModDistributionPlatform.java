@@ -22,7 +22,7 @@ import java.util.Set;
  */
 public interface ModDistributionPlatform {
     /**
-     * By default, we use {@code Modrinth}, there are no implementations for other platforms yet
+     * By default, we use {@code Modrinth}, the only other platform is {@code github} for the headlesshq mods.
      */
     String DEFAULT = "modrinth";
 

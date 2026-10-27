@@ -4,6 +4,7 @@ import io.smallrye.config.Config;
 import io.smallrye.config.ConfigMapping;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
+import java.util.Collections;
 import java.util.SortedSet;
 import java.util.function.Supplier;
 
@@ -118,8 +119,17 @@ public interface ConfigService {
     <V> V bind(Object key, Supplier<V> mapping);
 
     /**
-     * @return {@link Config#getPropertyNames()} for the current config.
+     * @return {@link Config#getPropertyNames()} for the current config,
+     * plus the {@link #getOptionalPropertyNames()}, which might not have a value.
      */
     SortedSet<String> getPropertyNames();
+
+    /**
+     * @return the names of all optional properties declared by {@link ConfigMapping}s,
+     * which have no default value and are therefore missing from {@link Config#getPropertyNames()} if they are not set.
+     */
+    default SortedSet<String> getOptionalPropertyNames() {
+        return Collections.emptySortedSet();
+    }
 
 }

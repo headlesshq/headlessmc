@@ -15,6 +15,7 @@ dependencies {
     implementation project(':headlessmc-util:headlessmc-util-maven')
     implementation project(':headlessmc-util:headlessmc-util-json')
     implementation project(':headlessmc-files')
+    implementation project(':headlessmc-mods:headlessmc-mods-distribution-github')
 
     api project(':headlessmc-launcher')
     api project(':headlessmc-launcher:headlessmc-launcher-profile')

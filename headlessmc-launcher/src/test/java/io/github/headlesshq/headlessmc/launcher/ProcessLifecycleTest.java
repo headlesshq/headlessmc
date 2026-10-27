@@ -115,6 +115,11 @@ class ProcessLifecycleTest {
         public boolean free() {
             return true;
         }
+
+        @Override
+        public boolean autoDownloadSpecifics() {
+            return false;
+        }
     }
 
     private record Tests(boolean leave, Optional<String> file) implements TestConfig {

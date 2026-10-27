@@ -15,4 +15,10 @@ public interface LauncherConfig extends DynamicConfig {
     @WithDefault("true")
     boolean free();
 
+    /**
+     * @return {@code true} if hmc-specifics should be downloaded when launching a client.
+     */
+    @WithDefault("false")
+    boolean autoDownloadSpecifics();
+
 }

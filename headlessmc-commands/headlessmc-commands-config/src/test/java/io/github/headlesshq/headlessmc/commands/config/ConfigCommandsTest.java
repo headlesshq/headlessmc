@@ -15,6 +15,7 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.Config;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
@@ -51,6 +52,12 @@ public class ConfigCommandsTest {
 
     private final RecordingConsole console = new RecordingConsole();
     private final TableProvider tables = new SimpleTableProvider();
+    private ConfigTable configTable;
+
+    @BeforeEach
+    public void setupConfigTable() {
+        configTable = new ConfigTable(descriptionService, tables);
+    }
 
     private String output() {
         return console.output();
@@ -58,7 +65,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void theConfigCommandListsAllHmcProperties() {
-        ConfigCommand command = new ConfigCommand(descriptionService, configService.fork(), tables, console);
+        ConfigCommand command = new ConfigCommand(configService.fork(), configTable, console);
 
         command.run();
 
@@ -70,7 +77,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void getShowsProperty() {
-        GetCommand command = new GetCommand(descriptionService, configService.fork(), tables, console);
+        GetCommand command = new GetCommand(configService.fork(), configTable, console);
         command.setProperty(PROPERTY);
 
         command.run();
@@ -80,8 +87,40 @@ public class ConfigCommandsTest {
     }
 
     @Test
+    public void secretValuesAreMasked() {
+        String secret = "ghp_secret";
+        String token = "hmc.test.commands.token";
+        ConfigService fork = configService.fork();
+        SetCommand set = new SetCommand(descriptionService, fork, tables, console);
+        set.setTemp(true);
+        set.setProperty(token);
+        set.setValue(secret);
+        set.run();
+
+        GetCommand get = new GetCommand(fork, configTable, console);
+        get.setProperty(token);
+        get.run();
+        new ListCommand(fork, configTable, console).run();
+        new ConfigCommand(fork, configTable, console).run();
+
+        assertEquals(secret, fork.getConfig().getValue(token, String.class));
+        assertFalse(output().contains(secret), () -> "was: " + output());
+        assertTrue(output().contains("Set " + token + " to " + SecretConfigValues.MASK), () -> "was: " + output());
+        assertTrue(output().contains(SecretConfigValues.MASK + " "), () -> "was: " + output());
+    }
+
+    @Test
+    public void secretsAreRecognizedByTheirName() {
+        assertTrue(SecretConfigValues.isSecret("hmc.github.token"));
+        assertTrue(SecretConfigValues.isSecret("hmc.curseforge.API-KEY"));
+        assertFalse(SecretConfigValues.isSecret("hmc.github.cache-minutes"));
+        assertEquals("", SecretConfigValues.mask("hmc.github.token", ""));
+        assertEquals("true", SecretConfigValues.mask(PROPERTY, "true"));
+    }
+
+    @Test
     public void getWithoutPropertyThrows() {
-        GetCommand command = new GetCommand(descriptionService, configService.fork(), tables, console);
+        GetCommand command = new GetCommand(configService.fork(), configTable, console);
         assertThrows(IllegalArgumentException.class, command::run);
     }
 
@@ -273,7 +312,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void listShowsHmcProperties() {
-        ListCommand command = new ListCommand(descriptionService, configService.fork(), tables, console);
+        ListCommand command = new ListCommand(configService.fork(), configTable, console);
 
         command.run();
 
@@ -281,13 +320,26 @@ public class ConfigCommandsTest {
     }
 
     @Test
+    public void optionalPropertiesAreListedWithoutValue() {
+        String token = "hmc.test.commands.token";
+        new ConfigCommand(configService.fork(), configTable, console).run();
+        new ListCommand(configService.fork(), configTable, console).run();
+
+        List<String> lines = output().lines().filter(line -> line.startsWith(token)).toList();
+        assertEquals(2, lines.size(), () -> "was: " + output());
+        for (String line : lines) {
+            assertTrue(line.matches(token + " +- +Optional.*"), () -> "was: " + line);
+        }
+    }
+
+    @Test
     public void listAllShowsMoreProperties() {
-        ListCommand hmcOnly = new ListCommand(descriptionService, configService.fork(), tables, console);
+        ListCommand hmcOnly = new ListCommand(configService.fork(), configTable, console);
         hmcOnly.run();
         int hmcOutputLength = output().length();
         console.lines().clear();
 
-        ListCommand all = new ListCommand(descriptionService, configService.fork(), tables, console);
+        ListCommand all = new ListCommand(configService.fork(), configTable, console);
         all.setAll(true);
         all.run();
 

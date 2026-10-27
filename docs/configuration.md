@@ -11,6 +11,7 @@ name                                                       value                
 hmc.assets.dummy                                           false                                      Whether to write dummy asset files instead of downloading real assets.
 hmc.assets.net.cookies                                     true                                       -
 hmc.assets.net.delete-failed-files                         true                                       -
+hmc.assets.net.http-version                                -                                          Optional
 hmc.assets.net.retries                                     0                                          -
 hmc.assets.net.user-agent                                  HeadlessMc/3.0.0-SNAPSHOT                  -
 hmc.assets.parallel.breaker-failure-rate-threshold         50.0                                       -
@@ -28,7 +29,15 @@ hmc.assets.parallel.retry-jitter                           0.5                  
 hmc.assets.parallel.retry-max-attempts                     4                                          -
 hmc.assets.parallel.retry-max-interval-ms                  2000                                       -
 hmc.assets.url                                             https://resources.download.minecraft.net   Base URL of the asset CDN.
+hmc.auth.yggdrasil.url                                     -                                          Optional: Default url of a third party Yggdrasil authentication server, e.g. https://littleskin.cn. Yggdrasil authentication is disabled unless this is set.
+hmc.cpu.arch                                               -                                          Optional: Overrides the detected CPU architecture.
+hmc.cpu.bitness                                            -                                          Optional: Overrides the detected CPU bitness.
+hmc.files.game                                             -                                          Optional: Path to the game directory. Defaults to a per-version directory inside the Minecraft directory.
 hmc.files.game-for-each-version                            true                                       Whether each version gets its own game directory.
+hmc.files.location                                         -                                          Optional: Specify a custom location to place HeadlessMc files in.
+hmc.files.mc                                               -                                          Optional: Path to the Minecraft directory. Defaults to the OS-specific location.
+hmc.github.cache-minutes                                   60                                         How many minutes releases fetched from the GitHub API are cached for, 0 disables the cache.
+hmc.github.token                                           -                                          Optional: GitHub token to authenticate requests to the GitHub API with, which raises the rate limit of 60 requests per hour.
 hmc.java.check-for-updates                                 true                                       Whether the java updater checks the Java installations installed by HeadlessMc for updates, see hmc.updater.enabled.
 hmc.java.download                                          true                                       Whether missing Java versions may be downloaded automatically.
 hmc.java.fail-on-parsing-failure                           false                                      Whether parsing a Java installation that fails should abort instead of being skipped.
@@ -36,6 +45,8 @@ hmc.java.max-scan-depth                                    6                    
 hmc.jline.ansi-colors                                      false                                      Allows you to enable colored terminal output, even if the Jline terminal is disabled.
 hmc.jline.enabled                                          true                                       If Jline terminal support is enabled. Might need to be disabled on termux or in IDE terminals.
 hmc.jline.persistent-completions                           true                                       Always displays completions when the HeadlessMc shell is used.
+hmc.jline.too-many-candidates                              -                                          Optional
+hmc.launcher.auto-download-specifics                       false                                      Whether the latest hmc-specifics is downloaded from GitHub into the mods folder when launching a client. Other installed versions of hmc-specifics are replaced.
 hmc.launcher.auto-install                                  true                                       -
 hmc.launcher.crash-report-watcher                          false                                      -
 hmc.launcher.free                                          true                                       -
@@ -63,8 +74,13 @@ hmc.log.stacktraces                                        true                 
 hmc.logging.patch                                          true                                       -
 hmc.net.cookies                                            false                                      Whether to keep a cookie store for downloads.
 hmc.net.delete-failed-files                                true                                       Whether a partially downloaded file is deleted when the download fails.
+hmc.net.http-version                                       -                                          Optional: HTTP version to use for downloads (HTTP_1_1, HTTP_2, HTTP_3). Unset lets the client decide.
 hmc.net.retries                                            1                                          Number of retries per download (0 disables retrying).
 hmc.net.user-agent                                         HeadlessMc/3.0.0-SNAPSHOT                  User-Agent header sent with requests.
+hmc.os.actual-type                                         -                                          Optional: Overrides the actual operating system type used for launching.
+hmc.os.name                                                -                                          Optional: Overrides the detected operating system name.
+hmc.os.type                                                -                                          Optional: Overrides the detected operating system type.
+hmc.os.version                                             -                                          Optional: Overrides the detected operating system version.
 hmc.parallel.breaker-failure-rate-threshold                50.0                                       Failure rate in percent at which the shared circuit breaker opens.
 hmc.parallel.breaker-half-open-calls                       4                                          Number of probe calls allowed while the circuit breaker is half-open.
 hmc.parallel.breaker-minimum-calls                         8                                          Minimum number of calls required before the failure rate is evaluated.
@@ -81,6 +97,7 @@ hmc.parallel.retry-max-attempts                            4                    
 hmc.parallel.retry-max-interval-ms                         2000                                       Upper bound in milliseconds for a single retry delay.
 hmc.server.script.mock-java                                false                                      Whether server scripts (e.g. Forge/NeoForge run.sh/run.bat) are run with a mock java command that captures their java arguments, so HeadlessMc can launch the server itself, instead of running the scripts directly.
 hmc.server.script.timeout                                  60                                         Time in seconds to wait for a server script to call the mock java command (only used if hmc.server.script.mock-java is enabled).
+hmc.test.file                                              -                                          Optional
 hmc.test.leave                                             true                                       -
 hmc.test.no-timeout                                        false                                      -
 hmc.test.server                                            false                                      -

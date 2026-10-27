@@ -256,6 +256,15 @@ public class ConfigTest {
     }
 
     @Test
+    public void optionalPropertiesWithoutValueAreListed() {
+        String optional = "hmc.test.properties.test-optional";
+        assertFalse(configService.getConfig().getOptionalValue(optional, String.class).isPresent());
+        assertTrue(configService.getPropertyNames().contains(optional));
+        assertTrue(configService.getOptionalPropertyNames().contains(optional));
+        assertFalse(configService.getOptionalPropertyNames().contains(PROP));
+    }
+
+    @Test
     public void bindCachesTheSupplierResultUntilTheConfigChanges() {
         AtomicInteger calls = new AtomicInteger();
         Supplier<Object> mapping = () -> {

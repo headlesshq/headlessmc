@@ -81,6 +81,7 @@ include 'headlessmc-platform:headlessmc-platform-all'
 include 'headlessmc-mods'
 include 'headlessmc-mods:headlessmc-mods-distribution'
 include 'headlessmc-mods:headlessmc-mods-distribution-modrinth'
+include 'headlessmc-mods:headlessmc-mods-distribution-github'
 
 include 'headlessmc-util'
 include 'headlessmc-util:headlessmc-util-maven'

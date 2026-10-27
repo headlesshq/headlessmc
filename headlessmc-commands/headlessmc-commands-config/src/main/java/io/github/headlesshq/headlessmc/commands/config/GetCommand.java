@@ -1,10 +1,8 @@
 package io.github.headlesshq.headlessmc.commands.config;
 
-import io.github.headlesshq.headlessmc.config.ConfigDescriptionService;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.console.format.TableProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -14,7 +12,6 @@ import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.util.List;
-import java.util.function.Function;
 
 @Getter
 @Setter
@@ -26,9 +23,8 @@ import java.util.function.Function;
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class GetCommand implements Runnable, CachedConsole.Enabled {
-    private final ConfigDescriptionService descriptionService;
     private final ConfigService configService;
-    private final TableProvider tableProvider;
+    private final ConfigTable configTable;
     private final Console console;
 
     @CommandLine.Parameters(
@@ -47,11 +43,6 @@ public class GetCommand implements Runnable, CachedConsole.Enabled {
             throw new IllegalArgumentException("Please specify a config property to get!");
         }
 
-        tableProvider.<String>get()
-            .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class).orElse("-"))
-            .withColumn("description", name -> descriptionService.getDescription(name).orElse("-"))
-            .addAll(List.of(property))
-            .log(console::write);
+        configTable.log(configService, List.of(property), console);
     }
 }
