@@ -110,7 +110,8 @@ interface FoojayAPI {
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
         @Nullable @QueryParam("libc_type") List<String> libcType,
         @Nullable @QueryParam("latest") String latest,
-        @Nullable @QueryParam("release_status") List<String> releaseStatus
+        @Nullable @QueryParam("release_status") List<String> releaseStatus,
+        @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled
         /*
         Other unneeded parameters from swagger
 
@@ -120,7 +121,6 @@ interface FoojayAPI {
         @Nullable @QueryParam("distro") List<String> distro,
         @Nullable @QueryParam("term_of_support") List<String> termOfSupport,
         @Nullable @QueryParam("fpu") List<String> fpu,
-        @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled,
         @Nullable @QueryParam("with_javafx_if_available") Boolean withJavafxIfAvailable,
         @Nullable @QueryParam("feature") List<String> feature,
         @Nullable @QueryParam("signature_available") Boolean signatureAvailable,
@@ -156,7 +156,8 @@ interface FoojayAPI {
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
         @Nullable @QueryParam("libc_type") List<String> libcType,
         @Nullable @QueryParam("latest") String latest,
-        @Nullable @QueryParam("release_status") List<String> releaseStatus
+        @Nullable @QueryParam("release_status") List<String> releaseStatus,
+        @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled
     ) throws ApiException, ProcessingException {
         //noinspection Convert2Diamond
         return resolve(
@@ -171,7 +172,8 @@ interface FoojayAPI {
                 directlyDownloadable,
                 libcType,
                 latest,
-                releaseStatus
+                releaseStatus,
+                javafxBundled
             )
         );
     }

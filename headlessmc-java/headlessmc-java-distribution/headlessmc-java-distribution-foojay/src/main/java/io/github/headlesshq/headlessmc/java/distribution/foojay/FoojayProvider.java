@@ -88,7 +88,8 @@ public class FoojayProvider implements JavaDistributionProvider {
                     null, // true?
                     List.of(operatingSystem.getLibCType().getApiString()),
                     LATEST_AVAILABLE,
-                    List.of(RELEASE_STATUS_GA)
+                    List.of(RELEASE_STATUS_GA),
+                    false
                 )
                 .stream()
                 .map(pkg -> pkg.toRuntime(getName(), version, distribution.id()))

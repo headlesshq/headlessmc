@@ -44,7 +44,7 @@ class FoojayProviderTest {
         public Response getPackages(String version, List<String> distribution, List<String> operatingSystem,
                                     List<String> architecture, Integer bitness, List<ArchiveType> archiveType,
                                     String packageType, Boolean directlyDownloadable, List<String> libcType,
-                                    String latest, List<String> releaseStatus) {
+                                    String latest, List<String> releaseStatus, Boolean javafxBundled) {
             throw new UnsupportedOperationException();
         }
 
@@ -70,9 +70,9 @@ class FoojayProviderTest {
         public List<Pkg> packages(String version, List<String> distribution, List<String> operatingSystem,
                                   List<String> architecture, Integer bitness, List<ArchiveType> archiveType,
                                   String packageType, Boolean directlyDownloadable, List<String> libcType,
-                                  String latest, List<String> releaseStatus) {
+                                  String latest, List<String> releaseStatus, Boolean javafxBundled) {
             packageQueries.add(new PackageQuery(
-                version, distribution, operatingSystem, architecture, bitness, latest, releaseStatus
+                version, distribution, operatingSystem, architecture, bitness, latest, releaseStatus, javafxBundled
             ));
             return packages;
         }
@@ -89,7 +89,7 @@ class FoojayProviderTest {
 
     private record PackageQuery(
         String version, List<String> distribution, List<String> operatingSystem,
-        List<String> architecture, Integer bitness, String latest, List<String> releaseStatus
+        List<String> architecture, Integer bitness, String latest, List<String> releaseStatus, Boolean javafxBundled
     ) {}
 
     @TempDir
@@ -153,6 +153,7 @@ class FoojayProviderTest {
         assertEquals(64, query.bitness());
         assertEquals(FoojayProvider.LATEST_AVAILABLE, query.latest());
         assertEquals(List.of(FoojayProvider.RELEASE_STATUS_GA), query.releaseStatus());
+        assertEquals(false, query.javafxBundled());
     }
 
     @Test
