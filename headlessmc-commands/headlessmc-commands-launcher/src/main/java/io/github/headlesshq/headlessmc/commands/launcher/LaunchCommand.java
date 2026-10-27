@@ -67,7 +67,7 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
     private @Nullable String packwiz;
 
     @CommandLine.Parameters(
-        description = "The profile/server/version/version.json name to launch",
+        description = "The profile/server/version name to launch",
         paramLabel = "profile",
         arity = "0..*",
         completionCandidates = ProfileVersionJsonCompletions.class
