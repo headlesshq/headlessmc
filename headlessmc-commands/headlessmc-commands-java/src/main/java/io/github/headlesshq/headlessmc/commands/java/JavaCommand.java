@@ -27,7 +27,8 @@ import picocli.CommandLine;
     subcommands = {
         InstallCommand.class,
         ListCommand.class,
-        RemoveCommand.class
+        RemoveCommand.class,
+        UpdateCommand.class
     }
 )
 @RequiredArgsConstructor(onConstructor_ = {@Inject})

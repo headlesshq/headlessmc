@@ -108,7 +108,10 @@ interface FoojayAPI {
         @Nullable @QueryParam("archive_type") List<ArchiveType> archiveType,
         @Nullable @QueryParam("package_type") String packageType,
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
-        @Nullable @QueryParam("libc_type") List<String> libcType
+        @Nullable @QueryParam("libc_type") List<String> libcType,
+        @Nullable @QueryParam("latest") String latest,
+        @Nullable @QueryParam("release_status") List<String> releaseStatus,
+        @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled
         /*
         Other unneeded parameters from swagger
 
@@ -116,12 +119,9 @@ interface FoojayAPI {
         @Nullable @QueryParam("jdk_version") Integer jdkVersion,
         @Nullable @QueryParam("version_by_definition") String versionByDefinition,
         @Nullable @QueryParam("distro") List<String> distro,
-        @Nullable @QueryParam("release_status") List<String> releaseStatus,
         @Nullable @QueryParam("term_of_support") List<String> termOfSupport,
         @Nullable @QueryParam("fpu") List<String> fpu,
-        @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled,
         @Nullable @QueryParam("with_javafx_if_available") Boolean withJavafxIfAvailable,
-        @Nullable @QueryParam("latest") String latest,
         @Nullable @QueryParam("feature") List<String> feature,
         @Nullable @QueryParam("signature_available") Boolean signatureAvailable,
         @Nullable @QueryParam("free_to_use_in_production") Boolean freeToUseInProduction,
@@ -154,7 +154,10 @@ interface FoojayAPI {
         @Nullable @QueryParam("archive_type") List<ArchiveType> archiveType,
         @Nullable @QueryParam("package_type") String packageType,
         @Nullable @QueryParam("directly_downloadable") Boolean directlyDownloadable,
-        @Nullable @QueryParam("libc_type") List<String> libcType
+        @Nullable @QueryParam("libc_type") List<String> libcType,
+        @Nullable @QueryParam("latest") String latest,
+        @Nullable @QueryParam("release_status") List<String> releaseStatus,
+        @Nullable @QueryParam("javafx_bundled") Boolean javafxBundled
     ) throws ApiException, ProcessingException {
         //noinspection Convert2Diamond
         return resolve(
@@ -167,7 +170,10 @@ interface FoojayAPI {
                 archiveType,
                 packageType,
                 directlyDownloadable,
-                libcType
+                libcType,
+                latest,
+                releaseStatus,
+                javafxBundled
             )
         );
     }

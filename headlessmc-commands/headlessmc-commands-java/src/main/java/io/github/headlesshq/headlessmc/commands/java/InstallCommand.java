@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.commands.java;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.LongRunningCommand;
+import io.github.headlesshq.headlessmc.distribution.InstalledJavaRuntimeService;
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProvider;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionProviderService;
@@ -39,6 +40,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class InstallCommand implements Runnable, CachedConsole.Enabled, LongRunningCommand {
     private final JavaDistributionProviderService distributionServiceManager;
+    private final InstalledJavaRuntimeService installedRuntimeService;
     private final FileService fileService;
     private final JavaService javaService;
     private final AppFiles appFiles;
@@ -81,7 +83,7 @@ public class InstallCommand implements Runnable, CachedConsole.Enabled, LongRunn
             );
         }
 
-        service.download(runtime, path);
+        installedRuntimeService.install(service, runtime, path);
         javaService.refresh();
         console.write("Installed java " + version + " (" + javaDistribution.name() + ") to " + path);
     }

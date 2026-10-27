@@ -21,4 +21,7 @@ public interface JavaConfig extends DynamicConfig {
     @WithDefault("6")
     int maxScanDepth();
 
+    @WithDefault("true")
+    boolean checkForUpdates();
+
 }

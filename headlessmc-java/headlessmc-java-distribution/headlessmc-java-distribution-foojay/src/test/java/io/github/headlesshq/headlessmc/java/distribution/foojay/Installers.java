@@ -48,6 +48,11 @@ final class Installers {
             public int maxScanDepth() {
                 return 6;
             }
+
+            @Override
+            public boolean checkForUpdates() {
+                return false;
+            }
         };
         return () -> config;
     }

@@ -4,10 +4,13 @@ dependencies {
     implementation project(':headlessmc-console:headlessmc-console-cdi')
 
     implementation project(':headlessmc-files')
+    implementation project(':headlessmc-updater')
+    implementation project(':headlessmc-util:headlessmc-util-reflection')
 
     implementation project(':headlessmc-java')
     implementation project(':headlessmc-java:headlessmc-java-distribution')
     runtimeOnly project(':headlessmc-java:headlessmc-java-sources')
+    runtimeOnly project(':headlessmc-java:headlessmc-java-distribution:headlessmc-java-distribution-foojay')
 
     implementation libs.picocli
 }
@@ -16,4 +19,5 @@ dependencies {
     testImplementation testFixtures(project(':headlessmc-console'))
     testImplementation testFixtures(project(':headlessmc-files'))
     testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }
