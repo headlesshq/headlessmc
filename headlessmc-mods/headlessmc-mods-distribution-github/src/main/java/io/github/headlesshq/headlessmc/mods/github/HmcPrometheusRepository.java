@@ -16,7 +16,7 @@ public class HmcPrometheusRepository extends AbstractHmcSpecificsAddonRepository
      * Constructs a new HmcPrometheusRepository.
      */
     public HmcPrometheusRepository() {
-        super(NAME, "hmc-prometheus", "hmc-prometheus", "A prometheus exporter for the Minecraft client.");
+        super(NAME, "hmc-prometheus", "hmc-prometheus", "A prometheus exporter for the Minecraft client.", "hmc_prometheus");
     }
 
 }

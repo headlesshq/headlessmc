@@ -16,7 +16,7 @@ public class McRuntimeTestRepository extends AbstractHmcModRepository {
      * Constructs a new McRuntimeTestRepository.
      */
     public McRuntimeTestRepository() {
-        super(NAME, "mc-runtime-test-mod", "Test the Minecraft client inside your CI.");
+        super(NAME, "mc-runtime-test-mod", "Test the Minecraft client inside your CI.", null);
     }
 
 }

@@ -16,7 +16,7 @@ public class HmcMcpRepository extends AbstractHmcSpecificsAddonRepository {
      * Constructs a new HmcMcpRepository.
      */
     public HmcMcpRepository() {
-        super(NAME, "headlessmc-mcp", "hmc-mcp-bridge", "Bridge between the game and the HeadlessMc MCP server.");
+        super(NAME, "headlessmc-mcp", "hmc-mcp-bridge", "Bridge between the game and the HeadlessMc MCP server.", "hmc_mcp_bridge");
     }
 
 }

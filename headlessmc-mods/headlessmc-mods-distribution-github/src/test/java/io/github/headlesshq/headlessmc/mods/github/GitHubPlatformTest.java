@@ -1,6 +1,9 @@
 package io.github.headlesshq.headlessmc.mods.github;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
+import io.github.headlesshq.headlessmc.files.DefaultFileService;
+import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
+import io.github.headlesshq.headlessmc.files.cache.CacheBuilder;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.distribution.ModCache;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionException;
@@ -20,12 +23,16 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GitHubPlatformTest {
     private static final byte[] JAR = "jar".getBytes(StandardCharsets.UTF_8);
+    private static final String MOD_ID_PREFIX = "mod:";
 
     @TempDir
     Path root;
@@ -36,13 +43,37 @@ class GitHubPlatformTest {
 
     private final GitHubAPI api = new GitHubAPI() {
         @Override
-        public GitHubRelease getLatestRelease(String owner, String repo) {
+        public GitHubRelease getLatestRelease(String owner, String repo, @Nullable String authorization) {
             return orNotFound(latestReleases.get(owner + "/" + repo));
         }
 
         @Override
-        public GitHubRelease getReleaseByTag(String owner, String repo, String tag) {
+        public GitHubRelease getReleaseByTag(String owner, String repo, String tag, @Nullable String authorization) {
             return orNotFound(taggedReleases.get(owner + "/" + repo + "@" + tag));
+        }
+    };
+
+    private final GitHubConfig config = new GitHubConfig() {
+        @Override
+        public Optional<String> token() {
+            return Optional.empty();
+        }
+
+        @Override
+        public int cacheMinutes() {
+            return 0;
+        }
+    };
+
+    /**
+     * Test jars contain {@code mod:<mod-id>} instead of real mod metadata.
+     */
+    private final ModIdReader modIdReader = (jar, version) -> {
+        try {
+            String content = Files.readString(jar);
+            return content.startsWith(MOD_ID_PREFIX) ? Set.of(content.substring(MOD_ID_PREFIX.length())) : Set.of();
+        } catch (Exception e) {
+            return Set.of();
         }
     };
 
@@ -78,7 +109,17 @@ class GitHubPlatformTest {
             new HmcPrometheusRepository()
         );
 
-        platform = new GitHubDistributionPlatform(instance(repositories), downloads, api, modCache);
+        GitHubReleaseService releaseService = new GitHubReleaseService(
+            api, config, new GitHubReleaseCache(CacheBuilder.<GitHubReleaseCache.Releases>create().build())
+        );
+        platform = new GitHubDistributionPlatform(
+            instance(repositories),
+            downloads,
+            releaseService,
+            modCache,
+            new DefaultFileService(new DefaultFileSystemProvider()),
+            modIdReader
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -97,7 +138,20 @@ class GitHubPlatformTest {
     private GitHubRelease.Asset asset(String repo, String tag, String name) {
         URI uri = URI.create("https://github.com/headlesshq/" + repo + "/releases/download/" + tag + "/" + name);
         downloads.register(uri, JAR);
-        return new GitHubRelease.Asset(name, uri.toString(), (long) JAR.length, null);
+        return new GitHubRelease.Asset(name, uri.toString(), (long) JAR.length, "sha256:" + sha256(JAR));
+    }
+
+    private static String sha256(byte[] bytes) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private Path installed(String name, String content) throws Exception {
+        Path mods = Files.createDirectories(root.resolve("mods"));
+        return Files.writeString(mods.resolve(name), content);
     }
 
     private void release(String repo, String tag, String... assetNames) {
@@ -233,6 +287,77 @@ class GitHubPlatformTest {
         assertEquals(List.of(), platform.search("hmc", Set.of(ModType.SHADER)));
         assertEquals(List.of(), platform.search("hmc", VersionArg.parse("vanilla", "1.21.1"), Set.of(ModType.MOD)));
         assertEquals(5, platform.search("", VersionArg.parse("fabric", "1.21.1"), Set.of(ModType.MOD)).size());
+    }
+
+    @Test
+    void installedVersionsWithTheSameModIdAreReplaced() throws Exception {
+        taggedRelease("hmc-specifics", "1.21.1-latest", "hmc-specifics-1.21.1-fabric-latest.jar");
+        Path old = installed("hmc-specifics-1.20.4-fabric-3.0.0.jar", MOD_ID_PREFIX + "headlessmc");
+        Path renamed = installed("specifics.jar", MOD_ID_PREFIX + "headlessmc");
+        Path other = installed("other.jar", MOD_ID_PREFIX + "other");
+
+        Path file = platform.download(root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
+
+        assertEquals(root.resolve("mods").resolve("hmc-specifics-1.21.1-fabric-latest.jar"), file);
+        assertArrayEquals(JAR, Files.readAllBytes(file));
+        assertFalse(Files.exists(old));
+        assertFalse(Files.exists(renamed));
+        assertTrue(Files.exists(other));
+    }
+
+    @Test
+    void installedFilesWithTheSameHashAreNotDownloadedAgain() throws Exception {
+        taggedRelease("hmc-specifics", "1.21.1-latest", "hmc-specifics-1.21.1-fabric-latest.jar");
+        Path installed = installed("hmc-specifics-1.21.1-fabric-latest.jar", "jar");
+
+        Path file = platform.download(root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
+
+        assertEquals(installed, file);
+        assertTrue(downloads.getRequestedUris().isEmpty());
+    }
+
+    @Test
+    void outdatedFilesWithTheSameNameAreReplaced() throws Exception {
+        taggedRelease("hmc-specifics", "1.21.1-latest", "hmc-specifics-1.21.1-fabric-latest.jar");
+        Path installed = installed("hmc-specifics-1.21.1-fabric-latest.jar", "outdated");
+
+        platform.download(root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
+
+        assertArrayEquals(JAR, Files.readAllBytes(installed));
+    }
+
+    @Test
+    void addonsDoNotDuplicateAnInstalledHmcSpecifics() throws Exception {
+        taggedRelease("hmc-specifics", "1.21.1-latest", "hmc-specifics-1.21.1-fabric-latest.jar");
+        release("hmc-prometheus", "0.1.0", "hmc-prometheus-0.1.0.jar");
+        Path pinned = installed("hmc-specifics-1.21.1-fabric-3.0.1.jar", MOD_ID_PREFIX + "headlessmc");
+
+        platform.download(root, null, "hmc-prometheus", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
+
+        assertFalse(Files.exists(pinned));
+        try (Stream<Path> files = Files.list(root.resolve("mods"))) {
+            assertEquals(
+                Set.of("hmc-specifics-1.21.1-fabric-latest.jar", "hmc-prometheus-0.1.0.jar"),
+                files.map(file -> file.getFileName().toString()).collect(Collectors.toSet())
+            );
+        }
+    }
+
+    @Test
+    void failedDownloadsKeepTheInstalledVersion() throws Exception {
+        String name = "hmc-specifics-1.21.1-fabric-latest.jar";
+        URI uri = URI.create("https://github.com/headlesshq/hmc-specifics/releases/download/1.21.1-latest/" + name);
+        downloads.register(uri, "corrupted".getBytes(StandardCharsets.UTF_8));
+        taggedReleases.put("headlesshq/hmc-specifics@1.21.1-latest", new GitHubRelease("1.21.1-latest", List.of(
+            new GitHubRelease.Asset(name, uri.toString(), (long) JAR.length, "sha256:" + sha256(JAR))
+        )));
+        Path old = installed("hmc-specifics-1.21.1-fabric-3.0.1.jar", MOD_ID_PREFIX + "headlessmc");
+
+        assertThrows(Exception.class,
+            () -> platform.download(root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD));
+
+        assertTrue(Files.exists(old));
+        assertFalse(Files.exists(root.resolve("mods").resolve(name)));
     }
 
     @Test

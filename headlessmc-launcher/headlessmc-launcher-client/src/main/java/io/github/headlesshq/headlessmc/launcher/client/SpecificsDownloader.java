@@ -11,31 +11,36 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 /**
- * Downloads hmc-specifics into the mods folder of a client before it launches,
+ * Keeps the latest hmc-specifics in the mods folder of a client before it launches,
  * if {@link LauncherConfig#autoDownloadSpecifics()} is enabled.
+ * Installed versions of hmc-specifics are detected by their mod id and replaced
+ * if they differ from the latest release, see {@link io.github.headlesshq.headlessmc.mods.github.GitHubDistributionPlatform}.
  * This never fails the launch, if hmc-specifics cannot be downloaded a warning is logged.
  */
 @Slf4j
 @ApplicationScoped
 public class SpecificsDownloader {
     private final ModDistributionPlatform gitHub;
+    private final HmcSpecificsRepository specifics;
     private final LauncherConfig config;
 
     @Inject
-    public SpecificsDownloader(@GitHub ModDistributionPlatform gitHub, LauncherConfig config) {
+    public SpecificsDownloader(
+        @GitHub ModDistributionPlatform gitHub,
+        HmcSpecificsRepository specifics,
+        LauncherConfig config
+    ) {
         this.gitHub = gitHub;
+        this.specifics = specifics;
         this.config = config;
     }
 
     /**
-     * Downloads hmc-specifics for the {@link Profile#currentVersion()} into the mods folder of the profile,
-     * unless the mods folder already contains a version of hmc-specifics.
+     * Makes sure that the mods folder of the profile contains the latest hmc-specifics
+     * for the {@link Profile#currentVersion()}.
      *
      * @param profile the profile that is about to be launched.
      */
@@ -44,32 +49,17 @@ public class SpecificsDownloader {
             return;
         }
 
-        Path modsDir = ModType.MOD.directory().getDir(profile.path());
-        if (containsSpecifics(modsDir)) {
-            log.debug("{} already contains {}, not downloading it", modsDir, HmcSpecificsRepository.NAME);
+        if (!specifics.supports(profile.currentVersion())) {
+            log.debug("{} is not available for {}", HmcSpecificsRepository.NAME, profile.currentVersion());
             return;
         }
 
         try {
             Path file = gitHub.download(profile.path(), null, HmcSpecificsRepository.NAME, profile.currentVersion(), ModType.MOD);
-            log.info("Downloaded {} to {}", HmcSpecificsRepository.NAME, file);
+            log.debug("{} is installed at {}", HmcSpecificsRepository.NAME, file);
         } catch (HeadlessMcException e) {
             log.warn("Failed to download {} for {}: {}", HmcSpecificsRepository.NAME, profile.currentVersion(), e.getMessage());
             log.debug("Failed to download {}", HmcSpecificsRepository.NAME, e);
-        }
-    }
-
-    private static boolean containsSpecifics(Path modsDir) {
-        if (!Files.isDirectory(modsDir)) {
-            return false;
-        }
-
-        try (Stream<Path> files = Files.list(modsDir)) {
-            return files.map(file -> file.getFileName().toString())
-                .anyMatch(name -> name.startsWith(HmcSpecificsRepository.NAME + "-") && name.endsWith(".jar"));
-        } catch (IOException e) {
-            log.warn("Failed to list {}", modsDir, e);
-            return false;
         }
     }
 

@@ -16,7 +16,7 @@ public class HmcSpecificsRepository extends AbstractHmcModRepository {
      * Constructs a new HmcSpecificsRepository.
      */
     public HmcSpecificsRepository() {
-        super(NAME, "hmc-specifics", "Version specific implementations of the HeadlessMc runtime.");
+        super(NAME, "hmc-specifics", "Version specific implementations of the HeadlessMc runtime.", "headlessmc");
     }
 
 }

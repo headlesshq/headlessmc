@@ -18,6 +18,7 @@ public abstract class AbstractHmcSpecificsAddonRepository implements ModReposito
     private final String repository;
     private final String filePrefix;
     private final String description;
+    private final @Nullable String modId;
 
     /**
      * Constructs a new AbstractHmcSpecificsAddonRepository.
@@ -26,12 +27,20 @@ public abstract class AbstractHmcSpecificsAddonRepository implements ModReposito
      * @param repository  the name of the GitHub repository.
      * @param filePrefix  the name of the release file without the {@code -<release-tag>.jar} suffix.
      * @param description a description of what the mod does.
+     * @param modId       the id the mod declares in its metadata, {@code null} if it is unknown.
      */
-    protected AbstractHmcSpecificsAddonRepository(String name, String repository, String filePrefix, String description) {
+    protected AbstractHmcSpecificsAddonRepository(
+        String name,
+        String repository,
+        String filePrefix,
+        String description,
+        @Nullable String modId
+    ) {
         this.name = name;
         this.repository = repository;
         this.filePrefix = filePrefix;
         this.description = description;
+        this.modId = modId;
     }
 
     @Override
@@ -52,6 +61,11 @@ public abstract class AbstractHmcSpecificsAddonRepository implements ModReposito
     @Override
     public List<String> getDependencies() {
         return List.of(HmcSpecificsRepository.NAME);
+    }
+
+    @Override
+    public Optional<String> getModId() {
+        return Optional.ofNullable(modId);
     }
 
     @Override

@@ -33,6 +33,7 @@ public abstract class AbstractHmcModRepository implements ModRepository {
     private final String name;
     private final String repository;
     private final String description;
+    private final @Nullable String modId;
 
     /**
      * Constructs a new AbstractHmcModRepository.
@@ -40,11 +41,13 @@ public abstract class AbstractHmcModRepository implements ModRepository {
      * @param name        the name of the mod, which is also the prefix of the release files.
      * @param repository  the name of the GitHub repository.
      * @param description a description of what the mod does.
+     * @param modId       the id the mod declares in its metadata, {@code null} if it is unknown.
      */
-    protected AbstractHmcModRepository(String name, String repository, String description) {
+    protected AbstractHmcModRepository(String name, String repository, String description, @Nullable String modId) {
         this.name = name;
         this.repository = repository;
         this.description = description;
+        this.modId = modId;
     }
 
     @Override
@@ -68,6 +71,11 @@ public abstract class AbstractHmcModRepository implements ModRepository {
         return release.getAsset(
             "%s-%s-%s-%s.jar".formatted(name, version.version(), version.platform(), modVersion)
         );
+    }
+
+    @Override
+    public Optional<String> getModId() {
+        return Optional.ofNullable(modId);
     }
 
     @Override

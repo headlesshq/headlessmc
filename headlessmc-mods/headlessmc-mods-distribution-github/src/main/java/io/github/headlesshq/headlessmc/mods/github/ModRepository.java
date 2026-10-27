@@ -61,6 +61,14 @@ public interface ModRepository {
     Optional<GitHubRelease.Asset> findAsset(GitHubRelease release, VersionArg version);
 
     /**
+     * @return the id the mod declares in its metadata, e.g. its {@code fabric.mod.json},
+     * which is used to find installed versions of the mod. Empty if it is unknown.
+     */
+    default Optional<String> getModId() {
+        return Optional.empty();
+    }
+
+    /**
      * @return the names ({@link #getName()}) of the mods that have to be downloaded alongside this mod.
      */
     default List<String> getDependencies() {

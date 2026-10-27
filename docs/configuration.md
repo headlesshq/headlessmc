@@ -29,13 +29,14 @@ hmc.assets.parallel.retry-max-attempts                     4                    
 hmc.assets.parallel.retry-max-interval-ms                  2000                                       -
 hmc.assets.url                                             https://resources.download.minecraft.net   Base URL of the asset CDN.
 hmc.files.game-for-each-version                            true                                       Whether each version gets its own game directory.
+hmc.github.cache-minutes                                   60                                         How many minutes releases fetched from the GitHub API are cached for, 0 disables the cache.
 hmc.java.download                                          true                                       Whether missing Java versions may be downloaded automatically.
 hmc.java.fail-on-parsing-failure                           false                                      Whether parsing a Java installation that fails should abort instead of being skipped.
 hmc.java.max-scan-depth                                    6                                          How deep to scan Java installation directories.
 hmc.jline.ansi-colors                                      false                                      Allows you to enable colored terminal output, even if the Jline terminal is disabled.
 hmc.jline.enabled                                          true                                       If Jline terminal support is enabled. Might need to be disabled on termux or in IDE terminals.
 hmc.jline.persistent-completions                           true                                       Always displays completions when the HeadlessMc shell is used.
-hmc.launcher.auto-download-specifics                       false                                      Whether hmc-specifics is downloaded from GitHub into the mods folder when launching a client, if it is not already there.
+hmc.launcher.auto-download-specifics                       false                                      Whether the latest hmc-specifics is downloaded from GitHub into the mods folder when launching a client. Other installed versions of hmc-specifics are replaced.
 hmc.launcher.auto-install                                  true                                       -
 hmc.launcher.crash-report-watcher                          false                                      -
 hmc.launcher.free                                          true                                       -
@@ -90,6 +91,10 @@ hmc.updater.repository                                     headlesshq/headlessmc
 hmc.updater.timeout-ms                                     3000                                       Timeout in milliseconds for the check for newer releases.
 hmc.xvfb.check                                             false                                      Whether to check if HeadlessMc is running with XVFB. For CI/CD pipelines.
 ```
+
+`hmc.github.token` is not listed above because it has no default.
+Set it, or the `HMC_GITHUB_TOKEN` environment variable, to a GitHub token
+to authenticate requests to the GitHub API, which are otherwise limited to 60 per hour.
 
 ```
 > debug

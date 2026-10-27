@@ -16,7 +16,7 @@ public class HmcOptimizationsRepository extends AbstractHmcModRepository {
      * Constructs a new HmcOptimizationsRepository.
      */
     public HmcOptimizationsRepository() {
-        super(NAME, "hmc-optimizations", "Version specific optimizations for HeadlessMc.");
+        super(NAME, "hmc-optimizations", "Version specific optimizations for HeadlessMc.", "hmc_optimizations");
     }
 
 }

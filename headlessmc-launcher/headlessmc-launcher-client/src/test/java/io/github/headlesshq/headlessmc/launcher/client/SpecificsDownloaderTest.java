@@ -5,12 +5,12 @@ import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionException;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
+import io.github.headlesshq.headlessmc.mods.github.HmcSpecificsRepository;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -26,7 +26,7 @@ class SpecificsDownloaderTest {
 
     private final ModDistributionPlatform gitHub = Mockito.mock(ModDistributionPlatform.class);
     private final LauncherConfig config = Mockito.mock(LauncherConfig.class);
-    private final SpecificsDownloader downloader = new SpecificsDownloader(gitHub, config);
+    private final SpecificsDownloader downloader = new SpecificsDownloader(gitHub, new HmcSpecificsRepository(), config);
 
     private Profile profile() {
         return new Profile("test", VERSION, gameDir);
@@ -49,12 +49,10 @@ class SpecificsDownloaderTest {
     }
 
     @Test
-    void doesNotDownloadIfTheModsFolderAlreadyContainsSpecifics() throws Exception {
+    void doesNotDownloadForUnsupportedPlatforms() {
         Mockito.when(config.autoDownloadSpecifics()).thenReturn(true);
-        Path mods = Files.createDirectories(gameDir.resolve("mods"));
-        Files.createFile(mods.resolve("hmc-specifics-1.21.1-fabric-3.0.1.jar"));
 
-        downloader.download(profile());
+        downloader.download(new Profile("test", VersionArg.parse("vanilla", "1.21.1"), gameDir));
 
         Mockito.verifyNoInteractions(gitHub);
     }
