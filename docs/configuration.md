@@ -107,8 +107,6 @@ hmc.updater.timeout-ms                                     3000                 
 hmc.xvfb.check                                             false                                      Whether to check if HeadlessMc is running with XVFB. For CI/CD pipelines.
 ```
 
-The config commands show properties that hold secrets, like tokens, as `********`.
-
 ```
 > debug
 ------------------------------------------
