@@ -115,6 +115,24 @@ class ModrinthPlatformTest {
     }
 
     @Test
+    void resourcePackSearchesUseTheMinecraftLoader() {
+        platform.search("faithful", VersionArg.parse("fabric", "1.21.1"), ModType.RESOURCE_PACK);
+
+        String facets = queries.getFirst().facets();
+        assertTrue(facets.contains("categories:minecraft"));
+        assertFalse(facets.contains("fabric"));
+    }
+
+    @Test
+    void dataPackSearchesUseTheDatapackLoader() {
+        platform.search("terralith", VersionArg.parse("fabric", "1.21.1"), ModType.DATA_PACK);
+
+        String facets = queries.getFirst().facets();
+        assertTrue(facets.contains("categories:datapack"));
+        assertFalse(facets.contains("fabric"));
+    }
+
+    @Test
     void vanillaSearchesDoNotFilterByLoader() {
         platform.search("fast", VersionArg.parse("vanilla", "1.21.1"), ModType.DATA_PACK);
 

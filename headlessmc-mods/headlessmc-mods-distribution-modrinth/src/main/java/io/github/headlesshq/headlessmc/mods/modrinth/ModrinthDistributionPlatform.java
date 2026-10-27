@@ -51,19 +51,8 @@ public class ModrinthDistributionPlatform implements ModDistributionPlatform {
 
     @Override
     public List<RemoteMod> search(String query, VersionArg version, ModType type) throws HeadlessMcException {
-        List<String> loaders = List.of(version.platform());
-        if (ModType.DATA_PACK.equals(type) || version.isVanilla()) {
-            loaders = List.of();
-        } else if (ModType.SHADER.equals(type)) {
-            // TODO: this is just a quick and dirty fix,
-            //  check what Shader platforms there actually are and which are supported
-            loaders = "fabric".equalsIgnoreCase(version.platform())
-                ? List.of("iris")
-                : List.of("iris", "optifine");
-        }
-
         String facets = Facets.builder()
-            .loaders(loaders)
+            .loaders(List.copyOf(getLoaders(version, type)))
             .sides(version.side().stream().toList())
             .versions(List.of(version.version()))
             .modTypes(Set.of(type))

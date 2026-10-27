@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.mods.curseforge;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
+import io.github.headlesshq.headlessmc.exceptions.VerificationException;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.distribution.ModCache;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionException;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.*;
 
@@ -29,7 +31,12 @@ class CurseForgePlatformTest {
     private static final URI MOD_URL = URI.create("https://edge.forgecdn.net/files/1/2/hmc-specifics.jar");
     private static final byte[] MOD = "hmc-specifics-jar".getBytes(StandardCharsets.UTF_8);
     private static final CurseForgeMod SPECIFICS = new CurseForgeMod(
-        1754192, 6, "hmc-specifics", "hmc-specifics", "Minecraft API", true
+        1754192, 6, "hmc-specifics", "hmc-specifics", "Minecraft API", true,
+        new CurseForgeMod.Links("https://www.curseforge.com/minecraft/mc-mods/hmc-specifics")
+    );
+    private static final CurseForgeMod FAITHFUL = new CurseForgeMod(
+        237299, 12, "faithful-32x", "Faithful 32x", "Faithful", false,
+        new CurseForgeMod.Links("https://www.curseforge.com/minecraft/texture-packs/faithful-32x")
     );
 
     @TempDir
@@ -38,6 +45,7 @@ class CurseForgePlatformTest {
     private final List<Search> searches = new ArrayList<>();
     private final List<CurseForgeMod> hits = new ArrayList<>();
     private final List<CurseForgeFile> files = new ArrayList<>();
+    private final List<String> requestedModIds = new ArrayList<>();
     private @Nullable String apiKey = API_KEY;
 
     private final CurseForgeAPI api = new CurseForgeAPI() {
@@ -53,7 +61,8 @@ class CurseForgePlatformTest {
         }
 
         @Override
-        public CurseForgeResponse<CurseForgeMod> getMod(String apiKey, long modId) {
+        public CurseForgeResponse<CurseForgeMod> getMod(String apiKey, String modId) {
+            requestedModIds.add(modId);
             return new CurseForgeResponse<>(SPECIFICS);
         }
 
@@ -89,8 +98,18 @@ class CurseForgePlatformTest {
     }
 
     private CurseForgeFile file(String name, @Nullable URI url, Instant date, String... gameVersions) {
-        return new CurseForgeFile(1, name, date, MOD.length, url == null ? null : url.toString(), List.of(),
+        return file(name, url, date, List.of(), gameVersions);
+    }
+
+    private CurseForgeFile file(
+        String name, @Nullable URI url, Instant date, List<CurseForgeFile.Hash> hashes, String... gameVersions
+    ) {
+        return new CurseForgeFile(1, name, date, MOD.length, url == null ? null : url.toString(), hashes,
             List.of(gameVersions));
+    }
+
+    private static String sha1(byte[] bytes) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-1").digest(bytes));
     }
 
     @Test
@@ -172,6 +191,7 @@ class CurseForgePlatformTest {
 
         assertArrayEquals(MOD, Files.readAllBytes(file));
         assertTrue(searches.isEmpty());
+        assertEquals(List.of("1754192"), requestedModIds);
     }
 
     @Test
@@ -198,6 +218,39 @@ class CurseForgePlatformTest {
         ModDistributionException e = assertThrows(ModDistributionException.class,
             () -> platform.download(root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD));
         assertTrue(e.getMessage().contains("https://www.curseforge.com/minecraft/mc-mods/hmc-specifics/files/1"));
+    }
+
+    @Test
+    void manualDownloadLinksUseTheWebsiteOfTheMod() {
+        hits.clear();
+        hits.add(FAITHFUL);
+        files.add(file("faithful.zip", null, Instant.now(), "1.21.1"));
+
+        ModDistributionException e = assertThrows(ModDistributionException.class, () -> platform.download(
+            root, null, "faithful-32x", VersionArg.parse("fabric", "1.21.1"), ModType.RESOURCE_PACK
+        ));
+        assertTrue(e.getMessage().contains("https://www.curseforge.com/minecraft/texture-packs/faithful-32x/files/1"));
+    }
+
+    @Test
+    void downloadsAreVerifiedWithTheFileHashes() throws Exception {
+        files.add(file("hmc-specifics.jar", MOD_URL, Instant.now(),
+            List.of(new CurseForgeFile.Hash(sha1(MOD), CurseForgeFile.Hash.SHA1)), "1.21.1", "Fabric"));
+
+        Path file = platform.download(root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD);
+
+        assertArrayEquals(MOD, Files.readAllBytes(file));
+    }
+
+    @Test
+    void downloadsWithWrongHashesFail() throws Exception {
+        files.add(file("hmc-specifics.jar", MOD_URL, Instant.now(),
+            List.of(new CurseForgeFile.Hash(sha1(new byte[]{1}), CurseForgeFile.Hash.SHA1)), "1.21.1", "Fabric"));
+
+        assertThrows(VerificationException.class, () -> platform.download(
+            root, null, "hmc-specifics", VersionArg.parse("fabric", "1.21.1"), ModType.MOD
+        ));
+        assertFalse(Files.exists(root.resolve("mods").resolve("hmc-specifics.jar")));
     }
 
     @Test

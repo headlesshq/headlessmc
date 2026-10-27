@@ -56,7 +56,7 @@ interface CurseForgeAPI {
      * Gets a mod by its id.
      *
      * @param apiKey the api key.
-     * @param modId  the id of the mod.
+     * @param modId  the numeric id of the mod.
      * @return the mod.
      * @see <a href=https://docs.curseforge.com/rest-api/#get-mod>https://docs.curseforge.com/rest-api/#get-mod</a>
      */
@@ -65,7 +65,7 @@ interface CurseForgeAPI {
     @Produces({"application/json"})
     CurseForgeResponse<CurseForgeMod> getMod(
         @HeaderParam(API_KEY_HEADER) String apiKey,
-        @PathParam("modId") long modId
+        @PathParam("modId") String modId
     );
 
     /**

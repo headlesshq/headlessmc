@@ -104,9 +104,8 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
 
             if (file.downloadUrl() == null) {
                 throw new ModDistributionException((
-                    "The author of %s does not allow third party downloads, "
-                        + "please download %s manually from https://www.curseforge.com/minecraft/mc-mods/%s/files/%d"
-                ).formatted(id, file.fileName(), mod.slug(), file.id()));
+                    "The author of %s does not allow third party downloads, please download %s manually from %s/files/%d"
+                ).formatted(id, file.fileName(), websiteUrl(mod), file.id()));
             }
 
             Path destination = type.directory().getDir(dir).resolve(file.fileName());
@@ -137,8 +136,8 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
     }
 
     private CurseForgeMod findMod(String apiKey, String id, ModType type) throws HeadlessMcException {
-        if (id.chars().allMatch(Character::isDigit)) {
-            return api.getMod(apiKey, Long.parseLong(id)).data();
+        if (!id.isEmpty() && id.chars().allMatch(Character::isDigit)) {
+            return api.getMod(apiKey, id).data();
         }
 
         Integer classId = CurseForgeIds.classId(type);
@@ -152,6 +151,15 @@ public class CurseForgeDistributionPlatform implements ModDistributionPlatform {
             .filter(mod -> id.equalsIgnoreCase(mod.slug()))
             .findFirst()
             .orElseThrow(() -> new ModDistributionException("Failed to find CurseForge project " + id));
+    }
+
+    private static String websiteUrl(CurseForgeMod mod) {
+        CurseForgeMod.Links links = mod.links();
+        if (links != null && links.websiteUrl() != null) {
+            return links.websiteUrl();
+        }
+
+        return "https://www.curseforge.com/minecraft/mc-mods/" + mod.slug();
     }
 
     private static @Nullable Integer modLoaderType(VersionArg version, ModType type) {
