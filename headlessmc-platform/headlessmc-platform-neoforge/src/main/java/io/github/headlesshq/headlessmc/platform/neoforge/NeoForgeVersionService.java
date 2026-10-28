@@ -24,16 +24,7 @@ public class NeoForgeVersionService extends ForgeVersionService implements Versi
      * e.g. {@code 62-beta} for {@code 21.10.62-beta}.
      */
     public static String getBuildName(PrismIndex.Meta meta) {
-        String metaVersion = meta.version();
-        // in the prism index NeoForge versions look like this: 21.10.62-beta
-        // we would like to only have the 62-beta part
-        if (metaVersion.startsWith(meta.getMcVersion())) {
-            metaVersion = metaVersion.substring(meta.getMcVersion().length() + 1);
-        } else if (("1." + metaVersion).startsWith(meta.getMcVersion())) {
-            metaVersion = metaVersion.substring(meta.getMcVersion().length() - 1);
-        }
-
-        return metaVersion;
+        return getBuildName(meta.version(), meta.getMcVersion());
     }
 
     /**
@@ -48,6 +39,25 @@ public class NeoForgeVersionService extends ForgeVersionService implements Versi
         return "release".equals(meta.type())
             && !meta.version().contains("alpha")
             && !meta.version().contains("beta");
+    }
+
+    /**
+     * In the prism index NeoForge versions look like this: {@code 21.10.62-beta},
+     * but we would like to only have the {@code 62-beta} part as the build name for {@code 1.21.10}.
+     * Versions that do not start with their mc version, e.g. {@code 47.1.104} for {@code 1.20.1}, are kept as is.
+     *
+     * @param neoForgeVersion the NeoForge version, e.g. {@code 21.10.62-beta}.
+     * @param mcVersion       the mc version of the NeoForge version, e.g. {@code 1.21.10}.
+     * @return the build name, e.g. {@code 62-beta}.
+     */
+    static String getBuildName(String neoForgeVersion, String mcVersion) {
+        if (neoForgeVersion.startsWith(mcVersion + ".")) {
+            return neoForgeVersion.substring(mcVersion.length() + 1);
+        } else if (("1." + neoForgeVersion).startsWith(mcVersion + ".")) {
+            return neoForgeVersion.substring(mcVersion.length() - 1);
+        }
+
+        return neoForgeVersion;
     }
 
 }
