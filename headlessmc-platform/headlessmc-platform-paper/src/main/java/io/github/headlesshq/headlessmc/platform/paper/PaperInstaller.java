@@ -25,6 +25,7 @@ import java.util.List;
 
 /**
  * Installs jars from the paper fill API to {@link ServerFinder#DEFAULT_JAR}.
+ * The installed server uses the jvm args recommended by Paper, see {@link PaperJvmArgsService}.
  *
  * @see BuildResponse
  */
@@ -36,11 +37,17 @@ public class PaperInstaller implements ServerInstaller {
     private final String projectName;
     private final VanillaInstaller vanillaInstaller;
     private final DownloadService downloadService;
+    private final PaperJvmArgsService jvmArgsService;
     private final PaperAPI api;
 
     @Inject
-    public PaperInstaller(DownloadService downloadService, VanillaInstaller vanillaInstaller, @RestClient PaperAPI api) {
-        this(PaperAPI.PAPER_PROJECT, vanillaInstaller, downloadService, api);
+    public PaperInstaller(
+        DownloadService downloadService,
+        VanillaInstaller vanillaInstaller,
+        PaperJvmArgsService jvmArgsService,
+        @RestClient PaperAPI api
+    ) {
+        this(PaperAPI.PAPER_PROJECT, vanillaInstaller, downloadService, jvmArgsService, api);
     }
 
     @Override
@@ -64,7 +71,10 @@ public class PaperInstaller implements ServerInstaller {
                 .size(response.getServerDownload().size())
                 .toFile(file);
 
-            return new Installation(vanillaVersion.requireJavaVersion());
+            return new Installation(
+                vanillaVersion.requireJavaVersion(),
+                jvmArgsService.getRecommendedJvmArgs(id.getVersion().getName())
+            );
         } catch (ApiException e) {
             if (isNotFound(e)) {
                 throw new HeadlessMcException(versionNotFoundMessage(id.getVersion().getName()), e);

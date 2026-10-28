@@ -115,7 +115,7 @@ class ServerCommandsTest {
     void addExistingServerRequiresForce() {
         serverService.add(root.resolve("existing"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "my-server", 21);
+        ), "my-server", new ServerInstaller.Installation(21));
 
         AddCommand command = add();
         command.setVersionArg(List.of("1.21.1"));
@@ -154,7 +154,7 @@ class ServerCommandsTest {
         profileService.createDefault("client", VersionArg.parse("vanilla", "1.21.1"));
         serverService.add(root.resolve("srv"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "srv", 21);
+        ), "srv", new ServerInstaller.Installation(21));
 
         new ListCommand(serverService, tables, console).run();
 
@@ -181,7 +181,7 @@ class ServerCommandsTest {
         Path dir = createDir(root.resolve("srv"));
         serverService.add(dir, VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "srv", 21);
+        ), "srv", new ServerInstaller.Installation(21));
 
         RemoveCommand command = new RemoveCommand(serverService, new DefaultFileService(new DefaultFileSystemProvider()), console);
         command.setName("srv");
@@ -196,7 +196,7 @@ class ServerCommandsTest {
     void serverCompletionsListServerNames() {
         serverService.add(root.resolve("srv"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "srv", 21);
+        ), "srv", new ServerInstaller.Installation(21));
 
         List<String> names = new ArrayList<>();
         new ServerCompletions(serverService).forEach(names::add);

@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstaller.Installation;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,22 +40,33 @@ class ServerServiceImplTest {
 
     @Test
     void addsServerProfilesWithADefaultName() {
-        Profile server = service.add(root.resolve("srv"), id(), null, 21);
+        Profile server = service.add(root.resolve("srv"), id(), null, new Installation(21));
 
         assertEquals("server-1.21.1", server.name());
         assertEquals(Optional.of(Side.SERVER), server.version().side());
         assertEquals(21, server.javaVersion());
         assertEquals(root.resolve("srv"), server.path());
+        assertEquals(List.of(), server.vmArgs());
+    }
+
+    @Test
+    void addsServerProfilesWithTheVmArgsOfTheInstallation() {
+        Installation installation = new Installation(21, List.of("-XX:+UseG1GC", "-XX:+AlwaysPreTouch"));
+
+        Profile server = service.add(root.resolve("srv"), id(), "my-server", installation);
+
+        assertEquals(List.of("-XX:+UseG1GC", "-XX:+AlwaysPreTouch"), server.vmArgs());
+        assertEquals(List.of("nogui"), server.gameArgs());
     }
 
     @Test
     void addsServerProfilesWithAGivenName() {
-        assertEquals("my-server", service.add(root.resolve("srv"), id(), "my-server", 21).name());
+        assertEquals("my-server", service.add(root.resolve("srv"), id(), "my-server", new Installation(21)).name());
     }
 
     @Test
     void findsServersIgnoringCase() {
-        service.add(root.resolve("srv"), id(), "my-server", 21);
+        service.add(root.resolve("srv"), id(), "my-server", new Installation(21));
 
         assertTrue(service.getServer("MY-SERVER").isPresent());
         assertTrue(service.getServer("nope").isEmpty());
@@ -62,7 +74,7 @@ class ServerServiceImplTest {
 
     @Test
     void listsOnlyServerProfiles() {
-        service.add(root.resolve("srv"), id(), "my-server", 21);
+        service.add(root.resolve("srv"), id(), "my-server", new Installation(21));
         profileService.createDefault("client", VersionArg.parse("vanilla", "1.21.1"));
 
         assertEquals(List.of("my-server"), service.listServers().stream().map(Profile::name).toList());
@@ -70,7 +82,7 @@ class ServerServiceImplTest {
 
     @Test
     void savesAndRemovesServers() {
-        Profile server = service.add(root.resolve("srv"), id(), "my-server", 21);
+        Profile server = service.add(root.resolve("srv"), id(), "my-server", new Installation(21));
 
         service.save(server.withJavaVersion(17));
         assertEquals(17, service.getServer("my-server").orElseThrow().javaVersion());
@@ -81,7 +93,7 @@ class ServerServiceImplTest {
 
     @Test
     void eulaStatusIsOnlySavedWhenItChanges() {
-        Profile server = service.add(root.resolve("srv"), id(), "my-server", 21);
+        Profile server = service.add(root.resolve("srv"), id(), "my-server", new Installation(21));
         assertEquals(EulaStatus.UNKNOWN, server.eulaStatus());
 
         assertSame(server, service.setEulaStatus(server, EulaStatus.UNKNOWN));
