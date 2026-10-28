@@ -10,6 +10,8 @@ import java.util.Optional;
  * A {@link Console} that removes secrets with the {@link SecretService}
  * from everything it writes, including prompts,
  * before passing it on to the console it wraps.
+ * Editors start empty instead of with a text containing secrets,
+ * as masking the text would turn the mask into the edited value.
  */
 @RequiredArgsConstructor
 public class CensoringConsole implements Console {
@@ -51,7 +53,8 @@ public class CensoringConsole implements Console {
         return console.extensions().map(extensions -> new ConsoleExtensions() {
             @Override
             public String edit(String initialString) {
-                return extensions.edit(initialString);
+                boolean containsSecrets = !secretService.censorSecrets(initialString).equals(initialString);
+                return extensions.edit(containsSecrets ? "" : initialString);
             }
 
             @Override

@@ -1,7 +1,6 @@
 package io.github.headlesshq.headlessmc.commands.config;
 
 import io.github.headlesshq.headlessmc.config.ConfigDescriptionService;
-import io.github.headlesshq.headlessmc.config.ConfigSecretSource;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
@@ -27,7 +26,6 @@ import picocli.CommandLine;
 public class SetCommand implements Runnable {
     private final ConfigDescriptionService descriptionService;
     private final ConfigService configService;
-    private final ConfigSecretSource secretSource;
     private final TableProvider tableProvider;
     private final Console console;
 
@@ -67,10 +65,7 @@ public class SetCommand implements Runnable {
                     "Please specify the value to set " + property + " to, or use another terminal."
                 ));
 
-            String before = secretSource.isSecret(property)
-                ? ""
-                : configService.getConfig().getValue(property, String.class);
-            value = extensions.edit(before);
+            value = extensions.edit(configService.getConfig().getValue(property, String.class));
         }
 
         configService.set(property, value, !temp);
