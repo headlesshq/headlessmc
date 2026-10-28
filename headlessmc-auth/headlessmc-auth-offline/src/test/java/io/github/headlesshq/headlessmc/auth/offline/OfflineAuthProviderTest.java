@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +48,11 @@ class OfflineAuthProviderTest {
         @Override
         public Optional<Account> getById(String id) {
             throw new AuthStoreException("broken");
+        }
+
+        @Override
+        public Collection<Account> loaded() {
+            return Collections.emptyList();
         }
     }
 

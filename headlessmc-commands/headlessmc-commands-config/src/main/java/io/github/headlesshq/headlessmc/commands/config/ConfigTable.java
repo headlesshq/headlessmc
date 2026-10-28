@@ -16,6 +16,7 @@ import java.util.function.Function;
  * Prints config properties with their values and descriptions.
  * Properties without a value are shown as {@code -},
  * the descriptions of optional properties start with {@value #OPTIONAL}.
+ * Secret values are removed by the {@link Console}.
  */
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
@@ -36,9 +37,7 @@ public class ConfigTable {
         Set<String> optional = configService.getOptionalPropertyNames();
         tableProvider.<String>get()
             .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class)
-                .map(value -> SecretConfigValues.mask(name, value))
-                .orElse("-"))
+            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class).orElse("-"))
             .withColumn("description", name -> describe(name, optional.contains(name)))
             .addAll(properties)
             .log(console::write);

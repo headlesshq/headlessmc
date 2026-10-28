@@ -8,6 +8,11 @@ public interface AuthService {
 
     List<Account> getAccounts();
 
+    /**
+     * @return the {@link AuthProvider#getLoadedAccounts()} of all providers, including disabled ones.
+     */
+    List<Account> getLoadedAccounts();
+
     Optional<AuthProvider> getProvider(String name);
 
     List<AuthProvider> getProviders();

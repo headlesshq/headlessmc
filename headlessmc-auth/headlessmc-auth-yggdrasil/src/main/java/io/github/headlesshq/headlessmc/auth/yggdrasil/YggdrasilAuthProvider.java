@@ -205,6 +205,11 @@ public class YggdrasilAuthProvider implements AuthProvider {
     }
 
     @Override
+    public List<Account> getLoadedAccounts() {
+        return authStore.loaded().stream().map(YggdrasilAccount::asAccount).collect(Collectors.toList());
+    }
+
+    @Override
     public void removeAccount(Account account) {
         try {
             authStore.remove(account.getName());

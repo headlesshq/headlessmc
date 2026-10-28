@@ -9,6 +9,8 @@ import io.github.headlesshq.headlessmc.console.input.SystemInputProvider;
 import io.github.headlesshq.headlessmc.console.output.Output;
 import io.github.headlesshq.headlessmc.console.output.OutputProvider;
 import io.github.headlesshq.headlessmc.console.output.Secret;
+import io.github.headlesshq.headlessmc.console.output.SecretService;
+import io.github.headlesshq.headlessmc.console.output.SecretServiceImpl;
 import io.github.headlesshq.headlessmc.console.output.StdOutOutput;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import org.junit.jupiter.api.Test;
@@ -165,7 +167,7 @@ class ConsoleProvidersTest {
 
         Console console = DefaultConsole.create(List.of(
             provider(List.of(output), List.of(new QueuedInput())), unavailable
-        ));
+        ), SecretService.none());
         console.write("hello");
 
         assertEquals(List.of("hello"), output.messages);
@@ -261,6 +263,32 @@ class ConsoleProvidersTest {
         } finally {
             System.setIn(original);
         }
+    }
+
+    @Test
+    void defaultConsoleRemovesSecretsFromEverythingItWrites() {
+        RecordingOutput output = new RecordingOutput();
+        QueuedInput input = new QueuedInput();
+        input.lines.add("answer");
+        SecretService secretService = new SecretServiceImpl(List.of(() -> List.of("access-token")));
+        Console console = DefaultConsole.create(List.of(provider(List.of(output), List.of(input))), secretService);
+
+        console.write("token: access-token");
+        console.write("prompt access-token", "");
+        assertEquals("answer", console.read("question access-token"));
+        try (CachedConsole cached = console.cache()) {
+            cached.get().write("cached access-token");
+        }
+
+        assertEquals(
+            List.of(
+                "token: " + SecretService.MASK,
+                "prompt " + SecretService.MASK,
+                "question " + SecretService.MASK,
+                "cached " + SecretService.MASK
+            ),
+            output.messages
+        );
     }
 
     @Test

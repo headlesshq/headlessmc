@@ -49,6 +49,11 @@ public class AnyAuthProvider implements AuthProvider {
     }
 
     @Override
+    public List<Account> getLoadedAccounts() {
+        return authService.getLoadedAccounts();
+    }
+
+    @Override
     public void removeAccount(Account account) {
         authService.getProvider(account.getProvider())
             .orElseThrow(() -> new AuthException(

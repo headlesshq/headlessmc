@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.auth;
 
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
@@ -30,6 +31,11 @@ public class InMemoryAuthStore<T> implements AuthStore<T> {
     @Override
     public synchronized void remove(String id) throws AuthStoreException {
         map.remove(id);
+    }
+
+    @Override
+    public Collection<T> loaded() {
+        return map.values();
     }
 
     @Override

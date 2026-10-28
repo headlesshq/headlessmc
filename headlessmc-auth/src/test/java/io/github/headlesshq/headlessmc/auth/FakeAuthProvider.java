@@ -7,6 +7,7 @@ import java.util.Optional;
 final class FakeAuthProvider implements AuthProvider {
     private final String name;
     final List<Account> accounts = new ArrayList<>();
+    final List<Account> loaded = new ArrayList<>();
     boolean failOnGetAccount;
     boolean enabled = true;
     Account refreshed;
@@ -38,6 +39,11 @@ final class FakeAuthProvider implements AuthProvider {
     @Override
     public List<Account> getAccounts() throws AuthException {
         return accounts;
+    }
+
+    @Override
+    public List<Account> getLoadedAccounts() {
+        return loaded;
     }
 
     @Override

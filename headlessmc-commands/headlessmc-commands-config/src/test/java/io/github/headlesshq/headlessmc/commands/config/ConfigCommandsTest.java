@@ -5,16 +5,20 @@ import io.github.headlesshq.headlessmc.config.ConfigException;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.config.ConfigServiceImpl;
 import io.github.headlesshq.headlessmc.config.DynamicConfig;
+import io.github.headlesshq.headlessmc.console.CensoringConsole;
 import io.github.headlesshq.headlessmc.console.Completions;
+import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.console.format.SimpleTableProvider;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
+import io.github.headlesshq.headlessmc.console.output.SecretService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.Config;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -33,12 +37,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @QuarkusTest
 public class ConfigCommandsTest {
     private static final String PROPERTY = "hmc.java.download";
+    private static final String TOKEN = "hmc.test.commands.token";
+    private static final String SECRET = "ghp_secret";
 
     @Inject
     ConfigService configService;
 
     @Inject
     ConfigDescriptionService descriptionService;
+
+    @Inject
+    SecretService secretService;
 
     @Inject
     @Any
@@ -54,9 +63,39 @@ public class ConfigCommandsTest {
     private final TableProvider tables = new SimpleTableProvider();
     private ConfigTable configTable;
 
+    @AfterEach
+    public void removeSecret() {
+        configService.remove(TOKEN);
+    }
+
     @BeforeEach
     public void setupConfigTable() {
         configTable = new ConfigTable(descriptionService, tables);
+    }
+
+    private static RecordingConsole editingConsole(List<String> edited, String result) {
+        return new RecordingConsole() {
+            @Override
+            public Optional<ConsoleExtensions> extensions() {
+                return Optional.of(new ConsoleExtensions() {
+                    @Override
+                    public String edit(String initialString) {
+                        edited.add(initialString);
+                        return result;
+                    }
+
+                    @Override
+                    public String read(String prompt, Completions completions) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public int getWidth() {
+                        return 80;
+                    }
+                });
+            }
+        };
     }
 
     private String output() {
@@ -87,35 +126,47 @@ public class ConfigCommandsTest {
     }
 
     @Test
-    public void secretValuesAreMasked() {
-        String secret = "ghp_secret";
-        String token = "hmc.test.commands.token";
-        ConfigService fork = configService.fork();
-        SetCommand set = new SetCommand(descriptionService, fork, tables, console);
+    public void setCommandOutputIsCensoredByTheConsole() {
+        Console censoring = new CensoringConsole(console, secretService);
+        SetCommand set = new SetCommand(descriptionService, configService, tables, censoring);
         set.setTemp(true);
-        set.setProperty(token);
-        set.setValue(secret);
+        set.setProperty(TOKEN);
+        set.setValue(SECRET);
+
         set.run();
 
-        GetCommand get = new GetCommand(fork, configTable, console);
-        get.setProperty(token);
-        get.run();
-        new ListCommand(fork, configTable, console).run();
-        new ConfigCommand(fork, configTable, console).run();
-
-        assertEquals(secret, fork.getConfig().getValue(token, String.class));
-        assertFalse(output().contains(secret), () -> "was: " + output());
-        assertTrue(output().contains("Set " + token + " to " + SecretConfigValues.MASK), () -> "was: " + output());
-        assertTrue(output().contains(SecretConfigValues.MASK + " "), () -> "was: " + output());
+        assertEquals(SECRET, configService.getConfig().getValue(TOKEN, String.class));
+        assertEquals(List.of("Set " + TOKEN + " to " + SecretService.MASK + " temporarily"), console.lines());
     }
 
     @Test
-    public void secretsAreRecognizedByTheirName() {
-        assertTrue(SecretConfigValues.isSecret("hmc.github.token"));
-        assertTrue(SecretConfigValues.isSecret("hmc.curseforge.API-KEY"));
-        assertFalse(SecretConfigValues.isSecret("hmc.github.cache-minutes"));
-        assertEquals("", SecretConfigValues.mask("hmc.github.token", ""));
-        assertEquals("true", SecretConfigValues.mask(PROPERTY, "true"));
+    public void configCommandsOutputIsCensoredByTheConsole() {
+        Console censoring = new CensoringConsole(console, secretService);
+        configService.set(TOKEN, SECRET, false);
+
+        GetCommand get = new GetCommand(configService, configTable, censoring);
+        get.setProperty(TOKEN);
+        get.run();
+        new ListCommand(configService, configTable, censoring).run();
+        new ConfigCommand(configService, configTable, censoring).run();
+
+        assertFalse(output().contains(SECRET), () -> "was: " + output());
+        assertTrue(output().contains(SecretService.MASK + " "), () -> "was: " + output());
+    }
+
+    @Test
+    public void editingASecretStartsWithAnEmptyEditor() {
+        configService.set(TOKEN, SECRET, false);
+        List<String> edited = new ArrayList<>();
+        Console censoring = new CensoringConsole(editingConsole(edited, "ghp_new_secret"), secretService);
+        SetCommand command = new SetCommand(descriptionService, configService, tables, censoring);
+        command.setTemp(true);
+        command.setProperty(TOKEN);
+
+        command.run();
+
+        assertEquals(List.of(""), edited);
+        assertEquals("ghp_new_secret", configService.getConfig().getValue(TOKEN, String.class));
     }
 
     @Test
@@ -171,28 +222,7 @@ public class ConfigCommandsTest {
     public void setWithoutValueUsesTheConsoleEditor() {
         ConfigService fork = configService.fork();
         List<String> edited = new ArrayList<>();
-        RecordingConsole editingConsole = new RecordingConsole() {
-            @Override
-            public Optional<ConsoleExtensions> extensions() {
-                return Optional.of(new ConsoleExtensions() {
-                    @Override
-                    public String edit(String initialString) {
-                        edited.add(initialString);
-                        return "false";
-                    }
-
-                    @Override
-                    public String read(String prompt, Completions completions) {
-                        throw new UnsupportedOperationException();
-                    }
-
-                    @Override
-                    public int getWidth() {
-                        return 80;
-                    }
-                });
-            }
-        };
+        RecordingConsole editingConsole = editingConsole(edited, "false");
 
         SetCommand command = new SetCommand(descriptionService, fork, tables, editingConsole);
 

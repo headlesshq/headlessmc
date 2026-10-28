@@ -12,6 +12,9 @@ import io.github.headlesshq.headlessmc.console.jline.JlineConfig;
 import io.github.headlesshq.headlessmc.console.jline.JlineConsoleProvider;
 import io.github.headlesshq.headlessmc.console.output.FileDescriptorOutput;
 import io.github.headlesshq.headlessmc.console.output.OutputProvider;
+import io.github.headlesshq.headlessmc.console.output.SecretService;
+import io.github.headlesshq.headlessmc.console.output.SecretServiceImpl;
+import io.github.headlesshq.headlessmc.console.output.SecretSource;
 import io.github.headlesshq.headlessmc.console.output.StdOutOutput;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -28,8 +31,15 @@ public class ConsoleFactory {
     @Produces
     @Default
     @ApplicationScoped
-    public Console getConsole(@Any Instance<ConsoleProvider> providers) {
-        return new DefaultConsole(providers.stream().sorted().toList());
+    public Console getConsole(@Any Instance<ConsoleProvider> providers, SecretService secretService) {
+        return new DefaultConsole(providers.stream().sorted().toList(), secretService);
+    }
+
+    @Produces
+    @Default
+    @ApplicationScoped
+    public SecretService getSecretService(@Any Instance<SecretSource> sources) {
+        return new SecretServiceImpl(sources.stream().toList());
     }
 
     @Produces

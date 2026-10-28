@@ -56,6 +56,11 @@ class AccountCommandsTest {
         }
 
         @Override
+        public List<Account> getLoadedAccounts() {
+            return accounts;
+        }
+
+        @Override
         public void removeAccount(Account account) {
             accounts.remove(account);
         }

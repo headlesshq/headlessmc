@@ -49,6 +49,8 @@ public class ConfigServiceImpl implements ConfigService {
      */
     public static final int CONFIG_FILE_ORDINAL = 270;
 
+    private static final Object NULL = new Object();
+
     private final Instance<DynamicConfig> dynamicConfigs;
     private final org.eclipse.microprofile.config.Config baseConfig;
 
@@ -198,7 +200,19 @@ public class ConfigServiceImpl implements ConfigService {
     @Override
     @SuppressWarnings("unchecked")
     public <V> V bind(Object key, Supplier<V> mapping) {
-        return (V) state.cache.computeIfAbsent(mapping, _ -> mapping.get());
+        Map<Object, Object> cache = state.cache;
+        Object value = cache.get(key);
+        if (value == null) {
+            // not computeIfAbsent, the mapping may bind other values itself, e.g. by logging through the SecretService
+            V computed = mapping.get();
+            value = computed == null ? NULL : computed;
+            Object previous = cache.putIfAbsent(key, value);
+            if (previous != null) {
+                value = previous;
+            }
+        }
+
+        return value == NULL ? null : (V) value;
     }
 
     @Override

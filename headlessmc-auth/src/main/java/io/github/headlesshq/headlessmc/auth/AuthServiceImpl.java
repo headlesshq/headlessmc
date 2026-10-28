@@ -45,6 +45,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public List<Account> getLoadedAccounts() {
+        return providers.stream()
+            .map(AuthProvider::getLoadedAccounts)
+            .flatMap(List::stream)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<AuthProvider> getProvider(String name) {
         return enabledProviders().stream()
             .filter(provider -> provider.getName().equalsIgnoreCase(name))

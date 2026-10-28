@@ -3,6 +3,7 @@ dependencies {
     implementation libs.jboss.logmanager
     api project(':headlessmc-config')
     api project(':headlessmc-files')
+    api project(':headlessmc-console')
 
     testImplementation testFixtures(project(':headlessmc-files'))
 }

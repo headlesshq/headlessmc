@@ -16,6 +16,7 @@ public abstract class GsonAuthStore<T> implements AuthStore<T> {
     protected final GsonCodec<T> codec;
     protected final Lock lock;
     protected final long version;
+    private volatile Collection<T> loaded = Collections.emptyList();
 
     protected abstract JsonObject readJson() throws IOException;
 
@@ -40,9 +41,11 @@ public abstract class GsonAuthStore<T> implements AuthStore<T> {
                     result.put(entry.getKey(), codec.fromJson(entry.getKey(), entry.getValue()));
                 }
 
+                loaded = Collections.unmodifiableList(new ArrayList<>(result.values()));
                 return result;
             }
 
+            loaded = Collections.emptyList();
             return new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         } catch (IOException e) {
             throw new AuthStoreException(e);
@@ -64,6 +67,7 @@ public abstract class GsonAuthStore<T> implements AuthStore<T> {
             result.add("accounts", accounts);
             result.add("version", new JsonPrimitive(version));
             writeJson(result);
+            loaded = Collections.unmodifiableList(new ArrayList<>(values.values()));
         } catch (IOException e) {
             throw new AuthStoreException(e);
         } finally {
@@ -94,6 +98,11 @@ public abstract class GsonAuthStore<T> implements AuthStore<T> {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public Collection<T> loaded() {
+        return loaded;
     }
 
     @Override

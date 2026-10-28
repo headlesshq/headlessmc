@@ -13,7 +13,6 @@ include 'headlessmc-application'
 include 'headlessmc-bom'
 include 'headlessmc-docs'
 include 'headlessmc-plugins'
-include 'headlessmc-secrets'
 include 'headlessmc-lwjgl'
 include 'headlessmc-config'
 
