@@ -69,7 +69,8 @@ public class RelativePathService {
      *
      * @param relativePath the path to resolve.
      * @return the resolved path.
-     * @throws JsonParseException if the source is unknown and the path cannot be resolved.
+     * @throws JsonParseException if the source is unknown and the path cannot be resolved,
+     *                            or if the path would escape its source, e.g. via {@code ..}.
      */
     public Path resolve(RelativePath relativePath) throws JsonParseException {
         String identifier = relativePath.source();
@@ -78,13 +79,19 @@ public class RelativePathService {
         }
 
         Path base = findSourcePath(identifier, relativePath);
+        Path result = base;
         for (String name : relativePath.path().split(RelativePath.SEPARATOR)) {
             if (!name.isEmpty()) {
-                base = base.resolve(name);
+                result = result.resolve(name);
             }
         }
 
-        return base;
+        result = result.normalize();
+        if (!result.startsWith(base)) {
+            throw new JsonParseException("Path " + relativePath + " escapes its location '" + base + "'");
+        }
+
+        return result;
     }
 
     private Path findSourcePath(String identifier, RelativePath relativePath) throws JsonParseException {
@@ -107,7 +114,7 @@ public class RelativePathService {
 
         log.warn("Unknown location '{}' for path '{}', falling back to '{}'",
                  identifier, relativePath.path(), serializedSourcePath);
-        return Path.of(serializedSourcePath);
+        return Path.of(serializedSourcePath).toAbsolutePath().normalize();
     }
 
     private boolean isBetterMatch(

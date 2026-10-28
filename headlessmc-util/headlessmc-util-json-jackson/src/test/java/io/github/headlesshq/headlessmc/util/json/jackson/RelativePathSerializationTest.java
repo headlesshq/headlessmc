@@ -137,6 +137,61 @@ class RelativePathSerializationTest {
     }
 
     @Test
+    void pathsEscapingTheirSourceFail() {
+        Path minecraft = root.resolve(".minecraft");
+        DefaultJacksonJsonService service = service(Map.of("minecraft", minecraft));
+        String sourcePath = escape(minecraft);
+
+        for (String path : List.of("..", "../secret", "mods/../../secret", "./../secret")) {
+            String json = "{\"file\":{\"source\":\"minecraft\",\"sourcePath\":\"" + sourcePath
+                + "\",\"path\":\"" + path + "\"}}";
+            assertThrows(JsonParseException.class, () -> parse(service, json, Holder.class), path);
+        }
+    }
+
+    @Test
+    void pathsEscapingTheSerializedSourcePathOfUnknownSourcesFail() {
+        String json = "{\"file\":{\"source\":\"minecraft\",\"sourcePath\":\"" + escape(root.resolve(".minecraft"))
+            + "\",\"path\":\"../secret\"}}";
+
+        assertThrows(JsonParseException.class, () -> parse(service(Map.of()), json, Holder.class));
+    }
+
+    @Test
+    void dotSegmentsThatStayInsideTheSourceAreAllowed() {
+        Path minecraft = root.resolve(".minecraft");
+        String json = "{\"file\":{\"source\":\"minecraft\",\"sourcePath\":\"" + escape(minecraft)
+            + "\",\"path\":\"mods/../versions/./1.21\"}}";
+
+        Holder holder = parse(service(Map.of("minecraft", minecraft)), json, Holder.class);
+
+        assertEquals(minecraft.resolve("versions").resolve("1.21"), holder.file());
+    }
+
+    @Test
+    void parentSegmentsAreNormalizedBeforeRelativizing() {
+        Path home = root.resolve("home");
+        Path minecraft = home.resolve(".minecraft");
+        DefaultJacksonJsonService service = service(Map.of("user.home", home, "minecraft", minecraft));
+
+        String json = write(service, new Holder(minecraft.resolve("..").resolve("Downloads").resolve("mod.jar")));
+
+        assertTrue(json.contains("\"source\":\"user.home\""), json);
+        assertTrue(json.contains("\"path\":\"Downloads/mod.jar\""), json);
+        assertFalse(json.contains(".."), json);
+    }
+
+    @Test
+    void siblingsSharingANamePrefixAreNotRelative() {
+        DefaultJacksonJsonService service = service(Map.of("user.home", root.resolve("user")));
+        Path file = root.resolve("user2").resolve("file.txt");
+
+        String json = write(service, new Holder(file));
+
+        assertEquals("{\"file\":{\"path\":\"" + escape(file) + "\"}}", json);
+    }
+
+    @Test
     void objectsWithoutPathFail() {
         assertThrows(JsonParseException.class, () -> parse(
             service(Map.of()), "{\"file\":{\"source\":\"minecraft\"}}", Holder.class
