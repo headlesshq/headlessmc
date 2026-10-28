@@ -19,6 +19,7 @@ dependencies {
 
     testFixturesApi testFixtures(project(':headlessmc-version'))
     testFixturesImplementation libs.jspecify
+    testFixturesImplementation libs.jackson
 }
 
 dependencies {

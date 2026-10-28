@@ -10,4 +10,5 @@ dependencies {
 
     testImplementation project(':headlessmc-version:headlessmc-version-jackson')
     testImplementation project(':headlessmc-version:headlessmc-version-service')
+    testImplementation testFixtures(project(':headlessmc-platform'))
 }

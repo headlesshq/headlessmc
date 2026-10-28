@@ -11,8 +11,6 @@ import io.github.headlesshq.headlessmc.platform.FakeVersionService;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.PlatformVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.platform.client.DefaultVersionMatcher;
-import io.github.headlesshq.headlessmc.platform.client.VersionMatcher;
 import io.github.headlesshq.headlessmc.platform.forge.Forge;
 import io.github.headlesshq.headlessmc.platform.forge.PrismIndex;
 import io.github.headlesshq.headlessmc.util.maven.Artifact;
@@ -22,6 +20,8 @@ import io.github.headlesshq.headlessmc.version.VersionProcessor;
 import io.github.headlesshq.headlessmc.version.service.FakeVersionJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +80,26 @@ class NeoForgeVersionsTest {
         assertEquals("47.1.104", service().getVersions().getFirst().getName());
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+        21.1.240                    | 1.21.1          | 240
+        21.10.64                    | 1.21.10         | 64
+        21.0.167                    | 1.21            | 0.167
+        20.2.3-beta                 | 1.20.2          | 3-beta
+        26.1.2.82                   | 26.1.2          | 82
+        26.2.0.25-beta              | 26.2            | 0.25-beta
+        47.1.100                    | 1.20.1          | 47.1.100
+        0.25w14craftmine.3-beta     | 25w14craftmine  | 0.25w14craftmine.3-beta
+        26.1.0.0-alpha.1+snapshot-1 | 26.1-snapshot-1 | 26.1.0.0-alpha.1+snapshot-1
+        21.10.64                    | 1.21.1          | 21.10.64
+        26.10.0.5                   | 26.1            | 26.10.0.5
+        21.1                        | 1.21.1          | 21.1
+        26.1                        | 26.1            | 26.1
+        """)
+    void buildNamesCutOffTheMcVersion(String neoForgeVersion, String mcVersion, String build) {
+        assertEquals(build, NeoForgeVersionService.getBuildName(neoForgeVersion, mcVersion));
+    }
+
     @Test
     void legacyArtifactsUseTheForgeName() {
         PrismIndex index = new PrismIndex("net.neoforged", List.of(meta("47.1.104", "1.20.1")));
@@ -107,17 +127,14 @@ class NeoForgeVersionsTest {
         platformService = new FakePlatformService(
             new FakeVanillaPlatform("1.21.10", "1.20.4", "1.20.1"), neoforge
         );
-        return new NeoForgeVersionMatcher(
-            new DefaultVersionMatcher(vanillaVersions, versions), NeoForge.PLATFORM_NAME
-        );
+        return new NeoForgeVersionMatcher(vanillaVersions, versions);
     }
 
     @Test
-    void platformNameAndDelegateAreExposed() {
+    void platformNameIsExposed() {
         NeoForgeVersionMatcher matcher = matcher(new FakeVersionService(NeoForge.PLATFORM_NAME));
 
         assertEquals(NeoForge.PLATFORM_NAME, matcher.getPlatformName());
-        assertInstanceOf(VersionMatcher.class, matcher.getDefaultVersionMatcher());
     }
 
     @Test
@@ -142,13 +159,25 @@ class NeoForgeVersionsTest {
     }
 
     @Test
-    void otherVersionsUseTheDefaultMatcher() {
+    void neoForgeVersionsAreMatchedExactly() {
         FakeVersionService versions = new FakeVersionService(NeoForge.PLATFORM_NAME)
             .withBuilds("1.21.10", "62-beta");
         NeoForgeVersionMatcher matcher = matcher(versions);
 
-        assertTrue(matcher.canMatch(platformService, new FakeVersion("neoforge-62-beta"), processor));
+        assertTrue(matcher.canMatch(platformService, new FakeVersion("neoforge-21.10.62-beta"), processor));
+        assertFalse(matcher.canMatch(platformService, new FakeVersion("neoforge-21.10.62"), processor));
         assertFalse(matcher.canMatch(platformService, new FakeVersion("1.21.10"), processor));
+    }
+
+    @Test
+    void customNamesUseTheDefaultMatcher() {
+        FakeVersionService versions = new FakeVersionService(NeoForge.PLATFORM_NAME)
+            .withBuilds("1.21.10", "62-beta");
+        NeoForgeVersionMatcher matcher = matcher(versions);
+        Version version = new FakeVersion("my-neoforge-pack-62-beta").withInheritsFrom("1.21.10");
+
+        assertTrue(matcher.canMatch(platformService, version, processor));
+        assertEquals("62-beta", matcher.match(platformService, version, processor).getBuild().orElseThrow().getName());
     }
 
     @Test
