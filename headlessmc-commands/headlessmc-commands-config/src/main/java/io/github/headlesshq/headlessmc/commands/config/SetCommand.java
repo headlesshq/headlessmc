@@ -74,7 +74,7 @@ public class SetCommand implements Runnable {
         }
 
         configService.set(property, value, !temp);
-        console.write("Set " + property + " to " + secretSource.mask(property, value) + (temp ? " temporarily" : ""));
+        console.write("Set " + property + " to " + value + (temp ? " temporarily" : ""));
     }
     
 }

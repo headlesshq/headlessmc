@@ -1,7 +1,6 @@
 package io.github.headlesshq.headlessmc.commands.config;
 
 import io.github.headlesshq.headlessmc.config.ConfigDescriptionService;
-import io.github.headlesshq.headlessmc.config.ConfigSecretSource;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
@@ -16,8 +15,8 @@ import java.util.function.Function;
 /**
  * Prints config properties with their values and descriptions.
  * Properties without a value are shown as {@code -},
- * the descriptions of optional properties start with {@value #OPTIONAL}
- * and the values of secret properties are masked.
+ * the descriptions of optional properties start with {@value #OPTIONAL}.
+ * Secret values are removed by the {@link Console}.
  */
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
@@ -25,7 +24,6 @@ public class ConfigTable {
     static final String OPTIONAL = "Optional: ";
 
     private final ConfigDescriptionService descriptionService;
-    private final ConfigSecretSource secretSource;
     private final TableProvider tableProvider;
 
     /**
@@ -39,9 +37,7 @@ public class ConfigTable {
         Set<String> optional = configService.getOptionalPropertyNames();
         tableProvider.<String>get()
             .withColumn("name", Function.identity())
-            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class)
-                .map(value -> secretSource.mask(name, value))
-                .orElse("-"))
+            .withColumn("value", name -> configService.getConfig().getOptionalValue(name, String.class).orElse("-"))
             .withColumn("description", name -> describe(name, optional.contains(name)))
             .addAll(properties)
             .log(console::write);

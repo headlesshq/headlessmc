@@ -6,12 +6,15 @@ import io.github.headlesshq.headlessmc.config.ConfigSecretSource;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.config.ConfigServiceImpl;
 import io.github.headlesshq.headlessmc.config.DynamicConfig;
+import io.github.headlesshq.headlessmc.console.CensoringConsole;
 import io.github.headlesshq.headlessmc.console.Completions;
+import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.console.format.SimpleTableProvider;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
 import io.github.headlesshq.headlessmc.console.output.SecretService;
+import io.github.headlesshq.headlessmc.console.output.SecretServiceImpl;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -61,7 +64,7 @@ public class ConfigCommandsTest {
 
     @BeforeEach
     public void setupConfigTable() {
-        configTable = new ConfigTable(descriptionService, secretSource, tables);
+        configTable = new ConfigTable(descriptionService, tables);
     }
 
     private String output() {
@@ -92,21 +95,23 @@ public class ConfigCommandsTest {
     }
 
     @Test
-    public void secretValuesAreMasked() {
+    public void secretValuesAreRemovedByTheConsole() {
         String secret = "ghp_secret";
         String token = "hmc.test.commands.token";
         ConfigService fork = configService.fork();
-        SetCommand set = new SetCommand(descriptionService, fork, secretSource, tables, console);
+        SecretService secretService = new SecretServiceImpl(List.of(new ConfigSecretSource(fork)));
+        Console censoring = new CensoringConsole(console, secretService);
+        SetCommand set = new SetCommand(descriptionService, fork, secretSource, tables, censoring);
         set.setTemp(true);
         set.setProperty(token);
         set.setValue(secret);
         set.run();
 
-        GetCommand get = new GetCommand(fork, configTable, console);
+        GetCommand get = new GetCommand(fork, configTable, censoring);
         get.setProperty(token);
         get.run();
-        new ListCommand(fork, configTable, console).run();
-        new ConfigCommand(fork, configTable, console).run();
+        new ListCommand(fork, configTable, censoring).run();
+        new ConfigCommand(fork, configTable, censoring).run();
 
         assertEquals(secret, fork.getConfig().getValue(token, String.class));
         assertFalse(output().contains(secret), () -> "was: " + output());

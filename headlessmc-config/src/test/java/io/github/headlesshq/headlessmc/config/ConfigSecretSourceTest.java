@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.config;
 
-import io.github.headlesshq.headlessmc.console.output.SecretService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
@@ -31,13 +30,6 @@ public class ConfigSecretSourceTest {
         assertTrue(secretSource.isSecret("GH_TOKEN"));
         assertFalse(secretSource.isSecret("hmc.github.cache-minutes"));
         assertFalse(secretSource.isSecret("hmc.tokens"));
-    }
-
-    @Test
-    public void masksOnlyNonEmptySecretValues() {
-        assertEquals(SecretService.MASK, secretSource.mask("hmc.github.token", "ghp_secret"));
-        assertEquals("", secretSource.mask("hmc.github.token", ""));
-        assertEquals("true", secretSource.mask("hmc.java.download", "true"));
     }
 
     @Test

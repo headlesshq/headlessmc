@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.config;
 
-import io.github.headlesshq.headlessmc.console.output.SecretService;
 import io.github.headlesshq.headlessmc.console.output.SecretSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,15 +31,6 @@ public class ConfigSecretSource implements SecretSource {
     public boolean isSecret(String property) {
         String normalized = property.toLowerCase(Locale.ENGLISH).replace('_', '.').replace('-', '.');
         return SECRET_SUFFIXES.stream().anyMatch(normalized::endsWith);
-    }
-
-    /**
-     * @param property the name of a config property.
-     * @param value    the value of the property.
-     * @return {@link SecretService#MASK} if the property holds a secret, otherwise the value.
-     */
-    public String mask(String property, String value) {
-        return isSecret(property) && !value.isEmpty() ? SecretService.MASK : value;
     }
 
     @Override
