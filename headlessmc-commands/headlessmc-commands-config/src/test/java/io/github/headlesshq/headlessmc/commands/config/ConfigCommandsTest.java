@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.commands.config;
 
 import io.github.headlesshq.headlessmc.config.ConfigDescriptionService;
 import io.github.headlesshq.headlessmc.config.ConfigException;
+import io.github.headlesshq.headlessmc.config.ConfigSecretSource;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.config.ConfigServiceImpl;
 import io.github.headlesshq.headlessmc.config.DynamicConfig;
@@ -10,6 +11,7 @@ import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.console.format.SimpleTableProvider;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
+import io.github.headlesshq.headlessmc.console.output.SecretService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -41,6 +43,9 @@ public class ConfigCommandsTest {
     ConfigDescriptionService descriptionService;
 
     @Inject
+    ConfigSecretSource secretSource;
+
+    @Inject
     @Any
     Instance<DynamicConfig> dynamicConfigs;
 
@@ -56,7 +61,7 @@ public class ConfigCommandsTest {
 
     @BeforeEach
     public void setupConfigTable() {
-        configTable = new ConfigTable(descriptionService, tables);
+        configTable = new ConfigTable(descriptionService, secretSource, tables);
     }
 
     private String output() {
@@ -91,7 +96,7 @@ public class ConfigCommandsTest {
         String secret = "ghp_secret";
         String token = "hmc.test.commands.token";
         ConfigService fork = configService.fork();
-        SetCommand set = new SetCommand(descriptionService, fork, tables, console);
+        SetCommand set = new SetCommand(descriptionService, fork, secretSource, tables, console);
         set.setTemp(true);
         set.setProperty(token);
         set.setValue(secret);
@@ -105,17 +110,8 @@ public class ConfigCommandsTest {
 
         assertEquals(secret, fork.getConfig().getValue(token, String.class));
         assertFalse(output().contains(secret), () -> "was: " + output());
-        assertTrue(output().contains("Set " + token + " to " + SecretConfigValues.MASK), () -> "was: " + output());
-        assertTrue(output().contains(SecretConfigValues.MASK + " "), () -> "was: " + output());
-    }
-
-    @Test
-    public void secretsAreRecognizedByTheirName() {
-        assertTrue(SecretConfigValues.isSecret("hmc.github.token"));
-        assertTrue(SecretConfigValues.isSecret("hmc.curseforge.API-KEY"));
-        assertFalse(SecretConfigValues.isSecret("hmc.github.cache-minutes"));
-        assertEquals("", SecretConfigValues.mask("hmc.github.token", ""));
-        assertEquals("true", SecretConfigValues.mask(PROPERTY, "true"));
+        assertTrue(output().contains("Set " + token + " to " + SecretService.MASK), () -> "was: " + output());
+        assertTrue(output().contains(SecretService.MASK + " "), () -> "was: " + output());
     }
 
     @Test
@@ -127,7 +123,7 @@ public class ConfigCommandsTest {
     @Test
     public void setChangesProperty() {
         ConfigService fork = configService.fork();
-        SetCommand command = new SetCommand(descriptionService, fork, tables, console);
+        SetCommand command = new SetCommand(descriptionService, fork, secretSource, tables, console);
         command.setTemp(true);
         command.setProperty(PROPERTY);
         command.setValue("false");
@@ -140,14 +136,14 @@ public class ConfigCommandsTest {
 
     @Test
     public void setWithoutPropertyThrows() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+        SetCommand command = new SetCommand(descriptionService, configService.fork(), secretSource, tables, console);
         command.setTemp(true);
         assertThrows(IllegalArgumentException.class, command::run);
     }
 
     @Test
     public void setWithoutValueThrowsWithoutConsoleExtensions() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+        SetCommand command = new SetCommand(descriptionService, configService.fork(), secretSource, tables, console);
         command.setTemp(true);
         command.setProperty(PROPERTY);
         assertThrows(IllegalArgumentException.class, command::run);
@@ -156,7 +152,7 @@ public class ConfigCommandsTest {
     @Test
     public void setInvalidValueThrowsAndKeepsTheOldValue() {
         ConfigService fork = configService.fork();
-        SetCommand command = new SetCommand(descriptionService, fork, tables, console);
+        SetCommand command = new SetCommand(descriptionService, fork, secretSource, tables, console);
         command.setTemp(true);
         command.setProperty("hmc.test.commands.number");
         command.setValue("notAnInt");
@@ -194,7 +190,7 @@ public class ConfigCommandsTest {
             }
         };
 
-        SetCommand command = new SetCommand(descriptionService, fork, tables, editingConsole);
+        SetCommand command = new SetCommand(descriptionService, fork, secretSource, tables, editingConsole);
 
         command.setTemp(true);
         command.setProperty(PROPERTY);
@@ -207,7 +203,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void setDoesNotAffectTheSharedConfigService() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+        SetCommand command = new SetCommand(descriptionService, configService.fork(), secretSource, tables, console);
         command.setTemp(true);
         command.setProperty(PROPERTY);
         command.setValue("false");
@@ -229,7 +225,7 @@ public class ConfigCommandsTest {
     @Test
     public void setPersistsToTheConfigFileByDefault() throws IOException {
         ConfigServiceImpl fileBacked = fileBackedConfigService();
-        SetCommand command = new SetCommand(descriptionService, fileBacked, tables, console);
+        SetCommand command = new SetCommand(descriptionService, fileBacked, secretSource, tables, console);
         command.setProperty(PROPERTY);
         command.setValue("false");
 
@@ -246,7 +242,7 @@ public class ConfigCommandsTest {
     @Test
     public void setWithTempDoesNotWriteTheConfigFile() {
         ConfigServiceImpl fileBacked = fileBackedConfigService();
-        SetCommand command = new SetCommand(descriptionService, fileBacked, tables, console);
+        SetCommand command = new SetCommand(descriptionService, fileBacked, secretSource, tables, console);
         command.setProperty(PROPERTY);
         command.setValue("false");
         command.setTemp(true);
@@ -261,7 +257,7 @@ public class ConfigCommandsTest {
     @Test
     public void setWithoutTempOnAConfigWithoutFileThrows() {
         ConfigService fork = configService.fork();
-        SetCommand command = new SetCommand(descriptionService, fork, tables, console);
+        SetCommand command = new SetCommand(descriptionService, fork, secretSource, tables, console);
         command.setProperty(PROPERTY);
         command.setValue("false");
 
@@ -285,7 +281,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void tempOptionIsParsedByPicocli() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+        SetCommand command = new SetCommand(descriptionService, configService.fork(), secretSource, tables, console);
         commandLine(command).parseArgs("--temp", PROPERTY, "false");
 
         assertTrue(command.isTemp());
@@ -295,7 +291,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void tempOptionDefaultsToFalse() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+        SetCommand command = new SetCommand(descriptionService, configService.fork(), secretSource, tables, console);
         commandLine(command).parseArgs(PROPERTY, "false");
 
         assertFalse(command.isTemp());
@@ -303,7 +299,7 @@ public class ConfigCommandsTest {
 
     @Test
     public void tempOptionCanComeAfterTheParameters() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+        SetCommand command = new SetCommand(descriptionService, configService.fork(), secretSource, tables, console);
         commandLine(command).parseArgs(PROPERTY, "false", "--temp");
 
         assertTrue(command.isTemp());

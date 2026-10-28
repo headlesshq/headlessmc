@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.logging;
 
 import io.github.headlesshq.headlessmc.config.Holder;
+import io.github.headlesshq.headlessmc.console.output.SecretService;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.quarkus.runtime.ShutdownEvent;
@@ -30,6 +31,7 @@ import java.util.logging.Logger;
  * Attaches a log file in {@link AppFiles#getLogDir()} to the root logger and
  * limits the console handlers Quarkus set up to {@link LogConfig#consoleLevel()},
  * formatting what they print with the {@link ConsoleFormatter}.
+ * Secrets are removed from the console and the log file with the {@link SecretService}.
  */
 @Slf4j
 @ApplicationScoped
@@ -41,6 +43,7 @@ public class LoggingInitializer {
     private final AppFiles appFiles;
     private final FileService fileService;
     private final Holder<LogConfig> config;
+    private final SecretService secretService;
 
     private @Nullable Handler fileHandler;
 
@@ -98,10 +101,11 @@ public class LoggingInitializer {
     private void configureConsoleHandlers(Handler handler, Level level) {
         if (handler instanceof ConsoleHandler) {
             handler.setLevel(level);
-            if (!(handler.getFormatter() instanceof ConsoleFormatter)) {
-                handler.setFormatter(
-                    new ConsoleFormatter(config, handler.getFormatter() instanceof ColorPatternFormatter)
+            if (!(handler.getFormatter() instanceof CensoringFormatter)) {
+                ConsoleFormatter formatter = new ConsoleFormatter(
+                    config, handler.getFormatter() instanceof ColorPatternFormatter
                 );
+                handler.setFormatter(new CensoringFormatter(formatter, secretService));
             }
 
             return;
@@ -127,7 +131,7 @@ public class LoggingInitializer {
             handler.setSuffix(ROTATION_SUFFIX);
             handler.setRotateSize(logConfig.maxFileSize().asLongValue());
             handler.setMaxBackupIndex(logConfig.maxBackups());
-            handler.setFormatter(new PatternFormatter(FILE_FORMAT));
+            handler.setFormatter(new CensoringFormatter(new PatternFormatter(FILE_FORMAT), secretService));
             handler.setAutoFlush(true);
             handler.setAppend(true);
             handler.setFile(directory.resolve(logConfig.fileName()).toFile());

@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,6 +92,20 @@ public class McAuthProvider implements AuthProvider {
     }
 
     @Override
+    public List<Account> getLoadedAccounts() {
+        List<Account> result = new ArrayList<>();
+        for (JavaAuthManager authManager : authStore.loaded()) {
+            MinecraftProfile profile = authManager.getMinecraftProfile().getCached();
+            MinecraftToken token = authManager.getMinecraftToken().getCached();
+            if (profile != null && token != null) {
+                result.add(account(profile, token));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
     public void removeAccount(Account account) {
         authStore.remove(account.getName());
     }
@@ -118,17 +133,21 @@ public class McAuthProvider implements AuthProvider {
                 token = authManager.getMinecraftToken().getUpToDate();
             }
 
-            return new Account(
-                getName(),
-                profile.getName(),
-                profile.getId().toString(),
-                token.getToken(),
-                Account.TYPE_MSA,
-                "" // xuid not supported for now
-            );
+            return account(profile, token);
         } catch (IOException e) {
             throw new AuthException("Failed to get Account " + authManager, e);
         }
+    }
+
+    private Account account(MinecraftProfile profile, MinecraftToken token) {
+        return new Account(
+            getName(),
+            profile.getName(),
+            profile.getId().toString(),
+            token.getToken(),
+            Account.TYPE_MSA,
+            "" // xuid not supported for now
+        );
     }
 
 }

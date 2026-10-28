@@ -11,6 +11,7 @@ import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilAccount;
 import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilAuthProvider;
 import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilClientFactory;
 import io.github.headlesshq.headlessmc.auth.yggdrasil.YggdrasilConfig;
+import io.github.headlesshq.headlessmc.console.output.SecretSource;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.config.Holder;
@@ -21,6 +22,7 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Default;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +104,13 @@ public class AuthFactory {
         @Default AuthProvider defaultProvider
     ) {
         return new AuthServiceImpl(providers.stream().toList(), defaultProvider);
+    }
+
+    @Produces
+    @ApplicationScoped
+    @Named("io.github.headlesshq.headlessmc.auth.AccountSecretSource")
+    public SecretSource createAccountSecretSource(AuthService authService) {
+        return new AccountSecretSource(authService);
     }
 
     @Produces

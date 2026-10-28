@@ -1,6 +1,8 @@
 package io.github.headlesshq.headlessmc.logging;
 
 import io.github.headlesshq.headlessmc.config.Holder;
+import io.github.headlesshq.headlessmc.console.output.SecretService;
+import io.github.headlesshq.headlessmc.console.output.SecretServiceImpl;
 import io.github.headlesshq.headlessmc.files.*;
 import org.jboss.logmanager.Level;
 import org.jboss.logmanager.formatters.PatternFormatter;
@@ -15,6 +17,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -22,10 +25,13 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LoggingInitializerTest {
+    private static final String SECRET = "super-secret-token";
+
     private final FileService fileService = new DefaultFileService(new DefaultFileSystemProvider());
     private final Logger logger = Logger.getLogger(getClass().getName() + "." + UUID.randomUUID());
     private TestLogConfig config = new TestLogConfig();
     private final Holder<LogConfig> holder = () -> config;
+    private final SecretService secretService = new SecretServiceImpl(List.of(() -> List.of(SECRET)));
 
     LoggingInitializerTest() {
         logger.setUseParentHandlers(false);
@@ -39,7 +45,7 @@ class LoggingInitializerTest {
     }
 
     private LoggingInitializer initializer(Path root) {
-        return new LoggingInitializer(TestFiles.appFiles(root), fileService, holder);
+        return new LoggingInitializer(TestFiles.appFiles(root), fileService, holder, secretService);
     }
 
     private Path logFile(Path root) {
@@ -106,7 +112,7 @@ class LoggingInitializerTest {
             }
         });
 
-        new LoggingInitializer(TestFiles.appFiles(root), virtual, holder).initialize(logger);
+        new LoggingInitializer(TestFiles.appFiles(root), virtual, holder, secretService).initialize(logger);
 
         assertFalse(Files.exists(logFile(root)));
     }
@@ -143,7 +149,7 @@ class LoggingInitializerTest {
         initializer.close();
 
         assertEquals(Level.WARN.intValue(), console.getLevel().intValue());
-        assertInstanceOf(ConsoleFormatter.class, console.getFormatter());
+        assertConsoleFormatter(console);
     }
 
     @Test
@@ -158,7 +164,7 @@ class LoggingInitializerTest {
         initializer.close();
 
         assertEquals(Level.WARN.intValue(), console.getLevel().intValue());
-        assertInstanceOf(ConsoleFormatter.class, console.getFormatter());
+        assertConsoleFormatter(console);
     }
 
     @Test
@@ -175,10 +181,53 @@ class LoggingInitializerTest {
         assertSame(formatter, console.getFormatter());
     }
 
+    @Test
+    void removesSecretsFromTheLogFile(@TempDir Path root) throws Exception {
+        LoggingInitializer initializer = initializer(root);
+
+        initializer.initialize(logger);
+        try {
+            logger.log(Level.WARN, "token " + SECRET, new IllegalStateException("failed with " + SECRET));
+        } finally {
+            initializer.close();
+        }
+
+        String content = Files.readString(logFile(root));
+        assertFalse(content.contains(SECRET), content);
+        assertTrue(content.contains("token " + SecretService.MASK), content);
+        assertTrue(content.contains("failed with " + SecretService.MASK), content);
+    }
+
+    @Test
+    void removesSecretsFromTheConsole(@TempDir Path root) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ConsoleHandler console = consoleHandler(output);
+        logger.addHandler(console);
+        LoggingInitializer initializer = initializer(root);
+
+        initializer.initialize(logger);
+        logger.log(Level.ERROR, "failed to use " + SECRET);
+        console.flush();
+        initializer.close();
+
+        String content = output.toString();
+        assertFalse(content.contains(SECRET), content);
+        assertTrue(content.contains("failed to use " + SecretService.MASK), content);
+    }
+
+    private static void assertConsoleFormatter(Handler handler) {
+        CensoringFormatter formatter = assertInstanceOf(CensoringFormatter.class, handler.getFormatter());
+        assertInstanceOf(ConsoleFormatter.class, formatter.getFormatter());
+    }
+
     private ConsoleHandler consoleHandler() {
-        ConsoleHandler handler = new ConsoleHandler(new PatternFormatter("%p %s%e%n"));
         // do not write to the terminal running the tests
-        handler.setOutputStream(new ByteArrayOutputStream());
+        return consoleHandler(new ByteArrayOutputStream());
+    }
+
+    private ConsoleHandler consoleHandler(ByteArrayOutputStream output) {
+        ConsoleHandler handler = new ConsoleHandler(new PatternFormatter("%p %s%e%n"));
+        handler.setOutputStream(output);
         return handler;
     }
 

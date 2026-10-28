@@ -233,6 +233,11 @@ class YggdrasilAuthProviderTest {
         public Optional<YggdrasilAccount> getById(String id) {
             throw new io.github.headlesshq.headlessmc.auth.AuthStoreException("broken");
         }
+
+        @Override
+        public java.util.Collection<YggdrasilAccount> loaded() {
+            return List.of();
+        }
     }
 
 }

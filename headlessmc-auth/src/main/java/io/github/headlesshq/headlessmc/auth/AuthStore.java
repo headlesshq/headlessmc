@@ -23,6 +23,15 @@ public interface AuthStore<T> {
 
     Optional<T> getById(String id) throws AuthStoreException;
 
+    /**
+     * Returns the values this store has most recently read or written, without reading them again.
+     * This never performs IO, so it is cheap and cannot fail,
+     * but values that have not been read yet are missing.
+     *
+     * @return the values this store currently holds in memory.
+     */
+    Collection<T> loaded();
+
     default Stream<T> stream() throws AuthStoreException {
         return read().values().stream();
     }

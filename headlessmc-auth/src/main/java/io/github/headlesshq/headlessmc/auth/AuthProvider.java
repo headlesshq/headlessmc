@@ -14,6 +14,15 @@ public interface AuthProvider {
 
     List<Account> getAccounts() throws AuthException;
 
+    /**
+     * Returns the accounts this provider currently holds in memory, without reading them from storage
+     * or contacting any service, so it is cheap and cannot fail.
+     * Accounts that have not been read yet are missing.
+     *
+     * @return the accounts currently held in memory.
+     */
+    List<Account> getLoadedAccounts();
+
     void removeAccount(Account account);
 
     Authenticator getAuthenticator();

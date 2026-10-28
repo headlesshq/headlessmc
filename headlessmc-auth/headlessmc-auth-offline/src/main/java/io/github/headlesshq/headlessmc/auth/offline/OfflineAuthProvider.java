@@ -53,6 +53,11 @@ public class OfflineAuthProvider implements AuthProvider {
     }
 
     @Override
+    public List<Account> getLoadedAccounts() {
+        return new ArrayList<>(authStore.loaded());
+    }
+
+    @Override
     public void removeAccount(Account account) {
         try {
             authStore.remove(account.getName());
