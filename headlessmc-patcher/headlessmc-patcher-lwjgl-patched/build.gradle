@@ -1,0 +1,54 @@
+// The patched LWJGL is published to maven local by headlessmc-lwjgl (./gradlew publishToMavenLocal) until it is released.
+repositories {
+    mavenLocal()
+}
+
+configurations {
+    patchedLwjgl {
+        transitive = false
+        canBeConsumed = false
+    }
+}
+
+def patchedLwjglVersion = '0.1.0'
+def lwjgl3Modules = ['', '-freetype', '-glfw', '-jemalloc', '-openal', '-opengl', '-sdl', '-shaderc', '-spvc', '-stb',
+                     '-tinyfd', '-vma', '-vulkan']
+
+dependencies {
+    implementation project(':headlessmc-patcher')
+
+    patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl-api:${patchedLwjglVersion}"
+    lwjgl3Modules.each { patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl3${it}:${patchedLwjglVersion}" }
+    patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl2:${patchedLwjglVersion}"
+    patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl2-util:${patchedLwjglVersion}"
+}
+
+/**
+ * headlessmc-lwjgl3-glfw-0.1.0.jar becomes patcher/lwjgl-patched/lwjgl3/lwjgl-glfw.jar, the name of the LWJGL module
+ * it replaces, headlessmc-lwjgl2-util-0.1.0.jar becomes lwjgl2/lwjgl_util.jar.
+ */
+tasks.named('processResources', ProcessResources) {
+    inputs.files(configurations.patchedLwjgl)
+    from(configurations.patchedLwjgl) {
+        eachFile { file ->
+            def artifact = file.name - ".jar" - "-${patchedLwjglVersion}"
+            def target = artifact
+            if (artifact == 'headlessmc-lwjgl-api') {
+                target = 'headlessmc-lwjgl-api'
+            } else if (artifact.startsWith('headlessmc-lwjgl3')) {
+                target = "lwjgl3/lwjgl${artifact - 'headlessmc-lwjgl3'}"
+            } else if (artifact == 'headlessmc-lwjgl2') {
+                target = 'lwjgl2/lwjgl'
+            } else if (artifact == 'headlessmc-lwjgl2-util') {
+                target = 'lwjgl2/lwjgl_util'
+            }
+
+            file.path = "patcher/lwjgl-patched/${target}.jar"
+        }
+    }
+}
+
+// the bundled patched jars are resources, JaCoCo must not analyze their classes
+tasks.named('jacocoTestReport', JacocoReport) {
+    classDirectories.setFrom(sourceSets.main.java.classesDirectory)
+}
