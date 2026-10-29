@@ -177,6 +177,49 @@ jobs:
           git commit -m "build(deps): update fabric-artifacts.json"
           git push
 
+  # same as update-fabric-lock, for the headlessmc-lwjgl release the lwjgl patcher downloads
+  update-lwjgl-lock:
+    needs: build
+    if: >
+      failure()
+      && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && startsWith(github.head_ref, 'renovate/')
+      && contains(github.head_ref, 'headlessmc-lwjgl')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.FABRIC_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Update headlessmc-lwjgl lock file
+        env:
+          # while headlessmc-lwjgl is private, HEADLESSMC_LWJGL_TOKEN needs read access to its releases
+          GITHUB_TOKEN: ${{ secrets.HEADLESSMC_LWJGL_TOKEN || secrets.GITHUB_TOKEN }}
+        run: ./gradlew :headlessmc-patcher:headlessmc-patcher-lwjgl-patched:updatePatchedLwjgl --stacktrace
+
+      - name: Push updated lock file
+        run: |
+          lock=headlessmc-patcher/headlessmc-patcher-lwjgl-patched/src/main/resources/patcher/lwjgl-patched/headlessmc-lwjgl.json
+          if git diff --quiet -- "$lock"; then
+            echo "Lock file is up to date, the build failed for another reason."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$lock"
+          git commit -m "build(deps): update headlessmc-lwjgl.json"
+          git push
+
   deploy-pages:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main')
     needs: build

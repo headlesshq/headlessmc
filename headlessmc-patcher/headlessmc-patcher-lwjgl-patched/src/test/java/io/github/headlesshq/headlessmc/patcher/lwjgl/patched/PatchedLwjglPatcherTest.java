@@ -36,11 +36,8 @@ public class PatchedLwjglPatcherTest {
     }
 
     @Test
-    public void everyPatchedJarIsBundled() {
-        for (String jar : new String[]{"headlessmc-lwjgl-api.jar", "headlessmc-macos-menu-agent.jar", "lwjgl3/lwjgl.jar", "lwjgl3/lwjgl-glfw.jar",
-            "lwjgl3/lwjgl-opengl.jar", "lwjgl3/lwjgl-sdl.jar", "lwjgl2/lwjgl.jar", "lwjgl2/lwjgl_util.jar"}) {
-            assertNotNull(getClass().getClassLoader().getResource(PatchedLwjglPatcher.RESOURCES + jar), jar);
-        }
+    public void theMacOsMenuAgentIsBundled() {
+        assertNotNull(getClass().getClassLoader().getResource(PatchedLwjglPatcher.RESOURCES + PatchedLwjglPatcher.MACOS_MENU_AGENT + ".jar"));
     }
 
     @Test

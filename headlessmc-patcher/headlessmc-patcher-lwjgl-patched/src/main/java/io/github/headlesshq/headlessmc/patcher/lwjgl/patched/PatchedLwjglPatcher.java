@@ -26,7 +26,8 @@ import java.util.zip.ZipInputStream;
 /**
  * Replaces the LWJGL jars on the classpath with the patched, headless jars of
  * <a href="https://github.com/headlesshq/headlessmc-lwjgl">headlessmc-lwjgl</a>, which never load native libraries,
- * and adds the input API, {@code headlessmc-lwjgl-api}, to the classpath.
+ * and adds the input API, {@code headlessmc-lwjgl-api}, to the classpath. The jars are downloaded from the locked
+ * GitHub release by {@link PatchedLwjglJars}.
  * <p>Every LWJGL 3 module jar, e.g. {@code org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3.jar}, is replaced by the
  * patched jar of the same module, which is built from the latest LWJGL 3 and contains the public API of every older
  * LWJGL 3 version Minecraft used. The LWJGL 2 jars {@code lwjgl} and {@code lwjgl_util} are replaced by the patched
@@ -42,14 +43,10 @@ public class PatchedLwjglPatcher implements Patcher {
     static final String RESOURCES = "patcher/lwjgl-patched/";
     static final String API = "headlessmc-lwjgl-api";
     static final String JOML_NO_UNSAFE = "joml.nounsafe";
-    /**
-     * A directory with the same layout as the bundled resources ({@code lwjgl3/<module>.jar}, {@code lwjgl2/...},
-     * {@code headlessmc-lwjgl-api.jar}), used instead of them, e.g. for testing a local build of headlessmc-lwjgl.
-     */
-    static final String DIRECTORY_PROPERTY = "hmc.lwjgl.patched-directory";
     static final String MACOS_MENU_AGENT = "headlessmc-macos-menu-agent";
 
     private final OSService osService;
+    private final PatchedLwjglJars jars;
 
     @Override
     public void patch(PatchContext context) {
@@ -61,7 +58,7 @@ public class PatchedLwjglPatcher implements Patcher {
                 continue;
             }
 
-            if (!exists(patched)) {
+            if (!jars.exists(patched)) {
                 log.warn("No patched LWJGL for {}, it might load native libraries", library);
                 continue;
             }
@@ -90,8 +87,8 @@ public class PatchedLwjglPatcher implements Patcher {
 
     /**
      * @param library a jar on the classpath, in the maven layout of the Minecraft libraries.
-     * @return the path of the patched jar that replaces it, relative to the bundled resources, or {@code null} if it
-     * is not an LWJGL jar.
+     * @return the path of the patched jar that replaces it, a key of {@link PatchedLwjglLock#jars()}, or {@code null}
+     * if it is not an LWJGL jar.
      */
     static @Nullable String patchedJar(Path library) {
         Path versionDirectory = library.getParent();
@@ -122,7 +119,7 @@ public class PatchedLwjglPatcher implements Patcher {
      * scanners, like the one of Forge for Minecraft 1.12.2, fail to read its module descriptor.
      */
     private void copy(String patched, JarOutputStream destination, boolean stripModuleDescriptors) throws IOException {
-        try (ZipInputStream in = new ZipInputStream(open(patched))) {
+        try (ZipInputStream in = new ZipInputStream(Files.newInputStream(jars.get(patched)))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
                 if (stripModuleDescriptors && isModuleDescriptor(entry.getName())) {
@@ -143,25 +140,6 @@ public class PatchedLwjglPatcher implements Patcher {
         return entry.equals("module-info.class") || entry.endsWith("/module-info.class");
     }
 
-    private boolean exists(String jar) {
-        Path directory = directory();
-        return directory != null ? Files.isRegularFile(directory.resolve(jar))
-            : getClass().getClassLoader().getResource(RESOURCES + jar) != null;
-    }
-
-    private InputStream open(String jar) throws IOException {
-        Path directory = directory();
-        if (directory != null) {
-            return Files.newInputStream(directory.resolve(jar));
-        }
-
-        return openResource(jar);
-    }
-
-    /**
-     * Opens a bundled resource, also when {@link #DIRECTORY_PROPERTY} points to a local build of headlessmc-lwjgl,
-     * which only contains the patched jars.
-     */
     private InputStream openResource(String jar) throws IOException {
         InputStream in = getClass().getClassLoader().getResourceAsStream(RESOURCES + jar);
         if (in == null) {
@@ -169,11 +147,6 @@ public class PatchedLwjglPatcher implements Patcher {
         }
 
         return in;
-    }
-
-    private static @Nullable Path directory() {
-        String directory = System.getProperty(DIRECTORY_PROPERTY);
-        return directory == null || directory.isBlank() ? null : Path.of(directory);
     }
 
     @Override

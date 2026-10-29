@@ -1,60 +1,145 @@
-// The patched LWJGL is published to maven local by headlessmc-lwjgl (./gradlew publishToMavenLocal) until it is released.
-repositories {
-    mavenLocal()
-}
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
-configurations {
-    patchedLwjgl {
-        transitive = false
-        canBeConsumed = false
-    }
-}
-
-def patchedLwjglVersion = '0.1.0'
-def lwjgl3Modules = ['', '-freetype', '-glfw', '-jemalloc', '-openal', '-opengl', '-sdl', '-shaderc', '-spvc', '-stb',
-                     '-tinyfd', '-vma', '-vulkan']
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.security.MessageDigest
 
 dependencies {
     implementation project(':headlessmc-patcher')
     implementation project(':headlessmc-os')
+    implementation project(':headlessmc-net')
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
 
-    patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl-api:${patchedLwjglVersion}"
-    lwjgl3Modules.each { patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl3${it}:${patchedLwjglVersion}" }
-    patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl2:${patchedLwjglVersion}"
-    patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl2-util:${patchedLwjglVersion}"
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-net'))
+}
+
+def headlessmcLwjglRepository = 'headlesshq/headlessmc-lwjgl'
+// renovate: datasource=github-releases depName=headlesshq/headlessmc-lwjgl
+def headlessmcLwjglVersion = '0.1.0'
+def headlessmcLwjglLockFile = layout.projectDirectory.file('src/main/resources/patcher/lwjgl-patched/headlessmc-lwjgl.json')
+
+/**
+ * The path a release asset is downloaded to by the patcher, the name of the LWJGL jar it replaces:
+ * headlessmc-lwjgl3-glfw-0.1.0.jar becomes lwjgl3/lwjgl-glfw.jar, headlessmc-lwjgl2-util-0.1.0.jar lwjgl2/lwjgl_util.jar.
+ */
+static String patchedJar(String asset, String version) {
+    def artifact = asset - '.jar' - "-${version}"
+    if (artifact == 'headlessmc-lwjgl-api') {
+        return 'headlessmc-lwjgl-api.jar'
+    } else if (artifact.startsWith('headlessmc-lwjgl3')) {
+        return "lwjgl3/lwjgl${artifact - 'headlessmc-lwjgl3'}.jar"
+    } else if (artifact == 'headlessmc-lwjgl2') {
+        return 'lwjgl2/lwjgl.jar'
+    } else if (artifact == 'headlessmc-lwjgl2-util') {
+        return 'lwjgl2/lwjgl_util.jar'
+    }
+
+    return null
 }
 
 /**
- * headlessmc-lwjgl3-glfw-0.1.0.jar becomes patcher/lwjgl-patched/lwjgl3/lwjgl-glfw.jar, the name of the LWJGL module
- * it replaces, headlessmc-lwjgl2-util-0.1.0.jar becomes lwjgl2/lwjgl_util.jar.
+ * Fetches the headlessmc-lwjgl release headlessmcLwjglVersion and rewrites the lock file with the size and checksum
+ * of every jar. This is the only task that accesses the release, run it after changing headlessmcLwjglVersion.
+ * GITHUB_TOKEN or GH_TOKEN is used if set, which is required while the repository is private.
  */
-tasks.named('processResources', ProcessResources) {
-    inputs.files(configurations.patchedLwjgl)
-    from(configurations.patchedLwjgl) {
-        eachFile { file ->
-            def artifact = file.name - ".jar" - "-${patchedLwjglVersion}"
-            def target = artifact
-            if (artifact == 'headlessmc-lwjgl-api') {
-                target = 'headlessmc-lwjgl-api'
-            } else if (artifact.startsWith('headlessmc-lwjgl3')) {
-                target = "lwjgl3/lwjgl${artifact - 'headlessmc-lwjgl3'}"
-            } else if (artifact == 'headlessmc-lwjgl2') {
-                target = 'lwjgl2/lwjgl'
-            } else if (artifact == 'headlessmc-lwjgl2-util') {
-                target = 'lwjgl2/lwjgl_util'
+tasks.register('updatePatchedLwjgl') {
+    group = 'lwjgl'
+    description = "Fetches headlessmc-lwjgl ${headlessmcLwjglVersion} and rewrites ${headlessmcLwjglLockFile.asFile.name}."
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def token = System.getenv('GITHUB_TOKEN') ?: System.getenv('GH_TOKEN')
+        def client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
+        def get
+        get = { String url, String accept, boolean authorize ->
+            def request = HttpRequest.newBuilder(URI.create(url)).header('Accept', accept)
+            if (token && authorize) {
+                request.header('Authorization', "Bearer ${token}")
             }
 
-            file.path = "patcher/lwjgl-patched/${target}.jar"
+            def response = client.send(request.build(), HttpResponse.BodyHandlers.ofByteArray())
+            // assets redirect to a storage that rejects the GitHub token
+            if (response.statusCode() in [301, 302, 303, 307, 308]) {
+                return get(response.headers().firstValue('Location').orElseThrow(), accept, false)
+            }
+
+            if (response.statusCode() != 200) {
+                throw new GradleException("GET ${url} failed with ${response.statusCode()}: ${new String(response.body())}")
+            }
+
+            return response.body()
+        }
+
+        def release = new JsonSlurper().parse(get(
+            "https://api.github.com/repos/${headlessmcLwjglRepository}/releases/tags/${headlessmcLwjglVersion}".toString(),
+            'application/vnd.github+json', true) as byte[])
+        def jars = new TreeMap()
+        release.assets.findAll { it.name.endsWith('.jar') }.each { asset ->
+            def jar = patchedJar(asset.name as String, headlessmcLwjglVersion)
+            if (jar == null) {
+                return
+            }
+
+            byte[] bytes = get(asset.url as String, 'application/octet-stream', true)
+            if (bytes.length != asset.size) {
+                throw new GradleException("Downloaded ${bytes.length} bytes of ${asset.name}, expected ${asset.size}")
+            }
+
+            jars[jar] = [
+                fileName: asset.name,
+                size    : asset.size,
+                sha256  : MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString(),
+                url     : asset.browser_download_url,
+            ]
+        }
+
+        for (String required : ['headlessmc-lwjgl-api.jar', 'lwjgl3/lwjgl.jar', 'lwjgl2/lwjgl.jar']) {
+            if (!jars.containsKey(required)) {
+                throw new GradleException("Release ${headlessmcLwjglVersion} of ${headlessmcLwjglRepository} has no ${required}, found ${jars.keySet()}")
+            }
+        }
+
+        File output = headlessmcLwjglLockFile.asFile
+        output.parentFile.mkdirs()
+        output.text = JsonOutput.prettyPrint(JsonOutput.toJson([version: headlessmcLwjglVersion, jars: jars])) + '\n'
+    }
+}
+
+/**
+ * Checks that the committed lock file matches headlessmcLwjglVersion without accessing the release.
+ */
+tasks.register('verifyPatchedLwjgl') {
+    group = 'verification'
+    description = "Checks that ${headlessmcLwjglLockFile.asFile.name} matches headlessmcLwjglVersion."
+    inputs.property('version', headlessmcLwjglVersion)
+    inputs.file(headlessmcLwjglLockFile)
+
+    doLast {
+        def locked = new JsonSlurper().parse(headlessmcLwjglLockFile.asFile).version
+        if (locked != headlessmcLwjglVersion) {
+            throw new GradleException("""${headlessmcLwjglLockFile.asFile} is out of date.
+  declared: ${headlessmcLwjglVersion}
+  locked:   ${locked}
+Run './gradlew ${project.path}:updatePatchedLwjgl' and commit the result.""")
         }
     }
+}
 
+tasks.named('processResources', ProcessResources) {
+    dependsOn('verifyPatchedLwjgl')
     dependsOn(':headlessmc-lwjgl:macosMenuAgentJar')
     from(project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile) {
         into('patcher/lwjgl-patched')
     }
 }
 
-// the bundled patched jars are resources, JaCoCo must not analyze their classes
+// the bundled macOS menu agent is a resource, JaCoCo must not analyze its classes
 tasks.named('jacocoTestReport', JacocoReport) {
     classDirectories.setFrom(sourceSets.main.java.classesDirectory)
 }
