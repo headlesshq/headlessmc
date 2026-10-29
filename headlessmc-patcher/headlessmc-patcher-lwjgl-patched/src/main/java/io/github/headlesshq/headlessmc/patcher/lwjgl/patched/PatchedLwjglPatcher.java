@@ -11,6 +11,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +35,11 @@ public class PatchedLwjglPatcher implements Patcher {
     static final String RESOURCES = "patcher/lwjgl-patched/";
     static final String API = "headlessmc-lwjgl-api";
     static final String JOML_NO_UNSAFE = "joml.nounsafe";
+    /**
+     * A directory with the same layout as the bundled resources ({@code lwjgl3/<module>.jar}, {@code lwjgl2/...},
+     * {@code headlessmc-lwjgl-api.jar}), used instead of them, e.g. for testing a local build of headlessmc-lwjgl.
+     */
+    static final String DIRECTORY_PROPERTY = "hmc.lwjgl.patched-directory";
 
     @Override
     public void patch(PatchContext context) {
@@ -45,20 +51,20 @@ public class PatchedLwjglPatcher implements Patcher {
                 continue;
             }
 
-            if (getClass().getClassLoader().getResource(patched) == null) {
+            if (!exists(patched)) {
                 log.warn("No patched LWJGL for {}, it might load native libraries", library);
                 continue;
             }
 
             log.info("{}: replacing {} with {}", name(), library, patched);
             context.patch(library, this, (source, destination) -> {
-                copy(patched, destination);
+                copy(patched, destination, false);
                 return true;
             });
         }
 
-        try (InputStream in = resource(RESOURCES + API + ".jar"); OutputStream out = context.add(API, this)) {
-            in.transferTo(out);
+        try (OutputStream out = context.add(API, this); JarOutputStream jar = new JarOutputStream(out)) {
+            copy(API + ".jar", jar, true);
         } catch (IOException e) {
             throw new PatchException("Failed to add " + API + " to the classpath", e);
         }
@@ -66,7 +72,8 @@ public class PatchedLwjglPatcher implements Patcher {
 
     /**
      * @param library a jar on the classpath, in the maven layout of the Minecraft libraries.
-     * @return the resource of the patched jar that replaces it, or {@code null} if it is not an LWJGL jar.
+     * @return the path of the patched jar that replaces it, relative to the bundled resources, or {@code null} if it
+     * is not an LWJGL jar.
      */
     static @Nullable String patchedJar(Path library) {
         Path versionDirectory = library.getParent();
@@ -84,18 +91,26 @@ public class PatchedLwjglPatcher implements Patcher {
         }
 
         if (version.startsWith("3.") && (artifact.equals("lwjgl") || artifact.startsWith("lwjgl-"))) {
-            return RESOURCES + "lwjgl3/" + artifact + ".jar";
+            return "lwjgl3/" + artifact + ".jar";
         } else if (version.startsWith("2.") && (artifact.equals("lwjgl") || artifact.equals("lwjgl_util"))) {
-            return RESOURCES + "lwjgl2/" + artifact + ".jar";
+            return "lwjgl2/" + artifact + ".jar";
         }
 
         return null;
     }
 
-    private void copy(String patched, JarOutputStream destination) throws IOException {
-        try (ZipInputStream in = new ZipInputStream(resource(patched))) {
+    /**
+     * Copies a jar, optionally without its module descriptors. The API is only used on the classpath, and old class
+     * scanners, like the one of Forge for Minecraft 1.12.2, fail to read its module descriptor.
+     */
+    private void copy(String patched, JarOutputStream destination, boolean stripModuleDescriptors) throws IOException {
+        try (ZipInputStream in = new ZipInputStream(open(patched))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
+                if (stripModuleDescriptors && isModuleDescriptor(entry.getName())) {
+                    continue;
+                }
+
                 destination.putNextEntry(new ZipEntry(entry.getName()));
                 if (!entry.isDirectory()) {
                     in.transferTo(destination);
@@ -106,13 +121,33 @@ public class PatchedLwjglPatcher implements Patcher {
         }
     }
 
-    private InputStream resource(String name) throws IOException {
-        InputStream in = getClass().getClassLoader().getResourceAsStream(name);
+    static boolean isModuleDescriptor(String entry) {
+        return entry.equals("module-info.class") || entry.endsWith("/module-info.class");
+    }
+
+    private boolean exists(String jar) {
+        Path directory = directory();
+        return directory != null ? Files.isRegularFile(directory.resolve(jar))
+            : getClass().getClassLoader().getResource(RESOURCES + jar) != null;
+    }
+
+    private InputStream open(String jar) throws IOException {
+        Path directory = directory();
+        if (directory != null) {
+            return Files.newInputStream(directory.resolve(jar));
+        }
+
+        InputStream in = getClass().getClassLoader().getResourceAsStream(RESOURCES + jar);
         if (in == null) {
-            throw new IOException("Failed to find resource " + name);
+            throw new IOException("Failed to find resource " + RESOURCES + jar);
         }
 
         return in;
+    }
+
+    private static @Nullable Path directory() {
+        String directory = System.getProperty(DIRECTORY_PROPERTY);
+        return directory == null || directory.isBlank() ? null : Path.of(directory);
     }
 
     @Override
