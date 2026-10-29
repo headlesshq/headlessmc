@@ -267,7 +267,7 @@ jobs:
           key: native-image-${{ matrix.os.name }}-${{ hashFiles('gradle/**', 'headlessmc-*/**', 'src/**', 'scripts/**', '.gitignore', 'build.gradle', 'gradle.properties', 'gradlew', 'gradlew.bat', 'lombok.config', 'settings.gradle') }}
           path: headlessmc-application/build/${{ matrix.os.name }}*
 
-      - uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173 # v1
+      - uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1
         if: steps.native-cache.outputs.cache-hit != 'true'
         with:
           java-version: '25'
