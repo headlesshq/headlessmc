@@ -1,10 +1,14 @@
 package io.github.headlesshq.headlessmc.patcher.lwjgl.patched;
 
+import io.github.headlesshq.headlessmc.os.OS;
+import io.github.headlesshq.headlessmc.os.OSService;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
 import io.quarkus.runtime.annotations.RegisterResources;
 import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
@@ -27,9 +31,12 @@ import java.util.zip.ZipInputStream;
  * patched jar of the same module, which is built from the latest LWJGL 3 and contains the public API of every older
  * LWJGL 3 version Minecraft used. The LWJGL 2 jars {@code lwjgl} and {@code lwjgl_util} are replaced by the patched
  * LWJGL 2.9.4. Native jars stay on the classpath, they are never loaded.</p>
+ * <p>On macOS the menu agent is added as well, because Minecraft 26.x edits the Cocoa window menu through the
+ * Objective-C bridge, which does not go through LWJGL.</p>
  */
 @Slf4j
 @Dependent
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 @RegisterResources(globs = PatchedLwjglPatcher.RESOURCES + "**")
 public class PatchedLwjglPatcher implements Patcher {
     static final String RESOURCES = "patcher/lwjgl-patched/";
@@ -40,6 +47,9 @@ public class PatchedLwjglPatcher implements Patcher {
      * {@code headlessmc-lwjgl-api.jar}), used instead of them, e.g. for testing a local build of headlessmc-lwjgl.
      */
     static final String DIRECTORY_PROPERTY = "hmc.lwjgl.patched-directory";
+    static final String MACOS_MENU_AGENT = "headlessmc-macos-menu-agent";
+
+    private final OSService osService;
 
     @Override
     public void patch(PatchContext context) {
@@ -67,6 +77,14 @@ public class PatchedLwjglPatcher implements Patcher {
             copy(API + ".jar", jar, true);
         } catch (IOException e) {
             throw new PatchException("Failed to add " + API + " to the classpath", e);
+        }
+
+        if (OS.McType.OSX.equals(osService.getOS().type().mcType())) {
+            try (InputStream in = openResource(MACOS_MENU_AGENT + ".jar"); OutputStream out = context.addAgent(MACOS_MENU_AGENT, this)) {
+                in.transferTo(out);
+            } catch (IOException e) {
+                throw new PatchException("Failed to add the " + MACOS_MENU_AGENT, e);
+            }
         }
     }
 
@@ -137,6 +155,14 @@ public class PatchedLwjglPatcher implements Patcher {
             return Files.newInputStream(directory.resolve(jar));
         }
 
+        return openResource(jar);
+    }
+
+    /**
+     * Opens a bundled resource, also when {@link #DIRECTORY_PROPERTY} points to a local build of headlessmc-lwjgl,
+     * which only contains the patched jars.
+     */
+    private InputStream openResource(String jar) throws IOException {
         InputStream in = getClass().getClassLoader().getResourceAsStream(RESOURCES + jar);
         if (in == null) {
             throw new IOException("Failed to find resource " + RESOURCES + jar);

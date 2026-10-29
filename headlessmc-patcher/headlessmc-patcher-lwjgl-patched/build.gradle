@@ -16,6 +16,7 @@ def lwjgl3Modules = ['', '-freetype', '-glfw', '-jemalloc', '-openal', '-opengl'
 
 dependencies {
     implementation project(':headlessmc-patcher')
+    implementation project(':headlessmc-os')
 
     patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl-api:${patchedLwjglVersion}"
     lwjgl3Modules.each { patchedLwjgl "io.github.headlesshq:headlessmc-lwjgl3${it}:${patchedLwjglVersion}" }
@@ -45,6 +46,11 @@ tasks.named('processResources', ProcessResources) {
 
             file.path = "patcher/lwjgl-patched/${target}.jar"
         }
+    }
+
+    dependsOn(':headlessmc-lwjgl:macosMenuAgentJar')
+    from(project(':headlessmc-lwjgl').tasks.named('macosMenuAgentJar').get().archiveFile) {
+        into('patcher/lwjgl-patched')
     }
 }
 
