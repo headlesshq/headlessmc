@@ -32,7 +32,11 @@ public class FakeVanillaPlatform implements VanillaPlatform {
     private int serverJavaVersion = 21;
 
     public FakeVanillaPlatform(String... versionsLatestFirst) {
-        this.versionService = new FakeVanillaVersionService(versionsLatestFirst);
+        this(new FakeVanillaVersionService(versionsLatestFirst));
+    }
+
+    public FakeVanillaPlatform(FakeVanillaVersionService versionService) {
+        this.versionService = versionService;
     }
 
     public FakeVanillaPlatform withVersion(Version version) {

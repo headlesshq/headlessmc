@@ -5,7 +5,6 @@ import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.platform.*;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
-import io.github.headlesshq.headlessmc.platform.client.DefaultVersionMatcher;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcher;
 import io.github.headlesshq.headlessmc.platform.mods.ModReader;
 import io.github.headlesshq.headlessmc.platform.mods.ModSupport;
@@ -80,7 +79,7 @@ class FabricFactory {
         VanillaVersionService vanillaVersionService,
         @Fabric VersionService versionService
     ) {
-        return new DefaultVersionMatcher(vanillaVersionService, versionService);
+        return new FabricVersionMatcher(vanillaVersionService, versionService);
     }
 
     @Fabric
