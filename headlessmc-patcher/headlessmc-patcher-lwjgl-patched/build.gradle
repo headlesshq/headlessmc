@@ -21,7 +21,7 @@ dependencies {
 
 def headlessmcLwjglRepository = 'headlesshq/headlessmc-lwjgl'
 // renovate: datasource=github-releases depName=headlesshq/headlessmc-lwjgl
-def headlessmcLwjglVersion = '0.1.1'
+def headlessmcLwjglVersion = '0.1.2'
 def headlessmcLwjglLockFile = layout.projectDirectory.file('src/main/resources/patcher/lwjgl-patched/headlessmc-lwjgl.json')
 
 /**
