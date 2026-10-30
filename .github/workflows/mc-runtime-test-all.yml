@@ -10,13 +10,17 @@ name: MC-Runtime-Test all versions
         description: Comma-delimited Minecraft versions to run (e.g. 1.20.4,1.21.1), or all
         default: all
       xvfb:
-        description: Run with xvfb, headless (-lwjgl), or both
+        description: >-
+          Run with xvfb, headless (-lwjgl with the lwjgl patcher), pre (-lwjgl with the opt-in patched LWJGL,
+          --patchers lwjgl-pre), both (xvfb and headless) or all
         type: choice
-        default: both
+        default: all
         options:
+          - all
           - both
           - xvfb
           - headless
+          - pre
   pull_request:
     paths:
       - .github/workflows/mc-runtime-test-all.yml
@@ -52,8 +56,8 @@ jobs:
           path: headlessmc.jar
           retention-days: 1
 
-      # the headless runs use the patched LWJGL of the locked headlessmc-lwjgl release: it is downloaded and verified
-      # once, cached across workflow runs by the lock file, and put into the HeadlessMc cache of every run
+      # the pre runs use the patched LWJGL of the locked headlessmc-lwjgl release: it is downloaded and verified once,
+      # cached across workflow runs by the lock file, and put into the HeadlessMc cache of every run
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: patched-lwjgl-cache
@@ -88,7 +92,7 @@ jobs:
         name: Construct matrix
         env:
           VERSIONS: ${{ inputs.versions || 'all' }}
-          XVFB: ${{ inputs.xvfb || 'both' }}
+          XVFB: ${{ inputs.xvfb || 'all' }}
         shell: python
         run: |
           import json
@@ -101,17 +105,23 @@ jobs:
           if 'all' not in versions:
               run_data = [entry for entry in run_data if entry['mc'] in versions]
 
-          xvfb = {'both': [True, False], 'xvfb': [True], 'headless': [False]}[os.environ['XVFB']]
+          modes = {
+              'all': ['xvfb', 'headless', 'pre'],
+              'both': ['xvfb', 'headless'],
+              'xvfb': ['xvfb'],
+              'headless': ['headless'],
+              'pre': ['pre'],
+          }[os.environ['XVFB']]
           include = [
               {
                   'mc': entry['mc'],
                   'type': entry['type'],
                   'modloader': entry['modloader'],
                   'java': entry['java'],
-                  'xvfb': x,
+                  'mode': mode,
               }
               for entry in run_data
-              for x in xvfb
+              for mode in modes
           ]
 
           if not include:
@@ -122,7 +132,7 @@ jobs:
               fh.write(f"matrix={json.dumps({'include': include})}\n")
 
   run:
-    name: ${{ matrix.mc }} ${{ matrix.type }} ${{ matrix.xvfb && 'xvfb' || 'headless' }}
+    name: ${{ matrix.mc }} ${{ matrix.type }} ${{ matrix.mode }}
     needs: [ build, matrix ]
     runs-on: ubuntu-latest
     strategy:
@@ -149,7 +159,7 @@ jobs:
 
       # HeadlessMc finds the jars in its cache, HMC_FILES_LOCATION/cache, and does not download them
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        if: ${{ !matrix.xvfb }}
+        if: ${{ matrix.mode == 'pre' }}
         with:
           name: patched-lwjgl-cache
           path: HeadlessMC/cache/lwjgl-patched
@@ -164,13 +174,14 @@ jobs:
           # downloads the prebuilt mc-runtime-test jar from the mc-runtime-test release
           mc-runtime-test: ${{ matrix.type }}
           # the action adds -lwjgl itself when xvfb is false
-          xvfb: ${{ matrix.xvfb }}
+          xvfb: ${{ matrix.mode == 'xvfb' }}
           cache-mc: github
           download-hmc: false
-          headlessmc-command: --retries 3 --jvm -Djava.awt.headless=true
+          headlessmc-command: >-
+            ${{ matrix.mode == 'pre' && '--patchers lwjgl-pre' || '' }} --retries 3 --jvm -Djava.awt.headless=true
 
       - name: Check that the patched LWJGL came from the cache
-        if: ${{ always() && !matrix.xvfb }}
+        if: ${{ always() && matrix.mode == 'pre' }}
         run: |
           if grep -h "Requesting https://github.com/headlesshq/headlessmc-lwjgl/" HeadlessMC/logs/*.log; then
             echo "::error::HeadlessMc downloaded the patched LWJGL instead of using the cached jars"
@@ -181,7 +192,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: logs-${{ matrix.mc }}-${{ matrix.type }}-${{ matrix.xvfb && 'xvfb' || 'headless' }}
+          name: logs-${{ matrix.mc }}-${{ matrix.type }}-${{ matrix.mode }}
           path: |
             run/crash-reports/**
             run/logs/**
