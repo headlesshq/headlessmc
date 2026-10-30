@@ -8,6 +8,7 @@ dependencies {
     implementation project(':headlessmc-java:headlessmc-java-launcher')
     implementation project(':headlessmc-net')
     implementation project(':headlessmc-net:headlessmc-net-hash')
+    implementation project(':headlessmc-os')
     implementation project(':headlessmc-util:headlessmc-util-json')
     api project(':headlessmc-util:headlessmc-util-reflection')
     runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')

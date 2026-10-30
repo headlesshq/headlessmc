@@ -15,7 +15,8 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     description = "Manage HeadlessMc plugins.",
     subcommands = {
-        ListCommand.class
+        ListCommand.class,
+        CompileCommand.class
     }
 )
 public class PluginCommand implements CachedConsole.Enabled {

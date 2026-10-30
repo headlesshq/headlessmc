@@ -6,8 +6,8 @@ if [ "$SEPARATE_NATIVE_BUILD" = "true" ]; then
   set -- -Dquarkus.native.sources-only=true "$@"
 fi
 
-./gradlew :headlessmc-application:quarkusBuild -Dquarkus.native.enabled=true -Dquarkus.package.jar.enabled=false \
--Dquarkus.native.additional-build-args="--initialize-at-run-time=org.jline.nativ,--initialize-at-run-time=org.jline.terminal.impl.ffm,-H:+UnlockExperimentalVMOptions,-H:-ParseRuntimeOptions,-H:+SharedArenaSupport,-H:-UnlockExperimentalVMOptions" "$@"
+# the native-image arguments are configured in headlessmc-application/src/main/resources/application.properties
+./gradlew :headlessmc-application:quarkusBuild -Dquarkus.native.enabled=true -Dquarkus.package.jar.enabled=false "$@"
 
 if [ "$SEPARATE_NATIVE_BUILD" = "true" ]; then
   ./gradlew --stop

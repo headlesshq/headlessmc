@@ -1,0 +1,13 @@
+// Runs inside the deployment class path of the mutable jar, not as part of HeadlessMc,
+// so the Quarkus deployment API is only needed to compile it. See NativeAugmenterMain.
+dependencies {
+    compileOnly platform(libs.quarkus)
+    compileOnly 'io.quarkus:quarkus-core-deployment'
+    compileOnly 'io.quarkus:quarkus-bootstrap-core'
+    compileOnly 'io.quarkus:quarkus-bootstrap-app-model'
+}
+
+dependencies {
+    testImplementation platform(libs.quarkus)
+    testImplementation 'io.quarkus:quarkus-core-deployment'
+}

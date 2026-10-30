@@ -74,13 +74,21 @@ public class PluginBuilder {
      * @return the hash of the build.
      */
     public String hash(PluginResolution resolution, Path mutableJar) {
+        // all jars, the libraries contain most of HeadlessMc, which can change without a new version during development
         List<Path> mutableFiles = new ArrayList<>();
         mutableFiles.add(mutableJar.resolve("quarkus").resolve("quarkus-application.dat"));
         mutableFiles.add(mutableJar.resolve("lib").resolve("deployment").resolve("appmodel.dat"));
-        try (Stream<Path> app = Files.list(mutableJar.resolve("app"))) {
-            app.sorted().forEach(mutableFiles::add);
-        } catch (IOException e) {
-            throw new HeadlessMcException("Failed to list " + mutableJar.resolve("app"), e);
+        for (String directory : List.of("app", "lib/boot", "lib/main", "hmc")) {
+            Path path = mutableJar.resolve(directory);
+            if (!Files.isDirectory(path)) {
+                continue;
+            }
+
+            try (Stream<Path> files = Files.list(path)) {
+                files.filter(Files::isRegularFile).sorted().forEach(mutableFiles::add);
+            } catch (IOException e) {
+                throw new HeadlessMcException("Failed to list " + path, e);
+            }
         }
 
         StringBuilder input = new StringBuilder()
@@ -118,7 +126,8 @@ public class PluginBuilder {
                 }
 
                 console.write("Plugins changed, re-building HeadlessMc with " + resolution.plugins().size()
-                    + " plugin(s). This takes a few seconds, subsequent runs will be faster.");
+                    + " plugin(s). This takes a few seconds, subsequent runs will be faster."
+                    + " Run 'plugin compile' afterwards to compile a native executable, which starts even faster.");
                 Path temp = builds.resolve(hash + ".tmp");
                 fileService.delete(temp);
                 Path quarkusApp = temp.resolve(QUARKUS_APP);

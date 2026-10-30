@@ -24,7 +24,8 @@ If plugins are installed, HeadlessMc instead
 
 !!! note
 
-    With plugins, HeadlessMc always runs on the JVM, even when started from a native executable.
+    With plugins, HeadlessMc runs on the JVM, even when started from a native executable,
+    unless you compile a native executable with the plugins, see [below](#native-executable-with-plugins).
 
 To keep later starts fast, HeadlessMc remembers the build and the Java installation for the installed plugins.
 As long as the size and modification time of the plugin jars do not change, it neither hashes the plugins again,
@@ -42,6 +43,25 @@ because there every run usually starts with an empty cache.
 | `hmc.plugins.aot-cache`      | `true`, `false` in CI | Speeds up the start of the Java process with an AOT cache, see below.               |
 | `hmc.plugins.jvm-args`       |         | Additional JVM arguments, comma separated, for the process running HeadlessMc with plugins.       |
 | `hmc.plugins.mutable-jar`    |         | A `quarkus-app` directory or `headlessmc-mutable.zip` to use instead of downloading it.           |
+| `hmc.plugins.native`         | `true`  | Set to `false` to run on the JVM, even if `plugin compile` has compiled a native executable.     |
+
+### Native executable with plugins
+
+On the JVM, HeadlessMc with plugins needs about half a second to start, the native executable 50 ms.
+`plugin compile` compiles HeadlessMc with the installed plugins into a native executable,
+which is started instead of the JVM for as long as the plugins do not change:
+
+```shell
+headlessmc plugin compile                    # a local GraalVM 25, otherwise Docker or Podman
+headlessmc plugin compile --local --graalvm ~/.jdks/graalvm-ce-25
+headlessmc plugin compile --container        # Linux only, ghcr.io/graalvm/native-image-community:25
+```
+
+It looks for a GraalVM 25 in `GRAALVM_HOME`, `JAVA_HOME`, the `PATH` and the Java installations HeadlessMc knows.
+Compiling takes a few minutes and a few GB of memory, the executable is placed next to the build in
+`<cache>/plugins/builds/<hash>/native`. When the plugins change, run `plugin compile` again,
+until then HeadlessMc runs the new plugins on the JVM. Containers build Linux executables,
+so on Windows and macOS a local GraalVM is needed.
 
 ## Writing plugins
 
@@ -126,3 +146,10 @@ All plugins run on the same classpath as HeadlessMc, so only one version of each
 * If multiple plugins ship the same library, the highest version that is contained in the `versions` range
   of every plugin is used. By default, a library is compatible with `[version, nextMajor)`,
   so the newest version wins, but two plugins needing different major versions cannot be loaded together.
+
+### Native images
+
+To work in a native executable compiled with `plugin compile`, plugins have to follow the same rules as
+HeadlessMc itself: resources they read have to be registered with `@RegisterResources(globs = "...")`,
+classes accessed by reflection, e.g. records parsed from JSON, with `@RegisterForReflection`.
+CDI beans, picocli commands and their options work without further configuration.

@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.plugins;
 import io.github.headlesshq.headlessmc.config.DynamicConfig;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
+import io.smallrye.config.WithName;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +45,14 @@ public interface PluginConfig extends DynamicConfig {
      * Defaults to {@code true}, unless the {@code CI} environment variable is set, see {@link PluginAotCache}.
      */
     Optional<Boolean> aotCache();
+
+    /**
+     * @return {@code false} to run HeadlessMc with plugins on the JVM, even if {@code plugin compile}
+     * has compiled a native executable for the installed plugins.
+     */
+    @WithName("native")
+    @WithDefault("true")
+    boolean useNative();
 
     /**
      * @return additional JVM arguments for the JVM running HeadlessMc with the plugins.

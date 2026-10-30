@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ import java.util.OptionalInt;
  * Hashing the plugins and especially discovering the installed Java versions takes time,
  * so the {@link PluginLaunchCache} remembers the build and the Java for the current plugins,
  * and the {@link PluginAotCache} speeds up the start of the child JVM.
+ * If {@code plugin compile} has compiled the build into a native executable ({@link PluginNativeCompiler}),
+ * that is started instead of a JVM.
  */
 @Slf4j
 @ApplicationScoped
@@ -59,6 +63,7 @@ public class PluginBootstrap {
     private final JavaLauncherService javaLauncherService;
     private final PluginLaunchCache launchCache;
     private final PluginAotCache aotCache;
+    private final PluginNativeCompiler nativeCompiler;
     private final AppFiles appFiles;
 
     /**
@@ -132,6 +137,11 @@ public class PluginBootstrap {
     }
 
     private int launch(PluginLaunchCache.Launch launch, String... args) {
+        Path executable = nativeCompiler.getExecutable(launch.build());
+        if (config.get().useNative() && Files.isExecutable(executable)) {
+            return launchNative(executable, launch, args);
+        }
+
         List<String> aotArgs = aotCache.jvmArgs(launch);
         JavaProcessBuilder process = processBuilder(launch, aotArgs).arg(args);
         log.debug("Running HeadlessMc with plugins: {}", process.buildCommand());
@@ -146,6 +156,29 @@ public class PluginBootstrap {
         }
 
         return exitCode;
+    }
+
+    /**
+     * Runs the native executable {@link PluginNativeCompiler} compiled for the build.
+     * System properties are passed as {@code -D} arguments before the actual arguments,
+     * which HeadlessMcMain parses itself.
+     */
+    private int launchNative(Path executable, PluginLaunchCache.Launch launch, String... args) {
+        List<String> command = new ArrayList<>();
+        command.add(executable.toString());
+        Map<String, @Nullable String> properties = new LinkedHashMap<>(getForwardedProperties());
+        properties.put(BUILD_PROPERTY, launch.build().getFileName().toString());
+        properties.forEach((key, value) -> command.add("-D" + key + (value == null ? "" : "=" + value)));
+        command.addAll(List.of(args));
+        log.debug("Running native HeadlessMc with plugins: {}", command);
+        try {
+            return new ProcessBuilder(command).inheritIO().start().waitFor();
+        } catch (IOException e) {
+            throw new HeadlessMcException("Failed to run " + executable, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HeadlessMcException("Interrupted while running " + executable, e);
+        }
     }
 
     private JavaProcessBuilder processBuilder(PluginLaunchCache.Launch launch, List<String> additionalJvmArgs) {

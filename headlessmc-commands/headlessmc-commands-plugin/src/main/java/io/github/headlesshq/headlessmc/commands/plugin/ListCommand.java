@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.plugins.PluginBootstrap;
 import io.github.headlesshq.headlessmc.plugins.PluginBuilder;
 import io.github.headlesshq.headlessmc.plugins.PluginFile;
 import io.github.headlesshq.headlessmc.plugins.PluginManifest;
+import io.github.headlesshq.headlessmc.plugins.PluginNativeCompiler;
 import io.github.headlesshq.headlessmc.plugins.PluginResolution;
 import io.github.headlesshq.headlessmc.plugins.PluginResolver;
 import io.github.headlesshq.headlessmc.plugins.PluginScanner;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import picocli.CommandLine;
 
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +44,7 @@ public class ListCommand implements Runnable, CachedConsole.Enabled {
     private final PluginScanner scanner;
     private final PluginResolver resolver;
     private final PluginBuilder builder;
+    private final PluginNativeCompiler nativeCompiler;
     private final TableProvider tableProvider;
     private final AppFiles appFiles;
     private final Console console;
@@ -85,9 +88,13 @@ public class ListCommand implements Runnable, CachedConsole.Enabled {
             .withColumn("status", file -> status(file, resolution, loaded))
             .addAll(files)
             .log(console::write);
-        console.write(build == null
-            ? "HeadlessMc is running without plugins."
-            : "HeadlessMc is running with plugin build " + build + ".");
+        if (build == null) {
+            console.write("HeadlessMc is running without plugins.");
+        } else if (Files.isExecutable(nativeCompiler.getExecutable(builder.getBuildsDir().resolve(build)))) {
+            console.write("HeadlessMc is running with plugin build " + build + " as a native executable.");
+        } else {
+            console.write("HeadlessMc is running with plugin build " + build + " on the JVM, 'plugin compile' makes it start faster.");
+        }
     }
 
     private void listLibraries(PluginResolution resolution) {

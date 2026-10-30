@@ -10,6 +10,7 @@ import io.github.headlesshq.headlessmc.net.hash.HashServiceImpl;
 import io.github.headlesshq.headlessmc.plugins.CoreLibraries;
 import io.github.headlesshq.headlessmc.plugins.PluginBuilder;
 import io.github.headlesshq.headlessmc.plugins.PluginManifest;
+import io.github.headlesshq.headlessmc.plugins.PluginNativeCompiler;
 import io.github.headlesshq.headlessmc.plugins.PluginResolver;
 import io.github.headlesshq.headlessmc.plugins.PluginScanner;
 import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
@@ -87,7 +88,7 @@ class ListCommandTest {
         Mockito.when(providers.stream()).thenAnswer(_ -> Stream.of(new DefaultHashAlgorithmProvider()));
         PluginScanner scanner = new PluginScanner(new HashServiceImpl(providers), new DefaultJacksonJsonService());
         PluginResolver resolver = new PluginResolver(new CoreLibraries(Map.of()), "3.0.0");
-        return new ListCommand(scanner, resolver, Mockito.mock(PluginBuilder.class),
+        return new ListCommand(scanner, resolver, Mockito.mock(PluginBuilder.class), Mockito.mock(PluginNativeCompiler.class),
             new SimpleTableProvider(), TestFiles.appFiles(root), console);
     }
 

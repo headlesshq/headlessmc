@@ -26,6 +26,11 @@ if (providers.gradleProperty('mutableJar').present) {
         from(layout.buildDirectory.dir('quarkus-build/gen/quarkus-app')) {
             into 'quarkus-app'
         }
+        // generates the native image sources for 'plugin compile', see PluginNativeCompiler.AUGMENTER
+        from(project(':headlessmc-plugins:headlessmc-plugins-augmenter').tasks.named('jar')) {
+            into 'quarkus-app/hmc'
+            rename { 'headlessmc-plugins-augmenter.jar' }
+        }
         archiveFileName = 'headlessmc-mutable.zip'
         destinationDirectory = layout.buildDirectory
         preserveFileTimestamps = false
