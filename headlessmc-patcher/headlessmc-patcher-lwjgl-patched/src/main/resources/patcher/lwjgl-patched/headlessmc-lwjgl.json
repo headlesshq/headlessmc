@@ -1,0 +1,101 @@
+{
+    "version": "0.1.2",
+    "jars": {
+        "headlessmc-lwjgl-api.jar": {
+            "fileName": "headlessmc-lwjgl-api-0.1.2.jar",
+            "size": 8779,
+            "sha256": "49684843f514bd7179ecd0c9462cab027049b2f8813cc91e2a2456603010ddad",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl-api-0.1.2.jar"
+        },
+        "lwjgl2/lwjgl.jar": {
+            "fileName": "headlessmc-lwjgl2-0.1.2.jar",
+            "size": 828612,
+            "sha256": "4f84a70dd724cd34c033e1785325b8de19bb166e55d42ec668189ea5e6657b45",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl2-0.1.2.jar"
+        },
+        "lwjgl2/lwjgl_util.jar": {
+            "fileName": "headlessmc-lwjgl2-util-0.1.2.jar",
+            "size": 155586,
+            "sha256": "f679f816054cf682184d17967f0bf367234b334b7b6765909812da08cccb9163",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl2-util-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-freetype.jar": {
+            "fileName": "headlessmc-lwjgl3-freetype-0.1.2.jar",
+            "size": 503813,
+            "sha256": "0948f8ef710e9302dec905018675fbc30ffec6877244762b683beb4af0d680bb",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-freetype-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-glfw.jar": {
+            "fileName": "headlessmc-lwjgl3-glfw-0.1.2.jar",
+            "size": 153503,
+            "sha256": "7fe467d08e79045635d18331db1e74392888002f8846f3b456fd92374bcdbd40",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-glfw-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-jemalloc.jar": {
+            "fileName": "headlessmc-lwjgl3-jemalloc-0.1.2.jar",
+            "size": 41670,
+            "sha256": "5a3fbed894d4a4c3c0f8093f76c4e605d774665a22afcc46323b738ff4d168ef",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-jemalloc-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-openal.jar": {
+            "fileName": "headlessmc-lwjgl3-openal-0.1.2.jar",
+            "size": 116541,
+            "sha256": "f6252902994dfe18040ab55bbef5be957005139a0c4ebf5381911c79e34facdd",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-openal-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-opengl.jar": {
+            "fileName": "headlessmc-lwjgl3-opengl-0.1.2.jar",
+            "size": 793600,
+            "sha256": "22e23d47c7c81996903a48d7d183cc046af4a2fefb7784c331c43f09b418bfbd",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-opengl-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-sdl.jar": {
+            "fileName": "headlessmc-lwjgl3-sdl-0.1.2.jar",
+            "size": 993700,
+            "sha256": "437b382ed9089dbdc0845b25c0b25dfbfaefd3fc7eab4344f6e2b77ac3c26174",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-sdl-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-shaderc.jar": {
+            "fileName": "headlessmc-lwjgl3-shaderc-0.1.2.jar",
+            "size": 142994,
+            "sha256": "9fb6885d7eaaeba8bfd3b79ff849dcc07552a73580504b4113036ecfb4201b70",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-shaderc-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-spvc.jar": {
+            "fileName": "headlessmc-lwjgl3-spvc-0.1.2.jar",
+            "size": 142857,
+            "sha256": "24cf1bf49132b995ea26f843b96abdab291432061d5daf975c6952a053386986",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-spvc-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-stb.jar": {
+            "fileName": "headlessmc-lwjgl3-stb-0.1.2.jar",
+            "size": 143248,
+            "sha256": "2074f35c026cdeeec37eda60b316efa2e04836905468948eba5fbd3ffaf230d3",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-stb-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-tinyfd.jar": {
+            "fileName": "headlessmc-lwjgl3-tinyfd-0.1.2.jar",
+            "size": 4691,
+            "sha256": "700659e67d80dde1db4f297b39c7eb19f244f6a0cc1fd9352444ac16fa31a0c3",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-tinyfd-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-vma.jar": {
+            "fileName": "headlessmc-lwjgl3-vma-0.1.2.jar",
+            "size": 136696,
+            "sha256": "00ea67039d8dd56eedf529c7189c585bc6f5e1a5cf786b0d5ef2c061cff9d0c2",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-vma-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl-vulkan.jar": {
+            "fileName": "headlessmc-lwjgl3-vulkan-0.1.2.jar",
+            "size": 10086449,
+            "sha256": "a2044e38b0e72e639b46964d271e69b6aa9f6582a1a3ea77d188b2b3894febff",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-vulkan-0.1.2.jar"
+        },
+        "lwjgl3/lwjgl.jar": {
+            "fileName": "headlessmc-lwjgl3-0.1.2.jar",
+            "size": 990639,
+            "sha256": "1b5881b3f46a105c8de221cbb00d609d41c3164bf3c9abf678ae7ede7ae30df2",
+            "url": "https://github.com/headlesshq/headlessmc-lwjgl/releases/download/0.1.2/headlessmc-lwjgl3-0.1.2.jar"
+        }
+    }
+}

@@ -13,7 +13,7 @@
     'prIgnoreNotification',
   ],
   rebaseWhen: 'conflicted',
-  // the lifecycle workflow pushes updated fabric lock files to renovate branches
+  // the lifecycle workflow pushes updated fabric and headlessmc-lwjgl lock files to renovate branches
   gitIgnoredAuthors: [
     '41898282+github-actions[bot]@users.noreply.github.com',
   ],
@@ -21,12 +21,32 @@
     'gradle',
     'gradle-wrapper',
     'github-actions',
+    'custom.regex',
+  ],
+  customManagers: [
+    {
+      // the headlessmc-lwjgl release the lwjgl patcher downloads, CI regenerates its lock file on renovate PRs
+      customType: 'regex',
+      managerFilePatterns: [
+        '/headlessmc-patcher-lwjgl-patched/build\\.gradle$/',
+      ],
+      matchStrings: [
+        "// renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+def \\w+ = '(?<currentValue>[^']+)'",
+      ],
+    },
   ],
   packageRules: [
     {
       // dependency updates affect the released artifacts, so they should trigger a release
       matchManagers: [
         'gradle',
+      ],
+      semanticCommitType: 'fix',
+      semanticCommitScope: 'deps',
+    },
+    {
+      matchManagers: [
+        'custom.regex',
       ],
       semanticCommitType: 'fix',
       semanticCommitScope: 'deps',
