@@ -10,6 +10,78 @@ if (providers.gradleProperty('uberJar').present) {
     }
 }
 
+// -PmutableJar builds the mutable-jar, which keeps the deployment dependencies,
+// so that it can be re-augmented with the plugin jars placed in quarkus-app/providers.
+if (providers.gradleProperty('mutableJar').present) {
+    quarkus {
+        set('package.jar.type', 'mutable-jar')
+        set('package.jar.user-providers-directory', 'providers')
+    }
+
+    // The Quarkus Gradle plugin assembles build/quarkus-app as a fast-jar and drops lib/deployment,
+    // so we zip the complete mutable-jar Quarkus generated in quarkus-build/gen instead.
+    tasks.register('mutableJarZip', Zip) {
+        dependsOn quarkusBuild
+        group = 'build'
+        from(layout.buildDirectory.dir('quarkus-build/gen/quarkus-app')) {
+            into 'quarkus-app'
+        }
+        archiveFileName = 'headlessmc-mutable.zip'
+        destinationDirectory = layout.buildDirectory
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+
+    // Writes the lock for the mutable-jar, which the builds of the uber-jar and native image
+    // embed with -PmutableJarLock=<file>, so that they can download and verify the mutable-jar.
+    def releaseVersion = version
+    tasks.register('mutableJarLock') {
+        def zip = tasks.named('mutableJarZip', Zip).flatMap { it.archiveFile }
+        def lock = layout.buildDirectory.file('headlessmc-mutable.properties')
+        inputs.file(zip)
+        outputs.file(lock)
+        group = 'build'
+        doLast {
+            File zipFile = zip.get().asFile
+            def sha256 = java.security.MessageDigest.getInstance('SHA-256').digest(zipFile.bytes).encodeHex().toString()
+            lock.get().asFile.text = """\
+                version=${releaseVersion}
+                sha256=${sha256}
+                size=${zipFile.length()}
+                url=https://github.com/headlesshq/headlessmc/releases/download/${releaseVersion}/headlessmc-mutable.zip
+                """.stripIndent()
+        }
+    }
+}
+
+// Generates META-INF/headlessmc/core-libraries.txt, the libraries plugins cannot replace,
+// and META-INF/headlessmc/mutable-jar.properties if -PmutableJarLock=<file> is given.
+def mutableJarLock = providers.gradleProperty('mutableJarLock').map { rootProject.file(it) }
+def coreLibraries = configurations.runtimeClasspath.incoming.artifacts.resolvedArtifacts.map { artifacts ->
+    artifacts.collect { it.id.componentIdentifier }
+        .findAll { it instanceof ModuleComponentIdentifier }
+        .collect { "${it.group}:${it.module}:${it.version}".toString() }
+        .unique()
+        .sort()
+}
+def generateHeadlessMcResources = tasks.register('generateHeadlessMcResources') {
+    def outputDir = layout.buildDirectory.dir('generated/resources/headlessmc')
+    inputs.property('coreLibraries', coreLibraries)
+    inputs.files(mutableJarLock.map { [it] }.orElse([])).optional()
+    outputs.dir(outputDir)
+    doLast {
+        File dir = outputDir.get().dir('META-INF/headlessmc').asFile
+        dir.deleteDir()
+        dir.mkdirs()
+        new File(dir, 'core-libraries.txt').text = coreLibraries.get().join('\n') + '\n'
+        if (mutableJarLock.present) {
+            new File(dir, 'mutable-jar.properties').bytes = mutableJarLock.get().bytes
+        }
+    }
+}
+
+sourceSets.main.resources.srcDir(generateHeadlessMcResources)
+
 // quarkusDev is not that great, especially if we want to debug from the shell
 // quarkusRun is not a JavaExec, so IntelliJ cannot attach a debugger
 // the gradle application plugin run task somehow also runs quarkusDev

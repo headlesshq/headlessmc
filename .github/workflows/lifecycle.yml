@@ -56,13 +56,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # The mutable-jar is re-augmented with plugins, the uber-jar and the native images
+      # embed its lock (hash, size, url) to download and verify it, see headlessmc-plugins.
+      - name: Build mutable jar
+        run: ./gradlew :headlessmc-application:mutableJarLock -PmutableJar --stacktrace
+
       - name: Test, coverage and build
-        run: ./gradlew jacocoRootReport build :headlessmc-application:quarkusBuild -PuberJar --stacktrace
+        run: ./gradlew jacocoRootReport build :headlessmc-application:quarkusBuild -PuberJar -PmutableJarLock=headlessmc-application/build/headlessmc-mutable.properties --stacktrace
 
       # Builds the (unsigned) Maven Central bundle on PRs too,
       # so problems with javadoc/sources/poms show up before a release.
       - name: Check Maven Central bundle
-        run: ./gradlew nmcpZipAggregation -PuberJar --stacktrace
+        run: ./gradlew nmcpZipAggregation -PuberJar -PmutableJarLock=headlessmc-application/build/headlessmc-mutable.properties --stacktrace
 
       - name: Add coverage to PR
         if: github.event_name == 'pull_request'
@@ -104,7 +109,14 @@ jobs:
           name: HeadlessMc Launcher files
           path: |
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar
+            ./headlessmc-application/build/headlessmc-mutable.zip
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar
+
+      - name: Publish mutable jar lock
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: HeadlessMc Mutable Jar Lock
+          path: ./headlessmc-application/build/headlessmc-mutable.properties
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
@@ -240,9 +252,10 @@ jobs:
 
   build-natives:
     runs-on: ${{ matrix.os.os }}
-    needs: release-please
+    # needs the mutable jar lock from the build job
+    needs: [release-please, build]
     # release-please is skipped on pull requests, run anyway
-    if: ${{ !cancelled() && needs.release-please.result != 'failure' }}
+    if: ${{ !cancelled() && needs.release-please.result != 'failure' && needs.build.result == 'success' }}
     strategy:
       matrix:
         os:
@@ -258,6 +271,13 @@ jobs:
           ]' || '[]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # downloaded before the cache step, so that the cache key includes the lock
+      - name: Download mutable jar lock
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: HeadlessMc Mutable Jar Lock
+          path: headlessmc-application/build
 
       # native image builds take very long, reuse the executable if nothing it is built from has changed
       - name: Cache native image
@@ -300,7 +320,7 @@ jobs:
             sudo launchctl limit maxfiles 524288 524288
             ulimit -n 524288
           fi
-          bash scripts/build-native.sh
+          bash scripts/build-native.sh -PmutableJarLock=headlessmc-application/build/headlessmc-mutable.properties
 
       - name: List files
         if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
@@ -648,6 +668,7 @@ jobs:
         run: |
           gh release upload "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --clobber \
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar \
+            ./headlessmc-application/build/headlessmc-mutable.zip \
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar \
             ./headlessmc-launcher-linux-x64 \
             ./headlessmc-launcher-windows-x64.exe \
