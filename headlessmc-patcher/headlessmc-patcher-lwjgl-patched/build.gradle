@@ -46,7 +46,7 @@ static String patchedJar(String asset, String version) {
 /**
  * Fetches the headlessmc-lwjgl release headlessmcLwjglVersion and rewrites the lock file with the size and checksum
  * of every jar. This is the only task that accesses the release, run it after changing headlessmcLwjglVersion.
- * GITHUB_TOKEN or GH_TOKEN is used if set, which is required while the repository is private.
+ * GITHUB_TOKEN or GH_TOKEN is used if set, against the rate limit of the GitHub API.
  */
 tasks.register('updatePatchedLwjgl') {
     group = 'lwjgl'

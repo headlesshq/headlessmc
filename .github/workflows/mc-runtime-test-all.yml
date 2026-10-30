@@ -52,6 +52,25 @@ jobs:
           path: headlessmc.jar
           retention-days: 1
 
+      # the headless runs use the patched LWJGL of the locked headlessmc-lwjgl release: it is downloaded and verified
+      # once, cached across workflow runs by the lock file, and put into the HeadlessMc cache of every run
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: patched-lwjgl-cache
+          key: patched-lwjgl-${{ hashFiles('headlessmc-patcher/headlessmc-patcher-lwjgl-patched/src/main/resources/patcher/lwjgl-patched/headlessmc-lwjgl.json') }}
+
+      - name: Download the locked patched LWJGL
+        run: >-
+          python3 -I .github/scripts/download_patched_lwjgl.py
+          headlessmc-patcher/headlessmc-patcher-lwjgl-patched/src/main/resources/patcher/lwjgl-patched/headlessmc-lwjgl.json
+          patched-lwjgl-cache
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: patched-lwjgl-cache
+          path: patched-lwjgl-cache
+          retention-days: 1
+
   matrix:
     name: Construct matrix
     runs-on: ubuntu-latest
@@ -128,6 +147,13 @@ jobs:
           name: headlessmc-all-versions
           path: .
 
+      # HeadlessMc finds the jars in its cache, HMC_FILES_LOCATION/cache, and does not download them
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        if: ${{ !matrix.xvfb }}
+        with:
+          name: patched-lwjgl-cache
+          path: HeadlessMC/cache/lwjgl-patched
+
       - name: Run the MC client
         timeout-minutes: 10
         uses: ./mc-runtime-test
@@ -142,6 +168,14 @@ jobs:
           cache-mc: github
           download-hmc: false
           headlessmc-command: --retries 3 --jvm -Djava.awt.headless=true
+
+      - name: Check that the patched LWJGL came from the cache
+        if: ${{ always() && !matrix.xvfb }}
+        run: |
+          if grep -h "Requesting https://github.com/headlesshq/headlessmc-lwjgl/" HeadlessMC/logs/*.log; then
+            echo "::error::HeadlessMc downloaded the patched LWJGL instead of using the cached jars"
+            exit 1
+          fi
 
       - name: Upload crash reports and logs
         if: failure()
