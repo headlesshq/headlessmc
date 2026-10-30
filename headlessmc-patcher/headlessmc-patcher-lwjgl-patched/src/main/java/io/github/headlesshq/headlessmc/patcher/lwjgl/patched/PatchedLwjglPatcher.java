@@ -40,6 +40,7 @@ import java.util.zip.ZipInputStream;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 @RegisterResources(globs = PatchedLwjglPatcher.RESOURCES + "**")
 public class PatchedLwjglPatcher implements Patcher {
+    public static final String NAME = "lwjgl-pre";
     static final String RESOURCES = "patcher/lwjgl-patched/";
     static final String API = "headlessmc-lwjgl-api";
     static final String JOML_NO_UNSAFE = "joml.nounsafe";
@@ -164,9 +165,13 @@ public class PatchedLwjglPatcher implements Patcher {
         return in;
     }
 
+    /**
+     * Opt-in while the patched LWJGL is in preview, e.g. {@code launch -lwjgl --patchers lwjgl-pre}: it replaces the
+     * transformer based patcher "lwjgl", which headless launches use otherwise.
+     */
     @Override
     public String name() {
-        return "lwjgl";
+        return NAME;
     }
 
     @Override

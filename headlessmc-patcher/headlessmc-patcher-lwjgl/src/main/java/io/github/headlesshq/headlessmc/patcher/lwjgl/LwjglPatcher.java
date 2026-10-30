@@ -79,13 +79,9 @@ public class LwjglPatcher extends AbstractClassPatcher {
         transformer.transform(classNode);
     }
 
-    /**
-     * The transformer based patcher, replaced by the patched LWJGL of
-     * {@code headlessmc-patcher-lwjgl-patched}, which is called "lwjgl". Can still be selected as a profile patcher.
-     */
     @Override
     public String name() {
-        return "lwjgl-legacy";
+        return "lwjgl";
     }
 
     @Override

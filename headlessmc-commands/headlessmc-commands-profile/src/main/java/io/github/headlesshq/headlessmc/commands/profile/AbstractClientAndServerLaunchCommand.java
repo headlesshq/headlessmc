@@ -28,11 +28,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 @Getter
 @Setter
 public abstract class AbstractClientAndServerLaunchCommand extends AbstractServerLaunchCommand {
+    /**
+     * The name of the patcher of the patched LWJGL, {@code PatchedLwjglPatcher}, which this module does not depend on.
+     */
+    private static final String PATCHED_LWJGL = "lwjgl-pre";
+
     private final LastUsedAccountService lastUsedAccountService;
     private final ClientLauncher clientLauncher;
     private final XvfbService xvfbService;
@@ -176,7 +182,13 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
 
         patchers.add("log4j");
         if (headless) {
-            patchers.add("lwjgl");
+            // the patched LWJGL of headlessmc-lwjgl is opt-in and replaces the transformer based patcher
+            boolean patchedLwjgl = Stream.concat(patchers.stream(), profile.patchers().stream())
+                .anyMatch(PATCHED_LWJGL::equalsIgnoreCase);
+            if (!patchedLwjgl) {
+                patchers.add("lwjgl");
+            }
+
             patchers.add("paulscode");
         }
 
