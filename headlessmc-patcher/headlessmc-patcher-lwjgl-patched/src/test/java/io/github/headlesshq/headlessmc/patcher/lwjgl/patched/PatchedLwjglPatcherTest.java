@@ -18,6 +18,13 @@ public class PatchedLwjglPatcherTest {
     }
 
     @Test
+    public void classifiedLwjgl3JarsAreReplaced() {
+        // Minecraft 26.2 uses org.lwjgl:lwjgl:3.4.1:unsafe instead of the core jar
+        assertEquals("lwjgl3/lwjgl.jar",
+                     PatchedLwjglPatcher.patchedJar(LIBRARIES.resolve("org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-unsafe.jar")));
+    }
+
+    @Test
     public void lwjgl2IsReplacedByThePatchedLwjgl2() {
         assertEquals("lwjgl2/lwjgl.jar", PatchedLwjglPatcher.patchedJar(
             LIBRARIES.resolve("org/lwjgl/lwjgl/lwjgl/2.9.4-nightly-20150209/lwjgl-2.9.4-nightly-20150209.jar")));
@@ -31,6 +38,9 @@ public class PatchedLwjglPatcherTest {
             LIBRARIES.resolve("org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3-natives-linux.jar")));
         assertNull(PatchedLwjglPatcher.patchedJar(
             LIBRARIES.resolve("org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-linux.jar")));
+        assertNull(PatchedLwjglPatcher.patchedJar(
+            LIBRARIES.resolve("org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux-arm64.jar")));
+        assertNull(PatchedLwjglPatcher.patchedJar(LIBRARIES.resolve("org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.10.jar")));
         assertNull(PatchedLwjglPatcher.patchedJar(LIBRARIES.resolve("org/joml/joml/1.10.5/joml-1.10.5.jar")));
         assertNull(PatchedLwjglPatcher.patchedJar(Path.of("lwjgl.jar")));
     }

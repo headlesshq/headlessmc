@@ -101,7 +101,7 @@ public class PatchedLwjglPatcher implements Patcher {
         String version = versionDirectory.getFileName().toString();
         String artifact = artifactDirectory.getFileName().toString().toLowerCase(Locale.ENGLISH);
         String fileName = library.getFileName().toString();
-        if (!"lwjgl".equals(groupDirectory.getFileName().toString()) || !fileName.equals(artifact + "-" + version + ".jar")) {
+        if (!"lwjgl".equals(groupDirectory.getFileName().toString()) || !isClassesJar(fileName, artifact, version)) {
             return null;
         }
 
@@ -112,6 +112,21 @@ public class PatchedLwjglPatcher implements Patcher {
         }
 
         return null;
+    }
+
+    /**
+     * @return whether the file is the classes jar of the artifact, {@code lwjgl-3.3.3.jar}, or a variant of it with a
+     * classifier, like {@code lwjgl-3.4.1-unsafe.jar}, which Minecraft 26.2 uses instead of the core jar, but not a jar
+     * of native libraries, like {@code lwjgl-3.3.3-natives-linux.jar}.
+     */
+    private static boolean isClassesJar(String fileName, String artifact, String version) {
+        String prefix = artifact + "-" + version;
+        if (!fileName.startsWith(prefix) || !fileName.endsWith(".jar")) {
+            return false;
+        }
+
+        String classifier = fileName.substring(prefix.length(), fileName.length() - ".jar".length());
+        return classifier.isEmpty() || classifier.startsWith("-") && classifier.length() > 1 && !classifier.startsWith("-natives");
     }
 
     /**
