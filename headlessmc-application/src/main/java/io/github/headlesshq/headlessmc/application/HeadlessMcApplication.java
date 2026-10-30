@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.application;
 
+import io.github.headlesshq.headlessmc.commands.ShellCompletions;
 import io.github.headlesshq.headlessmc.config.ConfigFileProvider;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
@@ -14,6 +15,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
@@ -23,9 +25,14 @@ public class HeadlessMcApplication implements QuarkusApplication {
     private final AppFiles appFiles;
     private final ConfigFileProvider configFileProvider;
     private final UpdateNotifier updateNotifier;
+    private final ShellCompletions shellCompletions;
 
     @Override
     public int run(String... args) throws Exception {
+        if (args.length > 0 && ShellCompletions.COMMAND.equals(args[0])) {
+            return shellCompletions.complete(commandLine, Arrays.asList(args).subList(1, args.length), System.out);
+        }
+
         initFiles();
         commandLine.setUsageHelpAutoWidth(true);
         updateNotifier.checkBefore(getCommand(args));

@@ -42,6 +42,71 @@ Download the executable for your Operating System from the latest
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
 
+### Shell completions
+
+HeadlessMc can complete its commands, options, installed versions, accounts, profiles and more
+in bash, zsh, fish and PowerShell, with a description for every completion.
+`headlessmc completion <shell>` prints a small script for your shell,
+which asks the `headlessmc` executable on your `PATH` for completions every time you press tab.
+Use the native executable for this, the `headlessmc.jar` takes too long to start.
+If you named the executable differently, e.g. `headlessmc-launcher-linux-x64`,
+rename it to `headlessmc` (or `hmc`), as the scripts only complete those names.
+
+=== "zsh"
+
+    Add this to your `~/.zshrc`, after `compinit` (frameworks like Oh My Zsh run `compinit` for you):
+    ```shell
+    source <(headlessmc completion zsh)
+    ```
+    Alternatively, save the script once into a directory of your `fpath`,
+    so that HeadlessMc does not have to run whenever a shell starts:
+    ```shell
+    mkdir -p ~/.zsh/completions
+    headlessmc completion zsh > ~/.zsh/completions/_headlessmc
+    ```
+    and add `fpath=(~/.zsh/completions $fpath)` before `compinit` runs.
+    If your system runs `compinit` before your `~/.zshrc`, like Ubuntu does in `/etc/zsh/zshrc`,
+    add it to your `~/.zshenv` instead.
+    You might have to remove the completion cache with `rm ~/.zcompdump*` once.
+    Remember to save the script again after updating HeadlessMc.
+
+    Options are shown before you have typed a `-`, to only show them after a `-`:
+    ```shell
+    zstyle ':completion:*:*:headlessmc:*:options' prefix-needed true
+    ```
+
+=== "bash"
+
+    Add this to your `~/.bashrc`:
+    ```shell
+    source <(headlessmc completion bash)
+    ```
+    The script works best with the
+    [bash-completion](https://github.com/scop/bash-completion) package installed,
+    which most Linux distributions do by default.
+    Bash cannot show descriptions next to completions,
+    so if there are multiple completions they are listed as `name  (description)`.
+
+=== "fish"
+
+    Save the script into your completions directory, fish loads it automatically:
+    ```shell
+    headlessmc completion fish > ~/.config/fish/completions/headlessmc.fish
+    ```
+    Remember to save the script again after updating HeadlessMc.
+
+=== "PowerShell"
+
+    Add this to your PowerShell profile, which you can open with `notepad $PROFILE`:
+    ```powershell
+    headlessmc completion powershell | Out-String | Invoke-Expression
+    ```
+    Pressing tab cycles through the completions,
+    to see all completions with their descriptions use `Ctrl+Space`, or enable a menu for tab:
+    ```powershell
+    Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+    ```
+
 ### Java
 
 HeadlessMc has been written in Java with the Quarkus Framework and runs on Java 25.

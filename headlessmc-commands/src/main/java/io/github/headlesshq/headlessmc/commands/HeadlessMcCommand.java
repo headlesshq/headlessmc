@@ -52,6 +52,7 @@ import java.util.concurrent.Callable;
         ModCommand.class,
         CommandLine.HelpCommand.class,
         DebugCommand.class,
+        CompletionCommand.class,
         InstallShortcutCommand.class,
         LoginShortcutCommand.class
     }
