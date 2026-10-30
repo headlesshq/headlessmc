@@ -15,4 +15,6 @@ dependencies {
     implementation project(':headlessmc-commands:headlessmc-commands-profile')
     implementation project(':headlessmc-commands:headlessmc-commands-server')
     implementation project(':headlessmc-commands:headlessmc-commands-mod')
+
+    testImplementation testFixtures(project(':headlessmc-console'))
 }

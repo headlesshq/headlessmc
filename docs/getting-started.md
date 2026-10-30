@@ -46,7 +46,7 @@ Download the executable for your Operating System from the latest
 
 HeadlessMc can complete its commands, options, installed versions, accounts, profiles and more
 in bash, zsh, fish and PowerShell, with a description for every completion.
-`headlessmc completion <shell>` prints a small script for your shell,
+`headlessmc completion <shell>` prints a small script for your shell, or writes it to a file with `-o <file>`,
 which asks the `headlessmc` executable on your `PATH` for completions every time you press tab.
 Use the native executable for this, the `headlessmc.jar` takes too long to start.
 If you named the executable differently, e.g. `headlessmc-launcher-linux-x64`,
@@ -61,14 +61,13 @@ rename it to `headlessmc` (or `hmc`), as the scripts only complete those names.
     Alternatively, save the script once into a directory of your `fpath`,
     so that HeadlessMc does not have to run whenever a shell starts:
     ```shell
-    mkdir -p ~/.zsh/completions
-    headlessmc completion zsh > ~/.zsh/completions/_headlessmc
+    headlessmc completion zsh -o ~/.zsh/completions/_headlessmc
     ```
     and add `fpath=(~/.zsh/completions $fpath)` before `compinit` runs.
     If your system runs `compinit` before your `~/.zshrc`, like Ubuntu does in `/etc/zsh/zshrc`,
     add it to your `~/.zshenv` instead.
     You might have to remove the completion cache with `rm ~/.zcompdump*` once.
-    Remember to save the script again after updating HeadlessMc.
+    Running the command again overwrites the file, do so after updating HeadlessMc.
 
     Options are shown before you have typed a `-`, to only show them after a `-`:
     ```shell
@@ -84,6 +83,10 @@ rename it to `headlessmc` (or `hmc`), as the scripts only complete those names.
     The script works best with the
     [bash-completion](https://github.com/scop/bash-completion) package installed,
     which most Linux distributions do by default.
+    With bash-completion you can also save the script once instead, it is then loaded when you first press tab:
+    ```shell
+    headlessmc completion bash -o ~/.local/share/bash-completion/completions/headlessmc
+    ```
     Bash cannot show descriptions next to completions,
     so if there are multiple completions they are listed as `name  (description)`.
 
@@ -91,9 +94,9 @@ rename it to `headlessmc` (or `hmc`), as the scripts only complete those names.
 
     Save the script into your completions directory, fish loads it automatically:
     ```shell
-    headlessmc completion fish > ~/.config/fish/completions/headlessmc.fish
+    headlessmc completion fish -o ~/.config/fish/completions/headlessmc.fish
     ```
-    Remember to save the script again after updating HeadlessMc.
+    Running the command again overwrites the file, do so after updating HeadlessMc.
 
 === "PowerShell"
 
@@ -106,6 +109,8 @@ rename it to `headlessmc` (or `hmc`), as the scripts only complete those names.
     ```powershell
     Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
     ```
+
+To uninstall the completions, remove the line from your shell configuration or delete the saved file again.
 
 ### Java
 
