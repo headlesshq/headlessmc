@@ -1,0 +1,64 @@
+# Dynamic PowerShell completion for HeadlessMc.
+#
+# Asks HeadlessMc itself for candidates by calling the hidden command
+#   headlessmc __complete <args...> <current word>
+# which prints one candidate per line as "<name>`t<description>", lines without a tab are ignored,
+# followed by a last line ":<directive>", a bitmask of
+#   1 = error, do not complete anything
+#   2 = do not append a space after the completion
+#   4 = do not fall back to file completion if there are no candidates
+# PowerShell falls back to completing files whenever there are no candidates.
+
+Register-ArgumentCompleter -Native -CommandName 'headlessmc', 'hmc', 'headlessmc.exe' -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    $elements = @($commandAst.CommandElements | Where-Object { $_.Extent.StartOffset -lt $cursorPosition })
+    $words = @($elements | Select-Object -Skip 1 | ForEach-Object {
+        if ($_ -is [System.Management.Automation.Language.StringConstantExpressionAst]) { $_.Value } else { $_.Extent.Text }
+    })
+    if ($wordToComplete -ne '' -and $words.Count -gt 0) {
+        $words = @($words | Select-Object -SkipLast 1)
+    }
+
+    # Windows PowerShell and PowerShell before 7.3 drop empty arguments when calling native commands
+    $current = $wordToComplete
+    if ($current -eq '' -and $PSVersionTable.PSVersion -lt [version]'7.3') {
+        $current = '""'
+    }
+
+    $lines = @(& $elements[0].Extent.Text __complete @words $current 2>$null)
+    if ($lines.Count -eq 0) {
+        return
+    }
+
+    $directive = 0
+    if ($lines[-1] -match '^:(\d+)$') {
+        $directive = [int]$Matches[1]
+        $lines = @($lines | Select-Object -SkipLast 1)
+    }
+
+    if ($directive -band 1) {
+        return
+    }
+
+    foreach ($line in $lines) {
+        $tab = $line.IndexOf("`t")
+        if ($tab -lt 0) {
+            continue
+        }
+
+        $name = $line.Substring(0, $tab)
+        $description = $line.Substring($tab + 1)
+        if ($description -eq '') {
+            $description = $name
+        }
+
+        $text = $name
+        if ($name -match '[\s''"`$;,(){}|&<>@#]') {
+            $text = "'" + $name.Replace("'", "''") + "'"
+        }
+
+        $type = if ($name.StartsWith('-')) { 'ParameterName' } else { 'ParameterValue' }
+        [System.Management.Automation.CompletionResult]::new($text, $name, $type, $description)
+    }
+}
