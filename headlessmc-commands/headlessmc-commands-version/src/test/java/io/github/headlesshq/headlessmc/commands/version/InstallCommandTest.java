@@ -61,7 +61,7 @@ class InstallCommandTest {
         };
         ServerInstaller serverInstaller = (id, dir, args) -> {
             serverInstalls.add(new ServerInstallation(id, dir));
-            return new ServerInstaller.Installation(21);
+            return new ServerInstaller.Installation(21, List.of("-XX:+UseG1GC"));
         };
         vanilla.withClientSupport(new ClientSupport(new UnsupportedMatcher(), clientInstaller));
         vanilla.withServerSupport(new ServerSupport(serverDir -> serverDir.resolve("server.jar"), serverInstaller));
@@ -147,6 +147,7 @@ class InstallCommandTest {
         assertEquals(1, servers.size());
         Profile server = servers.getFirst();
         assertEquals(21, server.javaVersion());
+        assertEquals(List.of("-XX:+UseG1GC"), server.vmArgs());
         assertEquals(Optional.of(Side.SERVER), server.version().side());
         assertEquals(install.dir(), server.path());
         assertTrue(console.output().contains("Installed server"));
@@ -167,7 +168,7 @@ class InstallCommandTest {
     void existingServerRequiresForce() {
         serverService.add(root.resolve("existing"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "my-server", 21);
+        ), "my-server", new ServerInstaller.Installation(21));
 
         InstallCommand command = command();
         command.setVersionArg(List.of("server", "1.21.1"));

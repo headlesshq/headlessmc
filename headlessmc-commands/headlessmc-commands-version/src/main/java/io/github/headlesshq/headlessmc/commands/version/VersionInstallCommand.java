@@ -121,8 +121,7 @@ public class VersionInstallCommand implements Runnable, VersionArgCommand, LongR
                     id, dir, new TypedMapImpl()
                 );
 
-                // TODO: Paper actually has recommendations on vm args!!!
-                Profile server = serverService.add(dir, id, name, installation.javaVersion());
+                Profile server = serverService.add(dir, id, name, installation);
                 console.write("Installed server " + server.name() + " for version " + id);
             } else {
                 installClient(platform, id);

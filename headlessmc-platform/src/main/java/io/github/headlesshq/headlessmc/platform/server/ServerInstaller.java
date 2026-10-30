@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * When a {@link io.github.headlesshq.headlessmc.platform.Platform}
@@ -19,7 +20,7 @@ public interface ServerInstaller {
      * @param dir  the directory to install the server in.
      * @param args special arguments for the platform installer (e.g. display UI)
      * @return an {@link Installation} with the java version that was used to
-     * install (and should be used to launch) the server.
+     * install (and should be used to launch) the server and the default jvm args for it.
      * @throws HeadlessMcException if something goes wrong.
      */
     Installation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException;
@@ -30,8 +31,14 @@ public interface ServerInstaller {
      * for the server.
      *
      * @param javaVersion the java version to launch the server with.
+     * @param vmArgs      the default jvm args the server profile should be created with,
+     *                    e.g. the flags recommended by Paper.
      */
     // TODO: maybe the ServerInstaller should actually get the java version from the outside?
-    record Installation(int javaVersion) {}
+    record Installation(int javaVersion, List<String> vmArgs) {
+        public Installation(int javaVersion) {
+            this(javaVersion, List.of());
+        }
+    }
 
 }

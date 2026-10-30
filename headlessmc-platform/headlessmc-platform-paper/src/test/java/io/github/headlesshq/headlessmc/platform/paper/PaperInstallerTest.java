@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PaperInstallerTest {
     private static final URI URL_130 = URI.create("https://papermc.io/paper-130.jar");
+    private static final List<String> FLAGS = List.of("-XX:+UseG1GC", "-XX:+AlwaysPreTouch");
 
     @TempDir
     Path root;
@@ -76,7 +77,18 @@ class PaperInstallerTest {
 
         @Override
         public VersionResponse getVersion(String project, String version) {
-            throw new UnsupportedOperationException();
+            if (!"1.21.1".equals(version)) {
+                throw new ApiException(Response.status(404).build());
+            }
+
+            return new VersionResponse(
+                new VersionResponse.Version(version, new VersionResponse.Java(
+                    new VersionResponse.JavaVersion(21),
+                    Map.of(PaperJvmArgsService.RECOMMENDED, FLAGS)
+                )),
+                new VersionResponse.Support("SUPPORTED", null),
+                List.of(130, 129)
+            );
         }
 
         @Override
@@ -106,7 +118,7 @@ class PaperInstallerTest {
     void setup() {
         FakePlatform paper = FakePlatform.create(Paper.PLATFORM_NAME, new String[]{"1.21.1", "130", "129"});
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1", "26.1", "1.20.4"), paper);
-        installer = new PaperInstaller(downloads, vanillaInstaller, api);
+        installer = new PaperInstaller(downloads, vanillaInstaller, new PaperJvmArgsService(api), api);
         downloads.register(URL_130, "jar-130");
         downloads.register(URI.create("https://papermc.io/paper-129.jar"), "jar-129");
     }
@@ -145,6 +157,7 @@ class PaperInstallerTest {
         ServerInstaller.Installation installation = installer.installServer(id, root, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
+        assertEquals(FLAGS, installation.vmArgs());
         assertEquals("jar-130", Files.readString(root.resolve(ServerFinder.DEFAULT_JAR)));
         assertTrue(downloads.wasRequested(URL_130));
     }

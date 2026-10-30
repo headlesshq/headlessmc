@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
 import io.github.headlesshq.headlessmc.platform.VanillaInstaller;
 import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.platform.paper.PaperJvmArgsService;
 import io.github.headlesshq.headlessmc.platform.purpur.api.BuildResponse;
 import io.github.headlesshq.headlessmc.platform.purpur.api.ProjectResponse;
 import io.github.headlesshq.headlessmc.platform.purpur.api.PurpurAPI;
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,6 +57,16 @@ class PurpurInstallerTest {
         }
     };
 
+    private final List<String> requestedJvmArgs = new ArrayList<>();
+
+    private final PaperJvmArgsService jvmArgsService = new PaperJvmArgsService("paper", null) {
+        @Override
+        public List<String> getRecommendedJvmArgs(String version) {
+            requestedJvmArgs.add(version);
+            return List.of("-XX:+UseG1GC");
+        }
+    };
+
     private final PurpurAPI api = new PurpurAPI() {
         @Override
         public ProjectResponse getProject(String project) {
@@ -79,7 +91,7 @@ class PurpurInstallerTest {
     void setup() {
         FakePlatform purpur = FakePlatform.create(Purpur.PLATFORM_NAME, new String[]{"1.21.1", "2329", "2328"});
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"), purpur);
-        installer = new PurpurInstaller(downloads, vanillaInstaller, api);
+        installer = new PurpurInstaller(downloads, vanillaInstaller, jvmArgsService, api);
 
         downloads.register(url("2329"), "jar-2329");
         downloads.register(url("2328"), "jar-2328");
@@ -110,6 +122,8 @@ class PurpurInstallerTest {
         ServerInstaller.Installation installation = installer.installServer(id, root, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
+        assertEquals(List.of("-XX:+UseG1GC"), installation.vmArgs());
+        assertEquals(List.of("1.21.1"), requestedJvmArgs);
         assertEquals("jar-2329", Files.readString(root.resolve(ServerFinder.DEFAULT_JAR)));
         assertTrue(downloads.wasRequested(url("2329")));
     }

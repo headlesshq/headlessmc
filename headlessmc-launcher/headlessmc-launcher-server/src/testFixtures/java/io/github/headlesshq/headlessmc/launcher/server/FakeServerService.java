@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import org.jspecify.annotations.Nullable;
 
@@ -29,9 +30,11 @@ public class FakeServerService implements ServerService {
     }
 
     @Override
-    public Profile add(Path dir, VersionID id, @Nullable String nameIn, int javaVersion) {
+    public Profile add(Path dir, VersionID id, @Nullable String nameIn, ServerInstaller.Installation installation) {
         String name = nameIn == null ? getServerName(id.asArg()) : nameIn;
-        Profile profile = new Profile(name, id.asArg().withSide(Side.SERVER), dir).withJavaVersion(javaVersion);
+        Profile profile = new Profile(name, id.asArg().withSide(Side.SERVER), dir)
+            .withJavaVersion(installation.javaVersion())
+            .withVmArgs(installation.vmArgs());
         return profileService.save(profile);
     }
 
