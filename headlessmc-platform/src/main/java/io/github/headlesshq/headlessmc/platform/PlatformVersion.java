@@ -39,9 +39,14 @@ public sealed class PlatformVersion permits VanillaVersion, BoundPlatformVersion
     public static PlatformVersion resolve(
         VersionService versionService, VanillaVersion vanillaVersion, String name
     ) throws HeadlessMcException {
-        Optional<? extends PlatformVersion> platformVersion = VersionArg.LATEST.equalsIgnoreCase(name)
-            ? versionService.getLatestBuild(vanillaVersion)
-            : versionService.getBuild(vanillaVersion, name);
+        Optional<? extends PlatformVersion> platformVersion;
+        if (VersionArg.LATEST.equalsIgnoreCase(name)) {
+            platformVersion = versionService.getLatestBuild(vanillaVersion);
+        } else if (VersionArg.STABLE.equalsIgnoreCase(name)) {
+            platformVersion = versionService.getLatestStableBuild(vanillaVersion);
+        } else {
+            platformVersion = versionService.getBuild(vanillaVersion, name);
+        }
 
         return platformVersion.orElseThrow(() -> new BadArgumentException(
             "Failed to find version %s/%s/%s".formatted(

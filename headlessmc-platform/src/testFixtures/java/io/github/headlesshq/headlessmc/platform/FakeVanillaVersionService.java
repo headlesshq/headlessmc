@@ -2,10 +2,12 @@ package io.github.headlesshq.headlessmc.platform;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * A {@link VanillaVersionService} over a fixed list of version names,
@@ -13,9 +15,24 @@ import java.util.SequencedSet;
  */
 public class FakeVanillaVersionService implements VanillaVersionService {
     private final List<String> namesLatestFirst;
+    private final Set<String> releases = new HashSet<>();
 
     public FakeVanillaVersionService(String... namesLatestFirst) {
         this.namesLatestFirst = List.of(namesLatestFirst);
+    }
+
+    public FakeVanillaVersionService withReleases(String... releases) {
+        this.releases.addAll(List.of(releases));
+        return this;
+    }
+
+    @Override
+    public VanillaVersion getLatestStable() {
+        return namesLatestFirst.stream()
+            .filter(releases::contains)
+            .findFirst()
+            .map(VanillaVersion::new)
+            .orElseThrow();
     }
 
     @Override
@@ -46,6 +63,11 @@ public class FakeVanillaVersionService implements VanillaVersionService {
     @Override
     public Optional<VanillaVersion> getLatestBuild(VanillaVersion version) {
         return Optional.of(version);
+    }
+
+    @Override
+    public Optional<VanillaVersion> getLatestStableBuild(VanillaVersion version) {
+        return releases.contains(version.getName()) ? Optional.of(version) : Optional.empty();
     }
 
     @Override

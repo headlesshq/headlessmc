@@ -19,6 +19,10 @@ public final class VanillaVersion extends PlatformVersion {
             return vanillaVersionService.getLatest();
         }
 
+        if (VersionArg.STABLE.equalsIgnoreCase(name)) {
+            return vanillaVersionService.getLatestStable();
+        }
+
         if (vanillaVersionService.hasVersion(name)) {
             return new VanillaVersion(name);
         }

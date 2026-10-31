@@ -22,6 +22,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
     protected abstract View<SequencedSet<V>> getSetView();
     protected abstract View<Map<String, V>> getMapView();
     protected abstract View<Map<V, Integer>> getIndices();
+    protected abstract View<Set<V>> getStableView();
 
     @Override
     public SequencedSet<V> getVersions() throws HeadlessMcException {
@@ -34,6 +35,12 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
     @Override
     public Optional<V> getLatestBuild(VanillaVersion version) throws HeadlessMcException {
         return getBuilds(version).stream().findFirst();
+    }
+
+    @Override
+    public Optional<V> getLatestStableBuild(VanillaVersion version) throws HeadlessMcException {
+        Set<V> stable = getStableView().get().orElseThrow(() -> new NotFoundException("Failed to fetch stable versions"));
+        return getBuilds(version).stream().filter(stable::contains).findFirst();
     }
 
     @Override

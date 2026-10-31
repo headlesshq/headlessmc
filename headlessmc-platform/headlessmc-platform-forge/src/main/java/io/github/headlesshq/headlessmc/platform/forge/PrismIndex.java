@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.platform.forge;
 
 import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,6 +36,7 @@ public record PrismIndex(String uid, List<Meta> versions) implements ReflectionR
      * {@code
      * {
      *  "recommended": false,
+     *  "type": "release",
      *  "releaseTime": "2026-06-09T18:25:56+00:00",
      *  "requires": [
      *      {
@@ -48,13 +50,20 @@ public record PrismIndex(String uid, List<Meta> versions) implements ReflectionR
      * }
      * </pre>
      *
-     * @param requires usually only contains the mc version, see example.
-     * @param sha256   the hash (TODO: OF WHAT?)
-     * @param version  the name of the forge build.
+     * @param requires    usually only contains the mc version, see example.
+     * @param sha256      the hash (TODO: OF WHAT?)
+     * @param version     the name of the forge build.
+     * @param recommended if this build is recommended, used by Forge, always {@code false} for NeoForge.
+     * @param type        {@code "release"} or {@code "beta"}, used by NeoForge, not present for Forge.
      */
     @RegisterForReflection
-    public record Meta(List<Requires> requires, String sha256, String version)
-        implements Comparable<Meta>, ReflectionRegistered {
+    public record Meta(
+        List<Requires> requires, String sha256, String version, boolean recommended, @Nullable String type
+    ) implements Comparable<Meta>, ReflectionRegistered {
+        public Meta(List<Requires> requires, String sha256, String version) {
+            this(requires, sha256, version, false, null);
+        }
+
         /**
          * @return the name of the Mc version for this forge version.
          */

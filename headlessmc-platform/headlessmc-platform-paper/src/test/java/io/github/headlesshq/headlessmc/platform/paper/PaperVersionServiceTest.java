@@ -14,6 +14,7 @@ import io.github.headlesshq.headlessmc.platform.paper.api.ProjectResponse;
 import io.github.headlesshq.headlessmc.platform.paper.api.VersionResponse;
 import io.github.headlesshq.headlessmc.platform.paper.api.VersionsResponse;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,8 +64,10 @@ class PaperVersionServiceTest {
         }
 
         @Override
-        public List<BuildResponse> getBuilds(String project, String version, List<Channel> channel) {
-            return builds;
+        public List<BuildResponse> getBuilds(String project, String version, @Nullable List<Channel> channel) {
+            return channel == null
+                ? builds
+                : builds.stream().filter(build -> channel.contains(build.getChannel())).toList();
         }
     }
 
@@ -96,7 +99,11 @@ class PaperVersionServiceTest {
     }
 
     private BuildResponse build(int id) {
-        return new BuildResponse(id, "STABLE", Map.of(
+        return build(id, "STABLE");
+    }
+
+    private BuildResponse build(int id, String channel) {
+        return new BuildResponse(id, channel, Map.of(
             BuildResponse.DEFAULT_DOWNLOAD,
             new BuildResponse.Download("paper-" + id + ".jar", Map.of("sha256", "hash"), 10L, "https://p/" + id)
         ));
@@ -201,6 +208,18 @@ class PaperVersionServiceTest {
                 .resolve(platformService, VersionArg.parse("paper", "1.21.1", "130"))
                 .getBuild().orElseThrow().getName()
         );
+    }
+
+    @Test
+    void latestStableBuildSkipsAlphaAndBetaBuilds() {
+        builds.add(build(131, "BETA"));
+        builds.add(build(132, "ALPHA"));
+        builds.add(build(128, "RECOMMENDED"));
+
+        VanillaVersion vanilla = new FakeVanillaPlatform("1.21.1").getVersionService().getVersion("1.21.1").orElseThrow();
+
+        assertEquals("132", service.getLatestBuild(vanilla).orElseThrow().getName());
+        assertEquals("130", service.getLatestStableBuild(vanilla).orElseThrow().getName());
     }
 
 }

@@ -86,6 +86,14 @@ public class PurpurVersionService extends AbstractVersionService implements Vers
             .map(build -> createVersion(build, version.getName()));
     }
 
+    /**
+     * The Purpur API has no notion of stable builds, so this returns the latest build.
+     */
+    @Override
+    public Optional<BoundPlatformVersion> getLatestStableBuild(VanillaVersion version) {
+        return getLatestBuild(version);
+    }
+
     @Override
     public Optional<BoundPlatformVersion> getBuild(VanillaVersion version, String build) {
         return api.getVersion(projectName, version.getName())

@@ -8,21 +8,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SequencedSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AbstractCachedVersionServiceTest {
-    /** A cached version service over a list of "vanillaVersion:build" strings. */
+    /** A cached version service over a list of "vanillaVersion:build[:stable]" strings. */
     private static final class TestService extends AbstractCachedVersionService<BoundPlatformVersion> {
         private final Cache<List<String>> cache;
         private final View<SequencedSet<BoundPlatformVersion>> setView;
         private final View<Map<String, BoundPlatformVersion>> mapView;
         private final View<Map<BoundPlatformVersion, Integer>> indices;
+        private final View<Set<BoundPlatformVersion>> stableView;
 
         TestService(Cache<List<String>> cache) {
             super("fabric");
@@ -38,6 +41,17 @@ class AbstractCachedVersionServiceTest {
             });
             this.mapView = createMapView(setView);
             this.indices = createIndices(setView);
+            this.stableView = cache.view((value, previous) -> {
+                Set<BoundPlatformVersion> result = new HashSet<>();
+                for (String entry : value) {
+                    String[] parts = entry.split(":");
+                    if (parts.length > 2 && "stable".equals(parts[2])) {
+                        result.add(createVersion(parts[1], parts[0]));
+                    }
+                }
+
+                return result;
+            });
         }
 
         @Override
@@ -56,6 +70,11 @@ class AbstractCachedVersionServiceTest {
         }
 
         @Override
+        protected View<Set<BoundPlatformVersion>> getStableView() {
+            return stableView;
+        }
+
+        @Override
         public SequencedSet<BoundPlatformVersion> getBuilds(VanillaVersion version) {
             return filter(getVersions(), version);
         }
@@ -66,7 +85,7 @@ class AbstractCachedVersionServiceTest {
     }
 
     private final List<String> entries = new ArrayList<>(
-        List.of("1.21.1:0.16.9", "1.21.1:0.16.5", "1.20.4:0.15.0")
+        List.of("1.21.1:0.16.9", "1.21.1:0.16.5:stable", "1.20.4:0.15.0")
     );
 
     private TestService service;
@@ -117,6 +136,12 @@ class AbstractCachedVersionServiceTest {
     void resolvesLatestBuild() {
         assertEquals("0.16.9", service.getLatestBuild(vanilla("1.21.1")).orElseThrow().getName());
         assertEquals(Optional.empty(), service.getLatestBuild(vanilla("1.7.10")));
+    }
+
+    @Test
+    void resolvesLatestStableBuild() {
+        assertEquals("0.16.5", service.getLatestStableBuild(vanilla("1.21.1")).orElseThrow().getName());
+        assertEquals(Optional.empty(), service.getLatestStableBuild(vanilla("1.20.4")));
     }
 
     @Test
