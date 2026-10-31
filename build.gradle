@@ -49,7 +49,7 @@ allprojects {
         baseProjects.add('headlessmc-lwjgl-transformer')
         baseProjects.add('headlessmc-patcher-probe')
         // a Gradle plugin, runs inside Gradle and not with HeadlessMc
-        baseProjects.add('headlessmc-plugins-gradle')
+        baseProjects.add('hmc-plugin-gradle-plugin')
         if (!baseProjects.contains(project.name)) {
             api project(':headlessmc-exceptions')
         }
@@ -165,7 +165,7 @@ allprojects {
     }
 
     // java-gradle-plugin creates its own publications (the plugin and its marker)
-    def published = project.name != 'headlessmc-docs' && project.name != 'headlessmc-plugins-gradle'
+    def published = project.name != 'headlessmc-docs' && project.name != 'hmc-plugin-gradle-plugin'
 
     publishing {
         publications {

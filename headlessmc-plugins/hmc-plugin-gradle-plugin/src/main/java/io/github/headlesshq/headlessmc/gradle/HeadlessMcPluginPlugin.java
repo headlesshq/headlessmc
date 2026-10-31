@@ -141,9 +141,9 @@ public class HeadlessMcPluginPlugin implements Plugin<Project> {
      * @return the version of this Gradle plugin, which is the version of HeadlessMc it was released with.
      */
     static String getVersion() {
-        try (InputStream inputStream = HeadlessMcPluginPlugin.class.getResourceAsStream("headlessmc-gradle-plugin.properties")) {
+        try (InputStream inputStream = HeadlessMcPluginPlugin.class.getResourceAsStream("hmc-plugin-gradle-plugin.properties")) {
             if (inputStream == null) {
-                throw new IllegalStateException("headlessmc-gradle-plugin.properties is missing");
+                throw new IllegalStateException("hmc-plugin-gradle-plugin.properties is missing");
             }
 
             Properties properties = new Properties();

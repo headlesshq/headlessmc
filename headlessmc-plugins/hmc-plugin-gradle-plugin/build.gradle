@@ -26,7 +26,7 @@ compileJava {
 
 processResources {
     inputs.property('version', project.version)
-    filesMatching('**/headlessmc-gradle-plugin.properties') {
+    filesMatching('**/hmc-plugin-gradle-plugin.properties') {
         expand(version: project.version)
     }
 }
