@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -54,7 +53,7 @@ class PluginLaunchCacheTest {
         Files.createDirectories(build.resolve(PluginBuilder.QUARKUS_APP));
         Path runJar = Files.writeString(build.resolve(PluginBuilder.QUARKUS_APP).resolve("quarkus-run.jar"), "");
         Path java = Files.writeString(root.resolve("java"), "");
-        Files.setPosixFilePermissions(java, PosixFilePermissions.fromString("rwxr-xr-x"));
+        assertTrue(java.toFile().setExecutable(true));
 
         PluginLaunchCache.Launch launch = new PluginLaunchCache.Launch(build, root, java, 25);
         assertEquals(Optional.empty(), cache.get("fingerprint"));
