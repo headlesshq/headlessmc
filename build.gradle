@@ -48,6 +48,8 @@ allprojects {
         baseProjects.add('headlessmc-lwjgl')
         baseProjects.add('headlessmc-lwjgl-transformer')
         baseProjects.add('headlessmc-patcher-probe')
+        // a Gradle plugin, runs inside Gradle and not with HeadlessMc
+        baseProjects.add('headlessmc-plugins-gradle')
         if (!baseProjects.contains(project.name)) {
             api project(':headlessmc-exceptions')
         }
@@ -162,7 +164,8 @@ allprojects {
         failOnError = false
     }
 
-    def published = project.name != 'headlessmc-docs'
+    // java-gradle-plugin creates its own publications (the plugin and its marker)
+    def published = project.name != 'headlessmc-docs' && project.name != 'headlessmc-plugins-gradle'
 
     publishing {
         publications {
@@ -176,6 +179,8 @@ allprojects {
                         fromResolutionResult()
                     }
                 }
+            }
+            withType(MavenPublication).configureEach {
                 pom {
                     name = project.name
                     description = project.description ?: 'HeadlessMc, a command line launcher for Minecraft Java Edition. Module: ' + project.name

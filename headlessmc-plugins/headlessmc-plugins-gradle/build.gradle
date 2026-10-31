@@ -1,0 +1,39 @@
+plugins {
+    id 'java-gradle-plugin'
+}
+
+description = 'A Gradle plugin to build HeadlessMc plugins: nests libraries into the plugin jar (Jar-in-Jar) ' +
+    'and generates the plugin manifest.'
+
+gradlePlugin {
+    website = 'https://headlesshq.github.io/headlessmc/plugins/'
+    vcsUrl = 'https://github.com/headlesshq/headlessmc'
+    plugins {
+        headlessmcPlugin {
+            id = 'io.github.headlesshq.headlessmc-plugin'
+            implementationClass = 'io.github.headlesshq.headlessmc.gradle.HeadlessMcPluginPlugin'
+            displayName = 'HeadlessMc Plugin'
+            description = project.description
+            tags.addAll('headlessmc', 'minecraft', 'plugin', 'jar-in-jar')
+        }
+    }
+}
+
+// Gradle may run on an older Java than the toolchain that compiles the HeadlessMc plugin
+compileJava {
+    options.release = 17
+}
+
+processResources {
+    inputs.property('version', project.version)
+    filesMatching('**/headlessmc-gradle-plugin.properties') {
+        expand(version: project.version)
+    }
+}
+
+dependencies {
+    testImplementation project(':headlessmc-plugins')
+    testImplementation project(':headlessmc-net:headlessmc-net-hash')
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+    testImplementation 'org.mockito:mockito-core'
+}

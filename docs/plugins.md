@@ -45,7 +45,8 @@ because there every run usually starts with an empty cache.
 
 ## Writing plugins
 
-Start from the [plugin template](https://github.com/headlesshq/headlessmc-plugin-template).
+Start from the [plugin template](https://github.com/headlesshq/headlessmc/tree/plugin-template), it uses the
+[Gradle plugin](#the-gradle-plugin).
 Plugins are regular CDI beans, they can inject everything HeadlessMc provides and are discovered by Quarkus like the
 rest of HeadlessMc, so plugins need a `META-INF/beans.xml`.
 To add a command, implement `HeadlessMcSubcommand` on a picocli command bean:
@@ -68,9 +69,67 @@ public class HelloCommand implements Runnable, HeadlessMcSubcommand {
 }
 ```
 
+### The Gradle plugin
+
+The `io.github.headlesshq.headlessmc-plugin` Gradle plugin is released with HeadlessMc, under the same version.
+It compiles the plugin against HeadlessMc, generates the [manifest](#the-manifest) and nests the
+[libraries](#libraries) into the plugin jar:
+
+```groovy
+// settings.gradle
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+```
+
+```groovy
+// build.gradle
+plugins {
+    id 'io.github.headlesshq.headlessmc-plugin' version '3.0.0-RC9'
+}
+
+repositories {
+    mavenCentral()
+}
+
+version = '1.0.0'
+
+headlessmcPlugin {
+    // defaults to the version of the Gradle plugin
+    // headlessmcVersion = '3.0.0-RC9'
+    id = 'example'
+    name = 'Example Plugin'
+    description = 'An example HeadlessMc plugin.'
+    authors = ['You']
+    license = 'MIT'
+    homepage = 'https://example.com'
+    // defaults to headlessmcVersion up to the next major version
+    // headlessmc = '[3.0.0-RC9,4)'
+    // java = 25
+    dependency 'other-plugin', '[1.0,2)'
+    optionalDependency 'another-plugin', '*'
+    libraryVersions 'com.github.lalyos:jfiglet', '[0.0.9,1)'
+}
+
+dependencies {
+    // nested into the plugin jar, together with its transitive dependencies
+    include 'com.github.lalyos:jfiglet:0.0.9'
+}
+```
+
+| Configuration / task     | Description                                                                                       |
+|--------------------------|---------------------------------------------------------------------------------------------------|
+| `headlessmc`             | The HeadlessMc runtime, on the compile and test classpath, but never packaged.                    |
+| `include`                | Libraries to nest under `META-INF/jars`, they are also `implementation` dependencies.             |
+| `generatePluginManifest` | Writes `META-INF/headlessmc-plugin.json`, the `jar` task includes it.                             |
+| `installPlugin`          | Copies the plugin jar into `-PheadlessmcPluginsDir=<HeadlessMc data directory>/plugins`.          |
+
 ### The manifest
 
-Every plugin jar contains `META-INF/headlessmc-plugin.json`, the template generates it:
+Every plugin jar contains `META-INF/headlessmc-plugin.json`, the Gradle plugin generates it:
 
 ```json
 {
@@ -81,7 +140,7 @@ Every plugin jar contains `META-INF/headlessmc-plugin.json`, the template genera
   "description": "An example HeadlessMc plugin.",
   "authors": ["You"],
   "license": "MIT",
-  "homepage": "https://github.com/headlesshq/headlessmc-plugin-template",
+  "homepage": "https://example.com",
   "headlessmc": "[3.0.0-RC9,4)",
   "java": 25,
   "dependencies": [
@@ -116,13 +175,13 @@ Version ranges use the Maven syntax: `[1.0,2.0)` means `1.0 <= version < 2.0`, `
 
 ### Libraries
 
-Plugins ship their libraries as jars nested in the plugin jar (Jar-in-Jar), the template nests every
+Plugins ship their libraries as jars nested in the plugin jar (Jar-in-Jar), the Gradle plugin nests every
 `include` dependency and its transitive dependencies.
 All plugins run on the same classpath as HeadlessMc, so only one version of each library can be loaded:
 
 * Libraries HeadlessMc already contains are never replaced, HeadlessMc's version is used.
   A plugin that cannot work with it (its `versions` range does not contain it) is not loaded.
-  The template never nests these libraries and fails the build if the plugin needs a different major version.
+  The Gradle plugin never nests these libraries and fails the build if the plugin needs a different major version.
 * If multiple plugins ship the same library, the highest version that is contained in the `versions` range
   of every plugin is used. By default, a library is compatible with `[version, nextMajor)`,
   so the newest version wins, but two plugins needing different major versions cannot be loaded together.
