@@ -86,8 +86,8 @@ public class HeadlessMcCommand implements Callable<Integer> {
                         .extensions()
                         .ifPresent(ex -> commandLine.setUsageHelpWidth(Math.max(55, ex.getWidth())));
                     // TODO: we only close the Jline Terminal all the time because we are scared of spawning a
-                    //  process that could use jline and because ctongfei/progressbar tries to open its own
-                    //  Terminal AGHHHHHH FIX this could be so much simpler...
+                    //  process that could use jline. ctongfei/progressbar used to open its own Terminal too,
+                    //  but JLineProgressBarService now passes it the width of our Console instead.
                     // Because we close the Jline Terminal on every console call
                     //  performance is a bit decreased, there is a gap after every command executed
                     //  to reopen the console.
