@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.gradle;
+package io.github.headlesshq.headlessmc.plugins.gradle;
 
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
@@ -9,7 +9,7 @@ import org.gradle.api.provider.SetProperty;
  * The {@code headlessmcPlugin} extension, describes the plugin.
  * Everything here ends up in {@code META-INF/headlessmc-plugin.json}, the version is the project version.
  */
-public abstract class HeadlessMcPluginExtension {
+public abstract class HmcPluginExtension {
     /**
      * @return the HeadlessMc version to compile against, e.g. 3.0.0-RC9. Defaults to the version of this Gradle plugin.
      */

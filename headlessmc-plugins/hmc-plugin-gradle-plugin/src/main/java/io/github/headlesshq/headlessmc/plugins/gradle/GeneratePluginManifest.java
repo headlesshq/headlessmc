@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.gradle;
+package io.github.headlesshq.headlessmc.plugins.gradle;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;

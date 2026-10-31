@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.gradle;
+package io.github.headlesshq.headlessmc.plugins.gradle;
 
 import io.github.headlesshq.headlessmc.net.hash.DefaultHashAlgorithmProvider;
 import io.github.headlesshq.headlessmc.net.hash.HashAlgorithmProvider;
@@ -29,7 +29,7 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class HeadlessMcPluginPluginTest {
+class HmcPluginGradlePluginTest {
     @TempDir
     Path dir;
 
@@ -141,7 +141,7 @@ class HeadlessMcPluginPluginTest {
 
     @Test
     void testDefaultVersionIsPluginVersion() {
-        String version = HeadlessMcPluginPlugin.getVersion();
+        String version = HmcPluginGradlePlugin.getVersion();
         assertNotNull(version);
         assertFalse(version.contains("${"), version);
     }
@@ -156,7 +156,7 @@ class HeadlessMcPluginPluginTest {
     private void buildGradle(String configuration) throws IOException {
         Files.writeString(project.resolve("build.gradle"), """
             plugins {
-                id 'io.github.headlesshq.headlessmc-plugin'
+                id 'io.github.headlesshq.hmc-plugin-gradle-plugin'
             }
 
             repositories {

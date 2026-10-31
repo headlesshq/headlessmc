@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.gradle;
+package io.github.headlesshq.headlessmc.plugins.gradle;
 
 import java.util.Collection;
 import java.util.Map;

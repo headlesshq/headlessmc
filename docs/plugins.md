@@ -71,7 +71,7 @@ public class HelloCommand implements Runnable, HeadlessMcSubcommand {
 
 ### The Gradle plugin
 
-The `io.github.headlesshq.headlessmc-plugin` Gradle plugin is released with HeadlessMc, under the same version.
+The `io.github.headlesshq.hmc-plugin-gradle-plugin` Gradle plugin is released with HeadlessMc, under the same version.
 It compiles the plugin against HeadlessMc, generates the [manifest](#the-manifest) and nests the
 [libraries](#libraries) into the plugin jar:
 
@@ -88,7 +88,7 @@ pluginManagement {
 ```groovy
 // build.gradle
 plugins {
-    id 'io.github.headlesshq.headlessmc-plugin' version '3.0.0-RC9'
+    id 'io.github.headlesshq.hmc-plugin-gradle-plugin' version '3.0.0-RC9'
 }
 
 repositories {

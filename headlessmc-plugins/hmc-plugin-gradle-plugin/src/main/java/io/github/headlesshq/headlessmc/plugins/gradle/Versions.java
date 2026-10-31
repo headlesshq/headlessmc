@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.gradle;
+package io.github.headlesshq.headlessmc.plugins.gradle;
 
 /**
  * A simple comparison of dot or dash separated versions, numeric parts are compared as numbers.

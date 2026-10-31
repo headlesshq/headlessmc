@@ -1,4 +1,4 @@
-package io.github.headlesshq.headlessmc.gradle;
+package io.github.headlesshq.headlessmc.plugins.gradle;
 
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
@@ -36,7 +36,7 @@ import java.util.Properties;
 /**
  * Builds HeadlessMc plugins.
  * <ul>
- *     <li>{@code headlessmcPlugin}: the {@link HeadlessMcPluginExtension}, describes the plugin.</li>
+ *     <li>{@code headlessmcPlugin}: the {@link HmcPluginExtension}, describes the plugin.</li>
  *     <li>{@code headlessmc}: the HeadlessMc runtime, the plugin is compiled and tested against it. Never packaged.</li>
  *     <li>{@code include}: libraries nested into the plugin jar (Jar-in-Jar) under META-INF/jars, with
  *     their transitive dependencies, except for the ones HeadlessMc already contains.</li>
@@ -44,17 +44,17 @@ import java.util.Properties;
  *     <li>{@code installPlugin}: copies the plugin jar into {@code -PheadlessmcPluginsDir=<dir>}.</li>
  * </ul>
  */
-public class HeadlessMcPluginPlugin implements Plugin<Project> {
+public class HmcPluginGradlePlugin implements Plugin<Project> {
     public static final String EXTENSION = "headlessmcPlugin";
     public static final String HEADLESSMC_CONFIGURATION = "headlessmc";
     public static final String INCLUDE_CONFIGURATION = "include";
     public static final String HEADLESSMC_MODULE = "io.github.headlesshq:headlessmc-application";
-    private static final Logger LOGGER = Logging.getLogger(HeadlessMcPluginPlugin.class);
+    private static final Logger LOGGER = Logging.getLogger(HmcPluginGradlePlugin.class);
 
     @Override
     public void apply(Project project) {
         project.getPluginManager().apply(JavaLibraryPlugin.class);
-        HeadlessMcPluginExtension extension = project.getExtensions().create(EXTENSION, HeadlessMcPluginExtension.class);
+        HmcPluginExtension extension = project.getExtensions().create(EXTENSION, HmcPluginExtension.class);
         extension.getHeadlessmcVersion().convention(getVersion());
         extension.getHeadlessmc().convention(extension.getHeadlessmcVersion());
         extension.getName().convention(extension.getId());
@@ -89,9 +89,9 @@ public class HeadlessMcPluginPlugin implements Plugin<Project> {
 
         // group:artifact -> version of the libraries HeadlessMc contains
         Provider<Map<String, String>> coreModules = headlessmc.getIncoming().getArtifacts().getResolvedArtifacts()
-            .map(HeadlessMcPluginPlugin::modules);
+            .map(HmcPluginGradlePlugin::modules);
         Provider<List<ResolvedArtifactResult>> nested = includeClasspath.getIncoming().getArtifacts().getResolvedArtifacts()
-            .zip(coreModules, HeadlessMcPluginPlugin::withoutCoreModules);
+            .zip(coreModules, HmcPluginGradlePlugin::withoutCoreModules);
         Provider<List<File>> nestedFiles = nested.map(artifacts -> artifacts.stream().map(ResolvedArtifactResult::getFile).toList());
 
         TaskProvider<GeneratePluginManifest> manifest = project.getTasks().register("generatePluginManifest", GeneratePluginManifest.class, task -> {
@@ -141,9 +141,9 @@ public class HeadlessMcPluginPlugin implements Plugin<Project> {
      * @return the version of this Gradle plugin, which is the version of HeadlessMc it was released with.
      */
     static String getVersion() {
-        try (InputStream inputStream = HeadlessMcPluginPlugin.class.getResourceAsStream("hmc-plugin-gradle-plugin.properties")) {
+        try (InputStream inputStream = HmcPluginGradlePlugin.class.getResourceAsStream("version.properties")) {
             if (inputStream == null) {
-                throw new IllegalStateException("hmc-plugin-gradle-plugin.properties is missing");
+                throw new IllegalStateException("version.properties is missing");
             }
 
             Properties properties = new Properties();
