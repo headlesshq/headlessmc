@@ -66,6 +66,11 @@ public class CensoringConsole implements Console {
             public int getWidth() {
                 return extensions.getWidth();
             }
+
+            @Override
+            public boolean supportsCursorMovement() {
+                return extensions.supportsCursorMovement();
+            }
         });
     }
 

@@ -11,6 +11,7 @@ import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp;
 import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
@@ -23,6 +24,13 @@ import java.util.function.Function;
 @Slf4j
 @RequiredArgsConstructor
 class JlineConsole implements Console, ConsoleExtensions {
+    private static final String MODE_2027_ENABLE = "\033[?2027h";
+    private static final String MODE_2027_DISABLE = "\033[?2027l";
+    /**
+     * The system terminal stays the same, so its grapheme cluster support only has to be detected once.
+     */
+    private static volatile @Nullable GraphemeClusterSupport detectedGraphemeClusterSupport;
+
     private final Holder<JlineConfig> config;
     /**
      * Guards {@link #activeReader}. The read lock is held while printing through the active reader,
@@ -108,6 +116,12 @@ class JlineConsole implements Console, ConsoleExtensions {
     }
 
     @Override
+    public boolean supportsCursorMovement() {
+        return wrap(state -> state.terminal.getStringCapability(InfoCmp.Capability.cursor_up) != null
+            && state.terminal.getStringCapability(InfoCmp.Capability.cursor_down) != null);
+    }
+
+    @Override
     public Optional<ConsoleExtensions> extensions() {
         return Optional.of(this);
     }
@@ -151,16 +165,42 @@ class JlineConsole implements Console, ConsoleExtensions {
     @Override
     public CachedConsole cache() {
         try {
-            TerminalState state = new TerminalState(TerminalBuilder.builder().build());
+            TerminalState state = openTerminal();
             return new JlineCachedConsole(config, state);
         } catch (IOException e) {
             throw new ConsoleException(e);
         }
     }
 
+    /**
+     * Opens a new system terminal, with grapheme clusters configured by {@link JlineConfig#graphemeCluster()}.
+     * Detecting grapheme cluster support makes Jline probe the terminal with escape sequences
+     * and print test emojis to measure the cursor movement. That is visible and slow,
+     * and we open a new terminal for every {@link #wrap(Function)} call, so the result is detected only once.
+     */
+    TerminalState openTerminal() throws IOException {
+        TerminalBuilder builder = TerminalBuilder.builder();
+        switch (config.get().graphemeCluster()) {
+            case OFF -> builder.graphemeCluster(false);
+            case ON -> builder.graphemeCluster(true);
+            case AUTO -> {
+                GraphemeClusterSupport support = detectedGraphemeClusterSupport;
+                if (support == null) {
+                    Terminal terminal = builder.build();
+                    detectedGraphemeClusterSupport = GraphemeClusterSupport.of(terminal);
+                    return new TerminalState(terminal, false);
+                }
+
+                return support.open(builder);
+            }
+        }
+
+        return new TerminalState(builder.build(), false);
+    }
+
     void test() {
         try {
-            TerminalBuilder.builder().build().close();
+            openTerminal().close();
         } catch (IOException e) {
             throw new ConsoleException("Failed to open Jline console", e);
         }
@@ -190,7 +230,7 @@ class JlineConsole implements Console, ConsoleExtensions {
     }
 
     synchronized <T> T wrap(Function<TerminalState, T> action) {
-        try (TerminalState state = new TerminalState(TerminalBuilder.builder().build())) {
+        try (TerminalState state = openTerminal()) {
             return action.apply(state);
         } catch (UserInterruptException e) {
             throw new UncheckedInterruptedException(e);
@@ -229,14 +269,63 @@ class JlineConsole implements Console, ConsoleExtensions {
         reader.getWidgets().put(widgetName, completionWidget);
     }
 
-    record TerminalState(Terminal terminal) implements Closeable {
+    /**
+     * @param mode2027 if we enabled the grapheme cluster mode 2027 of the terminal ourselves and have to disable it again.
+     */
+    record TerminalState(Terminal terminal, boolean mode2027) implements Closeable {
         LineReader reader() {
             return LineReaderBuilder.builder().terminal(terminal).build();
         }
 
         @Override
         public void close() throws IOException {
+            if (mode2027) {
+                terminal.writer().write(MODE_2027_DISABLE);
+                terminal.writer().flush();
+            }
+
             terminal.close();
+        }
+    }
+
+    /**
+     * Grapheme cluster support detected by Jline, so that terminals opened later do not have to probe again.
+     */
+    private enum GraphemeClusterSupport {
+        NONE,
+        /**
+         * The terminal groups grapheme clusters by itself.
+         * Jline also detects terminals which only group some emojis, e.g. only flags,
+         * but that cannot be configured without probing, so these are treated as grouping all emojis.
+         */
+        NATIVE,
+        /**
+         * The terminal groups grapheme clusters once mode 2027 has been enabled.
+         */
+        MODE_2027;
+
+        static GraphemeClusterSupport of(Terminal terminal) {
+            if (!terminal.getGraphemeClusterMode()) {
+                return NONE;
+            }
+
+            // the result of the mode probe is cached by the terminal, so this does not probe again
+            return terminal.isModeSupported(Terminal.Mode.GRAPHEME_CLUSTER) ? MODE_2027 : NATIVE;
+        }
+
+        TerminalState open(TerminalBuilder builder) throws IOException {
+            if (this == NONE) {
+                return new TerminalState(builder.graphemeCluster(false).build(), false);
+            }
+
+            // forcing grapheme cluster mode skips the probe, but makes Jline assume native support
+            Terminal terminal = builder.graphemeCluster(true).build();
+            if (this == MODE_2027) {
+                terminal.writer().write(MODE_2027_ENABLE);
+                terminal.writer().flush();
+            }
+
+            return new TerminalState(terminal, this == MODE_2027);
         }
     }
 

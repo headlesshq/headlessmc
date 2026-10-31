@@ -11,4 +11,12 @@ public interface ConsoleExtensions {
 
     int getWidth();
 
+    /**
+     * @return {@code true} if the terminal can move the cursor up and down,
+     * e.g. to redraw multiple progress bars at once.
+     */
+    default boolean supportsCursorMovement() {
+        return false;
+    }
+
 }
