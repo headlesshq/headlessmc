@@ -7,7 +7,7 @@ pluginManagement {
     }
     plugins {
         // released with HeadlessMc, under the same version
-        id 'io.github.headlesshq.headlessmc-plugin' version "${headlessmc_version}"
+        id 'io.github.headlesshq.hmc-plugin-gradle-plugin' version "${headlessmc_version}"
     }
 }
 

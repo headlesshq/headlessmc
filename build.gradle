@@ -5,7 +5,7 @@ import java.security.MessageDigest
 plugins {
     // nests the include dependencies into the jar and generates META-INF/headlessmc-plugin.json,
     // see https://headlesshq.github.io/headlessmc/plugins/#the-gradle-plugin
-    id 'io.github.headlesshq.headlessmc-plugin'
+    id 'io.github.headlesshq.hmc-plugin-gradle-plugin'
 }
 
 repositories {
