@@ -16,7 +16,9 @@ Copy it into the `plugins` directory in the HeadlessMc data directory, e.g. with
 ## Configuration
 
 Everything is configured in [build.gradle](build.gradle), the HeadlessMc version in [gradle.properties](gradle.properties).
-The `headlessmc-plugin` Gradle plugin in [buildSrc](buildSrc) does the packaging:
+The [HeadlessMc Gradle plugin](https://headlesshq.github.io/headlessmc/plugins/#the-gradle-plugin)
+`io.github.headlesshq.headlessmc-plugin` does the packaging. It is released with HeadlessMc, under the same version,
+so `headlessmc_version` sets both the version of the Gradle plugin and the HeadlessMc version the plugin is built against:
 
 * `headlessmcPlugin { ... }` describes the plugin. It is written into `META-INF/headlessmc-plugin.json`,
   the manifest HeadlessMc reads: id, version, name, description, authors, license, homepage,
@@ -44,7 +46,7 @@ See the [HeadlessMc documentation](https://headlesshq.github.io/headlessmc/plugi
 ## Developing against a local HeadlessMc
 
 ```shell
-# in the headlessmc repository
+# in the headlessmc repository, publishes HeadlessMc and the Gradle plugin
 ./gradlew publishToMavenLocal -Pversion=3.0.0-RC9-SNAPSHOT
 # in this repository
 ./gradlew build -Pheadlessmc_version=3.0.0-RC9-SNAPSHOT

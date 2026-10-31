@@ -1,6 +1,7 @@
 plugins {
-    // see buildSrc, nests the include dependencies into the jar and generates META-INF/headlessmc-plugin.json
-    id 'headlessmc-plugin'
+    // nests the include dependencies into the jar and generates META-INF/headlessmc-plugin.json,
+    // see https://headlesshq.github.io/headlessmc/plugins/#the-gradle-plugin
+    id 'io.github.headlesshq.headlessmc-plugin'
 }
 
 repositories {
@@ -10,15 +11,13 @@ repositories {
 }
 
 headlessmcPlugin {
-    headlessmcVersion = providers.gradleProperty('headlessmc_version')
-
     // The manifest, META-INF/headlessmc-plugin.json, the version is the project version.
     id = 'example'
     name = 'Example Plugin'
     description = 'An example HeadlessMc plugin, adds the hello command.'
     authors = ['You']
     license = 'MIT'
-    homepage = 'https://github.com/headlesshq/headlessmc-plugin-template'
+    homepage = 'https://github.com/headlesshq/headlessmc/tree/plugin-template'
     // The HeadlessMc versions this plugin works with, defaults to headlessmcVersion up to the next major version.
     // headlessmc = '[3.0.0-RC9,4)'
     // java = 25
