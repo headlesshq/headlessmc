@@ -30,6 +30,10 @@ hmc.assets.parallel.retry-max-attempts                     4                    
 hmc.assets.parallel.retry-max-interval-ms                  2000                                       -
 hmc.assets.url                                             https://resources.download.minecraft.net   Base URL of the asset CDN.
 hmc.auth.yggdrasil.url                                     -                                          Optional: Default url of a third party Yggdrasil authentication server, e.g. https://littleskin.cn. Yggdrasil authentication is disabled unless this is set.
+hmc.backup.auto                                            none                                       What to back up automatically before a profile or server is launched: none, worlds or full. Nothing is backed up if nothing changed since the last backup.
+hmc.backup.auto-keep                                       5                                          How many automatically created backups to keep for each profile or server, older ones are deleted automatically. Manually created backups are never deleted automatically. 0 keeps all.
+hmc.backup.dir                                             -                                          Optional: Path to the directory backups are placed in. Defaults to the backups directory inside the HeadlessMc data directory.
+hmc.backup.ignore                                          logs,crash-reports                         Comma-separated glob patterns of paths, relative to the game directory, that are left out of backups, e.g. logs,crash-reports,**/*.log.
 hmc.cpu.arch                                               -                                          Optional: Overrides the detected CPU architecture.
 hmc.cpu.bitness                                            -                                          Optional: Overrides the detected CPU bitness.
 hmc.files.game                                             -                                          Optional: Path to the game directory. Defaults to a per-version directory inside the Minecraft directory.

@@ -18,6 +18,7 @@ Commands:
   profile       Manage launch profiles.
   server        Manage servers.
   mod           Manage mods.
+  backup        Backs up a profile/server or its worlds.
   help          Display help information about the specified command.
   exit, quit    Exits the HeadlessMc shell
 ```

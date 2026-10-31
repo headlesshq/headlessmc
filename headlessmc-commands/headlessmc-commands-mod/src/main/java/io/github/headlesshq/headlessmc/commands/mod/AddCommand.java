@@ -2,10 +2,12 @@ package io.github.headlesshq.headlessmc.commands.mod;
 
 import io.github.headlesshq.headlessmc.commands.util.ProfileVersionCompletions;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
+import io.github.headlesshq.headlessmc.commands.util.WorldCompletions;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
@@ -46,6 +48,7 @@ public class AddCommand implements Runnable, VersionArgCommand, CachedConsole.En
     private final ProfileResolver profileResolver;
     private final PlatformService platformService;
     private final ModTypeService modTypeService;
+    private final WorldService worldService;
     private final Console console;
 
     @CommandLine.Option(
@@ -137,7 +140,7 @@ public class AddCommand implements Runnable, VersionArgCommand, CachedConsole.En
                 throw new IllegalArgumentException("Please specify a world to install the datapack to.");
             }
 
-            worldDir = Worlds.resolveWorld(profile, world);
+            worldDir = worldService.resolveWorld(profile, world);
         }
 
         Path file = distributionPlatform.download(profile.path(), worldDir, mod, profile.version(), modType);

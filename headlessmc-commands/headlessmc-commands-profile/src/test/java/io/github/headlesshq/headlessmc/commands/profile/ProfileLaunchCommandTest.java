@@ -268,6 +268,17 @@ class ProfileLaunchCommandTest {
 
         assertEquals(7, command.call());
         Mockito.verify(lifecycleService).wrap(processLauncher, 3);
+        Mockito.verify(lifecycleService).beforeLaunch(Mockito.any(), Mockito.eq(true));
+    }
+
+    @Test
+    void noBackupSkipsAutomaticBackups() {
+        client("main");
+        ProfileLaunchCommand command = command("main");
+        command.setNoBackup(true);
+
+        assertThrows(Launched.class, command::call);
+        Mockito.verify(lifecycleService).beforeLaunch(Mockito.any(), Mockito.eq(false));
     }
 
     @Test

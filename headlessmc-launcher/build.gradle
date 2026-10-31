@@ -29,4 +29,5 @@ dependencies {
 
     testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
     testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-java:headlessmc-java-launcher'))
 }
