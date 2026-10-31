@@ -1,0 +1,17 @@
+plugins {
+    id 'groovy'
+    id 'java-gradle-plugin'
+}
+
+repositories {
+    mavenCentral()
+}
+
+gradlePlugin {
+    plugins {
+        headlessmcPlugin {
+            id = 'headlessmc-plugin'
+            implementationClass = 'io.github.headlesshq.headlessmc.gradle.HeadlessMcPluginPlugin'
+        }
+    }
+}

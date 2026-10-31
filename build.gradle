@@ -1,0 +1,81 @@
+import groovy.json.JsonOutput
+
+import java.security.MessageDigest
+
+plugins {
+    // see buildSrc, nests the include dependencies into the jar and generates META-INF/headlessmc-plugin.json
+    id 'headlessmc-plugin'
+}
+
+repositories {
+    mavenCentral()
+    // for HeadlessMc builds published with ./gradlew publishToMavenLocal
+    mavenLocal()
+    maven {
+        name = 'quilt'
+        url = 'https://maven.quiltmc.org/repository/release'
+        content {
+            includeGroup 'org.quiltmc'
+        }
+    }
+}
+
+headlessmcPlugin {
+    headlessmcVersion = providers.gradleProperty('headlessmc_version')
+
+    id = 'quilt'
+    name = 'Quilt'
+    description = 'Adds the Quilt platform to HeadlessMc: launching Quilt clients and servers and reading quilt.mod.json.'
+    authors = ['HeadlessHQ']
+    license = 'MIT'
+    homepage = 'https://github.com/headlesshq/headlessmc-quilt'
+}
+
+configurations {
+    quiltInstaller {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    // downloaded by HeadlessMc at runtime, the build only pins its hash and size in quilt/quilt-installer.json
+    quiltInstaller 'org.quiltmc:quilt-installer:0.15.1'
+
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Generates quilt/quilt-installer.json, so HeadlessMc can verify the installer it downloads.
+def generateQuiltInstaller = tasks.register('generateQuiltInstaller') {
+    def installer = configurations.quiltInstaller
+    def output = layout.buildDirectory.dir('generated/resources/quilt')
+    def repository = 'https://maven.quiltmc.org/repository/release'
+    inputs.files(installer)
+    outputs.dir(output)
+    doLast {
+        def artifact = installer.resolvedConfiguration.resolvedArtifacts.first()
+        def id = artifact.moduleVersion.id
+        File file = artifact.file
+        def sha256 = MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
+        File json = output.get().file('quilt/quilt-installer.json').asFile
+        json.parentFile.mkdirs()
+        json.text = JsonOutput.prettyPrint(JsonOutput.toJson([
+            group     : id.group,
+            name      : id.name,
+            version   : id.version,
+            fileName  : file.name,
+            size      : file.length(),
+            sha256    : sha256,
+            repository: repository,
+        ])) + '\n'
+    }
+}
+
+sourceSets.main.resources.srcDir(generateQuiltInstaller)
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
