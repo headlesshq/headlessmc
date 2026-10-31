@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
@@ -34,6 +35,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class WorldsCommand implements Runnable, VersionArgCommand, CachedConsole.Enabled {
     private final ProfileResolver profileResolver;
+    private final WorldService worldService;
     private final TableProvider tableProvider;
     private final Console console;
 
@@ -52,7 +54,7 @@ public class WorldsCommand implements Runnable, VersionArgCommand, CachedConsole
         }
 
         Profile resolved = profileResolver.resolve(versionArg, Side.BOTH);
-        List<Path> worlds = Worlds.listWorlds(resolved);
+        List<Path> worlds = worldService.listWorlds(resolved);
 
         tableProvider.<Path>get()
             .withColumn("world", world -> world.getFileName().toString())

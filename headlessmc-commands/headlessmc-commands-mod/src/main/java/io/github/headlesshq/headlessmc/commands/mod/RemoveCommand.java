@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.commands.mod;
 
 import io.github.headlesshq.headlessmc.commands.util.ProfileVersionCompletions;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
+import io.github.headlesshq.headlessmc.commands.util.WorldCompletions;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.format.TableBuilder;

@@ -94,6 +94,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         LaunchOptions options = getLaunchOptions();
         Optional<Version> versionJson = getVersionJson();
         Profile baseProfile = getProfile();
+        beforeLaunch(baseProfile);
         Profile profile = prepareProfile(baseProfile)
             .withOptions(options.mergeWithDefaults(baseProfile.options()));
 

@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
 import io.github.headlesshq.headlessmc.mods.distribution.ModCache;
@@ -184,7 +185,7 @@ class ModCommandsTest {
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric);
         profileService = new FakeProfileService(root);
         profileResolver = new ProfileResolver(platformService, profileService);
-        modListingService = new ModListingService(platformService, profileResolver, modTypeService, modCache);
+        modListingService = new ModListingService(platformService, profileResolver, modTypeService, modCache, new WorldService());
     }
 
     private Profile profile(String name, String platform) {
@@ -293,9 +294,9 @@ class ModCommandsTest {
     @Test
     void listDatapacksOfAllWorlds() {
         Profile profile = profile("main", "fabric");
-        Path saves = profile.path().resolve(Worlds.SAVES);
-        createFile(saves.resolve("World A").resolve(Worlds.DATAPACKS).resolve("terralith.zip"));
-        createFile(saves.resolve("World B").resolve(Worlds.DATAPACKS).resolve("incendium.zip"));
+        Path saves = profile.path().resolve(WorldService.SAVES);
+        createFile(saves.resolve("World A").resolve(WorldService.DATAPACKS).resolve("terralith.zip"));
+        createFile(saves.resolve("World B").resolve(WorldService.DATAPACKS).resolve("incendium.zip"));
 
         ListCommand command = list();
         command.setVersionArg(List.of("main"));
@@ -308,9 +309,9 @@ class ModCommandsTest {
     @Test
     void listDatapacksOfOneWorld() {
         Profile profile = profile("main", "fabric");
-        Path saves = profile.path().resolve(Worlds.SAVES);
-        createFile(saves.resolve("World A").resolve(Worlds.DATAPACKS).resolve("terralith.zip"));
-        createFile(saves.resolve("World B").resolve(Worlds.DATAPACKS).resolve("incendium.zip"));
+        Path saves = profile.path().resolve(WorldService.SAVES);
+        createFile(saves.resolve("World A").resolve(WorldService.DATAPACKS).resolve("terralith.zip"));
+        createFile(saves.resolve("World B").resolve(WorldService.DATAPACKS).resolve("incendium.zip"));
         createFile(profile.path().resolve("resourcepacks").resolve("faithful.jar"));
         modsByFileName.put("faithful.jar", List.of(mod("faithful", "Faithful")));
 
@@ -328,16 +329,16 @@ class ModCommandsTest {
 
     @Test
     void worldsWithoutProfileThrows() {
-        WorldsCommand command = new WorldsCommand(profileResolver, tables, console);
+        WorldsCommand command = new WorldsCommand(profileResolver, new WorldService(), tables, console);
         assertThrows(IllegalArgumentException.class, command::run);
     }
 
     @Test
     void worldsListsSaves() {
         Profile profile = profile("main", "fabric");
-        createFile(profile.path().resolve(Worlds.SAVES).resolve("New World").resolve("level.dat"));
+        createFile(profile.path().resolve(WorldService.SAVES).resolve("New World").resolve("level.dat"));
 
-        WorldsCommand command = new WorldsCommand(profileResolver, tables, console);
+        WorldsCommand command = new WorldsCommand(profileResolver, new WorldService(), tables, console);
         command.setVersionArg(List.of("main"));
         command.run();
 
@@ -347,7 +348,7 @@ class ModCommandsTest {
     // ------------------------------------------------------------------- add
 
     private AddCommand add() {
-        return new AddCommand(distributionPlatformService, profileResolver, platformService, modTypeService, console);
+        return new AddCommand(distributionPlatformService, profileResolver, platformService, modTypeService, new WorldService(), console);
     }
 
     @Test
@@ -467,7 +468,7 @@ class ModCommandsTest {
     @Test
     void addDatapackToWorld() {
         Profile profile = profile("main", "fabric");
-        createFile(profile.path().resolve(Worlds.SAVES).resolve("New World").resolve("level.dat"));
+        createFile(profile.path().resolve(WorldService.SAVES).resolve("New World").resolve("level.dat"));
 
         AddCommand command = add();
         command.setType("datapack");
@@ -478,7 +479,7 @@ class ModCommandsTest {
 
         Download download = downloads.getFirst();
         assertEquals(profile.path(), download.dir());
-        assertEquals(profile.path().resolve(Worlds.SAVES).resolve("New World"), download.worldDir());
+        assertEquals(profile.path().resolve(WorldService.SAVES).resolve("New World"), download.worldDir());
         assertEquals(ModType.DATA_PACK, download.type());
     }
 
@@ -654,7 +655,7 @@ class ModCommandsTest {
     void removeDatapackFromWorld() {
         Profile profile = profile("main", "fabric");
         Path pack = createFile(profile.path()
-            .resolve(Worlds.SAVES).resolve("New World").resolve(Worlds.DATAPACKS).resolve("terralith.zip"));
+            .resolve(WorldService.SAVES).resolve("New World").resolve(WorldService.DATAPACKS).resolve("terralith.zip"));
 
         RemoveCommand command = remove();
         command.setVersionArg(List.of("main"));

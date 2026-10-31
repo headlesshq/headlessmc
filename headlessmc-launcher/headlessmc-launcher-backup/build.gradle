@@ -1,0 +1,38 @@
+dependencies {
+    api project(':headlessmc-launcher:headlessmc-launcher-profile')
+
+    implementation project(':headlessmc-files')
+    implementation project(':headlessmc-config')
+    implementation project(':headlessmc-java:headlessmc-java-launcher')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
+
+    implementation project(':headlessmc-console')
+}
+
+dependencies {
+    testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-platform'))
+    testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-java:headlessmc-java-launcher'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+}
+
+plugins.apply('java-test-fixtures')
+
+dependencies {
+    testFixturesApi project(':headlessmc-launcher:headlessmc-launcher-profile')
+    testFixturesApi testFixtures(project(':headlessmc-console'))
+    testFixturesApi testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+    testFixturesApi testFixtures(project(':headlessmc-java:headlessmc-java-launcher'))
+    testFixturesImplementation project(':headlessmc-files')
+    testFixturesImplementation project(':headlessmc-config')
+    testFixturesImplementation project(':headlessmc-java:headlessmc-java-launcher')
+    testFixturesImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+    testFixturesImplementation testFixtures(project(':headlessmc-files'))
+    testFixturesImplementation testFixtures(project(':headlessmc-platform'))
+    testFixturesImplementation libs.jspecify
+    testFixturesImplementation platform(libs.quarkus)
+    testFixturesImplementation libs.cdi
+}

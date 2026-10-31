@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
 import io.github.headlesshq.headlessmc.mods.distribution.ModCache;
@@ -32,6 +33,7 @@ public class ModListingService {
     private final ProfileResolver profileResolver;
     private final ModTypeService modTypeService;
     private final ModCache modCache;
+    private final WorldService worldService;
 
     public List<ModFile> list(
         List<String> versionArg,
@@ -92,10 +94,10 @@ public class ModListingService {
         if (ModType.DATA_PACK.equals(type)) {
             List<ModFile> result = new ArrayList<>();
             if (world != null) {
-                Path worldDir = Worlds.resolveWorld(profile, world);
+                Path worldDir = worldService.resolveWorld(profile, world);
                 result.addAll(collectModsOfType(platform, type, type.directory().getDir(worldDir), world));
             } else {
-                for (Path worldDir : Worlds.listWorlds(profile)) {
+                for (Path worldDir : worldService.listWorlds(profile)) {
                     result.addAll(collectModsOfType(platform, type, type.directory().getDir(worldDir), worldDir.getFileName().toString()));
                 }
             }

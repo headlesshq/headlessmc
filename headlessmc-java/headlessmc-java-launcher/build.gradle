@@ -2,9 +2,17 @@ dependencies {
     api project(':headlessmc-java')
     implementation project(':headlessmc-java:headlessmc-java-distribution')
     implementation project(':headlessmc-files')
+    implementation project(':headlessmc-util:headlessmc-util-json')
+    runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
 }
 
 dependencies {
     testImplementation testFixtures(project(':headlessmc-files'))
     testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
+}
+
+plugins.apply('java-test-fixtures')
+
+dependencies {
+    testFixturesImplementation libs.jspecify
 }
