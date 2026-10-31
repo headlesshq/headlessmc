@@ -93,6 +93,7 @@ nav:
   - 'Specifics': 'specifics.md'
   - 'Servers': 'servers.md'
   - 'Mods': 'mods.md'
+  - 'Backups': 'backups.md'
   - 'Commands': 'commands.md'
   - 'Configuration': 'configuration.md'
   - 'Plugins': 'plugins.md'

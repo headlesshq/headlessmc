@@ -62,6 +62,13 @@ public interface AppFiles {
     }
 
     /**
+     * @return the directory backups of profiles and worlds are placed in.
+     */
+    default Path getBackupDir() {
+        return getDataDir().resolve("backups");
+    }
+
+    /**
      * @return the directory launching profiles are placed in.
      */
     default Path getProfilesDir() {
