@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.platform.paper;
 
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import io.github.headlesshq.headlessmc.platform.*;
+import io.github.headlesshq.headlessmc.platform.paper.api.Channel;
 import io.github.headlesshq.headlessmc.platform.paper.api.PaperAPI;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -63,6 +64,22 @@ public class PaperVersionService extends AbstractVersionService implements Versi
         try {
             return Optional.of(api.getLatest(projectName, version.getName()))
                 .map(response -> createVersion(String.valueOf(response.id()), version.getName()));
+        } catch (ApiException ignored) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * @return the latest build in the {@link Channel#STABLE} or {@link Channel#RECOMMENDED} channel.
+     */
+    @Override
+    public Optional<BoundPlatformVersion> getLatestStableBuild(VanillaVersion version) {
+        try {
+            return api.getBuilds(projectName, version.getName(), List.of(Channel.STABLE, Channel.RECOMMENDED))
+                .stream()
+                .sorted()
+                .findFirst()
+                .map(build -> createVersion(String.valueOf(build.id()), version.getName()));
         } catch (ApiException ignored) {
             return Optional.empty();
         }

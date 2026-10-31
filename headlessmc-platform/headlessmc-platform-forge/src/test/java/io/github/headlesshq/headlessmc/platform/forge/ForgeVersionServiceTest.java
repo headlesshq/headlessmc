@@ -65,6 +65,19 @@ class ForgeVersionServiceTest {
     }
 
     @Test
+    void resolvesTheLatestRecommendedBuildAsStable() {
+        metas.addFirst(new PrismIndex.Meta(
+            List.of(new PrismIndex.Meta.Requires("1.20.2", "net.minecraft")), "sha", "48.0.5", true, null
+        ));
+        metas.add(new PrismIndex.Meta(
+            List.of(new PrismIndex.Meta.Requires("1.20.2", "net.minecraft")), "sha", "48.0.1", true, null
+        ));
+
+        assertEquals("48.0.5", service.getLatestStableBuild(vanilla("1.20.2")).orElseThrow().getName());
+        assertEquals(Optional.empty(), service.getLatestStableBuild(vanilla("1.8.9")));
+    }
+
+    @Test
     void resolvesLatestAndSpecificBuilds() {
         assertEquals("48.1.0", service.getLatestBuild(vanilla("1.20.2")).orElseThrow().getName());
         assertEquals("48.0.0", service.getBuild(vanilla("1.20.2"), "48.0.0").orElseThrow().getName());

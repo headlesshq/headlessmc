@@ -1,10 +1,12 @@
 package io.github.headlesshq.headlessmc.platform;
 
+import io.github.headlesshq.headlessmc.exceptions.BadArgumentException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings({"AssertBetweenInconvertibleTypes"})
 class PlatformVersionTest {
@@ -139,6 +141,41 @@ class PlatformVersionTest {
 
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    @DisplayName("VanillaVersion.resolve should resolve latest to the latest version and stable to the latest release")
+    void vanillaVersionShouldResolveLatestAndStable() {
+        FakeVanillaVersionService service = new FakeVanillaVersionService("1.21.2-pre1", "1.21.1", "1.21")
+            .withReleases("1.21.1", "1.21");
+
+        assertEquals(new VanillaVersion("1.21.2-pre1"), VanillaVersion.resolve(service, "latest"));
+        assertEquals(new VanillaVersion("1.21.1"), VanillaVersion.resolve(service, "stable"));
+        assertEquals(new VanillaVersion("1.21"), VanillaVersion.resolve(service, "1.21"));
+    }
+
+    @Test
+    @DisplayName("PlatformVersion.resolve should resolve latest and stable builds")
+    void platformVersionShouldResolveLatestAndStable() {
+        FakeVersionService service = new FakeVersionService("forge")
+            .withBuilds("1.21.1", "52.1.21", "52.1.20", "52.1.19")
+            .withStableBuilds("1.21.1", "52.1.20", "52.1.19");
+        VanillaVersion vanilla = new VanillaVersion("1.21.1");
+
+        assertEquals("52.1.21", PlatformVersion.resolve(service, vanilla, "latest").getName());
+        assertEquals("52.1.20", PlatformVersion.resolve(service, vanilla, "stable").getName());
+        assertEquals("52.1.19", PlatformVersion.resolve(service, vanilla, "52.1.19").getName());
+    }
+
+    @Test
+    @DisplayName("PlatformVersion.resolve should throw if there is no stable build")
+    void platformVersionShouldThrowWithoutStableBuild() {
+        FakeVersionService service = new FakeVersionService("forge").withBuilds("1.21.1", "52.1.21");
+
+        assertThrows(
+            BadArgumentException.class,
+            () -> PlatformVersion.resolve(service, new VanillaVersion("1.21.1"), "stable")
+        );
     }
 
 }

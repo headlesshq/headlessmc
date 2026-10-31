@@ -204,7 +204,7 @@ public class VersionRemoveService {
     /**
      * Profiles launch the first installed version matching their {@link Profile#currentVersion()}.
      * A profile is blocking if it finds a version now, but would not find one after the removal.
-     * Profiles on the {@code latest} build are treated like profiles for any build.
+     * Profiles on the {@code latest} or {@code stable} build are treated like profiles for any build.
      */
     private List<Profile> blockingProfiles(List<Version> dependents, Version version, Map<String, Version> installed) {
         Set<String> removedIds = new HashSet<>();
@@ -219,7 +219,7 @@ public class VersionRemoveService {
             }
 
             VersionArg arg = profile.currentVersion();
-            if (arg.isLatest()) {
+            if (arg.isLatest() || arg.isStable()) {
                 arg = arg.withBuild(null);
             }
 

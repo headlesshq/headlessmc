@@ -6,7 +6,15 @@ import java.util.Optional;
 import java.util.SequencedSet;
 
 public interface VanillaVersionService extends VersionService {
+    /**
+     * @return the latest version, which might be a snapshot.
+     */
     VanillaVersion getLatest() throws HeadlessMcException;
+
+    /**
+     * @return the latest release.
+     */
+    VanillaVersion getLatestStable() throws HeadlessMcException;
 
     boolean hasVersion(String name) throws HeadlessMcException;
 
@@ -17,6 +25,9 @@ public interface VanillaVersionService extends VersionService {
 
     @Override
     Optional<VanillaVersion> getLatestBuild(VanillaVersion version) throws HeadlessMcException;
+
+    @Override
+    Optional<VanillaVersion> getLatestStableBuild(VanillaVersion version) throws HeadlessMcException;
 
     @Override
     SequencedSet<VanillaVersion> getBuilds(VanillaVersion version) throws HeadlessMcException;
