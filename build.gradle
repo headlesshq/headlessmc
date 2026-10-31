@@ -1,0 +1,48 @@
+plugins {
+    // see buildSrc, nests the include dependencies into the jar and generates META-INF/headlessmc-plugin.json
+    id 'headlessmc-plugin'
+}
+
+repositories {
+    mavenCentral()
+    // for HeadlessMc builds published with ./gradlew publishToMavenLocal
+    mavenLocal()
+}
+
+headlessmcPlugin {
+    headlessmcVersion = providers.gradleProperty('headlessmc_version')
+
+    // The manifest, META-INF/headlessmc-plugin.json, the version is the project version.
+    id = 'example'
+    name = 'Example Plugin'
+    description = 'An example HeadlessMc plugin, adds the hello command.'
+    authors = ['You']
+    license = 'MIT'
+    homepage = 'https://github.com/headlesshq/headlessmc-plugin-template'
+    // The HeadlessMc versions this plugin works with, defaults to headlessmcVersion up to the next major version.
+    // headlessmc = '[3.0.0-RC9,4)'
+    // java = 25
+
+    // Other plugins this plugin needs:
+    // dependency 'other-plugin', '[1.0,2)'
+    // optionalDependency 'another-plugin', '*'
+
+    // The included libraries are compatible with [version, nextMajor) by default, override it like this:
+    // libraryVersions 'com.github.lalyos:jfiglet', '[0.0.8,0.1)'
+}
+
+dependencies {
+    // Libraries nested into the plugin jar (Jar-in-Jar), together with their transitive dependencies.
+    // Libraries HeadlessMc already contains (see the headlessmc configuration) are never nested,
+    // HeadlessMc always uses its own version of them, e.g. commons-lang3 or commons-text.
+    // If multiple plugins include the same library, HeadlessMc loads the highest version that all of them accept.
+    include 'com.github.lalyos:jfiglet:0.0.9'
+
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
