@@ -2,6 +2,7 @@ dependencies {
     api project(':headlessmc-auth')
     api project(':headlessmc-commands')
     api project(':headlessmc-updater')
+    api project(':headlessmc-plugins')
 
     api project(':headlessmc-os:headlessmc-os-all')
 

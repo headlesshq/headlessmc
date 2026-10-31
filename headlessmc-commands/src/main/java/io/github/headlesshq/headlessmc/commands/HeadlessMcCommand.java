@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.commands.config.ConfigCommand;
 import io.github.headlesshq.headlessmc.commands.java.JavaCommand;
 import io.github.headlesshq.headlessmc.commands.launcher.LaunchCommand;
 import io.github.headlesshq.headlessmc.commands.mod.ModCommand;
+import io.github.headlesshq.headlessmc.commands.plugin.PluginCommand;
 import io.github.headlesshq.headlessmc.commands.profile.ProfileCommand;
 import io.github.headlesshq.headlessmc.commands.server.ServerCommand;
 import io.github.headlesshq.headlessmc.commands.version.InstallShortcutCommand;
@@ -50,6 +51,7 @@ import java.util.concurrent.Callable;
         ProfileCommand.class,
         ServerCommand.class,
         ModCommand.class,
+        PluginCommand.class,
         CommandLine.HelpCommand.class,
         DebugCommand.class,
         InstallShortcutCommand.class,

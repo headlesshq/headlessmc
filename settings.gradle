@@ -113,6 +113,7 @@ include 'headlessmc-commands:headlessmc-commands-server'
 include 'headlessmc-commands:headlessmc-commands-mod'
 include 'headlessmc-commands:headlessmc-commands-util'
 include 'headlessmc-commands:headlessmc-commands-launcher'
+include 'headlessmc-commands:headlessmc-commands-plugin'
 
 include 'headlessmc-test'
 include 'headlessmc-test:headlessmc-introspection'
