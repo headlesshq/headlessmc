@@ -108,7 +108,7 @@ class LaunchCommandTest {
     private LaunchCommand command() {
         return new LaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService, clientLauncher,
-            line -> line.split(" "), console, mcFiles, lastUsedAccountService, xvfbService, authService,
+            line -> line.split(" "), console, TestFiles.mcFilesService(mcFiles), lastUsedAccountService, xvfbService, authService,
             new PackwizService(platformService), profileService, versionJsonService
         );
     }

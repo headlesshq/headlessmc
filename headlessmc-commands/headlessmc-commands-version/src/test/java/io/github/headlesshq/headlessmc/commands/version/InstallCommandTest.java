@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.launcher.client.VersionMcFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.server.FakeServerService;
@@ -21,6 +22,7 @@ import io.github.headlesshq.headlessmc.version.FakeVersion;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.version.service.FakeVersionJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -50,6 +52,8 @@ class InstallCommandTest {
     private FakeProfileService profileService;
     private FakeServerService serverService;
     private McFiles mcFiles;
+    private McFiles otherMcFiles;
+    private FakeVersionJsonService versionJsonService;
     private AppFiles appFiles;
 
     @BeforeEach
@@ -70,19 +74,33 @@ class InstallCommandTest {
         profileService = new FakeProfileService(root.resolve("profiles"));
         serverService = new FakeServerService(profileService);
         mcFiles = TestFiles.mcFiles(root);
+        otherMcFiles = McFiles.of(root.resolve("other"));
+        versionJsonService = new FakeVersionJsonService();
         appFiles = TestFiles.appFiles(root);
     }
 
     private InstallCommand command() {
         return new InstallCommand(
             platformService, profileService, serverService,
-            new DefaultFileService(new DefaultFileSystemProvider()), appFiles, mcFiles, console
+            new DefaultFileService(new DefaultFileSystemProvider()), appFiles,
+            new VersionMcFilesService(versionJsonService, TestFiles.mcFilesService(mcFiles, otherMcFiles)), console
         );
     }
 
     @Test
     void emptyVersionArgThrows() {
         assertThrows(IllegalArgumentException.class, command()::run);
+    }
+
+    @Test
+    void installsClientIntoTheMcFolderOfItsVanillaVersion() {
+        versionJsonService.add(new FakeVersion("1.21.1"), otherMcFiles.getVersionsDir());
+        InstallCommand command = command();
+        command.setVersionArg(List.of("1.21.1"));
+        command.setForce(true);
+        command.run();
+
+        assertEquals(otherMcFiles.getMcDir(), clientInstalls.getFirst().dir());
     }
 
     @Test

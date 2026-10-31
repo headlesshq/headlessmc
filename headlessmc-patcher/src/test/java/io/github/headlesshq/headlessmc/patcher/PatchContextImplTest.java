@@ -39,7 +39,7 @@ public class PatchContextImplTest {
             fileService,
             new PatchCache.Key("abc", 1L, Map.of(), 21, 0L),
             List.of(TestPatchers.patcher("test", 1L)),
-            TestPatchers.mcFiles(root),
+            TestPatchers.mcFilesService(root),
             21,
             root.resolve("base"),
             patchResult

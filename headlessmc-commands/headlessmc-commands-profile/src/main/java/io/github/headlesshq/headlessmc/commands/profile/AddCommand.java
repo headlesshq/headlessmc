@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.commands.version.VersionInstallCommand;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.launcher.client.VersionMcFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
@@ -52,12 +52,12 @@ public class AddCommand extends VersionInstallCommand {
         ServerService serverService,
         FileService fileService,
         AppFiles appFiles,
-        McFiles mcFiles,
+        VersionMcFilesService versionMcFilesService,
         Console console,
         VersionJsonService versionJsonService,
         OSService osService
     ) {
-        super(platformService, profileService, serverService, fileService, appFiles, mcFiles, console);
+        super(platformService, profileService, serverService, fileService, appFiles, versionMcFilesService, console);
         this.versionJsonService = versionJsonService;
         this.osService = osService;
     }
@@ -91,9 +91,12 @@ public class AddCommand extends VersionInstallCommand {
         return version;
     }
 
+    /**
+     * For profiles {@link #getCustomDir()} is the game directory of the profile, not the .minecraft folder.
+     */
     @Override
-    protected Path getMcDir() {
-        return getMcFiles().getMcDir();
+    protected Path getMcDir(VersionID id) {
+        return getVersionMcFilesService().getInstallMcFiles(id).getMcDir();
     }
 
     private List<String> getDefaultJvmArgs(Version version) {

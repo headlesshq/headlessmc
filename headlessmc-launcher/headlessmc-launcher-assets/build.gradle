@@ -16,4 +16,5 @@ dependencies {
 
 dependencies {
     testImplementation testFixtures(project(':headlessmc-net'))
+    testImplementation testFixtures(project(':headlessmc-files'))
 }

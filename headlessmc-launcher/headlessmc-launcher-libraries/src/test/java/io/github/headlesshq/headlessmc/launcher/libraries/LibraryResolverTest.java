@@ -25,14 +25,8 @@ public class LibraryResolverTest {
     private final OS linux = new OS("linux", OS.Type.LINUX, "6.0");
     private final CPU cpu = CPU.X64;
 
-    private LibraryResolver resolver(McFiles mcFiles) {
-        return new LibraryResolver(
-            new NativeLibraryResolver(fileService, mcFiles, linux),
-            fileService,
-            mcFiles,
-            cpu,
-            linux
-        );
+    private LibraryResolver resolver() {
+        return new LibraryResolver(new NativeLibraryResolver(fileService, linux), fileService, cpu, linux);
     }
 
     private List<LibraryFile> resolve(McFiles mcFiles, TestLibraries.FakeLibrary... libraries) {
@@ -44,7 +38,8 @@ public class LibraryResolverTest {
         TemplateStrings templates,
         TestLibraries.FakeLibrary... libraries
     ) {
-        return resolver(mcFiles).resolveLibraries(
+        return resolver().resolveLibraries(
+            mcFiles,
             templates,
             new Features(),
             new TestLibraries.FakeVersion(List.of(libraries))

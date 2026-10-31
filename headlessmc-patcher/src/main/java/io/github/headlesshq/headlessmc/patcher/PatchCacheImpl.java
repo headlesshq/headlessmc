@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.net.hash.HashService;
 import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
@@ -32,7 +33,7 @@ public class PatchCacheImpl implements PatchCache {
     private final HashService hashService;
     private final JsonService jsonService;
     private final AppFiles appFiles;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
 
     @Override
     public Optional<PatchResult> getCache(PatchContext context) {
@@ -111,6 +112,7 @@ public class PatchCacheImpl implements PatchCache {
         }
 
         for (CacheInfo.PatchFile patchFile : info.initialClasspath) {
+            McFiles mcFiles = mcFilesService.getPrimaryMcFiles();
             Path library = patchFile.deRelativize(cacheDir, mcFiles.getMcDir(), mcFiles.getLibraryDir());
             if (!context.getInitialPatchResult().files().contains(library)) {
                 throw new PatchException(
@@ -126,6 +128,7 @@ public class PatchCacheImpl implements PatchCache {
     private SequencedSet<Path> resolveFiles(Path cacheDir, SequencedSet<CacheInfo.PatchFile> patchFiles) {
         SequencedSet<Path> result = new LinkedHashSet<>();
         for (CacheInfo.PatchFile patchFile : patchFiles) {
+            McFiles mcFiles = mcFilesService.getPrimaryMcFiles();
             Path file = patchFile.deRelativize(cacheDir, mcFiles.getMcDir(), mcFiles.getLibraryDir());
             if (!Files.exists(file)) {
                 throw new PatchException("Failed to find patch file " + file + " (" + patchFile + ")");
@@ -161,7 +164,12 @@ public class PatchCacheImpl implements PatchCache {
         );
     }
 
+    /**
+     * Files in the primary .minecraft folder are stored relative to it,
+     * files in additional .minecraft folders are stored as absolute paths.
+     */
     private CacheInfo.PatchFile relativize(Path file, Path cacheDir) {
+        McFiles mcFiles = mcFilesService.getPrimaryMcFiles();
         if (file.startsWith(cacheDir)) {
             return new CacheInfo.PatchFile(cacheDir.relativize(file).toString(), CacheInfo.RelativeTo.CACHE);
         } else if (file.startsWith(mcFiles.getLibraryDir())) {

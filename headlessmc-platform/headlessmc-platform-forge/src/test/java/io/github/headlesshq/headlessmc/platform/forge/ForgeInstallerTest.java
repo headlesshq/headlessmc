@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.platform.forge;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class ForgeInstallerTest {
     @Inject
-    McFiles mcFiles;
+    McFilesService mcFilesService;
 
     @Inject
     PlatformService platformService;
@@ -29,7 +29,7 @@ public class ForgeInstallerTest {
     public void testInstall1_8_9() throws HeadlessMcException {
         VersionArg arg = VersionArg.parse("forge", "1.8.9");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
     @Test
@@ -37,7 +37,7 @@ public class ForgeInstallerTest {
     public void testInstall1_12_2() throws HeadlessMcException {
         VersionArg arg = VersionArg.parse("forge", "1.12.2");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
     @Test
@@ -45,7 +45,7 @@ public class ForgeInstallerTest {
     public void testInstall1_21_1() throws HeadlessMcException {
         VersionArg arg = VersionArg.parse("forge", "1.21.1");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ForgeInstallerTest {
     public void testInstall26_2() throws HeadlessMcException {
         VersionArg arg = VersionArg.parse("forge", "26.2");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
 }

@@ -13,32 +13,7 @@ final class TestLibraries {
     }
 
     static McFiles mcFiles(Path root) {
-        return new McFiles() {
-            @Override
-            public Path getMcDir() {
-                return root.resolve("mc");
-            }
-
-            @Override
-            public Path getVersionsDir() {
-                return getMcDir().resolve("versions");
-            }
-
-            @Override
-            public Path getLibraryDir() {
-                return getMcDir().resolve("libraries");
-            }
-
-            @Override
-            public Path getAssetsDir() {
-                return getMcDir().resolve("assets");
-            }
-
-            @Override
-            public Path getResourcesDir() {
-                return getMcDir().resolve("resources");
-            }
-        };
+        return McFiles.of(root.resolve("mc"));
     }
 
     static Version.Download download(@Nullable String path, @Nullable Long size) {

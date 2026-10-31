@@ -112,7 +112,7 @@ class ServerLaunchCommandsTest {
     private ServerLaunchCommand launch(ServerService serverService) {
         return new ServerLaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService,
-            line -> line.split(" "), console, TestFiles.mcFiles(root)
+            line -> line.split(" "), console, TestFiles.mcFilesService(root)
         );
     }
 

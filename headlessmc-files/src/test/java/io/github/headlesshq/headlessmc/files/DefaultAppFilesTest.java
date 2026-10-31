@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.files;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,6 +18,11 @@ class DefaultAppFilesTest {
 
         @Override
         public Optional<String> mcDir() {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<List<String>> mcFolders() {
             return Optional.empty();
         }
 

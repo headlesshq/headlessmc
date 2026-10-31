@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.libraries;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.util.Features;
@@ -22,18 +23,19 @@ public class ClasspathService {
     private final McJarDownloader mcJarDownloader;
 
     public List<Path> buildClasspath(
+        McFiles mcFiles,
         TemplateStrings templates,
         Features features,
         Version version,
         List<MavenRepository> repositories
     ) {
-        List<LibraryFile> libraryFiles = libraryResolver.resolveLibraries(templates, features, version);
+        List<LibraryFile> libraryFiles = libraryResolver.resolveLibraries(mcFiles, templates, features, version);
         libraryDownloader.download(repositories, libraryFiles);
 
         Path nativeDir = nativeLibraryHandler.handleNativeLibraries(libraryFiles);
         templates.add(TemplateString.NATIVES_DIRECTORY, nativeDir.toAbsolutePath().toString());
 
-        Path mcJar = mcJarDownloader.downloadMcJar(Version.DOWNLOAD_CLIENT, version);
+        Path mcJar = mcJarDownloader.downloadMcJar(mcFiles, Version.DOWNLOAD_CLIENT, version);
 
         List<Path> classpath = new ArrayList<>(libraryFiles.size() + 1);
         libraryFiles.stream().map(LibraryFile::path).forEach(classpath::add);

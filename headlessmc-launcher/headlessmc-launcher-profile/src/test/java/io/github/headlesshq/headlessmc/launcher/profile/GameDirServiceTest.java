@@ -10,6 +10,8 @@ import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.FileConfig;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
+import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import io.smallrye.config.Config;
@@ -18,6 +20,7 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
@@ -34,6 +37,11 @@ class GameDirServiceTest {
 
         @Override
         public Optional<String> mcDir() {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<List<String>> mcFolders() {
             return Optional.empty();
         }
     }
@@ -126,7 +134,9 @@ class GameDirServiceTest {
         Holder<FileConfig> holder = () -> new TestFileConfig(gameForEachVersion, gameDir);
         Map<String, String> properties = legacyGameDir.map(value -> Map.of("hmc.gamedir", value)).orElse(Map.of());
         ConfigService configService = new PassthroughConfigService(config(properties));
-        return new GameDirService(holder, configService, fileService, appFiles, mcFiles);
+        // game dirs are placed in the primary .minecraft folder, not in additional ones
+        McFilesService mcFilesService = TestFiles.mcFilesService(mcFiles, McFiles.of(mcFiles.getMcDir().resolveSibling("other")));
+        return new GameDirService(holder, configService, fileService, appFiles, mcFilesService);
     }
 
     private VersionArg version(Side side) {

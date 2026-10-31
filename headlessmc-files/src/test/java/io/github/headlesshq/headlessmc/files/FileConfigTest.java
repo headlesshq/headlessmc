@@ -22,6 +22,11 @@ class FileConfigTest {
         }
 
         @Override
+        public Optional<List<String>> mcFolders() {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<String> gameDir() {
             return Optional.empty();
         }

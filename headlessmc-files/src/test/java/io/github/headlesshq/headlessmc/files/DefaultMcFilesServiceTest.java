@@ -11,6 +11,7 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
@@ -18,8 +19,8 @@ import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DefaultMcFilesTest {
-    private record TestFileConfig(Optional<String> mcDir) implements FileConfig {
+class DefaultMcFilesServiceTest {
+    private record TestFileConfig(Optional<String> mcDir, Optional<List<String>> mcFolders) implements FileConfig {
         @Override
         public Optional<String> location() {
             return Optional.empty();
@@ -36,7 +37,7 @@ class DefaultMcFilesTest {
         }
     }
 
-    /** Just delegates {@link #bind} and {@link #getConfig()}, since that is all {@link DefaultMcFiles} uses. */
+    /** Just delegates {@link #bind} and {@link #getConfig()}, since that is all {@link DefaultMcFilesService} uses. */
     private static final class PassthroughConfigService implements ConfigService {
         private final Config config;
 
@@ -95,54 +96,108 @@ class DefaultMcFilesTest {
             .build();
     }
 
-    private DefaultMcFiles mcFiles(Optional<String> mcDir, Optional<String> legacyMcDir, OS os) {
-        Holder<FileConfig> holder = () -> new TestFileConfig(mcDir);
+    private DefaultMcFilesService mcFiles(Optional<String> mcDir, Optional<String> legacyMcDir, OS os) {
+        return mcFiles(mcDir, legacyMcDir, Optional.empty(), os);
+    }
+
+    private DefaultMcFilesService mcFiles(
+        Optional<String> mcDir,
+        Optional<String> legacyMcDir,
+        Optional<List<String>> mcFolders,
+        OS os
+    ) {
+        Holder<FileConfig> holder = () -> new TestFileConfig(mcDir, mcFolders);
         Map<String, String> properties = legacyMcDir.map(value -> Map.of("hmc.mcdir", value)).orElse(Map.of());
         ConfigService configService = new PassthroughConfigService(config(properties));
-        return new DefaultMcFiles(holder, configService, fileService, os);
+        return new DefaultMcFilesService(holder, configService, fileService, os);
     }
 
     @Test
     void usesTheConfiguredMcDir() {
-        DefaultMcFiles mcFiles = mcFiles(Optional.of("/configured/mc"), Optional.empty(), linux);
+        DefaultMcFilesService mcFiles = mcFiles(Optional.of("/configured/mc"), Optional.empty(), linux);
 
-        assertEquals(fileService.getUserPath("/configured/mc"), mcFiles.getMcDir());
+        assertEquals(fileService.getUserPath("/configured/mc"), mcFiles.getPrimaryMcFiles().getMcDir());
     }
 
     @Test
     void fallsBackToTheLegacyMcDirProperty() {
-        DefaultMcFiles mcFiles = mcFiles(Optional.empty(), Optional.of("/legacy/mc"), linux);
+        DefaultMcFilesService mcFiles = mcFiles(Optional.empty(), Optional.of("/legacy/mc"), linux);
 
-        assertEquals(fileService.getUserPath("/legacy/mc"), mcFiles.getMcDir());
+        assertEquals(fileService.getUserPath("/legacy/mc"), mcFiles.getPrimaryMcFiles().getMcDir());
     }
 
     @Test
     void conflictingMcDirAndLegacyMcDirThrow() {
-        DefaultMcFiles mcFiles = mcFiles(Optional.of("/a"), Optional.of("/b"), linux);
+        DefaultMcFilesService mcFiles = mcFiles(Optional.of("/a"), Optional.of("/b"), linux);
 
-        assertThrows(ConfigException.class, mcFiles::getMcDir);
+        assertThrows(ConfigException.class, mcFiles::getPrimaryMcFiles);
     }
 
     @Test
     void fallsBackToTheUserHomeMinecraftDirOnLinux() {
-        DefaultMcFiles mcFiles = mcFiles(Optional.empty(), Optional.empty(), linux);
+        DefaultMcFilesService mcFiles = mcFiles(Optional.empty(), Optional.empty(), linux);
 
         Path expected = fileService.getUserPath(System.getProperty("user.home")).resolve(".minecraft");
-        assertEquals(expected, mcFiles.getMcDir());
+        assertEquals(expected, mcFiles.getPrimaryMcFiles().getMcDir());
     }
 
     @Test
     void fallsBackToTheApplicationSupportDirOnMacOs() {
-        DefaultMcFiles mcFiles = mcFiles(Optional.empty(), Optional.empty(), macos);
+        DefaultMcFilesService mcFiles = mcFiles(Optional.empty(), Optional.empty(), macos);
 
         Path expected = fileService.getUserPath(System.getProperty("user.home"))
             .resolve("Library").resolve("Application Support").resolve("minecraft");
-        assertEquals(expected, mcFiles.getMcDir());
+        assertEquals(expected, mcFiles.getPrimaryMcFiles().getMcDir());
     }
 
     @Test
     void testComputeMcDir() {
-        mcFiles(Optional.empty(), Optional.empty(), macos).getMcDir();
+        mcFiles(Optional.empty(), Optional.empty(), macos).getPrimaryMcFiles();
+    }
+
+    @Test
+    void withoutAdditionalFoldersThereIsOnlyThePrimaryFolder() {
+        DefaultMcFilesService mcFiles = mcFiles(Optional.of("/primary"), Optional.empty(), linux);
+
+        assertEquals(List.of(McFiles.of(fileService.getUserPath("/primary"))), mcFiles.getAllMcFiles());
+    }
+
+    @Test
+    void additionalFoldersFollowThePrimaryFolderInOrder() {
+        DefaultMcFilesService mcFiles = mcFiles(
+            Optional.of("/primary"),
+            Optional.empty(),
+            Optional.of(List.of("/b", " /a ", "", "/primary", "/b")),
+            linux
+        );
+
+        assertEquals(
+            List.of(
+                McFiles.of(fileService.getUserPath("/primary")),
+                McFiles.of(fileService.getUserPath("/b")),
+                McFiles.of(fileService.getUserPath("/a"))
+            ),
+            mcFiles.getAllMcFiles()
+        );
+        assertEquals(McFiles.of(fileService.getUserPath("/primary")), mcFiles.getPrimaryMcFiles());
+    }
+
+    @Test
+    void findsTheInnermostFolderContainingAPath() {
+        DefaultMcFilesService mcFiles = mcFiles(
+            Optional.of("/primary"),
+            Optional.empty(),
+            Optional.of(List.of("/primary/nested", "/other")),
+            linux
+        );
+
+        Path primary = fileService.getUserPath("/primary");
+        assertEquals(Optional.of(McFiles.of(primary)), mcFiles.getMcFiles(primary.resolve("versions")));
+        assertEquals(
+            Optional.of(McFiles.of(primary.resolve("nested"))),
+            mcFiles.getMcFiles(primary.resolve("nested").resolve("versions"))
+        );
+        assertEquals(Optional.empty(), mcFiles.getMcFiles(fileService.getUserPath("/elsewhere")));
     }
 
 }

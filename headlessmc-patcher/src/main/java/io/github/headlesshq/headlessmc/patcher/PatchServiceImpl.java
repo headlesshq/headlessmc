@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.patcher;
 
 import io.github.headlesshq.headlessmc.files.FileService;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
@@ -20,7 +20,7 @@ public class PatchServiceImpl implements PatchService {
     private final Instance<Patcher> patchers;
     private final FileService fileService;
     private final PatchCache cache;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
 
     @Inject
     public PatchServiceImpl(
@@ -28,12 +28,12 @@ public class PatchServiceImpl implements PatchService {
         @Any Instance<Patcher> patchers,
         FileService fileService,
         PatchCache cache,
-        McFiles mcFiles
+        McFilesService mcFilesService
     ) {
         this.services = services;
         this.patchers = patchers;
         this.fileService = fileService;
-        this.mcFiles = mcFiles;
+        this.mcFilesService = mcFilesService;
         this.cache = cache;
     }
 
@@ -46,7 +46,7 @@ public class PatchServiceImpl implements PatchService {
         PatchCache.Key key = cache.getCacheKey(patchResult, patchers, javaVersion);
         Path cacheDir = cache.getCacheDir(key);
         PatchContext context = new PatchContextImpl(
-            services::stream, patchResult, fileService, key, patchers, mcFiles, javaVersion, cacheDir, patchResult
+            services::stream, patchResult, fileService, key, patchers, mcFilesService, javaVersion, cacheDir, patchResult
         );
 
         Optional<PatchResult> cached = cache.getCache(context);

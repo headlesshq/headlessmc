@@ -1,7 +1,7 @@
 package io.github.headlesshq.headlessmc.platform.neoforge;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 public class NeoForgeInstallerTest {
     @Inject
-    McFiles mcFiles;
+    McFilesService mcFilesService;
 
     @Inject
     PlatformService platformService;
@@ -30,7 +30,7 @@ public class NeoForgeInstallerTest {
         // TODO: fix VersionMatcher in this case!!! ???!?!?!?!
         VersionArg arg = VersionArg.parse("neoforge", "1.20.1");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
     @Test
@@ -38,7 +38,7 @@ public class NeoForgeInstallerTest {
     public void testInstall1_20_2() throws HeadlessMcException {
         VersionArg arg = VersionArg.parse("neoforge", "1.20.2");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
     @Test
@@ -46,7 +46,7 @@ public class NeoForgeInstallerTest {
     public void testInstall26_2() throws HeadlessMcException {
         VersionArg arg = VersionArg.parse("neoforge", "26.2");
         VersionID id = VersionID.resolve(platformService, arg);
-        forgeInstaller.installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+        forgeInstaller.installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
     }
 
 }

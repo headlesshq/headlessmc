@@ -37,7 +37,7 @@ public class PatchCacheImplTest {
             hashService,
             jsonService,
             TestPatchers.appFiles(root),
-            TestPatchers.mcFiles(root)
+            TestPatchers.mcFilesService(root)
         );
     }
 
@@ -49,7 +49,7 @@ public class PatchCacheImplTest {
             fileService,
             key,
             List.of(TestPatchers.patcher("test", 1L)),
-            TestPatchers.mcFiles(root),
+            TestPatchers.mcFilesService(root),
             21,
             cache.getCacheDir(key),
             current
@@ -164,7 +164,7 @@ public class PatchCacheImplTest {
             fileService,
             saved.getCacheKey(),
             List.of(TestPatchers.patcher("test", 1L)),
-            mcFiles,
+            TestPatchers.mcFilesService(root),
             21,
             cache.getCacheDir(saved.getCacheKey()),
             grown

@@ -13,6 +13,7 @@ dependencies {
     runtimeOnly project(':headlessmc-util:headlessmc-util-json-jackson')
     testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
     testImplementation project(':headlessmc-platform:headlessmc-platform-vanilla')
+    testImplementation testFixtures(project(':headlessmc-files'))
 
     //implementation project(':headlessmc-launcher:headlessmc-launcher-args')
     //implementation project(':headlessmc-launcher:headlessmc-launcher-libraries')

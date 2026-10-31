@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.launcher.client.VersionMcFilesService;
 import io.github.headlesshq.headlessmc.launcher.client.VersionRemoveService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
@@ -72,8 +73,9 @@ class RemoveCommandTest {
             platformService,
             profileService,
             new DefaultFileService(new DefaultFileSystemProvider()),
-            new DefaultJacksonJsonService(),
-            mcFiles
+            new VersionMcFilesService(versionService, TestFiles.mcFilesService(mcFiles)),
+            TestFiles.mcFilesService(mcFiles),
+            new DefaultJacksonJsonService()
         ), console);
         command.setVersionArg(List.of(versionArg));
         return command;

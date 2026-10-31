@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.console.format.TableProvider;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.launcher.client.VersionMcFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
@@ -77,7 +78,8 @@ class ProfileCommandsTest {
     private AddCommand add() {
         return new AddCommand(
             platformService, profileService, Mockito.mock(ServerService.class),
-            new DefaultFileService(new DefaultFileSystemProvider()), TestFiles.appFiles(root), TestFiles.mcFiles(root),
+            new DefaultFileService(new DefaultFileSystemProvider()), TestFiles.appFiles(root),
+            new VersionMcFilesService(versionJsonService, TestFiles.mcFilesService(root)),
             console, versionJsonService, osService
         );
     }

@@ -36,11 +36,20 @@ public class LibraryResolver {
 
     private final NativeLibraryResolver nativeLibraryResolver;
     private final FileService fileService;
-    private final McFiles mcFiles;
     private final CPU cpu;
     private final OS os;
 
+    /**
+     * Resolves the libraries of a version.
+     *
+     * @param mcFiles         the .minecraft folder of the version, all libraries are loaded from it.
+     * @param templateStrings template strings to process native classifiers with.
+     * @param features        features to check library rules against.
+     * @param version         the version to resolve the libraries of.
+     * @return the libraries of the version.
+     */
     public List<LibraryFile> resolveLibraries(
+        McFiles mcFiles,
         TemplateStrings templateStrings,
         Features features,
         Version version
@@ -64,7 +73,7 @@ public class LibraryResolver {
 
             Map<String, Version.Download> classifiers = downloads.getClassifiers();
             if (classifiers != null) {
-                files.add(nativeLibraryResolver.handleNatives(library, templateStrings, classifiers, version));
+                files.add(nativeLibraryResolver.handleNatives(mcFiles, library, templateStrings, classifiers, version));
             }
 
             Version.Download artifactDownload = downloads.getArtifact();

@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
@@ -30,7 +31,7 @@ import java.util.Locale;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class DebugCommand implements Runnable, CachedConsole.Enabled {
     private final AppFiles appFiles;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
     private final Console console;
 
     @Override
@@ -43,7 +44,9 @@ public class DebugCommand implements Runnable, CachedConsole.Enabled {
         console.write(" - Config: " + appFiles.getConfigDir().toAbsolutePath());
         console.write(" - State:  " + appFiles.getStateDir().toAbsolutePath());
         console.write(" - Cache:  " + appFiles.getCacheDir().toAbsolutePath());
-        console.write(" - Mc:     " + mcFiles.getMcDir().toAbsolutePath());
+        for (McFiles mcFiles : mcFilesService.getAllMcFiles()) {
+            console.write(" - Mc:     " + mcFiles.getMcDir().toAbsolutePath());
+        }
         console.write("------------------------------------------");
         console.write("Memory:");
         Runtime runtime = Runtime.getRuntime();

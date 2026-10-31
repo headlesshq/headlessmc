@@ -38,7 +38,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -62,6 +64,9 @@ class VanillaInstallerImplTest {
      * and only supports {@link #getParser()}, which is all the installer needs.
      */
     private static final class TestVersionJsonService implements VersionJsonService {
+        /** The versions directories of the versions installed in other .minecraft folders. */
+        private final Map<String, Path> versionsDirs = new HashMap<>();
+
         private final VersionParser parser = reader -> {
             String content = read(reader);
             String[] parts = content.split(";");
@@ -101,6 +106,11 @@ class VanillaInstallerImplTest {
         @Override
         public Optional<Version> tryGetVersion(String fileName) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Path> getVersionsDir(String fileName) {
+            return Optional.ofNullable(versionsDirs.get(fileName));
         }
 
         @Override
@@ -157,6 +167,7 @@ class VanillaInstallerImplTest {
     private final MockDownloadService downloads = new MockDownloadService();
 
     private McFiles mcFiles;
+    private TestVersionJsonService versionJsonService;
     private FakePlatformService platformService;
     private VanillaInstallerImpl installer;
 
@@ -171,7 +182,8 @@ class VanillaInstallerImplTest {
             ))))
             .build();
 
-        installer = new VanillaInstallerImpl(new TestVersionJsonService(), downloads, cache, mcFiles);
+        versionJsonService = new TestVersionJsonService();
+        installer = new VanillaInstallerImpl(versionJsonService, downloads, cache, TestFiles.mcFilesService(mcFiles));
         downloads.register(MANIFEST_1_21_1, "1.21.1;java=21");
     }
 
@@ -181,6 +193,20 @@ class VanillaInstallerImplTest {
 
     private VersionID id(String name) {
         return VersionID.resolve(platformService, VersionArg.parse("vanilla", name));
+    }
+
+    @Test
+    void getVersionReadsTheVersionJsonFromAnyMcFolder() throws IOException {
+        Path versionsDir = root.resolve("other").resolve("versions");
+        Path json = versionsDir.resolve("1.21.1").resolve("1.21.1.json");
+        Files.createDirectories(json.getParent());
+        Files.writeString(json, "1.21.1;java=17");
+        versionJsonService.versionsDirs.put("1.21.1", versionsDir);
+
+        Version version = installer.getVersion(version("1.21.1"));
+
+        assertEquals(17, version.requireJavaVersion());
+        assertTrue(downloads.getRequestedUris().isEmpty());
     }
 
     @Test

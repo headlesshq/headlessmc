@@ -22,10 +22,10 @@ import java.util.UUID;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class TemplateStringService {
-    private final McFiles mcFiles;
     private final CPU cpu;
 
     public TemplateStrings create(
+        McFiles mcFiles,
         AssetsLocation assets,
         Account account,
         Path gameDir,

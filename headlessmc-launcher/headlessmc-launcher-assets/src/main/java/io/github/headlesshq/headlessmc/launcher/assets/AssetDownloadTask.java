@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.assets;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.exceptions.VerificationException;
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.net.DownloadContext;
 import io.github.headlesshq.headlessmc.net.DownloadRetry;
 import io.github.headlesshq.headlessmc.net.parallel.ParallelTask;
@@ -25,6 +26,7 @@ final class AssetDownloadTask implements ParallelTask {
     final AssetIndex.Download download;
     final AssetIndex assetIndex;
     final AssetDownloader ctx;
+    final McFiles mcFiles;
     final String fileName;
     final Path file;
     final URI url;
@@ -44,22 +46,27 @@ final class AssetDownloadTask implements ParallelTask {
 
     boolean needsDownload() throws HeadlessMcException {
         if (!Files.exists(file)) {
-            return true;
+            // the asset might already exist in another .minecraft folder
+            return !ctx.mcFilesService.copyFromOtherMcFiles(file, this::isValid);
         }
 
+        return !isValid(file);
+    }
+
+    private boolean isValid(Path asset) throws HeadlessMcException {
         if (ctx.config.get().dummy()) {
-            return false;
+            return true;
         }
 
         try {
             ctx.hashService.verifier()
                 .sha1(download.hash())
                 .size(download.size())
-                .verify(file);
-            return false;
-        } catch (VerificationException e) {
-            log.info("Asset {} at {} failed verification", fileName, file, e);
+                .verify(asset);
             return true;
+        } catch (VerificationException e) {
+            log.info("Asset {} at {} failed verification", fileName, asset, e);
+            return false;
         }
     }
 
@@ -91,7 +98,7 @@ final class AssetDownloadTask implements ParallelTask {
         // which could be a bug, as that dir is empty and for pre-1.6
         // we map_to_resources.
         try {
-            Path legacy = ctx.fileService.getPath(ctx.getVirtualDir(versionAssetIndex), fileName);
+            Path legacy = ctx.fileService.getPath(ctx.getVirtualDir(mcFiles, versionAssetIndex), fileName);
             Files.createDirectories(legacy.getParent());
             Files.copy(file, legacy, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -106,7 +113,7 @@ final class AssetDownloadTask implements ParallelTask {
 
         try {
             // TODO: this should probably be the game dir?
-            Path resources = ctx.fileService.getPath(ctx.mcFiles.getResourcesDir(), fileName);
+            Path resources = ctx.fileService.getPath(mcFiles.getResourcesDir(), fileName);
             Files.createDirectories(resources.getParent());
             Files.copy(file, resources, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {

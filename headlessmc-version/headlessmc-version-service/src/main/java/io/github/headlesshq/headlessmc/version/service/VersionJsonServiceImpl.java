@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.VersionParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,11 +22,22 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class VersionJsonServiceImpl implements VersionJsonService {
     private final VersionParser versionParser;
-    private final Supplier<Path> versionsDir;
+    /**
+     * The versions directories to search, versions in earlier directories shadow versions in later ones.
+     */
+    private final Supplier<? extends List<Path>> versionsDirs;
 
     @Override
     public Set<String> getInstalledFileNames() throws HeadlessMcException {
-        Path versionsDir = this.versionsDir.get();
+        Set<String> result = new LinkedHashSet<>();
+        for (Path versionsDir : versionsDirs.get()) {
+            result.addAll(getInstalledFileNames(versionsDir));
+        }
+
+        return result;
+    }
+
+    private Set<String> getInstalledFileNames(Path versionsDir) throws HeadlessMcException {
         if (!Files.exists(versionsDir)) {
             return Set.of();
         }
@@ -37,7 +49,7 @@ public class VersionJsonServiceImpl implements VersionJsonService {
                 .map(jsonFile -> jsonFile.getParent().getFileName().toString())
                 .collect(Collectors.toSet());
         } catch (IOException e) {
-            throw new HeadlessMcIOException("Failed to list files in " + versionParser, e);
+            throw new HeadlessMcIOException("Failed to list files in " + versionsDir, e);
         }
     }
 
@@ -49,12 +61,36 @@ public class VersionJsonServiceImpl implements VersionJsonService {
 
     @Override
     public Optional<Version> tryGetVersion(String fileName) throws HeadlessMcException {
-        Path jsonFile = versionsDir.get().resolve(fileName).resolve(fileName + ".json");
-        if (!Files.exists(jsonFile)) {
-            return Optional.empty();
+        return tryGetVersion(fileName, null);
+    }
+
+    /**
+     * @param fileName  the name of the version.json.
+     * @param preferred a versions directory to search first, e.g. the one of a child version.
+     * @return the parsed version, if one could be found.
+     */
+    private Optional<Version> tryGetVersion(String fileName, @Nullable Path preferred) throws HeadlessMcException {
+        Optional<Path> versionsDir = preferred != null && Files.exists(jsonFile(preferred, fileName))
+            ? Optional.of(preferred)
+            : getVersionsDir(fileName);
+        return versionsDir.map(dir -> versionParser.parse(jsonFile(dir, fileName)));
+    }
+
+    @Override
+    public Optional<Path> getVersionsDir(String fileName) throws HeadlessMcException {
+        List<Path> found = versionsDirs.get()
+            .stream()
+            .filter(versionsDir -> Files.exists(jsonFile(versionsDir, fileName)))
+            .toList();
+        if (found.size() > 1) {
+            log.debug("Version {} is installed in multiple folders {}, using {}", fileName, found, found.getFirst());
         }
 
-        return Optional.of(versionParser.parse(jsonFile));
+        return found.stream().findFirst();
+    }
+
+    private static Path jsonFile(Path versionsDir, String fileName) {
+        return versionsDir.resolve(fileName).resolve(fileName + ".json");
     }
 
     @Override
@@ -77,7 +113,9 @@ public class VersionJsonServiceImpl implements VersionJsonService {
                 break;
             }
 
-            Optional<Version> parent = tryGetVersion(currentVersion.getInheritsFrom());
+            // prefer parents in the same folder as their child
+            @Nullable Path preferred = getVersionsDir(currentVersion.getId()).orElse(null);
+            Optional<Version> parent = tryGetVersion(currentVersion.getInheritsFrom(), preferred);
             if (parent.isEmpty()) {
                 // TODO: wrap in versionChangeService
                 installer.install(currentVersion.getInheritsFrom());

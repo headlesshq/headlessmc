@@ -17,9 +17,16 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class McJarDownloader {
     private final DownloadService downloadService;
-    private final McFiles mcFiles;
 
-    public Path downloadMcJar(String key, Version version) {
+    /**
+     * Downloads the jar of a version into its folder in the versions directory, if it does not exist yet.
+     *
+     * @param mcFiles the .minecraft folder of the version.
+     * @param key     the download key, e.g. {@link Version#DOWNLOAD_CLIENT}.
+     * @param version the version to download the jar for.
+     * @return the jar file.
+     */
+    public Path downloadMcJar(McFiles mcFiles, String key, Version version) {
         Path file = mcFiles.getVersionsDir().resolve(version.getId()).resolve(version.getId() + ".jar");
         if (!Files.exists(file)) {
             Version.Download download = Optional.ofNullable(version.getDownloads())

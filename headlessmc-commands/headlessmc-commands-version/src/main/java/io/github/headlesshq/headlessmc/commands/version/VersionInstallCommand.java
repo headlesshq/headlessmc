@@ -7,7 +7,7 @@ import io.github.headlesshq.headlessmc.console.LongRunningCommand;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.launcher.client.VersionMcFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
@@ -47,7 +47,7 @@ public class VersionInstallCommand implements Runnable, VersionArgCommand, LongR
     private final ServerService serverService;
     private final FileService fileService;
     private final AppFiles appFiles;
-    private final McFiles mcFiles;
+    private final VersionMcFilesService versionMcFilesService;
     private final Console console;
 
     @CommandLine.Option(
@@ -139,7 +139,7 @@ public class VersionInstallCommand implements Runnable, VersionArgCommand, LongR
             map.put(ClientInstaller.CUSTOM_INSTALLER_URL, URI.create(customURL));
         }
 
-        Path dir = getMcDir();
+        Path dir = getMcDir(id);
         Version version = platform.getClientSupport().map(ClientSupport::installer).orElseThrow(() -> new IllegalArgumentException(
             "Platform " + platform.getName() + " does not support clients."
         )).installClient(id, dir, map);
@@ -147,13 +147,19 @@ public class VersionInstallCommand implements Runnable, VersionArgCommand, LongR
         return version;
     }
 
-    protected Path getMcDir() {
-        Path dir = mcFiles.getMcDir();
+    /**
+     * Versions are installed into the .minecraft folder of their vanilla version,
+     * or the primary .minecraft folder, if the vanilla version is not installed yet.
+     *
+     * @param id the version to install.
+     * @return the .minecraft folder to install the version into.
+     */
+    protected Path getMcDir(VersionID id) {
         if (customDir != null) {
-            dir = fileService.getUserPath(customDir);
+            return fileService.getUserPath(customDir);
         }
 
-        return dir;
+        return versionMcFilesService.getInstallMcFiles(id).getMcDir();
     }
 
 }

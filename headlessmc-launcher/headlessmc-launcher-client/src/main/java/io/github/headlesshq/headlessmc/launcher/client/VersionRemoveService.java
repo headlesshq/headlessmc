@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.client;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.assets.AssetIndex;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
@@ -33,6 +34,8 @@ import java.util.stream.Stream;
  * that no other installed version needs.
  * Everything that any other installed version, or a version in its {@link Version#getInheritsFrom()} hierarchy,
  * references is kept.
+ * Versions are launched with the files of the .minecraft folder they are installed in,
+ * so files are kept if any other version in the same folder needs them.
  */
 @Slf4j
 @ApplicationScoped
@@ -43,8 +46,9 @@ public class VersionRemoveService {
     private final PlatformService platformService;
     private final ProfileService profileService;
     private final FileService fileService;
+    private final VersionMcFilesService versionMcFilesService;
+    private final McFilesService mcFilesService;
     private final JsonService jsonService;
-    private final McFiles mcFiles;
 
     /**
      * Finds the installed version to remove.
@@ -118,6 +122,11 @@ public class VersionRemoveService {
             removedVersions.addAll(dependents);
         }
 
+        Map<String, McFiles> folders = new HashMap<>();
+        for (Version installedVersion : installed.values()) {
+            folders.put(installedVersion.getId(), versionMcFilesService.getMcFiles(installedVersion));
+        }
+
         Set<String> removedIds = removedVersions.stream().map(Version::getId).collect(Collectors.toSet());
         List<List<Version>> needed = installed.values().stream()
             .filter(other -> !removedIds.contains(other.getId()))
@@ -127,18 +136,26 @@ public class VersionRemoveService {
         Set<Path> files = new LinkedHashSet<>();
         for (Version removedVersion : removedVersions) {
             List<Version> removed = hierarchy(removedVersion, installed);
-            files.addAll(unusedLibraries(removed, needed));
-            files.addAll(unusedAssets(removed, needed));
-            files.addAll(unusedLoggingConfigs(removed, needed));
+            McFiles mcFiles = folders.get(removedVersion.getId());
+            // versions launch with the files of their own .minecraft folder, not the ones of their parents
+            List<List<Version>> neededInFolder = needed.stream()
+                .filter(hierarchy -> mcFiles.equals(folders.get(hierarchy.getLast().getId())))
+                .toList();
+            files.addAll(unusedLibraries(mcFiles, removed, neededInFolder));
+            files.addAll(unusedAssets(mcFiles, removed, neededInFolder));
+            files.addAll(unusedLoggingConfigs(mcFiles, removed, neededInFolder));
         }
 
         for (Version removedVersion : removedVersions.reversed()) {
+            McFiles mcFiles = folders.get(removedVersion.getId());
             files.add(fileService.getPath(mcFiles.getVersionsDir(), removedVersion.getId()));
         }
 
-        Path mcDir = mcFiles.getMcDir().toAbsolutePath().normalize();
+        List<Path> mcDirs = mcFilesService.getAllMcFiles().stream()
+            .map(mcFiles -> mcFiles.getMcDir().toAbsolutePath().normalize())
+            .toList();
         List<Path> existing = files.stream()
-            .filter(file -> file.toAbsolutePath().normalize().startsWith(mcDir))
+            .filter(file -> mcDirs.stream().anyMatch(file.toAbsolutePath().normalize()::startsWith))
             .filter(Files::exists)
             .toList();
 
@@ -240,22 +257,22 @@ public class VersionRemoveService {
         return result;
     }
 
-    private List<Path> unusedLibraries(List<Version> removed, List<List<Version>> needed) {
+    private List<Path> unusedLibraries(McFiles mcFiles, List<Version> removed, List<List<Version>> needed) {
         Set<Path> neededLibraries = needed.stream()
             .flatMap(List::stream)
-            .flatMap(version -> libraryPaths(version).stream())
+            .flatMap(version -> libraryPaths(mcFiles, version).stream())
             .collect(Collectors.toSet());
 
         return removed.stream()
-            .flatMap(version -> libraryPaths(version).stream())
+            .flatMap(version -> libraryPaths(mcFiles, version).stream())
             .filter(path -> !neededLibraries.contains(path))
             .toList();
     }
 
     /**
-     * All paths a library of the version could have been downloaded to, for any OS.
+     * All paths in the given .minecraft folder a library of the version could have been downloaded to, for any OS.
      */
-    private Set<Path> libraryPaths(Version version) {
+    private Set<Path> libraryPaths(McFiles mcFiles, Version version) {
         Set<Path> paths = new LinkedHashSet<>();
         for (Version.Library library : version.getLibraries()) {
             try {
@@ -266,10 +283,10 @@ public class VersionRemoveService {
 
             Version.LibraryDownloads downloads = library.getDownloads();
             if (downloads != null) {
-                addLibraryPath(paths, downloads.getArtifact());
+                addLibraryPath(mcFiles, paths, downloads.getArtifact());
                 Map<String, Version.Download> classifiers = downloads.getClassifiers();
                 if (classifiers != null) {
-                    classifiers.values().forEach(download -> addLibraryPath(paths, download));
+                    classifiers.values().forEach(download -> addLibraryPath(mcFiles, paths, download));
                 }
             }
         }
@@ -277,7 +294,7 @@ public class VersionRemoveService {
         return paths;
     }
 
-    private void addLibraryPath(Set<Path> paths, Version.@Nullable Download download) {
+    private void addLibraryPath(McFiles mcFiles, Set<Path> paths, Version.@Nullable Download download) {
         String path = download == null ? null : download.getPath();
         if (path != null) {
             try {
@@ -293,7 +310,7 @@ public class VersionRemoveService {
      * its virtual directory, the asset objects and the files it mapped to the resources directory are unused,
      * unless they are referenced by the asset index of another version.
      */
-    private List<Path> unusedAssets(List<Version> removed, List<List<Version>> needed) {
+    private List<Path> unusedAssets(McFiles mcFiles, List<Version> removed, List<List<Version>> needed) {
         String id = assetIndexId(removed).orElse(null);
         if (id == null) {
             return List.of();
@@ -309,7 +326,7 @@ public class VersionRemoveService {
 
         List<Path> result = new ArrayList<>();
         result.add(fileService.getPath(mcFiles.getAssetsDir(), "virtual", id));
-        Path indexFile = indexFile(id);
+        Path indexFile = indexFile(mcFiles, id);
         result.add(indexFile);
         Optional<AssetIndex> index = readAssetIndex(indexFile);
         if (index.isEmpty()) {
@@ -319,7 +336,7 @@ public class VersionRemoveService {
         Set<String> neededHashes = new HashSet<>();
         Set<String> neededResources = new HashSet<>();
         for (String neededId : neededIds) {
-            Path neededIndexFile = indexFile(neededId);
+            Path neededIndexFile = indexFile(mcFiles, neededId);
             if (!Files.exists(neededIndexFile)) {
                 continue;
             }
@@ -350,7 +367,7 @@ public class VersionRemoveService {
         return result;
     }
 
-    private Path indexFile(String id) {
+    private Path indexFile(McFiles mcFiles, String id) {
         return fileService.getPath(mcFiles.getAssetsDir(), "indexes", id + ".json");
     }
 
@@ -375,7 +392,7 @@ public class VersionRemoveService {
             .map(Version.AssetIndex::getId);
     }
 
-    private List<Path> unusedLoggingConfigs(List<Version> removed, List<List<Version>> needed) {
+    private List<Path> unusedLoggingConfigs(McFiles mcFiles, List<Version> removed, List<List<Version>> needed) {
         Set<String> neededIds = needed.stream()
             .map(this::loggingConfigId)
             .flatMap(Optional::stream)
@@ -417,7 +434,9 @@ public class VersionRemoveService {
     }
 
     private void deleteEmptyParents(Path file) {
-        List<Path> roots = Stream.of(mcFiles.getLibraryDir(), mcFiles.getAssetsDir(), mcFiles.getResourcesDir())
+        List<Path> roots = mcFilesService.getAllMcFiles()
+            .stream()
+            .flatMap(mcFiles -> Stream.of(mcFiles.getLibraryDir(), mcFiles.getAssetsDir(), mcFiles.getResourcesDir()))
             .map(root -> root.toAbsolutePath().normalize())
             .toList();
         Path parent = file.toAbsolutePath().normalize().getParent();

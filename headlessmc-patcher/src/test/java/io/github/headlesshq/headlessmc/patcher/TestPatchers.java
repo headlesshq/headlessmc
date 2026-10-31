@@ -2,12 +2,14 @@ package io.github.headlesshq.headlessmc.patcher;
 
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -58,30 +60,19 @@ final class TestPatchers {
     }
 
     static McFiles mcFiles(Path root) {
-        return new McFiles() {
+        return McFiles.of(root.resolve("mc"));
+    }
+
+    static McFilesService mcFilesService(Path root) {
+        return new McFilesService() {
             @Override
-            public Path getMcDir() {
-                return root.resolve("mc");
+            public McFiles getPrimaryMcFiles() {
+                return mcFiles(root);
             }
 
             @Override
-            public Path getVersionsDir() {
-                return getMcDir().resolve("versions");
-            }
-
-            @Override
-            public Path getLibraryDir() {
-                return getMcDir().resolve("libraries");
-            }
-
-            @Override
-            public Path getAssetsDir() {
-                return getMcDir().resolve("assets");
-            }
-
-            @Override
-            public Path getResourcesDir() {
-                return getMcDir().resolve("resources");
+            public List<McFiles> getAllMcFiles() {
+                return List.of(getPrimaryMcFiles());
             }
         };
     }

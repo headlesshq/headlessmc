@@ -65,6 +65,7 @@ public class ClientLauncher {
     private final ArgumentTemplateService argumentTemplateService;
     private final LastUsedAccountService lastUsedAccountService;
     private final SpecificsPropertiesService specificsPropertiesService;
+    private final VersionMcFilesService versionMcFilesService;
     private final SpecificsDownloader specificsDownloader;
     private final VersionMatcherService versionMatcherService;
     private final VersionJsonService versionJsonService;
@@ -77,7 +78,6 @@ public class ClientLauncher {
     private final PlatformService platformService;
     private final PatchService patchService;
     private final LauncherConfig config;
-    private final McFiles mcFiles;
 
     /**
      * Launches the installed version matching {@link Profile#currentVersion()}.
@@ -124,24 +124,27 @@ public class ClientLauncher {
         List<Patcher> patchers = getPatchers(profile);
         String name = id == null ? resolvedVersion.getId() : id.toString();
 
+        // a version is launched with the files of a single .minecraft folder, e.g. ${library_directory} is one path
+        McFiles mcFiles = versionMcFilesService.getMcFiles(resolvedVersion);
+        log.debug("Launching {} from {}", name, mcFiles.getMcDir());
         ProcessedVersion version = versionJsonService.process(resolvedVersion);
         specificsDownloader.download(profile);
 
         // library overrides?
         // configuration???
-        AssetsLocation assetsLocation = assetDownloader.download(version.getAssetIndex());
+        AssetsLocation assetsLocation = assetDownloader.download(mcFiles, version.getAssetIndex());
 
-        TemplateStrings templates = templateService.create(assetsLocation, account, gameDir, version, options);
+        TemplateStrings templates = templateService.create(mcFiles, assetsLocation, account, gameDir, version, options);
         Features features = Features.fromTemplates(templates);
         features.add(Feature.DEMO, options.demo());
 
-        Optional<String> loggingArg = loggingDownloader.downloadLogging(templates, version);
+        Optional<String> loggingArg = loggingDownloader.downloadLogging(mcFiles, templates, version);
 
         List<MavenRepository> repositories = new ArrayList<>(platformService.getVanillaPlatform().getRepositories());
         if (id != null) {
             repositories.addAll(id.getPlatform().getRepositories());
         }
-        List<Path> unpatchedClasspath = classpathService.buildClasspath(templates, features, version, repositories);
+        List<Path> unpatchedClasspath = classpathService.buildClasspath(mcFiles, templates, features, version, repositories);
 
         int javaVersion = profile.javaVersion() == null ? version.requireJavaVersion() : profile.javaVersion();
         PatchResult patchResult = new PatchResult(new LinkedHashSet<>(unpatchedClasspath), new LinkedHashSet<>());
@@ -217,6 +220,7 @@ public class ClientLauncher {
                         id.getPlatform().getCapitalizedName() + " does not support clients."
                     ));
 
+                McFiles mcFiles = versionMcFilesService.getInstallMcFiles(id);
                 return clientSupport.installer().installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
             }
 

@@ -42,7 +42,7 @@ and launches it headlessly with an offline account:
 
 ``` java
 import io.github.headlesshq.headlessmc.auth.Account;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
@@ -65,7 +65,7 @@ public class FabricLauncher implements QuarkusApplication {
     @Inject PlatformService platformService;
     @Inject ProfileService profileService;
     @Inject ClientLauncher clientLauncher;
-    @Inject McFiles mcFiles;
+    @Inject McFilesService mcFilesService;
 
     public static void main(String[] args) {
         Quarkus.run(FabricLauncher.class, args);
@@ -75,12 +75,12 @@ public class FabricLauncher implements QuarkusApplication {
     public int run(String... args) {
         VersionID id = VersionID.resolve(platformService, VersionArg.parse("fabric", "26.3"));
 
-        // install fabric 26.3 into the .minecraft directory
+        // install fabric 26.3 into the primary .minecraft directory
         id.getPlatform()
             .getClientSupport()
             .map(ClientSupport::installer)
             .orElseThrow()
-            .installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
+            .installClient(id, mcFilesService.getPrimaryMcFiles().getMcDir(), new TypedMapImpl());
 
         // launch with the patchers used by "launch --headless"
         Profile profile = profileService.getProfile(id.asArg())

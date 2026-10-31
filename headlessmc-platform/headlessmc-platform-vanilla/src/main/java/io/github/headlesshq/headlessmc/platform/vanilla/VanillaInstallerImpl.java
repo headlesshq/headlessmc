@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.platform.vanilla;
 import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.NotFoundException;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.cache.Cache;
 import io.github.headlesshq.headlessmc.net.DownloadBuilder;
 import io.github.headlesshq.headlessmc.net.DownloadService;
@@ -34,19 +34,19 @@ class VanillaInstallerImpl implements VanillaInstaller {
     private final VersionJsonService versionJsonService;
     private final DownloadService downloadService;
     private final Cache<VanillaManifest> cache;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
 
     @Inject
     VanillaInstallerImpl(
         VersionJsonService versionJsonService,
         DownloadService downloadService,
         @Vanilla Cache<VanillaManifest> cache,
-        McFiles mcFiles
+        McFilesService mcFilesService
     ) {
         this.versionJsonService = versionJsonService;
         this.downloadService = downloadService;
         this.cache = cache;
-        this.mcFiles = mcFiles;
+        this.mcFilesService = mcFilesService;
     }
 
     @Override
@@ -78,7 +78,11 @@ class VanillaInstallerImpl implements VanillaInstaller {
 
     @Override
     public Version getVersion(VanillaVersion version) {
-        return downloadVersion(version, mcFiles.getMcDir(), new TypedMapImpl(), false);
+        // the version might already be installed in any of the .minecraft folders
+        Path mcDir = versionJsonService.getVersionsDir(version.getName())
+            .map(Path::getParent)
+            .orElseGet(() -> mcFilesService.getPrimaryMcFiles().getMcDir());
+        return downloadVersion(version, mcDir, new TypedMapImpl(), false);
     }
 
     private Version downloadVersion(

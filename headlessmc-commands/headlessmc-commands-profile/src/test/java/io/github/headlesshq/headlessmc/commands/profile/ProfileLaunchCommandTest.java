@@ -90,7 +90,7 @@ class ProfileLaunchCommandTest {
         return new ProfileLaunchCommand(
             lifecycleService, new ProfileResolver(platformService, profileService), platformService,
             serverLauncher, serverService, clientLauncher, line -> line.split(" "), console,
-            TestFiles.mcFiles(root), lastUsedAccountService, xvfbService, authService, profileService
+            TestFiles.mcFilesService(root), lastUsedAccountService, xvfbService, authService, profileService
         );
     }
 

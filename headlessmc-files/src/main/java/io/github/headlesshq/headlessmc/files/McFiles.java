@@ -2,6 +2,11 @@ package io.github.headlesshq.headlessmc.files;
 
 import java.nio.file.Path;
 
+/**
+ * A .minecraft folder, holding versions, libraries and assets.
+ *
+ * @see McFilesService
+ */
 public interface McFiles {
     Path getMcDir();
 
@@ -19,6 +24,14 @@ public interface McFiles {
 
     default Path getResourcesDir() {
         return getMcDir().resolve("resources");
+    }
+
+    /**
+     * @param mcDir the .minecraft folder.
+     * @return McFiles for the given .minecraft folder.
+     */
+    static McFiles of(Path mcDir) {
+        return new DefaultMcFiles(mcDir);
     }
 
 }

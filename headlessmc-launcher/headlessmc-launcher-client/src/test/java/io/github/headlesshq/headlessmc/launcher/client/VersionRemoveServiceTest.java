@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.client;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
@@ -46,6 +47,7 @@ class VersionRemoveServiceTest {
     private FakePlatformService platformService;
     private FakeProfileService profileService;
     private McFiles mcFiles;
+    private McFiles otherMcFiles;
 
     private record Download(@Nullable String getPath) implements Version.Download {
         @Override
@@ -194,6 +196,7 @@ class VersionRemoveServiceTest {
     @BeforeEach
     void setup() throws IOException {
         mcFiles = TestFiles.mcFiles(root);
+        otherMcFiles = McFiles.of(root.resolve("other"));
         platformService = new FakePlatformService(
             new FakeVanillaPlatform("1.21.1", "1.20.4", "1.5.2", "1.5.1", "1.7.2"),
             FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9", "0.16.5"})
@@ -230,19 +233,25 @@ class VersionRemoveServiceTest {
     }
 
     private VersionRemoveService service() {
+        McFilesService mcFilesService = TestFiles.mcFilesService(mcFiles, otherMcFiles);
         return new VersionRemoveService(
             matcherService,
             versionJsonService,
             platformService,
             profileService,
             new DefaultFileService(new DefaultFileSystemProvider()),
-            new DefaultJacksonJsonService(),
-            mcFiles
+            new VersionMcFilesService(versionJsonService, mcFilesService),
+            mcFilesService,
+            new DefaultJacksonJsonService()
         );
     }
 
     private void install(FakeVersion version, String... versionArg) throws IOException {
-        versionJsonService.add(version);
+        install(mcFiles, version, versionArg);
+    }
+
+    private void install(McFiles mcFiles, FakeVersion version, String... versionArg) throws IOException {
+        versionJsonService.add(version, mcFiles.getVersionsDir());
         matcherService.withMatch(version.getId(), VersionID.resolve(platformService, VersionArg.parse(versionArg)));
         Path dir = mcFiles.getVersionsDir().resolve(version.getId());
         createFile(dir.resolve(version.getId() + ".json"));
@@ -273,6 +282,10 @@ class VersionRemoveServiceTest {
     }
 
     private void assetIndex(String id, String flags, Map<String, String> objects) throws IOException {
+        assetIndex(mcFiles, id, flags, objects);
+    }
+
+    private void assetIndex(McFiles mcFiles, String id, String flags, Map<String, String> objects) throws IOException {
         String json = objects.entrySet().stream()
             .map(e -> "\"%s\": {\"hash\": \"%s\", \"size\": 1}".formatted(e.getKey(), e.getValue()))
             .collect(Collectors.joining(",", "{" + flags + "\"objects\": {", "}}"));
@@ -280,15 +293,23 @@ class VersionRemoveServiceTest {
         Files.createDirectories(index.getParent());
         Files.writeString(index, json);
         for (String hash : objects.values()) {
-            createFile(object(hash));
+            createFile(object(mcFiles, hash));
         }
     }
 
     private Path object(String hash) {
+        return object(mcFiles, hash);
+    }
+
+    private static Path object(McFiles mcFiles, String hash) {
         return mcFiles.getAssetsDir().resolve("objects").resolve(hash.substring(0, 2)).resolve(hash);
     }
 
     private Path library(String name) {
+        return library(mcFiles, name);
+    }
+
+    private static Path library(McFiles mcFiles, String name) {
         return Artifact.of(name).jar(mcFiles.getLibraryDir());
     }
 
@@ -449,6 +470,44 @@ class VersionRemoveServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> service.findVersion(List.of("1.5.2")));
         assertThrows(IllegalArgumentException.class, () -> service.findVersion(List.of()));
+    }
+
+    @Test
+    void removesVersionsInOtherMcFolders() throws IOException {
+        install(otherMcFiles, new FakeVersion("1.19.4")
+            .withLibrary(library("com.example:shared:1.0", true))
+            .withLibrary(library("com.example:other-only:1.0", true))
+            .withAssetIndex(new AssetIndex("17")), "1.20.4");
+        assetIndex(otherMcFiles, "17", "", Map.of("only17.png", ONLY_17));
+
+        VersionRemoval removal = plan("1.19.4");
+        assertEquals(otherMcFiles.getVersionsDir().resolve("1.19.4"), removal.files().getLast());
+
+        remove("1.19.4");
+
+        assertFalse(Files.exists(otherMcFiles.getVersionsDir().resolve("1.19.4")));
+        assertFalse(Files.exists(library(otherMcFiles, "com.example:other-only:1.0")));
+        assertFalse(Files.exists(library(otherMcFiles, "com.example:shared:1.0")), "no other version in the folder needs it");
+        assertTrue(Files.exists(library("com.example:shared:1.0")));
+        // 1.21.1 uses the same asset index, but in the primary folder
+        assertFalse(Files.exists(otherMcFiles.getAssetsDir().resolve("indexes").resolve("17.json")));
+        assertFalse(Files.exists(object(otherMcFiles, ONLY_17)));
+        assertTrue(Files.exists(mcFiles.getAssetsDir().resolve("indexes").resolve("17.json")));
+        assertTrue(Files.exists(object(ONLY_17)));
+        assertTrue(Files.exists(mcFiles.getVersionsDir().resolve("1.21.1")));
+    }
+
+    @Test
+    void keepsLibrariesNeededByVersionsInTheSameMcFolderOnly() throws IOException {
+        createFile(library(otherMcFiles, "com.example:vanilla-only:1.0"));
+        remove(FABRIC_9);
+        remove(FABRIC_5);
+
+        remove("1.21.1");
+
+        assertFalse(Files.exists(library("com.example:vanilla-only:1.0")));
+        assertTrue(Files.exists(library(otherMcFiles, "com.example:vanilla-only:1.0")), "other folders are not touched");
+        assertTrue(Files.exists(library("com.example:shared:1.0")), "1.20.4 still needs it");
     }
 
 }

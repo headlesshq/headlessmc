@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
@@ -52,7 +52,7 @@ public class ProfileLaunchCommand extends AbstractClientAndServerLaunchCommand {
         ClientLauncher clientLauncher,
         ArgSplitter splitter,
         Console console,
-        McFiles mcFiles,
+        McFilesService mcFilesService,
         LastUsedAccountService lastUsedAccountService,
         XvfbService xvfbService,
         AuthService authService,
@@ -67,7 +67,7 @@ public class ProfileLaunchCommand extends AbstractClientAndServerLaunchCommand {
             clientLauncher,
             splitter,
             console,
-            mcFiles,
+            mcFilesService,
             lastUsedAccountService,
             xvfbService,
             authService

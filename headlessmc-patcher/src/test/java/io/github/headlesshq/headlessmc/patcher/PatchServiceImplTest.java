@@ -101,10 +101,10 @@ public class PatchServiceImplTest {
 
     private PatchServiceImpl service(Path root) {
         PatchCacheImpl cache = new PatchCacheImpl(
-            fileService, hashService, jsonService, TestPatchers.appFiles(root), TestPatchers.mcFiles(root)
+            fileService, hashService, jsonService, TestPatchers.appFiles(root), TestPatchers.mcFilesService(root)
         );
 
-        return new PatchServiceImpl(helperServices, patchers, fileService, cache, TestPatchers.mcFiles(root));
+        return new PatchServiceImpl(helperServices, patchers, fileService, cache, TestPatchers.mcFilesService(root));
     }
 
     private PatchResult classpath(Path root) throws IOException {

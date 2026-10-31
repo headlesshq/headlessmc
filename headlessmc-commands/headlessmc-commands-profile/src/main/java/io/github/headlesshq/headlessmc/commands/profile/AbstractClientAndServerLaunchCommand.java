@@ -7,7 +7,7 @@ import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.commands.server.AbstractServerLaunchCommand;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
@@ -68,7 +68,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         ClientLauncher clientLauncher,
         ArgSplitter splitter,
         Console console,
-        McFiles mcFiles,
+        McFilesService mcFilesService,
         LastUsedAccountService lastUsedAccountService,
         XvfbService xvfbService,
         AuthService authService
@@ -81,7 +81,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             serverService,
             splitter,
             console,
-            mcFiles
+            mcFilesService
         );
         this.lastUsedAccountService = lastUsedAccountService;
         this.clientLauncher = clientLauncher;
@@ -194,7 +194,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         return new LaunchOptions(
             resolution,
             Optional.of(
-                getMcFiles().getMcDir()
+                getMcFilesService().getPrimaryMcFiles().getMcDir()
                     .resolve("quickPlay")
                     .resolve("java")
                     .resolve(System.currentTimeMillis() + ".json")

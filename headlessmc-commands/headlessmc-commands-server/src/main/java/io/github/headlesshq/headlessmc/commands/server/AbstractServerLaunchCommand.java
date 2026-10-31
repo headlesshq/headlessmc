@@ -4,7 +4,7 @@ import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.FinalCommand;
 import io.github.headlesshq.headlessmc.console.LongRunningCommand;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
@@ -34,7 +34,7 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     private final ServerService serverService;
     private final ArgSplitter splitter;
     private final Console console;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
 
     public abstract String getGameArgs();
 

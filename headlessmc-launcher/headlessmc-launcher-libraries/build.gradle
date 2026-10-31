@@ -14,5 +14,6 @@ dependencies {
     implementation project(':headlessmc-files')
 
     testImplementation testFixtures(project(':headlessmc-net'))
+    testImplementation testFixtures(project(':headlessmc-files'))
     testImplementation testFixtures(project(':headlessmc-version'))
 }

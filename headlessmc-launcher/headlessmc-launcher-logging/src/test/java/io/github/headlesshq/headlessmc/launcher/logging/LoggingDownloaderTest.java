@@ -57,7 +57,7 @@ class LoggingDownloaderTest {
 
     private LoggingDownloader downloader(boolean patch) {
         LoggingConfig config = () -> patch;
-        return new LoggingDownloader(downloads, () -> config, new DefaultFileService(new DefaultFileSystemProvider()), mcFiles);
+        return new LoggingDownloader(downloads, () -> config, new DefaultFileService(new DefaultFileSystemProvider()));
     }
 
     private Version version(@Nullable Map<String, Version.LoggingConfiguration> logging) {
@@ -82,14 +82,14 @@ class LoggingDownloaderTest {
 
     @Test
     void versionsWithoutLoggingAreSkipped() {
-        assertEquals(Optional.empty(), downloader.downloadLogging(new TemplateStrings(), version(null)));
-        assertEquals(Optional.empty(), downloader.downloadLogging(new TemplateStrings(), version(Map.of())));
+        assertEquals(Optional.empty(), downloader.downloadLogging(mcFiles, new TemplateStrings(), version(null)));
+        assertEquals(Optional.empty(), downloader.downloadLogging(mcFiles, new TemplateStrings(), version(Map.of())));
     }
 
     @Test
     void downloadsTheLoggingConfigurationAndBuildsTheArgument() throws Exception {
         Optional<String> argument = downloader.downloadLogging(
-            new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration()))
+            mcFiles, new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration()))
         );
 
         assertEquals(
@@ -104,7 +104,7 @@ class LoggingDownloaderTest {
         Files.createDirectories(configFile().getParent());
         Files.write(configFile(), "cached".getBytes(StandardCharsets.UTF_8));
 
-        downloader.downloadLogging(new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration())));
+        downloader.downloadLogging(mcFiles, new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration())));
 
         assertFalse(downloads.wasRequested(CONFIG_URL));
         assertEquals("cached", Files.readString(configFile()));
@@ -119,7 +119,7 @@ class LoggingDownloaderTest {
         );
 
         assertThrows(NullPointerException.class, () -> downloader.downloadLogging(
-            new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, broken))
+            mcFiles, new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, broken))
         ));
     }
 
@@ -132,7 +132,7 @@ class LoggingDownloaderTest {
         );
 
         assertThrows(NullPointerException.class, () -> downloader.downloadLogging(
-            new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, broken))
+            mcFiles, new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, broken))
         ));
     }
 
@@ -142,7 +142,7 @@ class LoggingDownloaderTest {
         Files.writeString(configFile(), "<Console><XMLLayout /></Console><File><LegacyXMLLayout /></File>");
 
         Optional<String> argument = downloader(true).downloadLogging(
-            new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration()))
+            mcFiles, new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration()))
         );
 
         assertEquals(
@@ -167,7 +167,7 @@ class LoggingDownloaderTest {
         Files.writeString(patchedConfigFile(), "already-patched");
 
         Optional<String> argument = downloader(true).downloadLogging(
-            new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration()))
+            mcFiles, new TemplateStrings(), version(Map.of(Version.LOGGING_CLIENT, configuration()))
         );
 
         assertEquals(

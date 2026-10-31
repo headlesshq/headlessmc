@@ -2,7 +2,7 @@ package io.github.headlesshq.headlessmc.commands.server;
 
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
@@ -54,7 +54,7 @@ public class ServerLaunchCommand extends AbstractServerLaunchCommand {
         ServerService serverService,
         ArgSplitter splitter,
         Console console,
-        McFiles mcFiles
+        McFilesService mcFilesService
     ) {
         super(
             lifecycleService,
@@ -64,7 +64,7 @@ public class ServerLaunchCommand extends AbstractServerLaunchCommand {
             serverService,
             splitter,
             console,
-            mcFiles
+            mcFilesService
         );
     }
 

@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.patcher;
 
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,7 +33,7 @@ final class PatchContextImpl implements PatchContext {
     private final FileService fileService;
     private final PatchCache.Key cacheKey;
     private final List<Patcher> patchers;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
     private final int javaVersion;
     private final Path baseDir;
     private PatchResult currentPatchResult;
@@ -56,8 +57,14 @@ final class PatchContextImpl implements PatchContext {
     @Override
     public void patch(Path library, Patcher patcher, PatchAction action) {
         Path relative = library.getFileName();
-        if (library.startsWith(mcFiles.getLibraryDir())) {
-            relative = mcFiles.getLibraryDir().relativize(library);
+        // libraries are loaded from all .minecraft folders
+        Optional<Path> libraryDir = mcFilesService.getAllMcFiles()
+            .stream()
+            .map(McFiles::getLibraryDir)
+            .filter(library::startsWith)
+            .findFirst();
+        if (libraryDir.isPresent()) {
+            relative = libraryDir.get().relativize(library);
         } else if (relativePaths.containsKey(library)) {
             relative = relativePaths.get(library);
         }

@@ -9,7 +9,7 @@ import io.github.headlesshq.headlessmc.commands.util.ProfileVersionJsonCompletio
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
@@ -84,7 +84,7 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
         ClientLauncher clientLauncher,
         ArgSplitter splitter,
         Console console,
-        McFiles mcFiles,
+        McFilesService mcFilesService,
         LastUsedAccountService lastUsedAccountService,
         XvfbService xvfbService,
         AuthService authService,
@@ -101,7 +101,7 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
             clientLauncher,
             splitter,
             console,
-            mcFiles,
+            mcFilesService,
             lastUsedAccountService,
             xvfbService,
             authService

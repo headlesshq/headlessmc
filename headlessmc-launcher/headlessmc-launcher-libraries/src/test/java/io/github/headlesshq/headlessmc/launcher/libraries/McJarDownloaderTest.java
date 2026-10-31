@@ -37,9 +37,10 @@ public class McJarDownloaderTest {
     public void downloadsMissingMcJar(@TempDir Path root) throws Exception {
         McFiles mcFiles = TestLibraries.mcFiles(root);
         downloadService.register(URL, JAR);
-        McJarDownloader downloader = new McJarDownloader(downloadService, mcFiles);
+        McJarDownloader downloader = new McJarDownloader(downloadService);
 
         Path jar = downloader.downloadMcJar(
+            mcFiles,
             Version.DOWNLOAD_CLIENT,
             version(TestLibraries.download(null, (long) JAR.length, URL.toString(), sha1()))
         );
@@ -57,9 +58,9 @@ public class McJarDownloaderTest {
         Path existing = mcFiles.getVersionsDir().resolve("test-version").resolve("test-version.jar");
         Files.createDirectories(existing.getParent());
         Files.write(existing, JAR);
-        McJarDownloader downloader = new McJarDownloader(downloadService, mcFiles);
+        McJarDownloader downloader = new McJarDownloader(downloadService);
 
-        Path jar = downloader.downloadMcJar(Version.DOWNLOAD_CLIENT, version(TestLibraries.download(null, null, null, null)));
+        Path jar = downloader.downloadMcJar(mcFiles, Version.DOWNLOAD_CLIENT, version(TestLibraries.download(null, null, null, null)));
 
         assertEquals(existing, jar);
         assertTrue(downloadService.getRequestedUris().isEmpty());
@@ -67,17 +68,20 @@ public class McJarDownloaderTest {
 
     @Test
     public void throwsWithoutDownloadEntry(@TempDir Path root) {
-        McJarDownloader downloader = new McJarDownloader(downloadService, TestLibraries.mcFiles(root));
+        McFiles mcFiles = TestLibraries.mcFiles(root);
+        McJarDownloader downloader = new McJarDownloader(downloadService);
         TestLibraries.FakeVersion version = new TestLibraries.FakeVersion(List.of());
 
-        assertThrows(LibraryException.class, () -> downloader.downloadMcJar(Version.DOWNLOAD_CLIENT, version));
+        assertThrows(LibraryException.class, () -> downloader.downloadMcJar(mcFiles, Version.DOWNLOAD_CLIENT, version));
     }
 
     @Test
     public void throwsWithoutDownloadUrl(@TempDir Path root) {
-        McJarDownloader downloader = new McJarDownloader(downloadService, TestLibraries.mcFiles(root));
+        McFiles mcFiles = TestLibraries.mcFiles(root);
+        McJarDownloader downloader = new McJarDownloader(downloadService);
 
         assertThrows(NullPointerException.class, () -> downloader.downloadMcJar(
+            mcFiles,
             Version.DOWNLOAD_CLIENT,
             version(TestLibraries.download(null, null, null, null))
         ));

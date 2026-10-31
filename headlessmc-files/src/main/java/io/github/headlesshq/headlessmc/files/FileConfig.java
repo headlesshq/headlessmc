@@ -6,6 +6,7 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -18,6 +19,14 @@ public interface FileConfig extends DynamicConfig {
 
     @WithName("mc")
     Optional<String> mcDir();
+
+    /**
+     * Additional .minecraft folders, e.g. on other drives, next to the primary {@link #mcDir()}.
+     *
+     * @return comma separated paths to the additional .minecraft folders.
+     */
+    @WithName("mc-folders")
+    Optional<List<String>> mcFolders();
 
     @WithName("game")
     Optional<String> gameDir();

@@ -63,6 +63,7 @@ import java.util.SequencedMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyList;
 
 class ClientLauncherTest {
@@ -173,12 +174,14 @@ class ClientLauncherTest {
     private FakePlatform fabric;
     private FakePlatformService platformService;
     private McFiles mcFiles;
+    private McFiles otherMcFiles;
     private Path assetsDir;
     private List<Path> classpath;
 
     @BeforeEach
     void setup() {
         mcFiles = TestFiles.mcFiles(root);
+        otherMcFiles = McFiles.of(root.resolve("other"));
         assetsDir = root.resolve("assets");
         classpath = List.of(root.resolve("libs/a.jar"), root.resolve("versions/1.21.1.jar"));
 
@@ -187,9 +190,9 @@ class ClientLauncherTest {
             .withRepository(MavenRepository.of("https://maven.fabricmc.net/"));
         platformService = new FakePlatformService(vanilla, fabric);
 
-        Mockito.when(assetDownloader.download(any())).thenReturn(new AssetsLocation("17", assetsDir));
-        Mockito.when(loggingDownloader.downloadLogging(any(), any())).thenReturn(Optional.empty());
-        Mockito.when(classpathService.buildClasspath(any(), any(), any(), anyList())).thenAnswer(_ -> classpath);
+        Mockito.when(assetDownloader.download(any(), any())).thenReturn(new AssetsLocation("17", assetsDir));
+        Mockito.when(loggingDownloader.downloadLogging(any(), any(), any())).thenReturn(Optional.empty());
+        Mockito.when(classpathService.buildClasspath(any(), any(), any(), any(), anyList())).thenAnswer(_ -> classpath);
     }
 
     private ClientLauncher launcher() {
@@ -197,10 +200,11 @@ class ClientLauncherTest {
             new ArgumentTemplateService(),
             Mockito.mock(LastUsedAccountService.class),
             Mockito.mock(SpecificsPropertiesService.class),
+            new VersionMcFilesService(versionJsonService, TestFiles.mcFilesService(mcFiles, otherMcFiles)),
             Mockito.mock(SpecificsDownloader.class),
             versionMatcherService,
             versionJsonService,
-            new TemplateStringService(mcFiles, CPU.X64),
+            new TemplateStringService(CPU.X64),
             loggingDownloader,
             launcherService,
             classpathService,
@@ -208,8 +212,7 @@ class ClientLauncherTest {
             assetDownloader,
             platformService,
             patchService,
-            new Config(),
-            mcFiles
+            new Config()
         );
     }
 
@@ -424,7 +427,7 @@ class ClientLauncherTest {
     @Test
     void loggingArgumentIsAdded() {
         install(version("1.21.1"), "vanilla");
-        Mockito.when(loggingDownloader.downloadLogging(any(), any()))
+        Mockito.when(loggingDownloader.downloadLogging(any(), any(), any()))
             .thenReturn(Optional.of("-Dlog4j.configurationFile=logging.xml"));
 
         RecordingBuilder builder = builder(launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT));
@@ -438,7 +441,21 @@ class ClientLauncherTest {
 
         launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT);
 
-        Mockito.verify(assetDownloader).download(version.getAssetIndex());
+        Mockito.verify(assetDownloader).download(mcFiles, version.getAssetIndex());
+    }
+
+    @Test
+    void versionsInOtherMcFoldersLaunchWithTheFilesOfTheirFolder() {
+        FakeVersion version = version("1.21.1");
+        versionJsonService.add(version, otherMcFiles.getVersionsDir());
+        install(version, "vanilla");
+
+        RecordingBuilder builder = builder(launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT));
+
+        Mockito.verify(assetDownloader).download(otherMcFiles, version.getAssetIndex());
+        Mockito.verify(loggingDownloader).downloadLogging(eq(otherMcFiles), any(), any());
+        Mockito.verify(classpathService).buildClasspath(eq(otherMcFiles), any(), any(), any(), anyList());
+        assertEquals(otherMcFiles.getLibraryDir().toAbsolutePath().toString(), systemProperties(builder).get("libraryDirectory"));
     }
 
     @Test
@@ -449,7 +466,7 @@ class ClientLauncherTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MavenRepository>> repositories = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), repositories.capture());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), any(), repositories.capture());
         assertEquals(fabric.getRepositories(), repositories.getValue());
     }
 
@@ -468,7 +485,7 @@ class ClientLauncherTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MavenRepository>> repositories = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), repositories.capture());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), any(), repositories.capture());
         assertEquals(vanilla.getRepositories(), repositories.getValue());
     }
 
@@ -482,7 +499,7 @@ class ClientLauncherTest {
         assertEquals("mc-client-fabric/1.21.1", process.getId());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MavenRepository>> repositories = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), repositories.capture());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), any(), repositories.capture());
         assertEquals(fabric.getRepositories(), repositories.getValue());
     }
 
@@ -535,7 +552,7 @@ class ClientLauncherTest {
         launcher().launcher(profile, ACCOUNT);
 
         ArgumentCaptor<Features> features = ArgumentCaptor.forClass(Features.class);
-        Mockito.verify(classpathService).buildClasspath(any(), features.capture(), any(), anyList());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), features.capture(), any(), anyList());
         assertTrue(features.getValue().get(Feature.DEMO));
     }
 
@@ -546,7 +563,7 @@ class ClientLauncherTest {
         launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT);
 
         ArgumentCaptor<Features> features = ArgumentCaptor.forClass(Features.class);
-        Mockito.verify(classpathService).buildClasspath(any(), features.capture(), any(), anyList());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), features.capture(), any(), anyList());
         assertFalse(features.getValue().get(Feature.DEMO));
     }
 

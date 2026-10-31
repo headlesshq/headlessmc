@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileConfig;
 import io.github.headlesshq.headlessmc.files.FileService;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,7 +24,7 @@ public class GameDirService {
     private final ConfigService configService;
     private final FileService fileService;
     private final AppFiles appFiles;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
 
     public Path getGameDir(VersionArg version) {
         FileConfig config = this.config.get();
@@ -47,11 +47,13 @@ public class GameDirService {
             return fileService.getUserPath(gameDir.get());
         }
 
+        // game dirs are always in the primary .minecraft folder, no matter where the version is installed
+        Path mcDir = mcFilesService.getPrimaryMcFiles().getMcDir();
         if (config.gameForEachVersion()) {
-            return mcFiles.getMcDir().resolve(version.toString("-"));
+            return mcDir.resolve(version.toString("-"));
         }
 
-        return mcFiles.getMcDir();
+        return mcDir;
     }
 
 }

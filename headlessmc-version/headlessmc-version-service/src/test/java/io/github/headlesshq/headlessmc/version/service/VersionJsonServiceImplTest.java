@@ -47,15 +47,21 @@ class VersionJsonServiceImplTest {
     Path root;
 
     private Path versionsDir;
+    private Path otherVersionsDir;
     private VersionJsonServiceImpl service;
 
     @BeforeEach
     void setup() {
         versionsDir = root.resolve("versions");
-        service = new VersionJsonServiceImpl(PARSER, () -> versionsDir);
+        otherVersionsDir = root.resolve("other").resolve("versions");
+        service = new VersionJsonServiceImpl(PARSER, () -> List.of(versionsDir, otherVersionsDir));
     }
 
     private void write(String id, String inheritsFrom) {
+        write(versionsDir, id, inheritsFrom);
+    }
+
+    private void write(Path versionsDir, String id, String inheritsFrom) {
         try {
             Path dir = Files.createDirectories(versionsDir.resolve(id));
             Files.writeString(dir.resolve(id + ".json"), inheritsFrom == null ? id : id + ":" + inheritsFrom);
@@ -167,6 +173,49 @@ class VersionJsonServiceImplTest {
     void observeChangesWithoutChangesIsEmpty() {
         write("1.21.1", null);
         assertEquals(List.of(), service.observeChanges(() -> { }));
+    }
+
+    @Test
+    void listsVersionsOfAllVersionsDirs() {
+        write("1.21.1", null);
+        write(otherVersionsDir, "1.20.1", null);
+
+        assertEquals(Set.of("1.21.1", "1.20.1"), service.getInstalledFileNames());
+        assertEquals(Optional.of(otherVersionsDir), service.getVersionsDir("1.20.1"));
+        assertEquals(Optional.of(versionsDir), service.getVersionsDir("1.21.1"));
+        assertEquals(Optional.empty(), service.getVersionsDir("nope"));
+        assertEquals("1.20.1", service.getVersion("1.20.1").getId());
+    }
+
+    @Test
+    void earlierVersionsDirsShadowLaterOnes() {
+        write("1.21.1", null);
+        write(otherVersionsDir, "1.21.1", "shadowed");
+
+        assertEquals(Set.of("1.21.1"), service.getInstalledFileNames());
+        assertEquals(Optional.of(versionsDir), service.getVersionsDir("1.21.1"));
+        assertNull(service.getVersion("1.21.1").getInheritsFrom());
+    }
+
+    @Test
+    void resolvesParentsInOtherVersionsDirs() {
+        write(otherVersionsDir, "fabric-1.21.1", "1.21.1");
+        write("1.21.1", null);
+
+        ProcessedVersion resolved = service.resolve(service.getVersion("fabric-1.21.1"));
+
+        assertEquals(List.of("1.21.1", "fabric-1.21.1"), resolved.hierarchy().stream().map(Version::getId).toList());
+    }
+
+    @Test
+    void prefersParentsInTheVersionsDirOfTheirChild() {
+        write(otherVersionsDir, "fabric-1.21.1", "1.21.1");
+        write(otherVersionsDir, "1.21.1", null);
+        write("1.21.1", "!broken-if-used");
+
+        ProcessedVersion resolved = service.resolve(service.getVersion("fabric-1.21.1"));
+
+        assertEquals(List.of("1.21.1", "fabric-1.21.1"), resolved.hierarchy().stream().map(Version::getId).toList());
     }
 
 }

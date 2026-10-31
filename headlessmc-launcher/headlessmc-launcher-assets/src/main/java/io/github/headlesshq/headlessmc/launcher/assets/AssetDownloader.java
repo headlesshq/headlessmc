@@ -4,10 +4,12 @@ import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.net.DownloadContext;
 import io.github.headlesshq.headlessmc.net.DownloadService;
 import io.github.headlesshq.headlessmc.net.NetConfig;
 import io.github.headlesshq.headlessmc.net.hash.HashService;
+import io.github.headlesshq.headlessmc.net.hash.Verifier;
 import io.github.headlesshq.headlessmc.net.parallel.ParallelTaskService;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
 import io.github.headlesshq.headlessmc.progressbar.ProgressbarService;
@@ -30,14 +32,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AssetDownloader {
     final ProgressbarService progressbarService;
     final DownloadService downloadService;
+    final McFilesService mcFilesService;
     final FileService fileService;
     final HashService hashService;
     final DummyAssets dummyAssets;
     final Holder<AssetsConfig> config;
-    final McFiles mcFiles;
     final JsonService jsonService;
 
-    public AssetsLocation download(Version.AssetIndex assetIndex) throws HeadlessMcException {
+    /**
+     * Downloads the assets of an asset index.
+     *
+     * @param mcFiles    the .minecraft folder to download the assets into.
+     * @param assetIndex the asset index to download.
+     * @return the location of the assets.
+     * @throws HeadlessMcException if something goes wrong.
+     */
+    public AssetsLocation download(McFiles mcFiles, Version.AssetIndex assetIndex) throws HeadlessMcException {
         Objects.requireNonNull(assetIndex.getId(), "AssetIndex id was null");
         Objects.requireNonNull(assetIndex.getUrl(), "AssetIndex url was null");
         Path index = fileService.getPath(mcFiles.getAssetsDir(), "indexes", assetIndex.getId() + ".json");
@@ -45,7 +55,7 @@ public class AssetDownloader {
         NetConfig downloadConfig = config.net();
 
         try (DownloadContext downloadContext = downloadService.context(downloadConfig)) {
-            if (!Files.exists(index)) {
+            if (!Files.exists(index) && !mcFilesService.copyFromOtherMcFiles(index, copy -> isValid(copy, assetIndex))) {
                 downloadContext.download(URI.create(assetIndex.getUrl()))
                     .sha1(assetIndex.getSha1())
                     .size(assetIndex.getSize())
@@ -61,7 +71,7 @@ public class AssetDownloader {
                 AssetIndex.Download download = entry.getValue();
                 totalSize += download.size();
                 
-                AssetDownloadTask task = downloadTask(downloadContext, assetIndex, assetIndexJson, fileName, download);
+                AssetDownloadTask task = downloadTask(mcFiles, downloadContext, assetIndex, assetIndexJson, fileName, download);
                 if (task.needsDownload()) {
                     tasks.add(task);
                 } else {  // no download needed, just run local part
@@ -82,7 +92,7 @@ public class AssetDownloader {
             return new AssetsLocation(
                 assetIndex.getId(),
                 assetIndexJson.isVirtual()
-                    ? getVirtualDir(assetIndex)
+                    ? getVirtualDir(mcFiles, assetIndex)
                     : assetIndexJson.mapToResources()
                         ? mcFiles.getResourcesDir()
                         : mcFiles.getAssetsDir()
@@ -90,7 +100,22 @@ public class AssetDownloader {
         }
     }
 
-    Path getVirtualDir(Version.AssetIndex assetIndex) {
+    private boolean isValid(Path copy, Version.AssetIndex assetIndex) {
+        try {
+            Verifier verifier = hashService.verifier().size(assetIndex.getSize());
+            if (assetIndex.getSha1() != null) {
+                verifier.sha1(assetIndex.getSha1());
+            }
+
+            verifier.verify(copy);
+            return true;
+        } catch (HeadlessMcException e) {
+            log.info("Not copying asset index {}, failed to verify it", copy, e);
+            return false;
+        }
+    }
+
+    Path getVirtualDir(McFiles mcFiles, Version.AssetIndex assetIndex) {
         return fileService.getPath(
             mcFiles.getAssetsDir(),
             "virtual",
@@ -121,6 +146,7 @@ public class AssetDownloader {
     }
 
     private AssetDownloadTask downloadTask(
+        McFiles mcFiles,
         DownloadContext context,
         Version.AssetIndex versionAssetIndex,
         AssetIndex assetIndex,
@@ -131,7 +157,9 @@ public class AssetDownloader {
         String firstTwo = hash.substring(0, 2);
         Path file = fileService.getPath(mcFiles.getAssetsDir(), "objects", firstTwo, hash);
         URI url = URI.create(config.get().url() + "/" + firstTwo + "/" + hash);
-        return new AssetDownloadTask(versionAssetIndex, context, download, assetIndex, this, fileName, file, url);
+        return new AssetDownloadTask(
+            versionAssetIndex, context, download, assetIndex, this, mcFiles, fileName, file, url
+        );
     }
 
 }

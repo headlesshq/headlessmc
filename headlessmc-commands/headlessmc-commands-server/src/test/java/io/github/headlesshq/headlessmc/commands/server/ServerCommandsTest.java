@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.launcher.client.VersionMcFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.server.FakeServerService;
@@ -18,6 +19,7 @@ import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.version.service.FakeVersionJsonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -71,7 +73,8 @@ class ServerCommandsTest {
     private AddCommand add() {
         return new AddCommand(
             platformService, profileService, serverService,
-            new DefaultFileService(new DefaultFileSystemProvider()), appFiles, mcFiles, console
+            new DefaultFileService(new DefaultFileSystemProvider()), appFiles,
+            new VersionMcFilesService(new FakeVersionJsonService(), TestFiles.mcFilesService(mcFiles)), console
         );
     }
 

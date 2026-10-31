@@ -36,6 +36,7 @@ hmc.files.game                                             -                    
 hmc.files.game-for-each-version                            true                                       Whether each version gets its own game directory.
 hmc.files.location                                         -                                          Optional: Specify a custom location to place HeadlessMc files in.
 hmc.files.mc                                               -                                          Optional: Path to the Minecraft directory. Defaults to the OS-specific location.
+hmc.files.mc-folders                                       -                                          Optional: Comma separated paths to additional Minecraft directories, e.g. on other drives. Versions are found in all of them and launched with the files of the directory they are installed in.
 hmc.github.cache-minutes                                   60                                         How many minutes releases fetched from the GitHub API are cached for, 0 disables the cache.
 hmc.github.token                                           -                                          Optional: GitHub token to authenticate requests to the GitHub API with, which raises the rate limit of 60 requests per hour.
 hmc.java.check-for-updates                                 true                                       Whether the java updater checks the Java installations installed by HeadlessMc for updates, see hmc.updater.enabled.
@@ -127,3 +128,21 @@ Memory:
  - Free:  41.95 MB
 ------------------------------------------
 ```
+
+## Multiple Minecraft directories
+
+Next to the primary Minecraft directory, `hmc.files.mc`, you can use additional Minecraft directories,
+e.g. on other drives, with `hmc.files.mc-folders`:
+
+```
+> config set hmc.files.mc-folders D:/minecraft,E:/minecraft
+```
+
+- Versions are found in all Minecraft directories. If a version is installed in multiple directories,
+  the primary directory comes first, then the additional ones in the order they were configured in.
+- A version is launched with the libraries and assets of the directory it is installed in.
+  Missing libraries and assets are copied from the other directories, if they exist there,
+  instead of downloading them again.
+- Versions are installed into the directory their vanilla version is installed in,
+  otherwise into the primary directory. E.g. Fabric for a vanilla version on `E:/minecraft` is installed there.
+- Game directories are always placed in the primary directory.

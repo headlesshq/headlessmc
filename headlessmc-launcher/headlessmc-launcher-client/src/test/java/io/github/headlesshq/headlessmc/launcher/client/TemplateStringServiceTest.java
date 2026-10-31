@@ -21,38 +21,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TemplateStringServiceTest {
-    private TemplateStringService service(Path root) {
-        McFiles mcFiles = new McFiles() {
-            @Override
-            public Path getMcDir() {
-                return root.resolve("mc");
-            }
-
-            @Override
-            public Path getVersionsDir() {
-                return getMcDir().resolve("versions");
-            }
-
-            @Override
-            public Path getLibraryDir() {
-                return getMcDir().resolve("libraries");
-            }
-
-            @Override
-            public Path getAssetsDir() {
-                return getMcDir().resolve("assets");
-            }
-
-            @Override
-            public Path getResourcesDir() {
-                return getMcDir().resolve("resources");
-            }
-        };
-        return new TemplateStringService(mcFiles, CPU.X64);
-    }
-
     private TemplateStrings create(Path root, LaunchOptions options) {
-        return service(root).create(
+        return new TemplateStringService(CPU.X64).create(
+            McFiles.of(root.resolve("mc")),
             new AssetsLocation("assets-17", root.resolve("assets")),
             new Account("msa", "Steve", "uuid-steve", "token-123", Account.TYPE_MSA, "xuid"),
             root.resolve("game"),
