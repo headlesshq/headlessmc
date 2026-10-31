@@ -1,1 +1,14 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        // for HeadlessMc builds published with ./gradlew publishToMavenLocal
+        mavenLocal()
+    }
+    plugins {
+        // released with HeadlessMc, under the same version
+        id 'io.github.headlesshq.headlessmc-plugin' version "${headlessmc_version}"
+    }
+}
+
 rootProject.name = 'headlessmc-quilt'

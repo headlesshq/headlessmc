@@ -24,5 +24,5 @@ e.g. `~/.local/share/headlessmc/plugins`, and check that it has been loaded with
 ```
 
 This project was created from the
-[HeadlessMc plugin template](https://github.com/headlesshq/headlessmc-plugin-template),
-see its README for how the plugin is packaged.
+[HeadlessMc plugin template](https://github.com/headlesshq/headlessmc/tree/plugin-template)
+and is packaged by the [HeadlessMc Gradle plugin](https://headlesshq.github.io/headlessmc/plugins/#the-gradle-plugin).
