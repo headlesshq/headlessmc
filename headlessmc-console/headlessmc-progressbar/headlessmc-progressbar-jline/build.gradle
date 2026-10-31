@@ -1,4 +1,5 @@
 dependencies {
+    implementation project(':headlessmc-console')
     implementation project(':headlessmc-console:headlessmc-progressbar')
     implementation(libs.progressbar) {
         // hmm, is this needed on windows?
