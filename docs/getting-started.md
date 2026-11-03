@@ -1,7 +1,32 @@
 # Getting Started
 
-Download the executable for your Operating System from the latest 
-[GitHub Release](https://github.com/headlesshq/headlessmc/releases).
+The easiest way to install HeadlessMc is our install script.
+It downloads the executable for your Operating System from the latest
+[GitHub Release](https://github.com/headlesshq/headlessmc/releases) and adds it to your PATH as `headlessmc`.
+
+=== "Linux & MacOS"
+
+    ``` sh
+    curl -fsSL https://headlesshq.github.io/headlessmc/install.sh | sh
+    ```
+    This installs to `~/.local/bin`, which you might have to add to your PATH, the script tells you how.
+
+=== "Windows"
+
+    Run in PowerShell:
+    ```lang-powershell
+    irm https://headlesshq.github.io/headlessmc/install.ps1 | iex
+    ```
+    This installs to `%LOCALAPPDATA%\headlessmc\bin` and adds it to your user PATH.
+
+Afterwards, run `headlessmc` in a new terminal.
+To install a specific version or into another directory, set the `HEADLESSMC_VERSION`
+(e.g. `3.0.0`) or `HEADLESSMC_INSTALL_DIR` environment variables.
+
+### Manual download
+
+You can also download the executable for your Operating System from the latest 
+[GitHub Release](https://github.com/headlesshq/headlessmc/releases) yourself.
 
 === "Linux"
     

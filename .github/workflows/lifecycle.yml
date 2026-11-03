@@ -119,6 +119,8 @@ jobs:
       - run: pip install mkdocs-material
       - name: Build documentation
         run: mkdocs build -d _site
+      - name: Copy install scripts
+        run: cp scripts/install.sh scripts/install.ps1 _site/
 
       # Prepare Site deployment
       #- name: Copy javadoc
@@ -197,6 +199,52 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  test-install-scripts:
+    needs: [release-please, release]
+    if: ${{ !cancelled() && needs.release.result != 'failure' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15, macos-15-intel, windows-latest ]
+    env:
+      HEADLESSMC_VERSION: ${{ needs.release.result == 'success' && needs.release-please.outputs.tag_name || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: ShellCheck install.sh
+        if: runner.os == 'Linux'
+        run: shellcheck scripts/install.sh
+
+      - name: Install with install.sh
+        if: runner.os != 'Windows'
+        env:
+          HEADLESSMC_INSTALL_DIR: ${{ runner.temp }}/hmc-bin
+        run: |
+          sh scripts/install.sh
+          version="$("$HEADLESSMC_INSTALL_DIR/headlessmc" --version)"
+          echo "Installed HeadlessMc $version"
+          if [[ -n "$HEADLESSMC_VERSION" && "$version" != "$HEADLESSMC_VERSION" ]]; then
+            echo "::error::expected version $HEADLESSMC_VERSION, but got $version"
+            exit 1
+          fi
+          "$HEADLESSMC_INSTALL_DIR/headlessmc" help
+
+      - name: Install with install.ps1 (Windows PowerShell)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+          $version = headlessmc --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Host "Installed HeadlessMc $version"
+          if ($env:HEADLESSMC_VERSION -and $version -ne $env:HEADLESSMC_VERSION) {
+            Write-Host "::error::expected version $env:HEADLESSMC_VERSION, but got $version"
+            exit 1
+          }
+          headlessmc help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   # run the tests of all modules on the other platforms, to catch platform specific bugs
   # ubuntu is covered by the build job
