@@ -223,10 +223,11 @@ jobs:
           HEADLESSMC_INSTALL_DIR: ${{ runner.temp }}/hmc-bin
         run: |
           sh scripts/install.sh
-          version="$("$HEADLESSMC_INSTALL_DIR/headlessmc" --version)"
-          echo "Installed HeadlessMc $version"
-          if [[ -n "$HEADLESSMC_VERSION" && "$version" != "$HEADLESSMC_VERSION" ]]; then
-            echo "::error::expected version $HEADLESSMC_VERSION, but got $version"
+          # --version prints "HeadlessMc <version>", followed by a notice if a newer release is available
+          version="$("$HEADLESSMC_INSTALL_DIR/headlessmc" --version | head -n 1)"
+          echo "Installed $version"
+          if [[ -n "$HEADLESSMC_VERSION" && "$version" != "HeadlessMc $HEADLESSMC_VERSION" ]]; then
+            echo "::error::expected 'HeadlessMc $HEADLESSMC_VERSION', but got '$version'"
             exit 1
           fi
           "$HEADLESSMC_INSTALL_DIR/headlessmc" help
@@ -236,11 +237,13 @@ jobs:
         shell: powershell
         run: |
           Get-Content -Raw scripts/install.ps1 | Invoke-Expression
-          $version = headlessmc --version
+          # --version prints "HeadlessMc <version>", followed by a notice if a newer release is available
+          $output = headlessmc --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Write-Host "Installed HeadlessMc $version"
-          if ($env:HEADLESSMC_VERSION -and $version -ne $env:HEADLESSMC_VERSION) {
-            Write-Host "::error::expected version $env:HEADLESSMC_VERSION, but got $version"
+          $version = @($output)[0]
+          Write-Host "Installed $version"
+          if ($env:HEADLESSMC_VERSION -and $version -ne "HeadlessMc $env:HEADLESSMC_VERSION") {
+            Write-Host "::error::expected 'HeadlessMc $env:HEADLESSMC_VERSION', but got '$version'"
             exit 1
           }
           headlessmc help
