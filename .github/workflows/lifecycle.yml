@@ -655,6 +655,29 @@ jobs:
             ./headlessmc-launcher-linux-arm64 \
             ./headlessmc-launcher-macos-arm64
 
+  # Asks headlesshq/homebrew-tap to update its headlessmc formula to the new release.
+  # HOMEBREW_TAP_TOKEN: fine-grained token with "Contents: read and write" on headlesshq/homebrew-tap.
+  # The tap also checks for new releases daily, so a failure here only delays the update.
+  # Not a dependency of maven-central on purpose, the formula is not part of the release itself.
+  homebrew:
+    name: Update Homebrew tap
+    runs-on: ubuntu-latest
+    needs: [release-please, release]
+    if: needs.release-please.outputs.release_created == 'true'
+    steps:
+      - name: Dispatch headlessmc-release to headlesshq/homebrew-tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN is not set, the tap will pick up $TAG_NAME with its daily check"
+            exit 0
+          fi
+          gh api repos/headlesshq/homebrew-tap/dispatches \
+            -f event_type=headlessmc-release \
+            -f "client_payload[tag]=$TAG_NAME"
+
   maven-central:
     name: Publish to Maven Central
     runs-on: ubuntu-latest
