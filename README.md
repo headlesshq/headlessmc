@@ -37,6 +37,8 @@ Install HeadlessMc with
 curl -fsSL https://headlesshq.github.io/headlessmc/install.sh | sh
 # Windows (PowerShell)
 irm https://headlesshq.github.io/headlessmc/install.ps1 | iex
+# or with npm
+npm install -g headlessmc
 ```
 or download the latest release and visit our [Getting Started](https://headlesshq.github.io/headlessmc/getting-started/)
 page to get started, it's as easy as:

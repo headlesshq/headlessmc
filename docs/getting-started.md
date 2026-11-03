@@ -23,6 +23,20 @@ Afterwards, run `headlessmc` in a new terminal.
 To install a specific version or into another directory, set the `HEADLESSMC_VERSION`
 (e.g. `3.0.0`) or `HEADLESSMC_INSTALL_DIR` environment variables.
 
+### npm
+
+If you have [Node.js](https://nodejs.org) installed, you can get HeadlessMc from npm:
+```sh
+npm install -g headlessmc
+```
+or run it without installing, e.g. on a CI runner:
+```sh
+npx headlessmc launch fabric 26.3 -lwjgl
+```
+The [headlessmc](https://www.npmjs.com/package/headlessmc) package contains the same executables as the
+GitHub Release, so no Java installation is needed for HeadlessMc itself.
+It supports Windows x64, Linux x64 and ARM64 (glibc 2.34 or newer) and MacOS x64 and ARM64.
+
 ### Manual download
 
 You can also download the executable for your Operating System from the latest 
