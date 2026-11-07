@@ -16,7 +16,7 @@ import io.github.headlesshq.headlessmc.platform.paper.api.ProjectResponse;
 import io.github.headlesshq.headlessmc.platform.paper.api.VersionResponse;
 import io.github.headlesshq.headlessmc.platform.paper.api.VersionsResponse;
 import io.github.headlesshq.headlessmc.platform.server.ServerFinder;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
 import io.github.headlesshq.headlessmc.version.Version;
@@ -56,7 +56,7 @@ class PaperInstallerTest {
         }
 
         @Override
-        public Installation installServer(VersionID id, Path dir, io.github.headlesshq.headlessmc.util.typemap.TypedMap args) {
+        public ServerInstallation installServer(VersionID id, Path dir, io.github.headlesshq.headlessmc.util.typemap.TypedMap args) {
             throw new UnsupportedOperationException();
         }
     };
@@ -154,7 +154,7 @@ class PaperInstallerTest {
     void installsTheLatestBuildWhenNoBuildIsGiven() throws Exception {
         VersionID id = VersionID.resolve(platformService, VersionArg.parse("paper", "1.21.1"));
 
-        ServerInstaller.Installation installation = installer.installServer(id, root, new TypedMapImpl());
+        ServerInstallation installation = installer.installServer(id, root, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
         assertEquals(FLAGS, installation.vmArgs());

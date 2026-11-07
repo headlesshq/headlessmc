@@ -14,7 +14,7 @@ import io.github.headlesshq.headlessmc.launcher.server.FakeServerService;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
 import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
@@ -57,7 +57,7 @@ class ServerCommandsTest {
             dir -> dir.resolve("server.jar"),
             (id, dir, args) -> {
                 installations.add(new Installation(id, dir));
-                return new ServerInstaller.Installation(21);
+                return new ServerInstallation(21);
             }
         ));
 
@@ -115,7 +115,7 @@ class ServerCommandsTest {
     void addExistingServerRequiresForce() {
         serverService.add(root.resolve("existing"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "my-server", new ServerInstaller.Installation(21));
+        ), "my-server", new ServerInstallation(21));
 
         AddCommand command = add();
         command.setVersionArg(List.of("1.21.1"));
@@ -154,7 +154,7 @@ class ServerCommandsTest {
         profileService.createDefault("client", VersionArg.parse("vanilla", "1.21.1"));
         serverService.add(root.resolve("srv"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "srv", new ServerInstaller.Installation(21));
+        ), "srv", new ServerInstallation(21));
 
         new ListCommand(serverService, tables, console).run();
 
@@ -181,7 +181,7 @@ class ServerCommandsTest {
         Path dir = createDir(root.resolve("srv"));
         serverService.add(dir, VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "srv", new ServerInstaller.Installation(21));
+        ), "srv", new ServerInstallation(21));
 
         RemoveCommand command = new RemoveCommand(serverService, new DefaultFileService(new DefaultFileSystemProvider()), console);
         command.setName("srv");
@@ -196,7 +196,7 @@ class ServerCommandsTest {
     void serverCompletionsListServerNames() {
         serverService.add(root.resolve("srv"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "srv", new ServerInstaller.Installation(21));
+        ), "srv", new ServerInstallation(21));
 
         List<String> names = new ArrayList<>();
         new ServerCompletions(serverService).forEach(names::add);

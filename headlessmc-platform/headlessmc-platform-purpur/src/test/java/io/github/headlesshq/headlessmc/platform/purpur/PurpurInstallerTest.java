@@ -13,7 +13,7 @@ import io.github.headlesshq.headlessmc.platform.purpur.api.ProjectResponse;
 import io.github.headlesshq.headlessmc.platform.purpur.api.PurpurAPI;
 import io.github.headlesshq.headlessmc.platform.purpur.api.VersionResponse;
 import io.github.headlesshq.headlessmc.platform.server.ServerFinder;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
@@ -52,7 +52,7 @@ class PurpurInstallerTest {
         }
 
         @Override
-        public Installation installServer(VersionID id, Path dir, TypedMap args) {
+        public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) {
             throw new UnsupportedOperationException();
         }
     };
@@ -119,7 +119,7 @@ class PurpurInstallerTest {
     void installsTheLatestBuildWhenNoBuildIsGiven() throws Exception {
         VersionID id = VersionID.resolve(platformService, VersionArg.parse("purpur", "1.21.1"));
 
-        ServerInstaller.Installation installation = installer.installServer(id, root, new TypedMapImpl());
+        ServerInstallation installation = installer.installServer(id, root, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
         assertEquals(List.of("-XX:+UseG1GC"), installation.vmArgs());

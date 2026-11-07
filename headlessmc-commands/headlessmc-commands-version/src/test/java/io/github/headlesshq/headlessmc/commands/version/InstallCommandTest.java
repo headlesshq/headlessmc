@@ -15,6 +15,7 @@ import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
@@ -34,16 +35,16 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class InstallCommandTest {
-    private record ClientInstallation(VersionID id, Path dir, TypedMap args) {}
+    private record RecordedClientInstall(VersionID id, Path dir, TypedMap args) {}
 
-    private record ServerInstallation(VersionID id, Path dir) {}
+    private record RecordedServerInstall(VersionID id, Path dir) {}
 
     @TempDir
     Path root;
 
     private final RecordingConsole console = new RecordingConsole();
-    private final List<ClientInstallation> clientInstalls = new ArrayList<>();
-    private final List<ServerInstallation> serverInstalls = new ArrayList<>();
+    private final List<RecordedClientInstall> clientInstalls = new ArrayList<>();
+    private final List<RecordedServerInstall> serverInstalls = new ArrayList<>();
 
     private FakeVanillaPlatform vanilla;
     private FakePlatformService platformService;
@@ -56,12 +57,12 @@ class InstallCommandTest {
     void setup() {
         vanilla = new FakeVanillaPlatform("1.21.1", "1.20.4");
         ClientInstaller clientInstaller = (id, mcDir, args) -> {
-            clientInstalls.add(new ClientInstallation(id, mcDir, args));
+            clientInstalls.add(new RecordedClientInstall(id, mcDir, args));
             return new FakeVersion(id.getVersion().getName());
         };
         ServerInstaller serverInstaller = (id, dir, args) -> {
-            serverInstalls.add(new ServerInstallation(id, dir));
-            return new ServerInstaller.Installation(21, List.of("-XX:+UseG1GC"));
+            serverInstalls.add(new RecordedServerInstall(id, dir));
+            return new ServerInstallation(21, List.of("-XX:+UseG1GC"));
         };
         vanilla.withClientSupport(new ClientSupport(new UnsupportedMatcher(), clientInstaller));
         vanilla.withServerSupport(new ServerSupport(serverDir -> serverDir.resolve("server.jar"), serverInstaller));
@@ -92,7 +93,7 @@ class InstallCommandTest {
         command.run();
 
         assertEquals(1, clientInstalls.size());
-        ClientInstallation install = clientInstalls.getFirst();
+        RecordedClientInstall install = clientInstalls.getFirst();
         assertEquals("1.21.1", install.id().getVersion().getName());
         assertEquals(mcFiles.getMcDir(), install.dir());
         assertEquals(false, install.args().get(ClientInstaller.FORCE_INSTALL));
@@ -108,7 +109,7 @@ class InstallCommandTest {
         command.setCustomDir(root.resolve("custom").toString());
         command.run();
 
-        ClientInstallation install = clientInstalls.getFirst();
+        RecordedClientInstall install = clientInstalls.getFirst();
         assertEquals(true, install.args().get(ClientInstaller.FORCE_INSTALL));
         assertEquals(URI.create("https://example.com/installer.jar"),
             install.args().get(ClientInstaller.CUSTOM_INSTALLER_URL));
@@ -140,7 +141,7 @@ class InstallCommandTest {
         command.run();
 
         assertEquals(1, serverInstalls.size());
-        ServerInstallation install = serverInstalls.getFirst();
+        RecordedServerInstall install = serverInstalls.getFirst();
         assertEquals("1.21.1", install.id().getVersion().getName());
 
         List<Profile> servers = serverService.listServers();
@@ -168,7 +169,7 @@ class InstallCommandTest {
     void existingServerRequiresForce() {
         serverService.add(root.resolve("existing"), VersionID.resolve(
             platformService, VersionArg.parse("server", "vanilla", "1.21.1")
-        ), "my-server", new ServerInstaller.Installation(21));
+        ), "my-server", new ServerInstallation(21));
 
         InstallCommand command = command();
         command.setVersionArg(List.of("server", "1.21.1"));

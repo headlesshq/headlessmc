@@ -10,6 +10,7 @@ import io.github.headlesshq.headlessmc.net.DownloadService;
 import io.github.headlesshq.headlessmc.platform.*;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.server.ServerFinder;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.Version;
@@ -56,7 +57,7 @@ class VanillaInstallerImpl implements VanillaInstaller {
     }
 
     @Override
-    public Installation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException {
+    public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException {
         log.info("Installing server {} in {} args: {}", id, dir, args);
         Version version = getVersion(id.getVersion());
 
@@ -73,7 +74,7 @@ class VanillaInstallerImpl implements VanillaInstaller {
             .progressBar("Downloading " + id.asArg().withSide(Side.SERVER))
             .toFile(dir.resolve(ServerFinder.DEFAULT_JAR));
 
-        return new Installation(version.requireJavaVersion());
+        return new ServerInstallation(version.requireJavaVersion());
     }
 
     @Override

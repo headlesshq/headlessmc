@@ -3,7 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.server;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import org.jspecify.annotations.Nullable;
@@ -24,7 +24,7 @@ public interface ServerService {
      * @param installation the result of installing the server, provides java version and default jvm args.
      * @return the saved server profile.
      */
-    Profile add(Path dir, VersionID id, @Nullable String name, ServerInstaller.Installation installation);
+    Profile add(Path dir, VersionID id, @Nullable String name, ServerInstallation installation);
 
     Profile save(Profile profile);
 

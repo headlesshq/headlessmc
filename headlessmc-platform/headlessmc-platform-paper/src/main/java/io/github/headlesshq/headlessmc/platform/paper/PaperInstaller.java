@@ -10,6 +10,7 @@ import io.github.headlesshq.headlessmc.platform.paper.api.BuildResponse;
 import io.github.headlesshq.headlessmc.platform.paper.api.PaperAPI;
 import io.github.headlesshq.headlessmc.platform.server.ServerFinder;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.version.Version;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -51,7 +52,7 @@ public class PaperInstaller implements ServerInstaller {
     }
 
     @Override
-    public Installation installServer(
+    public ServerInstallation installServer(
         VersionID id,
         Path dir,
         TypedMap args
@@ -71,7 +72,7 @@ public class PaperInstaller implements ServerInstaller {
                 .size(response.getServerDownload().size())
                 .toFile(file);
 
-            return new Installation(
+            return new ServerInstallation(
                 vanillaVersion.requireJavaVersion(),
                 jvmArgsService.getRecommendedJvmArgs(id.getVersion().getName())
             );

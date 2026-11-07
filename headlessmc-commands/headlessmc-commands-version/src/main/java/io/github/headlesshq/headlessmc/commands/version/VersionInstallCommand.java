@@ -17,6 +17,7 @@ import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
@@ -117,7 +118,7 @@ public class VersionInstallCommand implements Runnable, VersionArgCommand, LongR
                 }
 
                 Path dir = customDir != null ? fileService.getUserPath(customDir) : appFiles.getServerDir().resolve(name);
-                ServerInstaller.Installation installation = installer.installServer(
+                ServerInstallation installation = installer.installServer(
                     id, dir, new TypedMapImpl()
                 );
 
