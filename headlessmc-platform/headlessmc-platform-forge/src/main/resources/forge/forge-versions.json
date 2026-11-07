@@ -1,8 +1,80 @@
 {
-  "version" : 0,
+  "version" : 1,
   "object" : {
     "uid" : "net.minecraftforge",
     "versions" : [ {
+      "requires" : [ {
+        "equals" : "1.20.6",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "4559ddd67c35e35d7c66b0f760372ba69602456a08e9f97cac62a86b5e48654a",
+      "version" : "50.2.15",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "1.21.1",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "12174c0eda811cb07f5988fd47b9735c49a2a3f5b74af41977c0e0fcde176215",
+      "version" : "52.1.21",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "1.21.11",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "722a3198c01d046b0a9c9bdcb3bdb2686ae5df149da757b7c6bb714a35674728",
+      "version" : "61.2.5",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "26.1.2",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "e4995a2c165d73ea164adeb59e1980e04e5bd2de9498b5f57881a9f62805ab23",
+      "version" : "64.1.6",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "26.2",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "20cca057d2c953784a6265f0e207852b857dd4869a77573a9cf88e315d78cee8",
+      "version" : "65.1.6",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "26.3",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "be39e452d5c3aacda96758deaa659934393513334df0941fe8da11697c52cdc8",
+      "version" : "66.1.5",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "26.3",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "c4f45c5477107812aeb8d07ba1938b9291c272b4a41f3a9e218158446355e2ea",
+      "version" : "66.1.4",
+      "recommended" : false,
+      "type" : null
+    }, {
+      "requires" : [ {
+        "equals" : "26.3",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "856abab88abccb085190469bc354c3e6f245065a5febe4d0f365ea6eea24421e",
+      "version" : "66.1.3",
+      "recommended" : false,
+      "type" : null
+    }, {
       "requires" : [ {
         "equals" : "26.3",
         "uid" : "net.minecraft"

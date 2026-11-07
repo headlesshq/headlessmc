@@ -1,8 +1,26 @@
 {
-  "version" : 0,
+  "version" : 1,
   "object" : {
     "uid" : "net.neoforged",
     "versions" : [ {
+      "requires" : [ {
+        "equals" : "26.1.2",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "3e005d91c42a01da7f4c3aa62eb726b96536993907b9d3464b7e615fcfb80bf0",
+      "version" : "26.1.2.126",
+      "recommended" : false,
+      "type" : "release"
+    }, {
+      "requires" : [ {
+        "equals" : "26.3",
+        "uid" : "net.minecraft"
+      } ],
+      "sha256" : "2f926281e447484790789ea7edc917e1e885e865493d22a3b67bff3a6fc56345",
+      "version" : "26.3.0.101",
+      "recommended" : false,
+      "type" : "release"
+    }, {
       "requires" : [ {
         "equals" : "26.3",
         "uid" : "net.minecraft"
