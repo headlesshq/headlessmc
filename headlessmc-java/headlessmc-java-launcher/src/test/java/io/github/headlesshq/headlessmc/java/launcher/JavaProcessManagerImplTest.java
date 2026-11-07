@@ -75,6 +75,35 @@ class JavaProcessManagerImplTest {
         assertEquals(List.of(), manager().getRunningProcesses());
     }
 
+    @Test
+    void keepsUnreadableFilesOfAlivePids() throws IOException {
+        Files.createDirectories(processDir());
+        Path file = processDir().resolve(ProcessHandle.current().pid() + ".json");
+        Files.writeString(file, "{\"id\": \"half-writ");
+
+        assertEquals(List.of(), manager().getRunningProcesses());
+        assertTrue(Files.exists(file));
+    }
+
+    @Test
+    void deletesUnreadableFilesOfDeadPids() throws IOException {
+        Files.createDirectories(processDir());
+        Path file = processDir().resolve(Long.MAX_VALUE + ".json");
+        Files.writeString(file, "not json");
+
+        assertEquals(List.of(), manager().getRunningProcesses());
+        assertFalse(Files.exists(file));
+    }
+
+    @Test
+    void registerLeavesNoTemporaryFile() throws IOException {
+        manager().register("test", currentProcess(), root);
+
+        try (var files = Files.list(processDir())) {
+            assertEquals(List.of(ProcessHandle.current().pid() + ".json"), files.map(f -> f.getFileName().toString()).toList());
+        }
+    }
+
     private Process currentProcess() {
         ProcessHandle handle = ProcessHandle.current();
         return new Process() {
