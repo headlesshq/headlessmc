@@ -176,6 +176,17 @@ class BackupServiceImplTest {
     }
 
     @Test
+    void worldOutsideOfProfileThrows() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("world").resolve("level.dat"), "level");
+        write(root.resolve("other").resolve("level.dat"), "other");
+
+        assertThrows(IllegalArgumentException.class, () -> create(profile, null, ".."));
+        assertThrows(IllegalArgumentException.class, () -> create(profile, null, "../other"));
+        assertEquals(List.of(), service.list());
+    }
+
+    @Test
     void unknownTypeThrows() throws IOException {
         Profile profile = server();
         write(profile.path().resolve("server.jar"), "jar");

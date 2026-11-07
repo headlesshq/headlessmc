@@ -58,13 +58,14 @@ public class WorldService {
      * @param profile the profile to resolve the world of.
      * @param world   the name of the world, or {@code null} to use the default.
      * @return the resolved world directory.
-     * @throws IllegalArgumentException if the world cannot be resolved.
+     * @throws IllegalArgumentException if the world cannot be resolved,
+     *                                  or if the name is not the name of a directory inside the profile.
      */
     public Path resolveWorld(Profile profile, @Nullable String world) {
         if (profile.side().isClient()) {
             Path saves = getSavesDir(profile);
             if (world != null) {
-                return requireDirectory(saves.resolve(world), profile, world);
+                return requireDirectory(resolveNamedWorld(saves, profile, world), profile, world);
             }
 
             List<Path> worlds = listDirectories(saves);
@@ -78,12 +79,12 @@ public class WorldService {
         }
 
         if (world != null) {
-            return requireDirectory(profile.path().resolve(world), profile, world);
+            return requireDirectory(resolveNamedWorld(profile.path(), profile, world), profile, world);
         }
 
         String defaultWorldName = getDefaultServerWorldName(profile);
         Path defaultWorld = profile.path().resolve(defaultWorldName);
-        if (Files.isDirectory(defaultWorld)) {
+        if (Files.isDirectory(defaultWorld) && isChild(profile.path(), defaultWorld)) {
             return defaultWorld;
         }
 
@@ -123,6 +124,24 @@ public class WorldService {
 
         String levelName = properties.getProperty(LEVEL_NAME);
         return levelName == null || levelName.isBlank() ? DEFAULT_SERVER_WORLD : levelName.trim();
+    }
+
+    private Path resolveNamedWorld(Path base, Profile profile, String world) {
+        Path dir = base.resolve(world);
+        if (world.isBlank() || world.contains("/") || world.contains("\\") || world.equals(".") || world.equals("..")
+            || !isChild(base, dir)) {
+            throw new IllegalArgumentException(
+                "Invalid world '" + world + "' for profile " + profile.name() + ", expected the name of a world directory"
+            );
+        }
+
+        return dir;
+    }
+
+    private boolean isChild(Path base, Path child) {
+        Path normalizedBase = base.toAbsolutePath().normalize();
+        Path normalizedChild = child.toAbsolutePath().normalize();
+        return normalizedChild.startsWith(normalizedBase) && !normalizedChild.equals(normalizedBase);
     }
 
     private Path requireDirectory(Path dir, Profile profile, String world) {

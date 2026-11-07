@@ -150,6 +150,29 @@ class WorldServiceTest {
     }
 
     @Test
+    void resolveWorldOutsideOfProfileThrows() throws IOException {
+        Profile server = server();
+        dir(server.path());
+        dir(root.resolve("other"));
+        Profile client = client();
+        dir(client.path().resolve(WorldService.SAVES).resolve("A"));
+        for (String world : List.of("..", ".", "", "../other", "A/..", "saves/A", "saves\\A")) {
+            assertThrows(IllegalArgumentException.class, () -> worlds.resolveWorld(server, world), world);
+            assertThrows(IllegalArgumentException.class, () -> worlds.resolveWorld(client, world), world);
+        }
+    }
+
+    @Test
+    void defaultServerWorldOutsideOfProfileThrows() throws IOException {
+        Profile profile = server();
+        dir(root.resolve("other"));
+        dir(profile.path());
+        Files.writeString(profile.path().resolve(WorldService.SERVER_PROPERTIES), "level-name=../other\n");
+
+        assertThrows(IllegalArgumentException.class, () -> worlds.resolveWorld(profile, null));
+    }
+
+    @Test
     void resolveMissingDefaultServerWorldThrows() {
         IllegalArgumentException e = assertThrows(
             IllegalArgumentException.class, () -> worlds.resolveWorld(server(), null)

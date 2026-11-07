@@ -77,6 +77,7 @@ public class BackupServiceImpl implements BackupService {
     public Backup create(BackupRequest request) {
         BackupProvider provider = providerService.getProvider(request.provider());
         BackupPlan plan = provider.plan(request);
+        requireInsideSource(plan);
         List<String> ignored = new ArrayList<>();
         if (request.defaultIgnore()) {
             ignored.addAll(config.get().ignore());
@@ -274,6 +275,19 @@ public class BackupServiceImpl implements BackupService {
             deleteQuietly(temp, e);
             deleteQuietly(archive, e);
             throw e;
+        }
+    }
+
+    /**
+     * Paths outside the source would be archived as {@code ../} entries, which cannot be restored.
+     */
+    private void requireInsideSource(BackupPlan plan) {
+        Path source = plan.source().toAbsolutePath().normalize();
+        for (String path : plan.paths()) {
+            Path resolved = source.resolve(path).normalize();
+            if (!resolved.startsWith(source) || !path.isEmpty() && resolved.equals(source)) {
+                throw new IllegalArgumentException("Path '" + path + "' of " + plan.target() + " is not inside " + source);
+            }
         }
     }
 
