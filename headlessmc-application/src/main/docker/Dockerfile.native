@@ -16,7 +16,7 @@
 # The ` registry.access.redhat.com/ubi9/ubi-minimal:9.7` base image is based on UBI 9.
 # To use UBI 8, switch to `quay.io/ubi8/ubi-minimal:8.10`.
 ###
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:907b68736aa798b2d38255b7aa070b2a70acb90803864a40f05d0ec47556ddd0
 WORKDIR /work/
 RUN chown 1001 /work \
     && chmod "g+rwX" /work \
