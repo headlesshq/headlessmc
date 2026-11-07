@@ -13,8 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,22 +54,16 @@ public class MutableJarProvider {
         MutableJarLock lock = MutableJarLock.load().orElseThrow(() -> new HeadlessMcException(
             "This build of HeadlessMc does not know its mutable jar, which is needed to load plugins."
                 + " Set hmc.plugins.mutable-jar to a quarkus-app directory or headlessmc-mutable.zip."));
-        Path directory = getMutableDir().resolve(lock.sha256());
-        Path quarkusApp = directory.resolve("quarkus-app");
-        if (Files.exists(directory.resolve(COMPLETE))) {
-            return quarkusApp;
-        }
-
-        Path zip = getMutableDir().resolve(lock.sha256() + ".zip");
-        log.info("Downloading the HeadlessMc mutable jar {} to load plugins", lock.url());
-        downloadService.download(URI.create(lock.url()))
-            .size(lock.size())
-            .hash(HashService.SHA256, lock.sha256())
-            .progressBar("Downloading HeadlessMc mutable jar")
-            .toFile(zip);
-        extract(zip, directory);
-        fileService.delete(zip);
-        return quarkusApp;
+        return extract(lock.sha256(), mutableDir -> {
+            Path zip = mutableDir.resolve(lock.sha256() + ".zip");
+            log.info("Downloading the HeadlessMc mutable jar {} to load plugins", lock.url());
+            downloadService.download(URI.create(lock.url()))
+                .size(lock.size())
+                .hash(HashService.SHA256, lock.sha256())
+                .progressBar("Downloading HeadlessMc mutable jar")
+                .toFile(zip);
+            return zip;
+        }, true);
     }
 
     private Path fromConfig(Path path) throws HeadlessMcException {
@@ -82,30 +80,66 @@ public class MutableJarProvider {
         }
 
         String sha256 = hashService.hashFiles(List.of(path), HashService.SHA256).hash();
-        Path directory = getMutableDir().resolve(sha256);
-        if (!Files.exists(directory.resolve(COMPLETE))) {
-            extract(path, directory);
-        }
-
-        return directory.resolve("quarkus-app");
+        return extract(sha256, mutableDir -> path, false);
     }
 
-    private void extract(Path zip, Path directory) throws HeadlessMcException {
-        try {
-            fileService.delete(directory);
-            PluginFiles.unzip(zip, directory);
-            if (!Files.isDirectory(directory.resolve("quarkus-app").resolve("lib").resolve("deployment"))) {
-                throw new HeadlessMcException(zip + " does not contain a quarkus-app directory with lib/deployment");
-            }
-
-            Files.createFile(directory.resolve(COMPLETE));
-        } catch (IOException e) {
-            throw new HeadlessMcException("Failed to extract " + zip, e);
+    /**
+     * Extracts the zip with the given hash into {@code <cache>/plugins/mutable/<sha256>}, unless that already happened.
+     * Multiple HeadlessMc processes may start at the same time, so this happens while holding a lock on
+     * {@code <sha256>.lock} (and synchronized, because file locks are held by the whole JVM),
+     * into a temporary directory, which is then moved into place.
+     *
+     * @param sha256    the hash of the zip.
+     * @param zip       provides the zip, given the mutable directory, only called if it has not been extracted yet.
+     * @param deleteZip whether to delete the zip after extracting it.
+     * @return the {@code quarkus-app} directory.
+     */
+    private synchronized Path extract(String sha256, ZipProvider zip, boolean deleteZip) throws HeadlessMcException {
+        Path mutableDir = getMutableDir();
+        Path directory = mutableDir.resolve(sha256);
+        Path quarkusApp = directory.resolve("quarkus-app");
+        if (Files.exists(directory.resolve(COMPLETE))) {
+            return quarkusApp;
         }
+
+        try {
+            Files.createDirectories(mutableDir);
+            try (FileChannel channel = FileChannel.open(mutableDir.resolve(sha256 + ".lock"), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                 FileLock ignored = channel.lock()) {
+                // another process might have extracted it while we were waiting for the lock
+                if (Files.exists(directory.resolve(COMPLETE))) {
+                    return quarkusApp;
+                }
+
+                Path zipFile = zip.get(mutableDir);
+                Path temp = mutableDir.resolve(sha256 + ".tmp");
+                fileService.delete(temp);
+                PluginFiles.unzip(zipFile, temp);
+                if (!Files.isDirectory(temp.resolve("quarkus-app").resolve("lib").resolve("deployment"))) {
+                    throw new HeadlessMcException(zipFile + " does not contain a quarkus-app directory with lib/deployment");
+                }
+
+                Files.createFile(temp.resolve(COMPLETE));
+                fileService.delete(directory);
+                Files.move(temp, directory, StandardCopyOption.ATOMIC_MOVE);
+                if (deleteZip) {
+                    fileService.delete(zipFile);
+                }
+            }
+        } catch (IOException e) {
+            throw new HeadlessMcException("Failed to extract the mutable jar " + sha256, e);
+        }
+
+        return quarkusApp;
     }
 
     private Path getMutableDir() {
         return appFiles.getCacheDir().resolve("plugins").resolve("mutable");
+    }
+
+    @FunctionalInterface
+    private interface ZipProvider {
+        Path get(Path mutableDir) throws HeadlessMcException;
     }
 
 }
