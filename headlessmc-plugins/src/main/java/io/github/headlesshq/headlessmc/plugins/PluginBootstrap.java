@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * Runs HeadlessMc with the installed plugins.
@@ -49,6 +50,7 @@ public class PluginBootstrap {
      * HeadlessMc requires Java 25.
      */
     public static final int MIN_JAVA_VERSION = 25;
+    private static final Set<String> DIAGNOSTIC_ARGS = Set.of("-h", "--help", "-V", "--version", "help", "plugin", "plugins");
 
     private final Holder<PluginConfig> config;
     private final PluginScanner scanner;
@@ -73,12 +75,25 @@ public class PluginBootstrap {
      *
      * @param args the arguments HeadlessMc has been started with.
      * @return the exit code of the JVM running with plugins, or empty if HeadlessMc should continue in this JVM.
+     * If the plugins cannot be loaded, e.g. because the mutable jar cannot be downloaded, {@code 1}
+     * if {@link PluginConfig#failOnError()}, otherwise empty, so that HeadlessMc continues without plugins.
+     * Asking for the usage help, the version or running the {@code plugin} command always continues.
      */
     public OptionalInt delegate(String... args) {
         if (getCurrentBuild() != null || !config.get().enabled()) {
             return OptionalInt.empty();
         }
 
+        try {
+            return delegateUnchecked(args);
+        } catch (RuntimeException e) {
+            log.debug("Failed to load plugins", e);
+            log.error("Failed to load plugins: {}", e.getMessage());
+            return fail(args);
+        }
+    }
+
+    private OptionalInt delegateUnchecked(String... args) {
         List<Path> jars = scanner.list(appFiles.getPluginDir());
         if (jars.isEmpty()) {
             return OptionalInt.empty();
@@ -104,9 +119,7 @@ public class PluginBootstrap {
             }
 
             if (config.get().failOnError()) {
-                log.error("Fix or remove the plugins in {}, or run with -Dhmc.plugins.fail-on-error=false to start without the broken ones",
-                    appFiles.getPluginDir());
-                return OptionalInt.of(1);
+                return fail(args);
             }
         }
 
@@ -129,6 +142,26 @@ public class PluginBootstrap {
         }
 
         return OptionalInt.of(launch(launch, args));
+    }
+
+    private OptionalInt fail(String... args) {
+        if (!config.get().failOnError() || isDiagnostic(args)) {
+            log.warn("Continuing without plugins");
+            return OptionalInt.empty();
+        }
+
+        log.error("Fix or remove the plugins in {}, or run with -Dhmc.plugins.fail-on-error=false to start without the broken ones",
+            appFiles.getPluginDir());
+        return OptionalInt.of(1);
+    }
+
+    /**
+     * @param args the arguments HeadlessMc has been started with.
+     * @return {@code true} if the arguments ask for the usage help, the version or the {@code plugin} command,
+     * which should work even if the plugins cannot be loaded.
+     */
+    static boolean isDiagnostic(String... args) {
+        return args.length > 0 && DIAGNOSTIC_ARGS.contains(args[0]);
     }
 
     private int launch(PluginLaunchCache.Launch launch, String... args) {
