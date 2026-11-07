@@ -203,8 +203,8 @@ jobs:
 
       - name: Update headlessmc-lwjgl lock file
         env:
-          # while headlessmc-lwjgl is private, HEADLESSMC_LWJGL_TOKEN needs read access to its releases
-          GITHUB_TOKEN: ${{ secrets.HEADLESSMC_LWJGL_TOKEN || secrets.GITHUB_TOKEN }}
+          # against the rate limit of the GitHub API
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :headlessmc-patcher:headlessmc-patcher-lwjgl-patched:updatePatchedLwjgl --stacktrace
 
       - name: Push updated lock file
