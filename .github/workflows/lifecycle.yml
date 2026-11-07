@@ -787,26 +787,33 @@ jobs:
             ./headlessmc-*.rpm \
             ./headlessmc-*.pkg.tar.zst
 
-  # Asks headlesshq/homebrew-tap to update its headlessmc formula to the new release.
-  # HOMEBREW_TAP_TOKEN: fine-grained token with "Contents: read and write" on headlesshq/homebrew-tap.
-  # The tap also checks for new releases daily, so a failure here only delays the update.
-  # Not a dependency of maven-central on purpose, the formula is not part of the release itself.
-  homebrew:
-    name: Update Homebrew tap
+  # Asks the Homebrew tap, the Scoop bucket and the apt repository to update to the new release,
+  # after the release job has uploaded the executables and packages they download.
+  # RELEASE_DISPATCH_TOKEN: fine-grained token with "Contents: read and write" on
+  # headlesshq/homebrew-tap, headlesshq/scoop-bucket and headlesshq/apt.
+  # They also check for new releases daily, so a failure here only delays the update.
+  # Not a dependency of maven-central on purpose, they are not part of the release itself.
+  dispatch-release:
+    name: Update ${{ matrix.repo }}
     runs-on: ubuntu-latest
     needs: [release-please, release]
     if: needs.release-please.outputs.release_created == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: [ homebrew-tap, scoop-bucket, apt ]
     steps:
-      - name: Dispatch headlessmc-release to headlesshq/homebrew-tap
+      - name: Dispatch headlessmc-release to headlesshq/${{ matrix.repo }}
         env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
+          REPO: headlesshq/${{ matrix.repo }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
           if [[ -z "$GH_TOKEN" ]]; then
-            echo "::warning::HOMEBREW_TAP_TOKEN is not set, the tap will pick up $TAG_NAME with its daily check"
+            echo "::warning::RELEASE_DISPATCH_TOKEN is not set, $REPO will pick up $TAG_NAME with its daily check"
             exit 0
           fi
-          gh api repos/headlesshq/homebrew-tap/dispatches \
+          gh api "repos/$REPO/dispatches" \
             -f event_type=headlessmc-release \
             -f "client_payload[tag]=$TAG_NAME"
 
