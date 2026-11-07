@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -75,7 +76,7 @@ public class PluginLaunchCache {
      * @param fingerprint the {@link #fingerprint(List, Path)} of the current inputs.
      * @return the launch remembered for the fingerprint, if its build and its Java still exist.
      */
-    public Optional<Launch> get(String fingerprint) {
+    public Optional<Entry> get(String fingerprint) {
         Path file = getFile();
         if (!Files.isRegularFile(file)) {
             return Optional.empty();
@@ -104,7 +105,12 @@ public class PluginLaunchCache {
             if (Files.isRegularFile(launch.build().resolve(PluginBuilder.QUARKUS_APP).resolve("quarkus-run.jar"))
                 && Files.isExecutable(launch.javaExecutable())
                 && stat(launch).equals(properties.getProperty("java.stat"))) {
-                return Optional.of(launch);
+                List<String> problems = new ArrayList<>();
+                for (int i = 0; properties.getProperty("problem." + i) != null; i++) {
+                    problems.add(properties.getProperty("problem." + i));
+                }
+
+                return Optional.of(new Entry(launch, List.copyOf(problems)));
             }
         } catch (RuntimeException e) {
             log.debug("Invalid {}", file, e);
@@ -118,8 +124,9 @@ public class PluginLaunchCache {
      *
      * @param fingerprint the {@link #fingerprint(List, Path)} of the current inputs.
      * @param launch      what to launch for them.
+     * @param problems    the problems of the plugins that cannot be loaded, reported again on every start.
      */
-    public void put(String fingerprint, Launch launch) {
+    public void put(String fingerprint, Launch launch, List<String> problems) {
         Properties properties = new Properties();
         properties.setProperty("fingerprint", fingerprint);
         properties.setProperty("build", launch.build().getFileName().toString());
@@ -127,6 +134,9 @@ public class PluginLaunchCache {
         properties.setProperty("java.executable", launch.javaExecutable().toString());
         properties.setProperty("java.version", String.valueOf(launch.javaVersion()));
         properties.setProperty("java.stat", stat(launch));
+        for (int i = 0; i < problems.size(); i++) {
+            properties.setProperty("problem." + i, problems.get(i));
+        }
         Path file = getFile();
         Path temp = file.resolveSibling(FILE + "." + ProcessHandle.current().pid() + ".tmp");
         try {
@@ -172,6 +182,16 @@ public class PluginLaunchCache {
      * @param javaVersion    the version of the Java to launch it with.
      */
     public record Launch(Path build, Path javaHome, Path javaExecutable, int javaVersion) {
+
+    }
+
+    /**
+     * A remembered launch.
+     *
+     * @param launch   what to launch.
+     * @param problems the problems of the plugins that cannot be loaded, empty if all can.
+     */
+    public record Entry(Launch launch, List<String> problems) {
 
     }
 

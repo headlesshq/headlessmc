@@ -71,15 +71,20 @@ class PluginLaunchCacheTest {
 
         PluginLaunchCache.Launch launch = new PluginLaunchCache.Launch(build, root, java, 25);
         assertEquals(Optional.empty(), cache.get("fingerprint"));
-        cache.put("fingerprint", launch);
-        assertEquals(Optional.of(launch), cache.get("fingerprint"));
+        cache.put("fingerprint", launch, List.of());
+        assertEquals(Optional.of(new PluginLaunchCache.Entry(launch, List.of())), cache.get("fingerprint"));
         assertEquals(Optional.empty(), cache.get("other"));
 
         // the JDK might have been updated in place
         Files.writeString(root.resolve("release"), "JAVA_VERSION=\"25.0.2\"");
         assertEquals(Optional.empty(), cache.get("fingerprint"));
-        cache.put("fingerprint", launch);
-        assertEquals(Optional.of(launch), cache.get("fingerprint"));
+        cache.put("fingerprint", launch, List.of());
+        assertEquals(Optional.of(new PluginLaunchCache.Entry(launch, List.of())), cache.get("fingerprint"));
+
+        // the problems of plugins that cannot be loaded are remembered, too
+        cache.put("fingerprint", launch, List.of("a.jar: broken", "b.jar: also broken"));
+        assertEquals(Optional.of(new PluginLaunchCache.Entry(launch, List.of("a.jar: broken", "b.jar: also broken"))),
+            cache.get("fingerprint"));
 
         // the build or the Java might have been deleted in the meantime
         Files.delete(runJar);

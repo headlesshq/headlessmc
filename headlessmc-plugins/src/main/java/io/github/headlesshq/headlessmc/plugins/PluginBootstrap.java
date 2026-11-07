@@ -102,9 +102,18 @@ public class PluginBootstrap {
         // fast path: the same plugins as last time, no hashing, resolution or Java discovery needed
         Path mutableJar = config.get().mutableJar().map(Path::of).orElse(null);
         String fingerprint = launchCache.fingerprint(jars, mutableJar);
-        Optional<PluginLaunchCache.Launch> cached = launchCache.get(fingerprint);
+        Optional<PluginLaunchCache.Entry> cached = launchCache.get(fingerprint);
         if (cached.isPresent()) {
-            return OptionalInt.of(launch(cached.get(), args));
+            List<String> problems = cached.get().problems();
+            for (String problem : problems) {
+                log.error("Cannot load plugin {}", problem);
+            }
+
+            if (!problems.isEmpty() && config.get().failOnError()) {
+                return fail(args);
+            }
+
+            return OptionalInt.of(launch(cached.get().launch(), args));
         }
 
         List<PluginFile> files = new ArrayList<>(jars.size());
@@ -136,10 +145,8 @@ public class PluginBootstrap {
             java.version()
         );
 
-        // only remembered if all plugins can be loaded, otherwise their problems would not be reported again
-        if (resolution.problems().isEmpty()) {
-            launchCache.put(fingerprint, launch);
-        }
+        // the problems are remembered, too, so that they are reported on every start
+        launchCache.put(fingerprint, launch, resolution.problems().stream().map(PluginResolution.Problem::toString).toList());
 
         return OptionalInt.of(launch(launch, args));
     }
