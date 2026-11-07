@@ -10,6 +10,9 @@
 #
 # Bash cannot show descriptions next to candidates, so if there are multiple candidates
 # they are listed as "<name>  (<description>)" and only the name is inserted.
+#
+# bash 3.2 (the macOS default) has no compopt, there file completion falls back to compgen
+# and directive 2 is ignored.
 
 _headlessmc() {
   local cur cword
@@ -40,11 +43,17 @@ _headlessmc() {
 
   COMPREPLY=()
   if (( ${#names[@]} == 0 )); then
-    (( directive & 4 )) || compopt -o default
+    (( directive & 4 )) && return
+    if type compopt &>/dev/null; then
+      compopt -o default
+    else
+      local IFS=$'\n'
+      COMPREPLY=($(compgen -f -- "$cur"))
+    fi
     return
   fi
 
-  (( directive & 2 )) && compopt -o nospace
+  (( directive & 2 )) && type compopt &>/dev/null && compopt -o nospace
 
   if (( ${#names[@]} == 1 )); then
     COMPREPLY=("${names[0]}")
