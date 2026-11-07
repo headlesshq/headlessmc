@@ -44,6 +44,11 @@ final class FakeJavaConfig {
             public boolean checkForUpdates() {
                 return false;
             }
+
+            @Override
+            public List<String> jmodsDistributions() {
+                return List.of("zulu");
+            }
         };
         return () -> config;
     }
