@@ -6,6 +6,10 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -21,14 +25,25 @@ import java.util.StringJoiner;
 @ApplicationScoped
 public class RelativePathService {
     private final Iterable<RelativePathSource> sources;
+    private final FileSystem fileSystem;
 
     @Inject
     public RelativePathService(Instance<RelativePathSource> sources) {
         this.sources = sources;
+        this.fileSystem = FileSystems.getDefault();
     }
 
     public RelativePathService(Collection<? extends RelativePathSource> sources) {
+        this(sources, FileSystems.getDefault());
+    }
+
+    /**
+     * @param sources the sources to relativize against.
+     * @param fileSystem the file system that paths without a known source are parsed with.
+     */
+    public RelativePathService(Collection<? extends RelativePathSource> sources, FileSystem fileSystem) {
         this.sources = List.copyOf(sources);
+        this.fileSystem = fileSystem;
     }
 
     /**
@@ -37,7 +52,9 @@ public class RelativePathService {
      */
     public RelativePath relativize(Path path) {
         if (!path.isAbsolute()) {
-            return new RelativePath(null, null, path.toString());
+            // write relative paths with '/' too, a path written on Windows as "mods\\mod.jar"
+            // would be a single file name on Linux. Drive relative paths like "C:mods" are kept as is.
+            return new RelativePath(null, null, path.getRoot() == null ? join(path) : path.toString());
         }
 
         Path normalized = path.normalize();
@@ -55,30 +72,56 @@ public class RelativePathService {
             return new RelativePath(null, null, path.toString());
         }
 
-        StringJoiner relative = new StringJoiner(RelativePath.SEPARATOR);
-        for (Path name : bestPath.relativize(normalized)) {
-            relative.add(name.toString());
-        }
-
-        return new RelativePath(bestSource.getIdentifier(), bestPath.toString(), relative.toString());
+        return new RelativePath(bestSource.getIdentifier(), bestPath.toString(), join(bestPath.relativize(normalized)));
     }
 
     /**
      * Resolves a {@link RelativePath} against the current location of its source.
-     * Logs a warning if the source has moved since the path was serialized.
+     * If the source has moved since the path was serialized,
+     * a warning is logged if the file still exists at the old location, but not at the new one.
      *
      * @param relativePath the path to resolve.
      * @return the resolved path.
      * @throws JsonParseException if the source is unknown and the path cannot be resolved,
-     *                            or if the path would escape its source, e.g. via {@code ..}.
+     *                            if the path would escape its source, e.g. via {@code ..},
+     *                            or if the path is not valid on this file system.
      */
     public Path resolve(RelativePath relativePath) throws JsonParseException {
-        String identifier = relativePath.source();
-        if (identifier == null) {
-            return Path.of(relativePath.path());
-        }
+        try {
+            String identifier = relativePath.source();
+            if (identifier == null) {
+                return fileSystem.getPath(relativePath.path());
+            }
 
-        Path base = findSourcePath(identifier, relativePath);
+            @Nullable Path serializedBase = parseAbsolute(relativePath.sourcePath());
+            @Nullable RelativePathSource source = findSource(identifier);
+            Path base;
+            if (source != null) {
+                base = source.getPath().toAbsolutePath().normalize();
+            } else if (serializedBase != null) {
+                log.warn("Unknown location '{}' for path '{}', falling back to '{}'",
+                         identifier, relativePath.path(), serializedBase);
+                base = serializedBase;
+            } else if (relativePath.sourcePath() == null) {
+                throw new JsonParseException("Unknown relative path source '" + identifier + "' for " + relativePath);
+            } else {
+                throw new JsonParseException("Unknown relative path source '" + identifier + "' for " + relativePath
+                                                 + ", '" + relativePath.sourcePath() + "' is not an absolute path on"
+                                                 + " this machine, was it written on another operating system?");
+            }
+
+            Path result = resolve(base, relativePath);
+            if (source != null && relativePath.sourcePath() != null && !base.equals(serializedBase)) {
+                warnIfLeftBehind(identifier, serializedBase, base, relativePath, result);
+            }
+
+            return result;
+        } catch (InvalidPathException e) {
+            throw new JsonParseException("Path " + relativePath + " is not valid on this machine: " + e.getMessage(), e);
+        }
+    }
+
+    private Path resolve(Path base, RelativePath relativePath) throws JsonParseException {
         Path result = base;
         for (String name : relativePath.path().split(RelativePath.SEPARATOR)) {
             if (!name.isEmpty()) {
@@ -94,27 +137,68 @@ public class RelativePathService {
         return result;
     }
 
-    private Path findSourcePath(String identifier, RelativePath relativePath) throws JsonParseException {
-        String serializedSourcePath = relativePath.sourcePath();
+    /**
+     * The source has moved, e.g. because HeadlessMc has been copied to another machine or the
+     * {@code .minecraft} directory has been changed. We only warn if the file actually got left behind,
+     * if it exists at the new location, or nowhere at all, everything is fine.
+     */
+    private void warnIfLeftBehind(
+        String identifier,
+        @Nullable Path oldBase,
+        Path newBase,
+        RelativePath relativePath,
+        Path result
+    ) {
+        @Nullable Path old = null;
+        try {
+            old = oldBase == null ? null : resolve(oldBase, relativePath);
+        } catch (JsonParseException ignored) {
+            // cannot escape the old base if it does not escape the new one, but be safe
+        }
+
+        if (old != null && Files.exists(old) && !Files.exists(result)) {
+            log.warn("Location '{}' has moved from '{}' to '{}', but '{}' only exists at the old location '{}'",
+                     identifier, oldBase, newBase, relativePath.path(), old);
+        } else {
+            log.debug("Location '{}' of path '{}' has moved from '{}' to '{}'",
+                      identifier, relativePath.path(), relativePath.sourcePath(), newBase);
+        }
+    }
+
+    private @Nullable RelativePathSource findSource(String identifier) {
         for (RelativePathSource source : sources) {
             if (identifier.equals(source.getIdentifier())) {
-                Path current = source.getPath().toAbsolutePath().normalize();
-                if (serializedSourcePath != null && !current.toString().equals(serializedSourcePath)) {
-                    log.warn("Location '{}' of path '{}' has changed from '{}' to '{}'",
-                             identifier, relativePath.path(), serializedSourcePath, current);
-                }
-
-                return current;
+                return source;
             }
         }
 
-        if (serializedSourcePath == null) {
-            throw new JsonParseException("Unknown relative path source '" + identifier + "' for " + relativePath);
+        return null;
+    }
+
+    /**
+     * @return the given path if it is absolute on this file system, {@code null} otherwise,
+     * e.g. if it has been written on another operating system.
+     */
+    private @Nullable Path parseAbsolute(@Nullable String path) {
+        if (path == null) {
+            return null;
         }
 
-        log.warn("Unknown location '{}' for path '{}', falling back to '{}'",
-                 identifier, relativePath.path(), serializedSourcePath);
-        return Path.of(serializedSourcePath).toAbsolutePath().normalize();
+        try {
+            Path result = fileSystem.getPath(path);
+            return result.isAbsolute() ? result.normalize() : null;
+        } catch (InvalidPathException e) {
+            return null;
+        }
+    }
+
+    private static String join(Path path) {
+        StringJoiner joiner = new StringJoiner(RelativePath.SEPARATOR);
+        for (Path name : path) {
+            joiner.add(name.toString());
+        }
+
+        return joiner.toString();
     }
 
     private boolean isBetterMatch(
