@@ -119,6 +119,8 @@ jobs:
       - run: pip install mkdocs-material
       - name: Build documentation
         run: mkdocs build -d _site
+      - name: Copy install scripts
+        run: cp scripts/install.sh scripts/install.ps1 _site/
 
       # Prepare Site deployment
       #- name: Copy javadoc
@@ -197,6 +199,64 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  test-install-scripts:
+    needs: [release-please, release]
+    if: ${{ !cancelled() && needs.release.result != 'failure' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15, macos-15-intel, windows-latest ]
+    env:
+      HEADLESSMC_VERSION: ${{ needs.release.result == 'success' && needs.release-please.outputs.tag_name || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: ShellCheck install.sh
+        if: runner.os == 'Linux'
+        run: shellcheck scripts/install.sh
+
+      - name: Install with install.sh
+        if: runner.os != 'Windows'
+        env:
+          HEADLESSMC_INSTALL_DIR: ${{ runner.temp }}/hmc-bin
+        run: |
+          sh scripts/install.sh
+          # --version prints "HeadlessMc <version>", followed by a notice if a newer release is available
+          version="$("$HEADLESSMC_INSTALL_DIR/headlessmc" --version | head -n 1)"
+          echo "Installed $version"
+          if [[ -n "$HEADLESSMC_VERSION" && "$version" != "HeadlessMc $HEADLESSMC_VERSION" ]]; then
+            echo "::error::expected 'HeadlessMc $HEADLESSMC_VERSION', but got '$version'"
+            exit 1
+          fi
+          "$HEADLESSMC_INSTALL_DIR/headlessmc" help
+          # releases before the shell completions have no completion command, install.sh skips them
+          if "$HEADLESSMC_INSTALL_DIR/headlessmc" completion bash > /dev/null 2>&1; then
+            bash_completion="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/headlessmc"
+            if [[ ! -s "$bash_completion" ]]; then
+              echo "::error::install.sh did not install the bash completion to $bash_completion"
+              exit 1
+            fi
+            echo "Installed the bash completion to $bash_completion"
+          fi
+
+      - name: Install with install.ps1 (Windows PowerShell)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+          # --version prints "HeadlessMc <version>", followed by a notice if a newer release is available
+          $output = headlessmc --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $version = @($output)[0]
+          Write-Host "Installed $version"
+          if ($env:HEADLESSMC_VERSION -and $version -ne "HeadlessMc $env:HEADLESSMC_VERSION") {
+            Write-Host "::error::expected 'HeadlessMc $env:HEADLESSMC_VERSION', but got '$version'"
+            exit 1
+          }
+          headlessmc help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   # run the tests of all modules on the other platforms, to catch platform specific bugs
   # ubuntu is covered by the build job
@@ -726,6 +786,36 @@ jobs:
             ./headlessmc_*.deb \
             ./headlessmc-*.rpm \
             ./headlessmc-*.pkg.tar.zst
+
+  # Asks the Homebrew tap, the Scoop bucket and the apt repository to update to the new release,
+  # after the release job has uploaded the executables and packages they download.
+  # RELEASE_DISPATCH_TOKEN: fine-grained token with "Contents: read and write" on
+  # headlesshq/homebrew-tap, headlesshq/scoop-bucket and headlesshq/apt.
+  # They also check for new releases daily, so a failure here only delays the update.
+  # Not a dependency of maven-central on purpose, they are not part of the release itself.
+  dispatch-release:
+    name: Update ${{ matrix.repo }}
+    runs-on: ubuntu-latest
+    needs: [release-please, release]
+    if: needs.release-please.outputs.release_created == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: [ homebrew-tap, scoop-bucket, apt ]
+    steps:
+      - name: Dispatch headlessmc-release to headlesshq/${{ matrix.repo }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
+          REPO: headlesshq/${{ matrix.repo }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::warning::RELEASE_DISPATCH_TOKEN is not set, $REPO will pick up $TAG_NAME with its daily check"
+            exit 0
+          fi
+          gh api "repos/$REPO/dispatches" \
+            -f event_type=headlessmc-release \
+            -f "client_payload[tag]=$TAG_NAME"
 
   maven-central:
     name: Publish to Maven Central

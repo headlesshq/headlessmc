@@ -1,7 +1,35 @@
 # Getting Started
 
-Download the executable for your Operating System from the latest 
-[GitHub Release](https://github.com/headlesshq/headlessmc/releases).
+The easiest way to install HeadlessMc is our install script.
+It downloads the executable for your Operating System from the latest
+[GitHub Release](https://github.com/headlesshq/headlessmc/releases) and adds it to your PATH as `headlessmc`.
+
+=== "Linux & MacOS"
+
+    ``` sh
+    curl -fsSL https://headlesshq.github.io/headlessmc/install.sh | sh
+    ```
+    This installs to `~/.local/bin`, which you might have to add to your PATH, the script tells you how.
+    It also installs the [shell completions](#shell-completions) for bash and fish,
+    and for zsh if it can, otherwise it tells you the line to add to your `~/.zshrc`.
+    Set `HEADLESSMC_NO_COMPLETIONS=1` to skip them.
+
+=== "Windows"
+
+    Run in PowerShell:
+    ```lang-powershell
+    irm https://headlesshq.github.io/headlessmc/install.ps1 | iex
+    ```
+    This installs to `%LOCALAPPDATA%\headlessmc\bin` and adds it to your user PATH.
+
+Afterwards, run `headlessmc` in a new terminal.
+To install a specific version or into another directory, set the `HEADLESSMC_VERSION`
+(e.g. `3.0.0`) or `HEADLESSMC_INSTALL_DIR` environment variables.
+
+### Manual download
+
+You can also download the executable for your Operating System from the latest 
+[GitHub Release](https://github.com/headlesshq/headlessmc/releases) yourself.
 
 === "Linux"
     
@@ -85,6 +113,12 @@ bash needs the [bash-completion](https://github.com/scop/bash-completion) packag
 and zsh needs `compinit` to run, which most distributions and frameworks like Oh My Zsh do.
 If zsh does not find them, remove its completion cache once with `rm ~/.zcompdump*`.
 The package manager updates the completions together with HeadlessMc.
+
+The install script for Linux and macOS writes the completions for bash and fish into
+`~/.local/share/bash-completion/completions` and `~/.config/fish/completions`.
+zsh has no such directory for users by default, so the script only installs the zsh completion
+if it can write to a `site-functions` directory of zsh, e.g. when run as root,
+and otherwise prints the line to add to your `~/.zshrc` as described below.
 
 `headlessmc completion <shell>` prints a small script for your shell, or writes it to a file with `-o <file>`,
 which asks the `headlessmc` executable on your `PATH` for completions every time you press tab.
