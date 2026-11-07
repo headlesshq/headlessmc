@@ -198,8 +198,9 @@ public class BackupServiceImpl implements BackupService {
     @Override
     public void remove(Backup backup) {
         Path dir = getTargetDir(backup.provider(), backup.target());
-        fileService.delete(getArchive(backup));
+        // the json first, so that a failure never leaves a listed backup without its archive
         fileService.delete(fileService.getPath(dir, backup.id() + JSON));
+        fileService.delete(getArchive(backup));
         deleteIfEmpty(dir);
         deleteIfEmpty(dir.getParent());
     }
