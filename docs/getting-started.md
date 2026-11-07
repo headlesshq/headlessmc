@@ -36,6 +36,7 @@ npx headlessmc launch fabric 26.3 -lwjgl
 The [headlessmc](https://www.npmjs.com/package/headlessmc) package contains the same executables as the
 GitHub Release, so no Java installation is needed for HeadlessMc itself.
 It supports Windows x64, Linux x64 and ARM64 (glibc 2.34 or newer) and MacOS x64 and ARM64.
+The package is maintained in [headlesshq/headlessmc.js](https://github.com/headlesshq/headlessmc.js).
 
 ### Manual download
 

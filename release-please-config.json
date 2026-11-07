@@ -11,13 +11,7 @@
       "prerelease": true,
       "prerelease-type": "RC",
       "extra-files": [
-        "gradle.properties",
-        { "type": "json", "path": "npm/headlessmc/package.json", "jsonpath": "$.version" },
-        { "type": "json", "path": "npm/headlessmc/package.json", "jsonpath": "$.optionalDependencies['headlessmc-linux-x64']" },
-        { "type": "json", "path": "npm/headlessmc/package.json", "jsonpath": "$.optionalDependencies['headlessmc-linux-arm64']" },
-        { "type": "json", "path": "npm/headlessmc/package.json", "jsonpath": "$.optionalDependencies['headlessmc-darwin-x64']" },
-        { "type": "json", "path": "npm/headlessmc/package.json", "jsonpath": "$.optionalDependencies['headlessmc-darwin-arm64']" },
-        { "type": "json", "path": "npm/headlessmc/package.json", "jsonpath": "$.optionalDependencies['headlessmc-win32-x64']" }
+        "gradle.properties"
       ]
     }
   }

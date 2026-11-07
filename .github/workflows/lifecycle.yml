@@ -383,45 +383,6 @@ jobs:
           path: |
             ./headlessmc-application/build/${{ matrix.os.name }}*
 
-  # Builds the npm packages from the linux-x64 executable and runs HeadlessMc through them.
-  # The packages of all platforms are only built for releases, see publish-npm.
-  test-npm:
-    runs-on: ubuntu-latest
-    needs: build-natives
-    if: ${{ !cancelled() && needs.build-natives.result == 'success' }}
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: 24
-      - name: Download linux-x64 executable
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: HeadlessMc Native Image headlessmc-launcher-linux-x64
-          path: dist
-
-      - name: Build and install npm packages
-        run: |
-          node scripts/npm-packages.mjs --partial dist npm-out
-          mkdir npm-tgz
-          for package in npm-out/*/; do
-            npm pack "$package" --pack-destination npm-tgz
-          done
-          npm install -g --prefix "$RUNNER_TEMP/npm" npm-tgz/*.tgz
-
-      - name: Run HeadlessMc from npm
-        run: |
-          expected="HeadlessMc $(node -p "require('./npm/headlessmc/package.json').version")"
-          version="$("$RUNNER_TEMP/npm/bin/headlessmc" --version | head -n 1)"
-          echo "$version"
-          if [[ "$version" != "$expected" ]]; then
-            echo "::error::expected '$expected', but got '$version', is the version of npm/headlessmc/package.json in sync?"
-            exit 1
-          fi
-          "$RUNNER_TEMP/npm/bin/headlessmc" "-Dhmc.files.location=$RUNNER_TEMP/hmc" help
-
   # https://github.com/headlesshq/headlessmc/issues/333
   build-mc-runtime-test:
     strategy:
@@ -692,8 +653,7 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     if: needs.release-please.outputs.release_created == 'true'
-    # test-npm downloads a native image artifact, which gets merged and deleted here
-    needs: [release-please, build, build-natives, test-npm, docker-release]
+    needs: [release-please, build, build-natives, docker-release]
     steps:
       - name: Cleanup Docker
         uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
@@ -769,68 +729,28 @@ jobs:
             -f event_type=headlessmc-release \
             -f "client_payload[tag]=$TAG_NAME"
 
-  # Publishes the npm package headlessmc and its platform packages with the native executables of the release.
-  # Uses npm trusted publishing (OIDC), configure the publisher (this workflow, environment npm) for every package
-  # on npmjs.com. NPM_TOKEN is only needed for the first publish, before the packages exist on npm.
-  publish-npm:
+  # Asks headlesshq/headlessmc.js to publish the npm packages of the new release.
+  # HEADLESSMC_JS_TOKEN: fine-grained token with "Contents: read and write" on headlesshq/headlessmc.js.
+  # headlessmc.js also checks for new releases daily, so a failure here only delays the npm release.
+  # Not a dependency of maven-central on purpose, the npm packages are not part of the release itself.
+  npm:
+    name: Publish to npm
     runs-on: ubuntu-latest
-    needs: [release-please, release, test-npm]
+    needs: [release-please, release]
     if: needs.release-please.outputs.release_created == 'true'
-    environment:
-      name: npm
-      url: https://www.npmjs.com/package/headlessmc
-    permissions:
-      contents: read
-      # npm trusted publishing with provenance
-      id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-
-      # the npm packages contain exactly the executables of the GitHub release
-      - name: Download executables
+      - name: Dispatch headlessmc-release to headlesshq/headlessmc.js
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
-        run: gh release download "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --dir dist --pattern 'headlessmc-launcher-*'
-
-      - name: Check version
-        env:
+          GH_TOKEN: ${{ secrets.HEADLESSMC_JS_TOKEN }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
-          version=$(node -p "require('./npm/headlessmc/package.json').version")
-          if [[ "$version" != "$TAG_NAME" ]]; then
-            echo "::error::npm/headlessmc/package.json has version $version, but the release is $TAG_NAME"
-            exit 1
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::warning::HEADLESSMC_JS_TOKEN is not set, headlessmc.js will pick up $TAG_NAME with its daily check"
+            exit 0
           fi
-
-      - name: Publish npm packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          node scripts/npm-packages.mjs dist npm-out
-          version=$(node -p "require('./npm-out/headlessmc/package.json').version")
-          # npm requires a dist-tag for prereleases. They become latest as long as there is no stable version on npm,
-          # so that npm install headlessmc works during the release candidates, afterwards they go to next.
-          tag=latest
-          latest=$(npm view headlessmc dist-tags.latest 2>/dev/null || true)
-          if [[ "$version" == *-* && -n "$latest" && "$latest" != *-* ]]; then
-            tag=next
-          fi
-          echo "Publishing $version with dist-tag $tag"
-          # the platform packages first, the main package depends on them
-          for package in npm-out/headlessmc-*/ npm-out/headlessmc/; do
-            name=$(node -p "require('./${package}package.json').name")
-            # skip versions published by an earlier attempt, so that a failed run can be re-run
-            if npm view "$name@$version" version >/dev/null 2>&1; then
-              echo "$name@$version is already published, skipping"
-              continue
-            fi
-            npm publish --access public --provenance --tag "$tag" "$package"
-          done
+          gh api repos/headlesshq/headlessmc.js/dispatches \
+            -f event_type=headlessmc-release \
+            -f "client_payload[tag]=$TAG_NAME"
 
   maven-central:
     name: Publish to Maven Central
@@ -842,7 +762,6 @@ jobs:
       - build
       - deploy-pages
       - build-natives
-      - test-npm
       - build-mc-runtime-test
       - mc-runtime-test
       - server-test
