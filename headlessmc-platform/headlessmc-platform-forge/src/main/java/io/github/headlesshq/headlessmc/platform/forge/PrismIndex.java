@@ -31,6 +31,15 @@ import java.util.NoSuchElementException;
 @RegisterForReflection
 public record PrismIndex(String uid, List<Meta> versions) implements ReflectionRegistered {
     /**
+     * The version of the cached {@link PrismIndex}.
+     * Bump this whenever fields are added to the index, so that outdated caches get refreshed.
+     * <ul>
+     *     <li>{@code 1}: added {@link Meta#recommended()} and {@link Meta#type()}</li>
+     * </ul>
+     */
+    public static final long CACHE_VERSION = 1;
+
+    /**
      * </a>
      * <pre>
      * {@code

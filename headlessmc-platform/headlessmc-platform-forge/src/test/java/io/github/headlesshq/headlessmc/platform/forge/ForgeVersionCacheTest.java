@@ -26,6 +26,7 @@ public class ForgeVersionCacheTest {
         }
 
         CacheBuilder.create()
+            .withVersion(cache.getVersion())
             .withStore(new JsonCacheFile<>(
                 CacheExceptionHandler.throwing(),
                 jsonService,

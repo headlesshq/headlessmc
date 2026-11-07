@@ -77,7 +77,7 @@ public class PlatformCacheServiceImpl implements PlatformCacheService {
                     CacheExceptionHandler.logging(),
                     jsonService,
                     type,
-                    0,
+                    version,
                     fileService.getPath(files.getCacheDir(), platformName + "-versions.json")
                 )
             ).withSource(

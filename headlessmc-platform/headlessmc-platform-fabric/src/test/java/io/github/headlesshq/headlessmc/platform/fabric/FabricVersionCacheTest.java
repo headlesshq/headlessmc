@@ -26,6 +26,7 @@ public class FabricVersionCacheTest {
         }
 
         CacheBuilder.create()
+            .withVersion(cache.getVersion())
             .withStore(new JsonCacheFile<>(
                 CacheExceptionHandler.throwing(),
                 jsonService,
