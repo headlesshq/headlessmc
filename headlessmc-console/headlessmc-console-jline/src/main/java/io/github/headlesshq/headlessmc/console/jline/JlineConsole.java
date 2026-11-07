@@ -17,7 +17,12 @@ import org.jspecify.annotations.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
@@ -30,6 +35,24 @@ class JlineConsole implements Console, ConsoleExtensions {
      * The system terminal stays the same, so its grapheme cluster support only has to be detected once.
      */
     private static volatile @Nullable GraphemeClusterSupport detectedGraphemeClusterSupport;
+    /**
+     * How long {@link #terminalInfo()} reuses the last result, querying the terminal size can spawn a process.
+     */
+    private static final long TERMINAL_INFO_MAX_AGE_NANOS = TimeUnit.SECONDS.toNanos(1);
+    /**
+     * Held while building a terminal and while {@link #terminalInfo()} queries a terminal,
+     * so that {@link #terminalInfo()} never opens a terminal while another one is being opened.
+     * This is never held while reading, so it can only block for a short time.
+     */
+    private static final Lock TERMINAL_LOCK = new ReentrantLock();
+    /**
+     * All terminals that are currently open. Jline only allows one system terminal at a time,
+     * so {@link #terminalInfo()} has to use one of these instead of opening its own.
+     * {@link JlineConsoleProvider} creates a new console every time, so this has to be static.
+     */
+    private static final Queue<Terminal> OPEN_TERMINALS = new ConcurrentLinkedQueue<>();
+    private static volatile @Nullable TerminalInfo lastTerminalInfo;
+    private static volatile long lastTerminalInfoNanos;
 
     private final Holder<JlineConfig> config;
     /**
@@ -100,9 +123,7 @@ class JlineConsole implements Console, ConsoleExtensions {
     public String edit(String initialString) {
         return wrap(state -> {
             // maybe we could also check the terminal capabilities for if this is supported?
-            if (Terminal.TYPE_DUMB.equalsIgnoreCase(state.terminal.getType())
-                || Terminal.TYPE_DUMB_COLOR.equalsIgnoreCase(state.terminal.getType())
-            ) {
+            if (isDumb(state.terminal)) {
                 return reading(state.reader(), reader -> reader.readLine("[" + initialString + "]:"));
             }
 
@@ -115,10 +136,85 @@ class JlineConsole implements Console, ConsoleExtensions {
         return wrap(state -> Math.max(55, state.terminal.getColumns()));
     }
 
+    /**
+     * Unlike the other methods, this does not go through {@link #wrap(Function)},
+     * which is locked while another thread waits for input.
+     * Instead, it queries a terminal that is already open, e.g. by a {@link CachedConsole},
+     * and only opens a terminal itself if there is none.
+     * The result is reused for {@link #TERMINAL_INFO_MAX_AGE_NANOS}.
+     */
     @Override
-    public boolean supportsCursorMovement() {
-        return wrap(state -> state.terminal.getStringCapability(InfoCmp.Capability.cursor_up) != null
-            && state.terminal.getStringCapability(InfoCmp.Capability.cursor_down) != null);
+    public TerminalInfo terminalInfo() {
+        TerminalInfo info = lastTerminalInfo;
+        if (info != null && System.nanoTime() - lastTerminalInfoNanos < TERMINAL_INFO_MAX_AGE_NANOS) {
+            return info;
+        }
+
+        try {
+            if (!TERMINAL_LOCK.tryLock(100, TimeUnit.MILLISECONDS)) {
+                return info == null ? TerminalInfo.UNKNOWN : info;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return info == null ? TerminalInfo.UNKNOWN : info;
+        }
+
+        try {
+            info = queryTerminalInfo();
+            if (info != null) {
+                lastTerminalInfo = info;
+                lastTerminalInfoNanos = System.nanoTime();
+                return info;
+            }
+
+            info = lastTerminalInfo;
+            return info == null ? TerminalInfo.UNKNOWN : info;
+        } finally {
+            TERMINAL_LOCK.unlock();
+        }
+    }
+
+    private static @Nullable TerminalInfo queryTerminalInfo() {
+        Terminal dumb = null;
+        for (Terminal terminal : OPEN_TERMINALS) {
+            if (isDumb(terminal)) {
+                // probably opened while another terminal was already open, so prefer that one
+                dumb = terminal;
+                continue;
+            }
+
+            try {
+                return terminalInfo(terminal);
+            } catch (RuntimeException e) {
+                log.debug("Failed to query terminal {}", terminal, e);
+            }
+        }
+
+        if (dumb != null) {
+            return null; // the system terminal is probably not dumb, keep the last result
+        }
+
+        // no terminal is open, and none can be opened while we hold the TERMINAL_LOCK,
+        // the grapheme cluster mode does not matter for the size, so we skip probing it.
+        try (Terminal terminal = TerminalBuilder.builder().dumb(true).graphemeCluster(false).build()) {
+            return terminalInfo(terminal);
+        } catch (IOException | RuntimeException e) {
+            log.debug("Failed to open terminal to query its size", e);
+            return null;
+        }
+    }
+
+    private static TerminalInfo terminalInfo(Terminal terminal) {
+        return new TerminalInfo(
+            terminal.getColumns(),
+            terminal.getStringCapability(InfoCmp.Capability.cursor_up) != null
+                && terminal.getStringCapability(InfoCmp.Capability.cursor_down) != null
+        );
+    }
+
+    private static boolean isDumb(Terminal terminal) {
+        return Terminal.TYPE_DUMB.equalsIgnoreCase(terminal.getType())
+            || Terminal.TYPE_DUMB_COLOR.equalsIgnoreCase(terminal.getType());
     }
 
     @Override
@@ -179,6 +275,17 @@ class JlineConsole implements Console, ConsoleExtensions {
      * and we open a new terminal for every {@link #wrap(Function)} call, so the result is detected only once.
      */
     TerminalState openTerminal() throws IOException {
+        TERMINAL_LOCK.lock();
+        try {
+            TerminalState state = buildTerminal();
+            OPEN_TERMINALS.add(state.terminal());
+            return state;
+        } finally {
+            TERMINAL_LOCK.unlock();
+        }
+    }
+
+    private TerminalState buildTerminal() throws IOException {
         TerminalBuilder builder = TerminalBuilder.builder();
         switch (config.get().graphemeCluster()) {
             case OFF -> builder.graphemeCluster(false);
@@ -279,12 +386,19 @@ class JlineConsole implements Console, ConsoleExtensions {
 
         @Override
         public void close() throws IOException {
-            if (mode2027) {
-                terminal.writer().write(MODE_2027_DISABLE);
-                terminal.writer().flush();
-            }
+            // so that terminalInfo() does not query this terminal while it is being closed
+            TERMINAL_LOCK.lock();
+            try {
+                OPEN_TERMINALS.remove(terminal);
+                if (mode2027) {
+                    terminal.writer().write(MODE_2027_DISABLE);
+                    terminal.writer().flush();
+                }
 
-            terminal.close();
+                terminal.close();
+            } finally {
+                TERMINAL_LOCK.unlock();
+            }
         }
     }
 
