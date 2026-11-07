@@ -29,10 +29,13 @@ import java.util.Optional;
  * @param platform The name of the platform this version runs on,
  *                 e.g. vanilla, fabric, forge, neoforge, paper, purpur, etc.
  * @param version  The vanilla version name, e.g. 1.12.2, 1.21.6-pre1, 23w14a, b1.6.5, a1.0.11, or rd-132211.
+ *                 Can be {@code "latest"} for the latest version, which might be a snapshot.
+ *                 Can be {@code "stable"} for the latest release.
  * @param build    The build of the platform this version runs on.
  *                 E.g. the version of the fabric-loader, 0.16.14.
  *                 Can be {@code null} to find the latest installed, or the latest version.
- *                 Can be {@code "latest"} for the latest version.
+ *                 Can be {@code "latest"} for the latest build.
+ *                 Can be {@code "stable"} for the latest build the platform considers stable.
  */
 @With
 @Builder
@@ -40,6 +43,7 @@ import java.util.Optional;
 public record VersionArg(Optional<Side> side, String platform, String version, Optional<String> build) {
     public static final String PLATFORM_VANILLA = "vanilla";
     public static final String LATEST = "latest";
+    public static final String STABLE = "stable";
 
     /**
      * Constructs a new {@link VersionArg} and performs normalization on platform
@@ -85,6 +89,13 @@ public record VersionArg(Optional<Side> side, String platform, String version, O
     }
 
     /**
+     * @return {@code true} if this VersionArg targets the {@code "stable"} build.
+     */
+    public boolean isStable() {
+        return build.isPresent() && STABLE.equalsIgnoreCase(build.get());
+    }
+
+    /**
      * @return {@code true} if this VersionArg targets any build (latest installed build).
      */
     public boolean isAnyBuild() {
@@ -92,10 +103,10 @@ public record VersionArg(Optional<Side> side, String platform, String version, O
     }
 
     /**
-     * @return {@code true} if this VersionArg targets a specific build that is not {@code "latest"}.
+     * @return {@code true} if this VersionArg targets a specific build that is not {@code "latest"} or {@code "stable"}.
      */
     public boolean isSpecificBuild() {
-        return !isLatest() && !isAnyBuild();
+        return !isLatest() && !isStable() && !isAnyBuild();
     }
 
     /**

@@ -9,9 +9,11 @@ import io.quarkus.runtime.annotations.RegisterResources;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.SequencedSet;
+import java.util.Set;
 
 @Slf4j
 @RegisterResources(globs = "fabric/fabric-versions.json")
@@ -39,6 +41,18 @@ final class FabricVersionService extends AbstractJsonVersionService<PlatformVers
         }
 
         return verify(value, result, previous);
+    }
+
+    @Override
+    protected Set<PlatformVersion> mapStable(List<BuildData> value, @Nullable Set<PlatformVersion> previous) {
+        Set<PlatformVersion> result = new HashSet<>();
+        for (BuildData buildData : value) {
+            if (buildData.stable()) {
+                result.add(createVersion(buildData.version()));
+            }
+        }
+
+        return result;
     }
 
 }
