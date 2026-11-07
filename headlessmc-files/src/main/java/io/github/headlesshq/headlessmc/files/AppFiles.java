@@ -48,6 +48,15 @@ public interface AppFiles {
     }
 
     /**
+     * @return the directory to cache jmods files in, one subdirectory per Java major version,
+     * e.g. {@code <cache>/java/jmods/25/java.base.jmod}.
+     * Used for Java distributions that do not ship their jmods anymore, see JEP 493.
+     */
+    default Path getJModsDir() {
+        return getCacheDir().resolve("java").resolve("jmods");
+    }
+
+    /**
      * @return the directory to place plugin jars in.
      */
     default Path getPluginDir() {

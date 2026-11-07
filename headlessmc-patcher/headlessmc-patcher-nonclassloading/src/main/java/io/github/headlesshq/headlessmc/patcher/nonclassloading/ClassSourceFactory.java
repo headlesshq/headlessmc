@@ -1,8 +1,10 @@
 package io.github.headlesshq.headlessmc.patcher.nonclassloading;
 
+import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaService;
+import io.github.headlesshq.headlessmc.java.launcher.JModsService;
 import io.github.headlesshq.headlessmc.java.launcher.JavaFinder;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
@@ -27,8 +29,14 @@ import java.util.stream.Stream;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ClassSourceFactory {
+    /**
+     * Since Java 9 the Java runtime is split into modules and there is no rt.jar anymore.
+     */
+    private static final int LAST_VERSION_WITH_RT_JAR = 8;
+
     private final JavaService javaService;
     private final JavaFinder javaFinder;
+    private final JModsService jModsService;
 
     public List<ClassSource.Provider> create(PatchContext context) {
         List<ClassSource.Provider> providers = new ArrayList<>();
@@ -40,28 +48,37 @@ public class ClassSourceFactory {
     }
 
     public List<ClassSource.Provider> jvmProviders(PatchContext context) {
-        PatchException exception = new PatchException("Failed to find a Java version with jmods or an rt.jar");
-        boolean foundJava = false;
+        int version = context.getJavaVersion();
+        PatchException exception = new PatchException("Failed to find a Java " + version + " with jmods or an rt.jar");
         for (Java java : javaService.getJavaVersions()) {
-            if (java.version() == context.getJavaVersion()) {
-                foundJava = true;
+            if (java.version() == version) {
                 try {
                     Optional<List<ClassSource.Provider>> classSource = scan(java);
                     if (classSource.isPresent()) {
                         return classSource.get();
                     }
-                } catch (PatchException e) {
+                } catch (HeadlessMcException e) {
                     exception.addSuppressed(e);
                 }
             }
         }
 
-        if (!foundJava) {
-            Java java = javaFinder.findJava(context.getJavaVersion());
+        try {
+            if (version > LAST_VERSION_WITH_RT_JAR) {
+                // no need to download an entire Java runtime, we only need the jmods
+                return jmods(jModsService.getJMods(version));
+            }
+
+            Java java = javaFinder.findJava(version);
             Optional<List<ClassSource.Provider>> classSource = scan(java);
             if (classSource.isPresent()) {
                 return classSource.get();
             }
+        } catch (PatchException e) {
+            e.addSuppressed(exception);
+            throw e;
+        } catch (HeadlessMcException e) {
+            exception.addSuppressed(e);
         }
 
         throw exception;
@@ -78,23 +95,17 @@ public class ClassSourceFactory {
             return Optional.of(List.of(ClassSource.Provider.jar(rtJar, java.version(), JarClassSource::new)));
         }
 
-        // TODO: API to download jmods for a distribution if not available
-        // e.g. https://api.adoptium.net/v3/binary/latest/24/ga/windows/x64/jmods/hotspot/normal/eclipse
-        // check if instead of temurin we should move to a distribution that still has jmods files
-        Path jmods = javaHome.resolve("jmods");
-        if (Files.exists(jmods) && Files.isDirectory(jmods)) {
-            try (Stream<Path> jmodFiles = Files.list(jmods)) {
-                return Optional.of(
-                    jmodFiles.filter(file -> file.toString().endsWith(".jmod"))
-                        .map(jmodFile -> ClassSource.Provider.zip(jmodFile, JModClassSource::new))
-                        .toList()
-                );
-            } catch (IOException e) {
-                throw new HeadlessMcIOException(e);
-            }
-        }
+        return jModsService.findJMods(java).map(this::jmods);
+    }
 
-        return Optional.empty();
+    private List<ClassSource.Provider> jmods(Path jmods) {
+        try (Stream<Path> jmodFiles = Files.list(jmods)) {
+            return jmodFiles.filter(file -> file.toString().endsWith(JModsService.JMOD_EXTENSION))
+                .map(jmodFile -> ClassSource.Provider.zip(jmodFile, JModClassSource::new))
+                .toList();
+        } catch (IOException e) {
+            throw new HeadlessMcIOException(e);
+        }
     }
 
 }

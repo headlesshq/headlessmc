@@ -24,4 +24,11 @@ public interface JavaConfig extends DynamicConfig {
     @WithDefault("true")
     boolean checkForUpdates();
 
+    /**
+     * @return the distributions to try, in order, when jmods have to be downloaded for a Java version.
+     * Since JEP 493 (Java 24) some distributions, like temurin, do not ship jmods anymore.
+     */
+    @WithDefault("zulu,corretto,temurin")
+    List<String> jmodsDistributions();
+
 }
