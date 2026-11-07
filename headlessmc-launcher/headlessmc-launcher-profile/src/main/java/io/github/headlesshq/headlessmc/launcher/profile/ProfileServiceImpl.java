@@ -70,8 +70,12 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     public Profile save(Profile profile) {
         Path json = getProfilePath(profile.name());
-        jsonService.write(json, profile, true);
-        return profile;
+        // a profile read from an older format is written in the current one
+        Profile current = profile.hmcVersion() == Profile.PROFILE_VERSION
+            ? profile
+            : profile.withHmcVersion(Profile.PROFILE_VERSION);
+        jsonService.write(json, current, true);
+        return current;
     }
 
     @Override
