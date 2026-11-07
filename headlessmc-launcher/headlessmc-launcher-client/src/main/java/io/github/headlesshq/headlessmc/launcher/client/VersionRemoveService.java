@@ -223,21 +223,55 @@ public class VersionRemoveService {
                 arg = arg.withBuild(null);
             }
 
+            boolean foundBefore;
+            boolean foundAfter;
             try {
                 VersionID id = VersionID.resolve(platformService, arg);
-                boolean foundBefore = ids.values().stream().anyMatch(matches -> matches(matches, id));
-                boolean foundAfter = ids.entrySet().stream()
+                foundBefore = ids.values().stream().anyMatch(matches -> matches(matches, id));
+                foundAfter = ids.entrySet().stream()
                     .filter(entry -> !removedIds.contains(entry.getKey()))
                     .anyMatch(entry -> matches(entry.getValue(), id));
-                if (foundBefore && !foundAfter) {
-                    result.add(profile);
-                }
             } catch (HeadlessMcException | IllegalArgumentException e) {
-                log.warn("Failed to check if profile {} needs version {}", profile.name(), version.getId(), e);
+                // e.g. the platform of the profile came from a plugin that has been uninstalled,
+                // the profile must keep its version for when the plugin is installed again
+                log.info("Failed to resolve version {} of profile {}, checking the version.jsons instead: {}",
+                    arg, profile.name(), e.getMessage());
+                VersionArg unresolved = arg;
+                foundBefore = installed.values().stream().anyMatch(v -> mayBeVersionOf(unresolved, v, installed));
+                foundAfter = installed.values().stream()
+                    .filter(v -> !removedIds.contains(v.getId()))
+                    .anyMatch(v -> mayBeVersionOf(unresolved, v, installed));
+            }
+
+            if (foundBefore && !foundAfter) {
+                result.add(profile);
             }
         }
 
         return result;
+    }
+
+    /**
+     * For a profile whose {@link VersionArg} cannot be resolved, e.g. because its platform is not available,
+     * we cannot match versions, so we decide by the version.json alone:
+     * mod loaders name their versions after themselves, e.g. {@code quilt-loader-0.30.2-1.21.1},
+     * and inherit from the Minecraft version. This errs on the side of keeping versions.
+     */
+    private boolean mayBeVersionOf(VersionArg arg, Version version, Map<String, Version> installed) {
+        String id = version.getId().toLowerCase(Locale.ROOT);
+        if (arg.isVanilla()) {
+            return id.equals(arg.version().toLowerCase(Locale.ROOT));
+        }
+
+        if (!id.contains(arg.platform().toLowerCase(Locale.ROOT))
+            || arg.isSpecificBuild() && !id.contains(arg.build().orElseThrow().toLowerCase(Locale.ROOT))) {
+            return false;
+        }
+
+        List<Version> hierarchy = hierarchy(version, installed);
+        String missingParent = hierarchy.getFirst().getInheritsFrom();
+        return Stream.concat(hierarchy.stream().map(Version::getId), Stream.ofNullable(missingParent))
+            .anyMatch(arg.version()::equals);
     }
 
     private List<Path> unusedLibraries(List<Version> removed, List<List<Version>> needed) {
