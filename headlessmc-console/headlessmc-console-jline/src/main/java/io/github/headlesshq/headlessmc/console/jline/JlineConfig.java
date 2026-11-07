@@ -15,6 +15,8 @@ public interface JlineConfig extends DynamicConfig {
 
     Optional<String> tooManyCandidates();
 
+    GraphemeClusterMode graphemeCluster();
+
     /**
      * Only used in game by hmc-specifics, declared here so that the config knows the property.
      */
