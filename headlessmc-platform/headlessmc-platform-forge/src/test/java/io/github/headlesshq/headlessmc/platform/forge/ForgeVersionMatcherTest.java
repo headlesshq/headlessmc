@@ -161,6 +161,20 @@ class ForgeVersionMatcherTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "neoforge-47.1.106",                // contains the Forge builds 47.1.10 and 47.1.1
+        "neoforge-47.1.10-custom",
+        "NeoForge-47.1.10",
+        "fabric-loader-47.1.10-forge",      // no pattern, but contains forge and 47.1.10
+    })
+    void idsReservedForOtherPlatformsDoNotFallBack(String id) {
+        Version version = new FakeVersion(id).withInheritsFrom("1.20.1");
+
+        assertFalse(matcher.canMatch(version), id);
+        assertThrows(VersionMatchException.class, () -> matcher.match(version));
+    }
+
     @Test
     void theVanillaParentDecidesTheMcVersion() {
         // 14.23.5.2852 is a build for 1.12.2, not 1.12.1

@@ -2,10 +2,13 @@ package io.github.headlesshq.headlessmc.platform.forge;
 
 import io.github.headlesshq.headlessmc.platform.VanillaVersionService;
 import io.github.headlesshq.headlessmc.platform.VersionService;
+import io.github.headlesshq.headlessmc.platform.client.DefaultVersionMatcher;
 import io.github.headlesshq.headlessmc.platform.client.PatternVersionMatcher;
 import io.github.headlesshq.headlessmc.platform.client.VersionPattern;
+import io.github.headlesshq.headlessmc.version.Version;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -48,6 +51,17 @@ public class ForgeVersionMatcher extends PatternVersionMatcher {
     @Override
     protected List<VersionPattern> getPatterns() {
         return patterns;
+    }
+
+    /**
+     * Ids starting with {@code neoforge-} or {@code fabric-loader-} are reserved for the installers of those platforms.
+     * They contain {@code forge}, or can contain a Forge build as a substring, e.g. {@code neoforge-47.1.106}
+     * contains the Forge build {@code 47.1.10}, so they must never be matched by the {@link DefaultVersionMatcher}.
+     */
+    @Override
+    protected boolean canFallBack(Version version) {
+        String id = version.getId().toLowerCase(Locale.ENGLISH);
+        return !id.startsWith("neoforge-") && !id.startsWith("fabric-loader-");
     }
 
 }

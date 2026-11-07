@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.platform.*;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.VersionProcessor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import java.util.regex.Matcher;
  * fall back to the matching of the {@link DefaultVersionMatcher},
  * unless {@link #canFallBack(Version)} forbids it, e.g. for malformed ids that use the prefix of the platform.
  */
+@Slf4j
 public abstract class PatternVersionMatcher extends DefaultVersionMatcher {
     public PatternVersionMatcher(VanillaVersionService vanillaVersionService, VersionService versionService) {
         super(vanillaVersionService, versionService);
@@ -116,7 +118,8 @@ public abstract class PatternVersionMatcher extends DefaultVersionMatcher {
     /**
      * Resolves a build of this platform for a mc version, both names have to match exactly.
      * If the version inherits from a vanilla version, that is the mc version the version is launched with,
-     * so it is preferred over the mc version in the id.
+     * so it is preferred over the mc version in the id. A mismatch between the two is logged,
+     * as the version.json was probably edited or is broken.
      *
      * @param platformService used to resolve versions.
      * @param version         the version that is being matched.
@@ -132,6 +135,11 @@ public abstract class PatternVersionMatcher extends DefaultVersionMatcher {
         String build
     ) throws HeadlessMcException {
         Optional<VanillaVersion> parent = getVanillaParent(version);
+        if (parent.isPresent() && !parent.get().getName().equals(mcVersion)) {
+            log.warn("{} names mc version {}, but inherits from {}, using {}",
+                version.getId(), mcVersion, parent.get().getName(), parent.get().getName());
+        }
+
         Optional<VanillaVersion> vanillaVersion = parent.isPresent()
             ? parent
             : vanillaVersionService.getVersion(mcVersion);
@@ -181,9 +189,18 @@ public abstract class PatternVersionMatcher extends DefaultVersionMatcher {
     ) throws HeadlessMcException {
         Optional<VanillaVersion> parent = getVanillaParent(version);
         if (parent.isPresent()) {
-            candidates = candidates.stream()
+            List<BoundPlatformVersion> forParent = candidates.stream()
                 .filter(candidate -> candidate.getVanillaVersion().equals(parent.get().getName()))
                 .toList();
+            if (forParent.isEmpty() && !candidates.isEmpty()) {
+                log.warn("{} inherits from {}, but names a {} build for {}",
+                    version.getId(),
+                    parent.get().getName(),
+                    getPlatformName(),
+                    candidates.stream().map(BoundPlatformVersion::getVanillaVersion).distinct().toList());
+            }
+
+            candidates = forParent;
         }
 
         if (candidates.size() != 1) {
