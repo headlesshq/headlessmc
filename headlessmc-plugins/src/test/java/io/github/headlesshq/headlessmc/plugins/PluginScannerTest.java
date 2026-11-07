@@ -73,6 +73,30 @@ class PluginScannerTest {
     }
 
     @Test
+    void testMalformedManifests() throws IOException {
+        jar(dir.resolve("a-null.jar"), Map.of(PluginManifest.PATH, "null"));
+        jar(dir.resolve("b-null-library.jar"), Map.of(PluginManifest.PATH, """
+            {"schemaVersion": 1, "id": "b", "version": "1.0.0", "headlessmc": "*", "libraries": [null]}
+            """));
+        jar(dir.resolve("c-null-dependency.jar"), Map.of(PluginManifest.PATH, """
+            {"schemaVersion": 1, "id": "c", "version": "1.0.0", "headlessmc": "*", "dependencies": [null]}
+            """));
+        jar(dir.resolve("d-wrong-type.jar"), Map.of(PluginManifest.PATH, """
+            {"schemaVersion": 1, "id": "d", "version": "1.0.0", "headlessmc": "*", "dependencies": "foo"}
+            """));
+
+        List<PluginFile> files = scanner().scan(dir);
+        assertEquals(4, files.size());
+        for (PluginFile file : files) {
+            assertNotNull(file.error(), file.fileName());
+        }
+
+        assertEquals(PluginManifest.PATH + " is empty", files.get(0).error());
+        assertTrue(files.get(1).error().contains("libraries"), files.get(1).error());
+        assertTrue(files.get(2).error().contains("dependencies"), files.get(2).error());
+    }
+
+    @Test
     void testMissingDirectory() {
         assertEquals(List.of(), scanner().scan(dir.resolve("missing")));
     }

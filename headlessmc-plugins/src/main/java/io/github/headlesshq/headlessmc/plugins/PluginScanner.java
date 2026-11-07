@@ -87,9 +87,13 @@ public class PluginScanner {
                 return new PluginFile(jar, sha256, null, "not a HeadlessMc plugin, " + PluginManifest.PATH + " is missing");
             }
 
-            PluginManifest manifest;
+            @Nullable PluginManifest manifest;
             try (InputStream inputStream = zipFile.getInputStream(entry)) {
                 manifest = jsonService.parse(inputStream, PluginManifest.class);
+            }
+
+            if (manifest == null) {
+                return new PluginFile(jar, sha256, null, PluginManifest.PATH + " is empty");
             }
 
             String error = validate(manifest);
@@ -97,6 +101,10 @@ public class PluginScanner {
         } catch (IOException | JsonParseException e) {
             log.debug("Failed to read plugin {}", jar, e);
             return new PluginFile(jar, sha256, null, "failed to read " + PluginManifest.PATH + ": " + e.getMessage());
+        } catch (RuntimeException e) {
+            // a malformed manifest must never prevent HeadlessMc from starting
+            log.debug("Invalid plugin {}", jar, e);
+            return new PluginFile(jar, sha256, null, "invalid " + PluginManifest.PATH + ": " + e);
         }
     }
 
@@ -114,6 +122,10 @@ public class PluginScanner {
         }
 
         for (PluginManifest.Library library : manifest.libraryList()) {
+            if (library == null) {
+                return "libraries must not contain null";
+            }
+
             if (library.group() == null || library.artifact() == null || library.version() == null
                 || library.path() == null || library.sha256() == null) {
                 return "library " + library + " needs a group, artifact, version, path and sha256";
@@ -121,6 +133,10 @@ public class PluginScanner {
         }
 
         for (PluginManifest.Dependency dependency : manifest.dependencyList()) {
+            if (dependency == null) {
+                return "dependencies must not contain null";
+            }
+
             if (dependency.id() == null) {
                 return "a dependency needs an id";
             }
