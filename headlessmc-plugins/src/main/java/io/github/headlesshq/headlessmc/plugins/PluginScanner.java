@@ -31,6 +31,10 @@ import java.util.zip.ZipFile;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class PluginScanner {
     private static final Pattern ID = Pattern.compile("[a-z0-9][a-z0-9_-]*");
+    /**
+     * Group, artifact and version of libraries become part of a file name.
+     */
+    private static final Pattern COORDINATE = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9._-]*");
 
     private final HashService hashService;
     private final JsonService jsonService;
@@ -129,6 +133,13 @@ public class PluginScanner {
             if (library.group() == null || library.artifact() == null || library.version() == null
                 || library.path() == null || library.sha256() == null) {
                 return "library " + library + " needs a group, artifact, version, path and sha256";
+            }
+
+            if (!COORDINATE.matcher(library.group()).matches()
+                || !COORDINATE.matcher(library.artifact()).matches()
+                || !COORDINATE.matcher(library.version()).matches()) {
+                return "library " + library.module() + ":" + library.version()
+                    + " may only contain letters, digits, ., - and _ in its group, artifact and version";
             }
         }
 

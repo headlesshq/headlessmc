@@ -97,6 +97,21 @@ class PluginScannerTest {
     }
 
     @Test
+    void testLibraryCoordinatesBecomeFileNames() throws IOException {
+        for (String version : List.of("../../evil", "1.0/x", "1.0\\\\x", "..")) {
+            Path jar = dir.resolve("plugin.jar");
+            jar(jar, Map.of(PluginManifest.PATH, """
+                {"schemaVersion": 1, "id": "p", "version": "1.0.0", "headlessmc": "*", "libraries": [{
+                  "group": "com.example", "artifact": "lib", "version": "%s", "path": "lib.jar", "sha256": "abc"
+                }]}
+                """.formatted(version)));
+            String error = scanner().read(jar).error();
+            assertNotNull(error, version);
+            assertTrue(error.contains("may only contain"), error);
+        }
+    }
+
+    @Test
     void testMissingDirectory() {
         assertEquals(List.of(), scanner().scan(dir.resolve("missing")));
     }

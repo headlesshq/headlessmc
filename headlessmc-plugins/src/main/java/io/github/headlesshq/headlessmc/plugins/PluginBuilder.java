@@ -176,9 +176,12 @@ public class PluginBuilder {
             Files.copy(plugin.path(), providers.resolve("plugin-" + id + ".jar"), StandardCopyOption.REPLACE_EXISTING);
         }
 
-        for (PluginResolution.Library library : resolution.libraries()) {
+        List<PluginResolution.Library> libraries = resolution.libraries();
+        for (int i = 0; i < libraries.size(); i++) {
+            PluginResolution.Library library = libraries.get(i);
             PluginManifest.Library entry = library.library();
-            Path target = providers.resolve("lib-" + entry.group() + "-" + entry.artifact() + "-" + entry.version() + ".jar");
+            // the index keeps e.g. a-b:c and a:b-c apart, the PluginScanner validated the rest of the name
+            Path target = providers.resolve("lib-" + i + "-" + entry.group() + "-" + entry.artifact() + "-" + entry.version() + ".jar");
             try (ZipFile zipFile = new ZipFile(library.source().path().toFile())) {
                 ZipEntry zipEntry = zipFile.getEntry(entry.path());
                 if (zipEntry == null) {
@@ -186,7 +189,7 @@ public class PluginBuilder {
                 }
 
                 try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
-                    Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(inputStream, target);
                 }
             }
 

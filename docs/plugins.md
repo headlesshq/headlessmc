@@ -43,6 +43,13 @@ because there every run usually starts with an empty cache.
 | `hmc.plugins.jvm-args`       |         | Additional JVM arguments, comma separated, for the process running HeadlessMc with plugins.       |
 | `hmc.plugins.mutable-jar`    |         | A `quarkus-app` directory or `headlessmc-mutable.zip` to use instead of downloading it.           |
 
+!!! warning
+
+    Plugins run with the same privileges as HeadlessMc itself, only install plugins you trust.
+    Every jar in the `plugins` directory is loaded, together with the libraries nested in it.
+    The SHA-256 hashes of the libraries come from the plugin's own manifest,
+    they protect against corrupted jars, not against a malicious plugin.
+
 ## Writing plugins
 
 Start from the [plugin template](https://github.com/headlesshq/headlessmc-plugin-template).
@@ -109,7 +116,7 @@ Every plugin jar contains `META-INF/headlessmc-plugin.json`, the template genera
 | `headlessmc`             | Versions of HeadlessMc the plugin works with.                                                 |
 | `java`                   | Minimum Java version, at least 25.                                                            |
 | `dependencies`           | Other plugins this plugin needs, plugins with `optional` dependencies load without them.      |
-| `libraries`              | Libraries nested in the plugin jar.                                                           |
+| `libraries`              | Libraries nested in the plugin jar. `group`, `artifact` and `version` may only contain letters, digits, `.`, `-` and `_`. |
 
 Version ranges use the Maven syntax: `[1.0,2.0)` means `1.0 <= version < 2.0`, `[1.0]` exactly `1.0`,
 `*` any version. A plain version like `1.2` means `[1.2,2)`, any version up to the next major version.
