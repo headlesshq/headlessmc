@@ -68,8 +68,8 @@ public class CensoringConsole implements Console {
             }
 
             @Override
-            public boolean supportsCursorMovement() {
-                return extensions.supportsCursorMovement();
+            public TerminalInfo terminalInfo() {
+                return extensions.terminalInfo();
             }
         });
     }

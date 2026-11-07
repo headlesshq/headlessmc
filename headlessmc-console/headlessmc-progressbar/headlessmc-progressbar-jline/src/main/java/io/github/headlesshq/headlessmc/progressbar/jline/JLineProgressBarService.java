@@ -1,6 +1,8 @@
 package io.github.headlesshq.headlessmc.progressbar.jline;
 
 import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
+import io.github.headlesshq.headlessmc.console.TerminalInfo;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
@@ -18,6 +20,9 @@ import java.util.Optional;
 
 @ApplicationScoped
 public class JLineProgressBarService implements ProgressbarService {
+    static final int DEFAULT_TERMINAL_WIDTH = 80;
+    static final int MIN_TERMINAL_WIDTH = 10;
+
     private final Instance<Console> console;
 
     public JLineProgressBarService(Instance<Console> console) {
@@ -69,15 +74,42 @@ public class JLineProgressBarService implements ProgressbarService {
             return Optional.empty();
         }
 
-        return console.get().extensions().map(extensions -> {
-            // same as ctongfei/progressbar, System.err might be overridden by System.setErr
-            PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.err));
-            // ctongfei/progressbar also leaves the last column free
-            int width = extensions.getWidth() - 1;
-            return extensions.supportsCursorMovement()
-                ? new InteractiveConsoleProgressBarConsumer(out, width)
-                : new ConsoleProgressBarConsumer(out, width);
-        });
+        return console.get().extensions().map(JLineProgressBarService::createConsumer);
+    }
+
+    static ConsoleProgressBarConsumer createConsumer(ConsoleExtensions extensions) {
+        // same as ctongfei/progressbar, System.err might be overridden by System.setErr
+        PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.err));
+        return createConsumer(extensions, out);
+    }
+
+    static ConsoleProgressBarConsumer createConsumer(ConsoleExtensions extensions, PrintStream out) {
+        // ConsoleExtensions.terminalInfo() does not block, so it can be called on every render,
+        // to react to the terminal being resized, just like ctongfei/progressbar does
+        if (extensions.terminalInfo().cursorMovement()) {
+            return new InteractiveConsoleProgressBarConsumer(out) {
+                @Override
+                public int getMaxRenderedLength() {
+                    return maxRenderedLength(extensions.terminalInfo());
+                }
+            };
+        }
+
+        return new ConsoleProgressBarConsumer(out) {
+            @Override
+            public int getMaxRenderedLength() {
+                return maxRenderedLength(extensions.terminalInfo());
+            }
+        };
+    }
+
+    /**
+     * Same as ctongfei/progressbar: unknown or tiny widths default to {@value #DEFAULT_TERMINAL_WIDTH}
+     * and the last column is left free.
+     */
+    static int maxRenderedLength(TerminalInfo info) {
+        int width = info.width() >= MIN_TERMINAL_WIDTH ? info.width() : DEFAULT_TERMINAL_WIDTH;
+        return width - 1;
     }
 
 }
