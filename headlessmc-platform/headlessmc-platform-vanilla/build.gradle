@@ -19,4 +19,5 @@ dependencies {
     testImplementation testFixtures(project(':headlessmc-net'))
     testImplementation project(':headlessmc-version:headlessmc-version-service')
     testImplementation project(':headlessmc-util:headlessmc-util-typemap')
+    testImplementation project(':headlessmc-util:headlessmc-util-json')
 }

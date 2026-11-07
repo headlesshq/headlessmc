@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
 import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import jakarta.enterprise.util.TypeLiteral;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -97,6 +98,48 @@ class CacheSourcesTest {
 
         assertEquals(Optional.of(new Example("resource")), resource.get());
         assertTrue(resource.toString().contains("example.json"));
+    }
+
+    private JsonResource<Example> versioned(CacheExceptionHandler handler, String name, @Nullable Long version) {
+        return new JsonResource<>(handler, jsonService, type, JsonResource.getDefaultClassLoader(), name, version);
+    }
+
+    @Test
+    void readsAVersionedJsonResource() {
+        assertEquals(
+            Optional.of(new Example("versioned")),
+            versioned(CacheExceptionHandler.throwing(), "cache/versioned-example.json", 1L).get()
+        );
+    }
+
+    @Test
+    void aVersionedJsonResourceOfAnotherVersionIsEmpty() {
+        assertEquals(
+            Optional.empty(),
+            versioned(CacheExceptionHandler.logging(), "cache/versioned-example.json", 2L).get()
+        );
+        assertThrows(
+            CacheException.class,
+            () -> versioned(CacheExceptionHandler.throwing(), "cache/versioned-example.json", 2L).get()
+        );
+    }
+
+    @Test
+    void aPlainJsonResourceIsNotAValidVersionedResource() {
+        assertEquals(Optional.empty(), versioned(CacheExceptionHandler.logging(), "cache/example.json", 0L).get());
+    }
+
+    @Test
+    void aJsonResourceWithoutVersionReadsPlainJson() {
+        assertEquals(
+            Optional.of(new Example("resource")),
+            versioned(CacheExceptionHandler.throwing(), "cache/example.json", null).get()
+        );
+    }
+
+    @Test
+    void aMissingVersionedJsonResourceIsEmpty() {
+        assertEquals(Optional.empty(), versioned(CacheExceptionHandler.logging(), "cache/missing.json", 1L).get());
     }
 
     @Test

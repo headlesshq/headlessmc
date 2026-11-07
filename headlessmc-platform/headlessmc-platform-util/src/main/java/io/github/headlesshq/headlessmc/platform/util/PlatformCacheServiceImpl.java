@@ -70,7 +70,8 @@ public class PlatformCacheServiceImpl implements PlatformCacheService {
                     jsonService,
                     type,
                     JsonResource.getDefaultClassLoader(),
-                    platformName + "/" + platformName + "-versions.json"
+                    platformName + "/" + platformName + "-versions.json",
+                    version
                 )
             ).withSourceStore(
                 new JsonCacheFile<>(
