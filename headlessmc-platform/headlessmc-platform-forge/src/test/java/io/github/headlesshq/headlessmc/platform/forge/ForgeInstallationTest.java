@@ -25,6 +25,7 @@ import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.client.DefaultVersionMatcher;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherServiceImpl;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.util.CommonInstallerServices;
 import io.github.headlesshq.headlessmc.util.maven.Artifact;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
@@ -147,8 +148,8 @@ class ForgeInstallationTest {
             }
 
             @Override
-            public Installation installServer(VersionID id, Path dir, TypedMap args) {
-                return new Installation(21);
+            public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) {
+                return new ServerInstallation(21);
             }
         };
     }
