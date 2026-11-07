@@ -2,6 +2,8 @@ package io.github.headlesshq.headlessmc.console;
 
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.output.SecretService;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import io.github.headlesshq.headlessmc.console.spi.SPIService;
 import lombok.RequiredArgsConstructor;
 
@@ -37,6 +39,11 @@ public class DefaultConsole implements Console {
     @Override
     public Password readPassword() {
         return getConsole().readPassword();
+    }
+
+    @Override
+    public Answers ask(Form form) throws ConsoleException {
+        return getConsole().ask(form);
     }
 
     @Override

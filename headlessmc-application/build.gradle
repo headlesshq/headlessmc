@@ -52,4 +52,5 @@ dependencies {
     api project(':headlessmc-bom')
 
     testImplementation project(':headlessmc-console:headlessmc-console-completions')
+    testImplementation testFixtures(project(':headlessmc-console'))
 }

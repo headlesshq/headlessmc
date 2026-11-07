@@ -10,6 +10,12 @@ import java.util.List;
  * and replays queued input lines.
  */
 public class RecordingConsole implements Console {
+    /**
+     * Compared by identity, a queued input that makes {@link #read()} behave like the user pressed Ctrl+C.
+     */
+    @SuppressWarnings("StringOperationCanBeSimplified")
+    private static final String INTERRUPT = new String("<interrupt>");
+
     private final List<String> lines = new ArrayList<>();
     private final Deque<String> input = new ArrayDeque<>();
     private final Deque<String> passwords = new ArrayDeque<>();
@@ -24,6 +30,15 @@ public class RecordingConsole implements Console {
 
     public RecordingConsole addInput(String line) {
         input.add(line);
+        return this;
+    }
+
+    /**
+     * Queues an input that makes {@link #read()} throw a {@link ConsoleException.Interrupted},
+     * like the user pressed Ctrl+C.
+     */
+    public RecordingConsole addInterrupt() {
+        input.add(INTERRUPT);
         return this;
     }
 
@@ -44,7 +59,12 @@ public class RecordingConsole implements Console {
 
     @Override
     public String read() {
-        return input.isEmpty() ? "" : input.poll();
+        String line = input.poll();
+        if (line == INTERRUPT) {
+            throw new ConsoleException.Interrupted();
+        }
+
+        return line == null ? "" : line;
     }
 
     @Override

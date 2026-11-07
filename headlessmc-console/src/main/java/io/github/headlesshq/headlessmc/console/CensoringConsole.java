@@ -2,6 +2,8 @@ package io.github.headlesshq.headlessmc.console;
 
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.output.SecretService;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
@@ -46,6 +48,11 @@ public class CensoringConsole implements Console {
     @Override
     public Password readPassword(String message) {
         return console.readPassword(secretService.censorSecrets(message));
+    }
+
+    @Override
+    public Answers ask(Form form) throws ConsoleException {
+        return console.ask(form.mapMessages(secretService::censorSecrets));
     }
 
     @Override

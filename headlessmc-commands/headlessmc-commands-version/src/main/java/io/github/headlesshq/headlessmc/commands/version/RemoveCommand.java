@@ -20,7 +20,6 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Getter
 @Setter
@@ -94,8 +93,7 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
     }
 
     private boolean confirm(VersionRemoval removal) {
-        String answer = console.read("This will delete " + summary(removal) + ". Continue? [y/N] ");
-        return answer != null && List.of("y", "yes").contains(answer.trim().toLowerCase(Locale.ENGLISH));
+        return console.confirm("This will delete " + summary(removal) + ". Continue?", false);
     }
 
     private static String summary(VersionRemoval removal) {

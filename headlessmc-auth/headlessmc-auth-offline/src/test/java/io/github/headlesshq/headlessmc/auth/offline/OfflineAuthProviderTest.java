@@ -7,7 +7,12 @@ import io.github.headlesshq.headlessmc.auth.AuthStoreException;
 import io.github.headlesshq.headlessmc.auth.Authenticator;
 import io.github.headlesshq.headlessmc.auth.InMemoryAuthStore;
 import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.console.ConsoleException;
+import io.github.headlesshq.headlessmc.console.Password;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
+import io.github.headlesshq.headlessmc.console.prompt.Prompt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -163,6 +168,39 @@ class OfflineAuthProviderTest {
 
         assertEquals("Steve", account.getName());
         assertEquals(1, logged.size());
+    }
+
+    @Test
+    void abortingTheLoginStoresNoAccount() {
+        RecordingConsole console = new RecordingConsole().addInput("Steve").addInterrupt();
+
+        assertThrows(ConsoleException.Interrupted.class, () -> defaultMethod().login(console));
+        assertEquals(List.of(), provider.getAccounts());
+    }
+
+    @Test
+    void loginAsksAllQuestionsAsOneForm() {
+        List<Form> forms = new ArrayList<>();
+        RecordingConsole console = new RecordingConsole() {
+            @Override
+            public Answers ask(Form form) {
+                forms.add(form);
+                // e.g. an MCP client that cannot ask for secrets skips the optional token
+                return new Answers()
+                    .put("name", "Steve")
+                    .put("uuid", "")
+                    .put("token", Password.of(""))
+                    .put("type", Account.TYPE_MSA);
+            }
+        };
+
+        Account account = defaultMethod().login(console);
+
+        assertEquals("Steve", account.getName());
+        assertEquals(1, forms.size());
+        assertEquals(List.of("name", "uuid", "token", "type"),
+            forms.get(0).getPrompts().stream().map(Prompt::getId).toList());
+        assertEquals(List.of(), console.lines());
     }
 
     @Test

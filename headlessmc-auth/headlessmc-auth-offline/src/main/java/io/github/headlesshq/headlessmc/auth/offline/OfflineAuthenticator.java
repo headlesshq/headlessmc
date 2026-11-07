@@ -5,7 +5,8 @@ import io.github.headlesshq.headlessmc.auth.AuthException;
 import io.github.headlesshq.headlessmc.auth.AuthStoreException;
 import io.github.headlesshq.headlessmc.auth.Authenticator;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.console.Password;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -26,21 +27,26 @@ final class OfflineAuthenticator implements Authenticator {
 
     private Method<Console> loginWithUserInput() throws AuthException {
         return console -> {
-            String name = console.read("Enter the account name:");
-            String uuid = console.read("Enter the account uuid (optional):");
-            if (uuid.trim().isEmpty()) {
-                uuid = UUID.randomUUID().toString();
-            }
+            Form form = Form.builder("Create an offline account")
+                .text("name", "Account name")
+                .optionalText("uuid", "Account uuid, leave empty for a random one", null)
+                .optionalSecret("token", "Account token")
+                .optionalText("type", "Account type", Account.TYPE_MSA)
+                .build();
 
+            String name;
+            String uuid;
             String token;
-            try (Password password = console.readPassword("Enter the account token (optional, hidden):")) {
-                char[] pwdChars = password.get();
-                token = new String(pwdChars);
+            String type;
+            try (Answers answers = console.ask(form)) {
+                name = answers.getString("name").trim();
+                uuid = answers.getString("uuid").trim();
+                token = new String(answers.getPassword("token").get());
+                type = answers.getString("type").trim();
             }
 
-            String type = console.read("Enter the account type (default: " + Account.TYPE_MSA + "):");
-            if (type.trim().isEmpty()) {
-                type = Account.TYPE_MSA;
+            if (uuid.isEmpty()) {
+                uuid = UUID.randomUUID().toString();
             }
 
             Account account = new Account(provider.getName(), name, uuid, token, type, "");

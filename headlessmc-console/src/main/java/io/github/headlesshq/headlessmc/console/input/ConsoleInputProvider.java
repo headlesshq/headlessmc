@@ -2,7 +2,6 @@ package io.github.headlesshq.headlessmc.console.input;
 
 import io.github.headlesshq.headlessmc.console.ConsoleException;
 import io.github.headlesshq.headlessmc.console.Password;
-import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 
 import java.io.Console;
 
@@ -19,7 +18,7 @@ public class ConsoleInputProvider implements InputProvider {
             public String read() {
                 String line = console.readLine();
                 if (line == null) {
-                    throw new HeadlessMcIOException("Console has been closed");
+                    throw new ConsoleException.Interrupted("Console has been closed");
                 }
 
                 return line;
@@ -29,7 +28,7 @@ public class ConsoleInputProvider implements InputProvider {
             public Password readPassword() {
                 char[] password = console.readPassword();
                 if (password == null) {
-                    throw new HeadlessMcIOException("Console has been closed");
+                    throw new ConsoleException.Interrupted("Console has been closed");
                 }
 
                 return new Password(password);

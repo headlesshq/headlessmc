@@ -1,7 +1,8 @@
 package io.github.headlesshq.headlessmc.auth;
 
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.console.Password;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
@@ -41,9 +42,13 @@ public interface Authenticator {
     default Optional<Method<Console>> loginWithInteractiveCredentials() {
         return loginWithCredentials()
             .map(method -> (console) -> {
-                String email = console.read("Please enter your email:");
-                try (Password password = console.readPassword("Please enter your password:")) {
-                    return method.login(new Credentials(email, new String(password.get())));
+                Form form = Form.builder("Log in with your credentials")
+                    .text("email", "Email")
+                    .secret("password", "Password")
+                    .build();
+                try (Answers answers = console.ask(form)) {
+                    String email = answers.getString("email").trim();
+                    return method.login(new Credentials(email, new String(answers.getPassword("password").get())));
                 } catch (IllegalStateException e) {
                     throw new AuthException("Failed to login with credentials, " +
                         "you may want to check if you have 2FA enabled, " +

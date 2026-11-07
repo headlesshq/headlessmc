@@ -147,11 +147,7 @@ class JlineConsole implements Console, ConsoleExtensions {
                 reader.setVariable(LineReader.TOO_MANY_CANDIDATES, config.get().tooManyCandidates().orElse("partial"));
             }
 
-            try {
-                return reading(reader, lineReader -> lineReader.readLine(prompt, null, (MaskingCallback) null, null));
-            } catch (UserInterruptException e) {
-                throw new ConsoleException.Interrupted();
-            }
+            return reading(reader, lineReader -> lineReader.readLine(prompt, null, (MaskingCallback) null, null));
         });
     }
 
@@ -203,11 +199,17 @@ class JlineConsole implements Console, ConsoleExtensions {
      * Makes the given reader the {@link #activeReader} while it reads.
      * The terminal of the reader is only closed after this method returns,
      * so {@link #write(String)} never prints through a reader with a closed terminal.
+     * If the user presses Ctrl+C or Ctrl+D while reading, a {@link ConsoleException.Interrupted} is thrown,
+     * which aborts the current command or form without being reported as an error.
      */
     private <T> T reading(LineReader reader, Function<LineReader, T> read) {
         setActiveReader(reader);
         try {
             return read.apply(reader);
+        } catch (UserInterruptException e) {
+            throw new ConsoleException.Interrupted(null, e);
+        } catch (EndOfFileException e) {
+            throw new ConsoleException.Interrupted("End of input", e);
         } finally {
             setActiveReader(null);
         }

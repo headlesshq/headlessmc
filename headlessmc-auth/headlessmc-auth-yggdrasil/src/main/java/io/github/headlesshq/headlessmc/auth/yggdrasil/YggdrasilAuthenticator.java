@@ -8,13 +8,15 @@ import io.github.headlesshq.headlessmc.auth.AuthStoreException;
 import io.github.headlesshq.headlessmc.auth.Authenticator;
 import io.github.headlesshq.headlessmc.auth.Credentials;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.console.Password;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,16 +46,19 @@ final class YggdrasilAuthenticator implements Authenticator {
      */
     private Method<Console> loginWithUserInput() {
         return console -> {
-            String serverUrl = console.read(
-                "Authentication server url (default: " + YggdrasilClientFactory.DEFAULT_SERVER + "):");
-            if (serverUrl.trim().isEmpty()) {
-                serverUrl = YggdrasilClientFactory.DEFAULT_SERVER;
-            }
+            Form form = Form.builder("Log in to a Yggdrasil account")
+                .optionalText("server", "Authentication server url", YggdrasilClientFactory.DEFAULT_SERVER)
+                .text("username", "Username")
+                .secret("password", "Password")
+                .build();
 
-            String username = console.read("Username:");
+            String serverUrl;
+            String username;
             String password;
-            try (Password pwd = console.readPassword("Password:")) {
-                password = new String(pwd.get());
+            try (Answers answers = console.ask(form)) {
+                serverUrl = answers.getString("server").trim();
+                username = answers.getString("username").trim();
+                password = new String(answers.getPassword("password").get());
             }
 
             return login(serverUrl, username, password, console);
@@ -242,19 +247,24 @@ final class YggdrasilAuthenticator implements Authenticator {
                 + " profiles, a profile has to be selected but no console is available.");
         }
 
-        console.write("Found " + profiles.size() + " profiles:", "");
+        List<String> names = new ArrayList<>(profiles.size());
         for (int i = 0; i < profiles.size(); i++) {
-            console.write("  " + (i + 1) + ". " + profiles.get(i).getName(), "");
+            String name = profiles.get(i).getName();
+            // choices are answered by name, so they have to be unique
+            names.add(names.contains(name) ? name + " (" + (i + 1) + ")" : name);
         }
 
-        String input = console.read("Select a profile (1-" + profiles.size() + "):");
-        try {
-            int index = Integer.parseInt(input.trim());
-            if (index >= 1 && index <= profiles.size()) {
-                return profiles.get(index - 1);
-            }
-        } catch (NumberFormatException e) {
-            // handled below
+        Form form = Form.builder("The account owns " + profiles.size() + " profiles")
+            .choice("profile", "Select a profile", names)
+            .build();
+        String input;
+        try (Answers answers = console.ask(form)) {
+            input = answers.getString("profile");
+        }
+
+        int index = names.indexOf(input);
+        if (index >= 0) {
+            return profiles.get(index);
         }
 
         throw new AuthException("Invalid profile selection: '" + input + "'.");

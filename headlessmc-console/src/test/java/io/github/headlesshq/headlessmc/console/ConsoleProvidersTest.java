@@ -12,7 +12,6 @@ import io.github.headlesshq.headlessmc.console.output.Secret;
 import io.github.headlesshq.headlessmc.console.output.SecretService;
 import io.github.headlesshq.headlessmc.console.output.SecretServiceImpl;
 import io.github.headlesshq.headlessmc.console.output.StdOutOutput;
-import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -258,8 +257,8 @@ class ConsoleProvidersTest {
         System.setIn(new ByteArrayInputStream(new byte[0]));
         try {
             Input input = new SystemInputProvider().get();
-            assertThrows(HeadlessMcIOException.class, input::read);
-            assertThrows(HeadlessMcIOException.class, input::readPassword);
+            assertThrows(ConsoleException.Interrupted.class, input::read);
+            assertThrows(ConsoleException.Interrupted.class, input::readPassword);
         } finally {
             System.setIn(original);
         }
