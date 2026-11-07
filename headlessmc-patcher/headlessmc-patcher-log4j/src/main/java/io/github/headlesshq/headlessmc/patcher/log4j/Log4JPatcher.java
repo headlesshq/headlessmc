@@ -56,7 +56,7 @@ public class Log4JPatcher extends AbstractClassPatcher {
 
     @Override
     public String name() {
-        return "log4j";
+        return LOG4J;
     }
 
     @Override

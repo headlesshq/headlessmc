@@ -81,7 +81,7 @@ public class LwjglPatcher extends AbstractClassPatcher {
 
     @Override
     public String name() {
-        return "lwjgl";
+        return LWJGL;
     }
 
     @Override

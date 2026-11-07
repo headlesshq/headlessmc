@@ -10,6 +10,24 @@ import java.nio.file.Path;
  */
 public interface Patcher extends Comparable<Patcher> {
     /**
+     * The {@link #name()} of the patcher that patches Log4J against Log4Shell.
+     */
+    String LOG4J = "log4j";
+    /**
+     * The {@link #name()} of the patcher that turns LWJGL into stubs with bytecode transformations.
+     */
+    String LWJGL = "lwjgl";
+    /**
+     * The {@link #name()} of the patcher that replaces LWJGL with the patched jars of headlessmc-lwjgl,
+     * opt-in while in preview, replaces {@link #LWJGL}.
+     */
+    String LWJGL_PRE = "lwjgl-pre";
+    /**
+     * The {@link #name()} of the patcher that patches the paulscode sound system of old Minecraft versions.
+     */
+    String PAULSCODE = "paulscode";
+
+    /**
      * Runs this patcher on the given {@link PatchContext}.
      * A patcher can modify the classpath using
      * {@link PatchContext#patch(Path, Patcher, PatchContext.PatchAction)}

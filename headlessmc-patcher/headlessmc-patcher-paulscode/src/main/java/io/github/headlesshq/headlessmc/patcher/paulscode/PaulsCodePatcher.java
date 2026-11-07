@@ -58,7 +58,7 @@ public class PaulsCodePatcher extends AbstractClassPatcher {
 
     @Override
     public String name() {
-        return "paulscode";
+        return PAULSCODE;
     }
 
     @Override
