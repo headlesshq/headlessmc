@@ -103,7 +103,8 @@ class RelativePathSerializationTest {
 
         String json = write(service, new Holder(file));
 
-        assertEquals("{\"file\":{\"path\":\"" + escape(file) + "\"}}", json);
+        // always written with '/', so files written on Windows stay valid on Linux
+        assertEquals("{\"file\":{\"path\":\"mods/mod.jar\"}}", json);
         assertEquals(new Holder(file), parse(service, json, Holder.class));
     }
 
