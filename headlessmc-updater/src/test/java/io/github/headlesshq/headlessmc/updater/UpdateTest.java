@@ -56,6 +56,16 @@ public class UpdateTest {
     }
 
     @Test
+    public void testPackage() {
+        Path path = Path.of("/usr/bin/headlessmc");
+        List<String> message = update(new Installation(Installation.Type.PACKAGE, path), NATIVE, false).getMessage();
+        assertEquals(3, message.size());
+        assertEquals("Release: " + RELEASE.htmlUrl(), message.get(1));
+        assertTrue(message.getLast().startsWith(path + " has been installed by a package manager"), message.getLast());
+        assertFalse(String.join("\n", message).contains("curl"));
+    }
+
+    @Test
     public void testNoAsset() {
         List<String> message = update(new Installation(Installation.Type.UNKNOWN, null), null, false).getMessage();
         assertEquals(2, message.size());

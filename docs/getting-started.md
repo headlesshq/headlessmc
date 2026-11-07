@@ -42,10 +42,50 @@ Download the executable for your Operating System from the latest
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
 
+### Linux packages
+
+Every release also contains deb, rpm and archlinux packages of the Linux executables for x64 and ARM64.
+They install HeadlessMc as `headlessmc`, replace $VERSION with the HeadlessMc version to download:
+
+=== "Debian/Ubuntu"
+
+    ``` sh
+    curl -LO https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc_${VERSION}_amd64.deb
+    sudo apt install ./headlessmc_${VERSION}_amd64.deb
+    ```
+    Use `arm64` instead of `amd64` on ARM64.
+
+=== "Fedora/RHEL/openSUSE"
+
+    ``` sh
+    sudo dnf install https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-$VERSION.x86_64.rpm
+    ```
+    Use `aarch64` instead of `x86_64` on ARM64, and `zypper install` on openSUSE.
+
+=== "Arch Linux"
+
+    ``` sh
+    curl -LO https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-$VERSION-x86_64.pkg.tar.zst
+    sudo pacman -U headlessmc-$VERSION-x86_64.pkg.tar.zst
+    ```
+    Use `aarch64` instead of `x86_64` on ARM64.
+
+The packages require glibc 2.34 or newer (e.g. Debian 12, Ubuntu 22.04, RHEL 9).
+To update HeadlessMc, install the package of the new release.
+
 ### Shell completions
 
 HeadlessMc can complete its commands, options, installed versions, accounts, profiles and more
 in bash, zsh, fish and PowerShell, with a description for every completion.
+
+If you installed one of the [Linux packages](#linux-packages), the completions for bash, zsh and fish
+are already installed and work in every new shell, you do not have to set up anything below:
+bash needs the [bash-completion](https://github.com/scop/bash-completion) package
+(on Arch Linux install it with `sudo pacman -S bash-completion`),
+and zsh needs `compinit` to run, which most distributions and frameworks like Oh My Zsh do.
+If zsh does not find them, remove its completion cache once with `rm ~/.zcompdump*`.
+The package manager updates the completions together with HeadlessMc.
+
 `headlessmc completion <shell>` prints a small script for your shell, or writes it to a file with `-o <file>`,
 which asks the `headlessmc` executable on your `PATH` for completions every time you press tab.
 Use the native executable for this, the `headlessmc.jar` takes too long to start.
