@@ -151,6 +151,29 @@ class ProfileLaunchCommandTest {
     }
 
     @Test
+    void thePatchedLwjglReplacesTheLwjglPatcherWhenSelected() {
+        client("main");
+        ProfileLaunchCommand command = command("main");
+        command.setHeadless(true);
+        command.setPatchers(new ArrayList<>(List.of("LWJGL-pre")));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(List.of("lwjgl-pre", "log4j", "paulscode"), launched.profile.patchers());
+    }
+
+    @Test
+    void thePatchedLwjglCanBeSelectedByTheProfile() {
+        profileService.save(client("main").withPatchers(List.of("lwjgl-pre")));
+        ProfileLaunchCommand command = command("main");
+        command.setHeadless(true);
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(List.of("log4j", "paulscode", "lwjgl-pre"), launched.profile.patchers());
+    }
+
+    @Test
     void patchersAreMergedLowerCasedAndDeduplicated() {
         profileService.save(client("main").withPatchers(List.of("log4j", "custom")));
         ProfileLaunchCommand command = command("main");
