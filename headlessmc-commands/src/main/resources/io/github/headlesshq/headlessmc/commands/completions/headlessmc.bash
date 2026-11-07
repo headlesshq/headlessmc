@@ -70,4 +70,4 @@ _headlessmc() {
   done
 }
 
-complete -F _headlessmc headlessmc hmc
+complete -F _headlessmc headlessmc

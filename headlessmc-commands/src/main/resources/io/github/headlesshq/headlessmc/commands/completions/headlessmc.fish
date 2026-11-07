@@ -39,4 +39,3 @@ function __headlessmc_complete
 end
 
 complete -c headlessmc -f -a '(__headlessmc_complete)'
-complete -c hmc -f -a '(__headlessmc_complete)'

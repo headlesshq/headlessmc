@@ -50,7 +50,7 @@ in bash, zsh, fish and PowerShell, with a description for every completion.
 which asks the `headlessmc` executable on your `PATH` for completions every time you press tab.
 Use the native executable for this, the `headlessmc.jar` takes too long to start.
 If you named the executable differently, e.g. `headlessmc-launcher-linux-x64`,
-rename it to `headlessmc` (or `hmc`), as the scripts only complete those names.
+rename it to `headlessmc`, as the scripts only complete that name.
 
 === "zsh"
 

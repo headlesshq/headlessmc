@@ -10,7 +10,7 @@
 # PowerShell falls back to completing files whenever there are no candidates, so if directive 4
 # is set and there are none, a single inert blank result is returned to suppress that fallback.
 
-Register-ArgumentCompleter -Native -CommandName 'headlessmc', 'hmc', 'headlessmc.exe' -ScriptBlock {
+Register-ArgumentCompleter -Native -CommandName 'headlessmc', 'headlessmc.exe' -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 
     $elements = @($commandAst.CommandElements | Where-Object { $_.Extent.StartOffset -lt $cursorPosition })

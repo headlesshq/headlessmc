@@ -1,4 +1,4 @@
-#compdef headlessmc hmc
+#compdef headlessmc
 
 # Dynamic zsh completion for HeadlessMc.
 #
@@ -63,5 +63,5 @@ _headlessmc() {
 if [[ $zsh_eval_context[-1] == loadautofunc ]]; then
   _headlessmc "$@"
 else
-  compdef _headlessmc headlessmc hmc
+  compdef _headlessmc headlessmc
 fi
