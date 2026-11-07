@@ -21,6 +21,7 @@
     'gradle',
     'gradle-wrapper',
     'github-actions',
+    'dockerfile',
   ],
   packageRules: [
     {
