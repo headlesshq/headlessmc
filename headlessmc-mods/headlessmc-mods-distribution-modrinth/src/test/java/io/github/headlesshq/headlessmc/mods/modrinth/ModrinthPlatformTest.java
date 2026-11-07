@@ -79,7 +79,7 @@ class ModrinthPlatformTest {
 
     @BeforeEach
     void setup() {
-        modpackDownloader = new ModpackDownloader(progressBars, new DefaultJacksonJsonService(), new DefaultFileService(new DefaultFileSystemProvider()));
+        modpackDownloader = new ModpackDownloader(progressBars, new DefaultJacksonJsonService(), new DefaultFileService(new DefaultFileSystemProvider()), TestModpackConfig.holder());
         platform = new ModrinthDistributionPlatform(modpackDownloader, downloads, api, modCache);
         hits.add(new ModrinthProject("sodium", "Sodium", "Fast rendering"));
         downloads.register(MOD_URL, MOD);

@@ -2,8 +2,11 @@ package io.github.headlesshq.headlessmc.mods.modrinth;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
+import io.github.headlesshq.headlessmc.exceptions.RequestException;
+import io.github.headlesshq.headlessmc.exceptions.VerificationException;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
+import io.github.headlesshq.headlessmc.net.DownloadImpl;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBarServiceManager;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -22,6 +26,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -31,6 +38,7 @@ class ModpackDownloaderTest {
     private static final URI PACK_URL = URI.create("https://cdn.modrinth.com/pack.mrpack");
     private static final URI MOD_URL = URI.create("https://cdn.modrinth.com/sodium.jar");
     private static final URI BROKEN_URL = URI.create("https://cdn.modrinth.com/broken.jar");
+    private static final URI FLAKY_URL = URI.create("https://cdn.modrinth.com/flaky.jar");
     private static final byte[] MOD = "sodium-jar".getBytes(StandardCharsets.UTF_8);
 
     @TempDir
@@ -43,7 +51,7 @@ class ModpackDownloaderTest {
 
     @BeforeEach
     void setup() {
-        downloader = new ModpackDownloader(progressBars, new DefaultJacksonJsonService(), new DefaultFileService(new DefaultFileSystemProvider()));
+        downloader = new ModpackDownloader(progressBars, new DefaultJacksonJsonService(), new DefaultFileService(new DefaultFileSystemProvider()), TestModpackConfig.holder());
         downloads.register(MOD_URL, MOD);
     }
 
@@ -179,6 +187,87 @@ class ModpackDownloaderTest {
             HeadlessMcException.class, () -> download(Side.CLIENT, root.resolve("game"))
         );
         assertTrue(e.getMessage().contains("Failed to download file"));
+    }
+
+    @Test
+    void downloadsAllFilesInParallel() throws IOException {
+        downloader = new ModpackDownloader(
+            progressBars,
+            new DefaultJacksonJsonService(),
+            new DefaultFileService(new DefaultFileSystemProvider()),
+            TestModpackConfig.holder(Map.of(ModpackConfig.PREFIX + ".parallel.parallelism", "3"))
+        );
+
+        StringJoiner files = new StringJoiner(",");
+        for (int i = 0; i < 5; i++) {
+            URI url = URI.create("https://cdn.modrinth.com/mod" + i + ".jar");
+            downloads.register(url, MOD);
+            files.add(file("mods/mod" + i + ".jar", url.toString(), null));
+        }
+
+        registerPack(Map.of("modrinth.index.json", index(files.toString())));
+        Path gameDir = root.resolve("game");
+
+        download(Side.CLIENT, gameDir);
+
+        for (int i = 0; i < 5; i++) {
+            assertArrayEquals(MOD, Files.readAllBytes(gameDir.resolve("mods").resolve("mod" + i + ".jar")));
+        }
+    }
+
+    @Test
+    void verificationFailuresAreNotRetried() {
+        downloader = new ModpackDownloader(
+            progressBars,
+            new DefaultJacksonJsonService(),
+            new DefaultFileService(new DefaultFileSystemProvider()),
+            TestModpackConfig.holder(Map.of(
+                ModpackConfig.PREFIX + ".parallel.retry-max-attempts", "4",
+                ModpackConfig.PREFIX + ".parallel.retry-initial-interval-ms", "1",
+                ModpackConfig.PREFIX + ".parallel.retry-max-interval-ms", "1"
+            ))
+        );
+
+        String wrongSize = "{\"path\":\"mods/sodium.jar\",\"hashes\":{},\"downloads\":[\"" + MOD_URL
+            + "\"],\"fileSize\":" + (MOD.length + 1) + "}";
+        registerPack(Map.of("modrinth.index.json", index(wrongSize)));
+
+        HeadlessMcException e = assertThrows(
+            HeadlessMcException.class, () -> download(Side.CLIENT, root.resolve("game"))
+        );
+        assertInstanceOf(VerificationException.class, e.getCause());
+        assertEquals(1, downloads.getRequestedUris().stream().filter(MOD_URL::equals).count());
+    }
+
+    @Test
+    void transientFailuresAreRetried() throws IOException {
+        downloader = new ModpackDownloader(
+            progressBars,
+            new DefaultJacksonJsonService(),
+            new DefaultFileService(new DefaultFileSystemProvider()),
+            TestModpackConfig.holder(Map.of(
+                ModpackConfig.PREFIX + ".parallel.retry-max-attempts", "2",
+                ModpackConfig.PREFIX + ".parallel.retry-initial-interval-ms", "1",
+                ModpackConfig.PREFIX + ".parallel.retry-max-interval-ms", "1"
+            ))
+        );
+
+        AtomicInteger attempts = new AtomicInteger();
+        downloads.register(FLAKY_URL, () -> {
+            if (attempts.getAndIncrement() == 0) {
+                throw new RequestException("Connection reset");
+            }
+
+            return new DownloadImpl(Optional.of((long) MOD.length), 200, new ByteArrayInputStream(MOD));
+        });
+
+        registerPack(Map.of("modrinth.index.json", index(file("mods/sodium.jar", FLAKY_URL.toString(), null))));
+        Path gameDir = root.resolve("game");
+
+        download(Side.CLIENT, gameDir);
+
+        assertEquals(2, attempts.get());
+        assertArrayEquals(MOD, Files.readAllBytes(gameDir.resolve("mods").resolve("sodium.jar")));
     }
 
     @Test
