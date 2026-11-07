@@ -9,10 +9,11 @@ import java.util.Locale;
  * Versions are compared by their numeric components first, missing components count as {@code 0}.
  * A version with a qualifier is lower than the same version without one ({@code 3.0.0-RC8 < 3.0.0}),
  * qualifiers are compared token by token, numbers numerically ({@code RC8 < RC10}).
+ * Build metadata after a {@code +} is ignored, like in SemVer ({@code 1.0.0+5 == 1.0.0}).
  *
  * @param value      the original string.
  * @param numbers    the leading numeric components.
- * @param qualifier  everything after the numeric components, without the separator, empty if none.
+ * @param qualifier  everything after the numeric components, without the separator and the build metadata, empty if none.
  */
 public record Version(String value, List<Integer> numbers, String qualifier) implements Comparable<Version> {
     /**
@@ -50,7 +51,12 @@ public record Version(String value, List<Integer> numbers, String qualifier) imp
         }
 
         String qualifier = version.substring(index);
-        if (!qualifier.isEmpty() && (qualifier.charAt(0) == '-' || qualifier.charAt(0) == '.' || qualifier.charAt(0) == '+')) {
+        int buildMetadata = qualifier.indexOf('+');
+        if (buildMetadata >= 0) {
+            qualifier = qualifier.substring(0, buildMetadata);
+        }
+
+        if (!qualifier.isEmpty() && (qualifier.charAt(0) == '-' || qualifier.charAt(0) == '.')) {
             qualifier = qualifier.substring(1);
         }
 
@@ -108,7 +114,10 @@ public record Version(String value, List<Integer> numbers, String qualifier) imp
             trimmed.removeLast();
         }
 
-        return 31 * trimmed.hashCode() + qualifier.toLowerCase(Locale.ROOT).hashCode();
+        List<String> tokens = tokenize(qualifier).stream()
+            .map(token -> Character.isDigit(token.charAt(0)) ? stripLeadingZeros(token) : token.toLowerCase(Locale.ROOT))
+            .toList();
+        return 31 * trimmed.hashCode() + tokens.hashCode();
     }
 
     @Override
@@ -130,7 +139,7 @@ public record Version(String value, List<Integer> numbers, String qualifier) imp
             boolean bNumber = Character.isDigit(b.charAt(0));
             int result;
             if (aNumber && bNumber) {
-                result = Long.compare(Long.parseLong(a), Long.parseLong(b));
+                result = compareNumbers(a, b);
             } else if (aNumber != bNumber) {
                 result = aNumber ? 1 : -1;
             } else {
@@ -143,6 +152,24 @@ public record Version(String value, List<Integer> numbers, String qualifier) imp
         }
 
         return Integer.compare(firstTokens.size(), secondTokens.size());
+    }
+
+    /**
+     * Compares two numeric tokens of any length, which might not fit into a long.
+     */
+    private static int compareNumbers(String first, String second) {
+        String a = stripLeadingZeros(first);
+        String b = stripLeadingZeros(second);
+        return a.length() != b.length() ? Integer.compare(a.length(), b.length()) : a.compareTo(b);
+    }
+
+    private static String stripLeadingZeros(String number) {
+        int index = 0;
+        while (index < number.length() - 1 && number.charAt(index) == '0') {
+            index++;
+        }
+
+        return number.substring(index);
     }
 
     private static List<String> tokenize(String qualifier) {

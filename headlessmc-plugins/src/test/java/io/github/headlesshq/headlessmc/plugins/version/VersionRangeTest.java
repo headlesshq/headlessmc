@@ -19,6 +19,25 @@ class VersionRangeTest {
     }
 
     @Test
+    void testLongNumericQualifiers() {
+        assertTrue(v("1.0-99999999999999999999").compareTo(v("1.0-100000000000000000000")) < 0);
+        assertEquals(v("1.0-rc0001"), v("1.0-rc1"));
+        assertEquals(v("1.0-rc0001").hashCode(), v("1.0-rc1").hashCode());
+        assertEquals(v("1.0-RC1").hashCode(), v("1.0-rc1").hashCode());
+    }
+
+    @Test
+    void testBuildMetadataIsIgnored() {
+        assertEquals(v("1.0.0"), v("1.0.0+5"));
+        assertEquals(v("1.0.0").hashCode(), v("1.0.0+5").hashCode());
+        assertEquals("", v("1.0.0+5").qualifier());
+        assertEquals(v("1.0.0-rc1"), v("1.0.0-rc1+build.7"));
+        assertTrue(v("1.0.0-rc1+build").compareTo(v("1.0.0")) < 0);
+        assertTrue(VersionRange.parse("[1.0.0,2)").contains(v("1.0.0+5")));
+        assertEquals("1.0.0+5", v("1.0.0+5").toString());
+    }
+
+    @Test
     void testBareVersionIsCompatibleRange() {
         VersionRange range = VersionRange.parse("1.2.0");
         assertTrue(range.contains(v("1.2.0")));
