@@ -38,7 +38,7 @@ public abstract class AbstractCachedVersionService<V extends PlatformVersion>
     }
 
     @Override
-    public Optional<V> getLatestStableBuild(VanillaVersion version) throws HeadlessMcException {
+    public Optional<V> getStableBuild(VanillaVersion version) throws HeadlessMcException {
         Set<V> stable = getStableView().get().orElseThrow(() -> new NotFoundException("Failed to fetch stable versions"));
         return getBuilds(version).stream().filter(stable::contains).findFirst();
     }

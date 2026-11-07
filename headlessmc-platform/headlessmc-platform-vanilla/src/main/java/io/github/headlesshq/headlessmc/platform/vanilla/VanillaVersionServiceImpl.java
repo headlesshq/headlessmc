@@ -51,7 +51,7 @@ class VanillaVersionServiceImpl extends AbstractJsonVersionService<VanillaVersio
     }
 
     @Override
-    public VanillaVersion getLatestStable() throws HeadlessMcException {
+    public VanillaVersion getStable() throws HeadlessMcException {
         Set<VanillaVersion> stable = getStableView().get()
             .orElseThrow(() -> new NotFoundException("Failed to fetch stable versions"));
         return getVersions().stream()

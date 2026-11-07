@@ -90,7 +90,7 @@ public class PurpurVersionService extends AbstractVersionService implements Vers
      * The Purpur API has no notion of stable builds, so this returns the latest build.
      */
     @Override
-    public Optional<BoundPlatformVersion> getLatestStableBuild(VanillaVersion version) {
+    public Optional<BoundPlatformVersion> getStableBuild(VanillaVersion version) {
         return getLatestBuild(version);
     }
 

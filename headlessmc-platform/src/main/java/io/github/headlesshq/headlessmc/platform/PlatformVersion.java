@@ -43,7 +43,7 @@ public sealed class PlatformVersion permits VanillaVersion, BoundPlatformVersion
         if (VersionArg.LATEST.equalsIgnoreCase(name)) {
             platformVersion = versionService.getLatestBuild(vanillaVersion);
         } else if (VersionArg.STABLE.equalsIgnoreCase(name)) {
-            platformVersion = versionService.getLatestStableBuild(vanillaVersion);
+            platformVersion = versionService.getStableBuild(vanillaVersion);
         } else {
             platformVersion = versionService.getBuild(vanillaVersion, name);
         }

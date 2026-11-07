@@ -63,7 +63,7 @@ public class FakeVersionService implements VersionService {
     }
 
     @Override
-    public Optional<BoundPlatformVersion> getLatestStableBuild(VanillaVersion version) {
+    public Optional<BoundPlatformVersion> getStableBuild(VanillaVersion version) {
         Set<String> stable = stableBuilds.getOrDefault(version.getName(), Set.of());
         return getBuilds(version).stream()
             .filter(platformVersion -> stable.contains(platformVersion.getName()))

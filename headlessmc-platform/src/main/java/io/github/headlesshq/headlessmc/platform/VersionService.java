@@ -39,7 +39,7 @@ public interface VersionService {
      * @param version the vanilla version to get the build for.
      * @return the latest stable build, or empty if there is no stable build for the version.
      */
-    Optional<? extends PlatformVersion> getLatestStableBuild(VanillaVersion version) throws HeadlessMcException;
+    Optional<? extends PlatformVersion> getStableBuild(VanillaVersion version) throws HeadlessMcException;
 
     Optional<? extends PlatformVersion> getBuild(VanillaVersion version, String build) throws HeadlessMcException;
 

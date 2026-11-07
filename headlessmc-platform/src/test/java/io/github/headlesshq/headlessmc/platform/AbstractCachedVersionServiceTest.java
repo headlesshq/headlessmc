@@ -139,9 +139,9 @@ class AbstractCachedVersionServiceTest {
     }
 
     @Test
-    void resolvesLatestStableBuild() {
-        assertEquals("0.16.5", service.getLatestStableBuild(vanilla("1.21.1")).orElseThrow().getName());
-        assertEquals(Optional.empty(), service.getLatestStableBuild(vanilla("1.20.4")));
+    void resolvesStableBuild() {
+        assertEquals("0.16.5", service.getStableBuild(vanilla("1.21.1")).orElseThrow().getName());
+        assertEquals(Optional.empty(), service.getStableBuild(vanilla("1.20.4")));
     }
 
     @Test

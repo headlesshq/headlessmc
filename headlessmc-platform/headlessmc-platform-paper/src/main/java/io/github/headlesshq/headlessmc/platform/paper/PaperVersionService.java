@@ -73,7 +73,7 @@ public class PaperVersionService extends AbstractVersionService implements Versi
      * @return the latest build in the {@link Channel#STABLE} or {@link Channel#RECOMMENDED} channel.
      */
     @Override
-    public Optional<BoundPlatformVersion> getLatestStableBuild(VanillaVersion version) {
+    public Optional<BoundPlatformVersion> getStableBuild(VanillaVersion version) {
         try {
             return api.getBuilds(projectName, version.getName(), List.of(Channel.STABLE, Channel.RECOMMENDED))
                 .stream()

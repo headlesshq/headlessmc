@@ -14,7 +14,7 @@ public interface VanillaVersionService extends VersionService {
     /**
      * @return the latest release.
      */
-    VanillaVersion getLatestStable() throws HeadlessMcException;
+    VanillaVersion getStable() throws HeadlessMcException;
 
     boolean hasVersion(String name) throws HeadlessMcException;
 
@@ -27,7 +27,7 @@ public interface VanillaVersionService extends VersionService {
     Optional<VanillaVersion> getLatestBuild(VanillaVersion version) throws HeadlessMcException;
 
     @Override
-    Optional<VanillaVersion> getLatestStableBuild(VanillaVersion version) throws HeadlessMcException;
+    Optional<VanillaVersion> getStableBuild(VanillaVersion version) throws HeadlessMcException;
 
     @Override
     SequencedSet<VanillaVersion> getBuilds(VanillaVersion version) throws HeadlessMcException;

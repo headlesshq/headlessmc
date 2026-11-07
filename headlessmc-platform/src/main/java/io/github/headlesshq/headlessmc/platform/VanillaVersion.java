@@ -20,7 +20,7 @@ public final class VanillaVersion extends PlatformVersion {
         }
 
         if (VersionArg.STABLE.equalsIgnoreCase(name)) {
-            return vanillaVersionService.getLatestStable();
+            return vanillaVersionService.getStable();
         }
 
         if (vanillaVersionService.hasVersion(name)) {

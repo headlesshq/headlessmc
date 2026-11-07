@@ -211,7 +211,7 @@ class PaperVersionServiceTest {
     }
 
     @Test
-    void latestStableBuildSkipsAlphaAndBetaBuilds() {
+    void stableBuildSkipsAlphaAndBetaBuilds() {
         builds.add(build(131, "BETA"));
         builds.add(build(132, "ALPHA"));
         builds.add(build(128, "RECOMMENDED"));
@@ -219,7 +219,7 @@ class PaperVersionServiceTest {
         VanillaVersion vanilla = new FakeVanillaPlatform("1.21.1").getVersionService().getVersion("1.21.1").orElseThrow();
 
         assertEquals("132", service.getLatestBuild(vanilla).orElseThrow().getName());
-        assertEquals("130", service.getLatestStableBuild(vanilla).orElseThrow().getName());
+        assertEquals("130", service.getStableBuild(vanilla).orElseThrow().getName());
     }
 
 }

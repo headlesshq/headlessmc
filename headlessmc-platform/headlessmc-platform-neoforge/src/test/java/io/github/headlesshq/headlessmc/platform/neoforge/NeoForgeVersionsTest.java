@@ -91,8 +91,8 @@ class NeoForgeVersionsTest {
         NeoForgeVersionService service = service();
 
         assertEquals("63-beta", service.getLatestBuild(vanilla("1.21.10")).orElseThrow().getName());
-        assertEquals("62", service.getLatestStableBuild(vanilla("1.21.10")).orElseThrow().getName());
-        assertEquals(Optional.empty(), service.getLatestStableBuild(vanilla("26.1")));
+        assertEquals("62", service.getStableBuild(vanilla("1.21.10")).orElseThrow().getName());
+        assertEquals(Optional.empty(), service.getStableBuild(vanilla("26.1")));
     }
 
     private static PrismIndex.Meta typed(String version, String mcVersion, String type) {

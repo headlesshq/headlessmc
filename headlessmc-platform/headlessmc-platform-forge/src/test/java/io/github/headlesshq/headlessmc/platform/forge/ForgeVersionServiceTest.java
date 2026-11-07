@@ -73,8 +73,8 @@ class ForgeVersionServiceTest {
             List.of(new PrismIndex.Meta.Requires("1.20.2", "net.minecraft")), "sha", "48.0.1", true, null
         ));
 
-        assertEquals("48.0.5", service.getLatestStableBuild(vanilla("1.20.2")).orElseThrow().getName());
-        assertEquals(Optional.empty(), service.getLatestStableBuild(vanilla("1.8.9")));
+        assertEquals("48.0.5", service.getStableBuild(vanilla("1.20.2")).orElseThrow().getName());
+        assertEquals(Optional.empty(), service.getStableBuild(vanilla("1.8.9")));
     }
 
     @Test

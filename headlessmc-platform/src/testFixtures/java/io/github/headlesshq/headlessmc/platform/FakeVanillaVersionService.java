@@ -27,7 +27,7 @@ public class FakeVanillaVersionService implements VanillaVersionService {
     }
 
     @Override
-    public VanillaVersion getLatestStable() {
+    public VanillaVersion getStable() {
         return namesLatestFirst.stream()
             .filter(releases::contains)
             .findFirst()
@@ -66,7 +66,7 @@ public class FakeVanillaVersionService implements VanillaVersionService {
     }
 
     @Override
-    public Optional<VanillaVersion> getLatestStableBuild(VanillaVersion version) {
+    public Optional<VanillaVersion> getStableBuild(VanillaVersion version) {
         return releases.contains(version.getName()) ? Optional.of(version) : Optional.empty();
     }
 
