@@ -231,6 +231,15 @@ jobs:
             exit 1
           fi
           "$HEADLESSMC_INSTALL_DIR/headlessmc" help
+          # releases before the shell completions have no completion command, install.sh skips them
+          if "$HEADLESSMC_INSTALL_DIR/headlessmc" completion bash > /dev/null 2>&1; then
+            bash_completion="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/headlessmc"
+            if [[ ! -s "$bash_completion" ]]; then
+              echo "::error::install.sh did not install the bash completion to $bash_completion"
+              exit 1
+            fi
+            echo "Installed the bash completion to $bash_completion"
+          fi
 
       - name: Install with install.ps1 (Windows PowerShell)
         if: runner.os == 'Windows'
