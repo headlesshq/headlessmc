@@ -1,11 +1,13 @@
 package io.github.headlesshq.headlessmc.mods.modrinth;
 
+import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.net.Download;
 import io.github.headlesshq.headlessmc.net.DownloadBuilder;
 import io.github.headlesshq.headlessmc.net.DownloadContext;
+import io.github.headlesshq.headlessmc.net.parallel.ParallelTaskService;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBarServiceManager;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
@@ -19,16 +21,17 @@ import org.jspecify.annotations.NonNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
  * Helps with downloading mod packs in the {@link Mrpack} format.
+ * The files of a modpack are downloaded in parallel, see {@link ModpackConfig#parallel()}.
  */
 @Slf4j
 @ApplicationScoped
@@ -37,6 +40,7 @@ public class ModpackDownloader {
     private final ProgressBarServiceManager progressBarServiceManager;
     private final JsonService jsonService;
     private final FileService fileService;
+    private final Holder<ModpackConfig> config;
 
     public void download(String name, Side side, Path gameDir, DownloadContext context, DownloadBuilder initial) {
         fileService.temp(workingDir -> {
@@ -80,39 +84,42 @@ public class ModpackDownloader {
             }
         }
 
-        Map<String, Path> files = new HashMap<>();
-        try (ProgressBar progressBar = progressBarServiceManager.displayProgressBar(
-            new ProgressBar.Configuration("Downloading modpack " + modpackName, totalSize, ProgressBar.Configuration.Unit.MB))
-        ) {
-            for (Mrpack.File file : filesToDownload) {
-                Path target = fileService.getPath(workingDir, file.path());
-                if (file.downloads().isEmpty()) {
-                    throw new HeadlessMcIOException("Failed to find download for file " + file);
-                }
-
-                boolean failed = true;
-                HeadlessMcIOException downloadFailed = new HeadlessMcIOException("Failed to download file " + file);
-                for (URI url : file.downloads()) {
-                    try {
-                        context.download(url)
-                            .hashes(file.hashes())
-                            .size(file.fileSize())
-                            .toFile(target);
-
-                        // TODO: progressBar has extraMessage
-                        progressBar.stepBy(file.fileSize());
-                        files.put(file.path(), target);
-                        failed = false;
-                        break;
-                    } catch (HeadlessMcException e) {
-                        downloadFailed.addSuppressed(e);
-                    }
-                }
-
-                if (failed) {
-                    throw downloadFailed;
-                }
+        List<ModpackDownloadTask> tasks = new ArrayList<>(filesToDownload.size());
+        for (Mrpack.File file : filesToDownload) {
+            if (file.downloads().isEmpty()) {
+                throw new HeadlessMcIOException("Failed to find download for file " + file);
             }
+
+            tasks.add(new ModpackDownloadTask(context, file, fileService.getPath(workingDir, file.path())));
+        }
+
+        Map<String, Path> files = new HashMap<>();
+        if (tasks.isEmpty()) {
+            return files;
+        }
+
+        try (
+            ParallelTaskService<ModpackDownloadTask> taskService = new ParallelTaskService<>(config.get().parallel(), tasks);
+            ProgressBar progressBar = progressBarServiceManager.displayProgressBar(new ProgressBar.Configuration(
+                "Downloading modpack " + modpackName,
+                totalSize,
+                ProgressBar.Configuration.Unit.MB
+            ))
+        ) {
+            AtomicInteger finishedTasks = new AtomicInteger();
+            taskService.run(task -> {
+                if (progressBar.isDummy()) {
+                    log.info("Downloaded modpack file {}/{}", finishedTasks.incrementAndGet(), tasks.size());
+                }
+
+                // TODO: progressBar has extraMessage
+                progressBar.stepBy(task.getSize());
+            });
+        }
+
+        // the ParallelTaskService throws if any task failed, so every file is downloaded at this point
+        for (ModpackDownloadTask task : tasks) {
+            files.put(task.path(), task.getTarget());
         }
 
         return files;

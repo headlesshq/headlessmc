@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
 @ApplicationScoped
 public class MockDownloadService implements DownloadService {
     private final Map<URI, Supplier<Download>> mockDownloads = new HashMap<>();
-    private final List<URI> requestedUris = new ArrayList<>();
+    private final List<URI> requestedUris = Collections.synchronizedList(new ArrayList<>());
 
     public MockDownloadService register(URI uri, byte[] bytes) {
         return register(uri, 200, bytes);

@@ -72,6 +72,20 @@ hmc.log.max-backups                                        5                    
 hmc.log.max-file-size                                      10M                                        Size the log file may reach before it is rotated, e.g. 10M.
 hmc.log.stacktraces                                        true                                       Whether the console prints full stacktraces instead of just the message of an exception and its causes. The log file always contains full stacktraces.
 hmc.logging.patch                                          true                                       -
+hmc.mods.modpacks.parallel.breaker-failure-rate-threshold  50.0                                       -
+hmc.mods.modpacks.parallel.breaker-half-open-calls         4                                          -
+hmc.mods.modpacks.parallel.breaker-minimum-calls           8                                          -
+hmc.mods.modpacks.parallel.breaker-open-wait-ms            5000                                       -
+hmc.mods.modpacks.parallel.breaker-sliding-window-size     32                                         -
+hmc.mods.modpacks.parallel.parallelism                     6                                          -
+hmc.mods.modpacks.parallel.rate-limit-permits              200                                        -
+hmc.mods.modpacks.parallel.rate-limit-refresh-period-seconds 1                                         -
+hmc.mods.modpacks.parallel.rate-limit-timeout-seconds      30                                         -
+hmc.mods.modpacks.parallel.retry-back-off-factor           2.0                                        -
+hmc.mods.modpacks.parallel.retry-initial-interval-ms       250                                        -
+hmc.mods.modpacks.parallel.retry-jitter                    0.5                                        -
+hmc.mods.modpacks.parallel.retry-max-attempts              4                                          -
+hmc.mods.modpacks.parallel.retry-max-interval-ms           2000                                       -
 hmc.net.cookies                                            false                                      Whether to keep a cookie store for downloads.
 hmc.net.delete-failed-files                                true                                       Whether a partially downloaded file is deleted when the download fails.
 hmc.net.http-version                                       -                                          Optional: HTTP version to use for downloads (HTTP_1_1, HTTP_2, HTTP_3). Unset lets the client decide.
