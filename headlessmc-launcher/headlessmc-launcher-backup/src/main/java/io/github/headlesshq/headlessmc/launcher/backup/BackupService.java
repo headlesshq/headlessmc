@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface BackupService {
     /**
      * Creates a new backup.
-     * Automatic backups delete older automatic backups of the same target, see {@link BackupConfig#autoKeep()}.
+     * Automatic backups delete older automatic backups of the same target and origin, see {@link BackupConfig#autoKeep()}.
      *
      * @param request what to back up.
      * @return the created backup.

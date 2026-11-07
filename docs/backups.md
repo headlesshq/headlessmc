@@ -53,7 +53,8 @@ If the backup fails, the launch fails as well. Launch with `--no-backup` to skip
 
 Automatically created backups, the ones created before launching and the ones `backup restore` creates,
 are deleted automatically: only the newest `hmc.backup.auto-keep` (default 5) automatic backups of each
-profile or server are kept. Backups you create with `backup` are never deleted automatically,
+profile or server are kept. Backups created before launching and backups created by `backup restore`
+are counted separately, so launching never deletes the backup of the files a restore replaced. Backups you create with `backup` are never deleted automatically,
 use `backup remove` or `backup prune` for those.
 
 ## Ignoring files

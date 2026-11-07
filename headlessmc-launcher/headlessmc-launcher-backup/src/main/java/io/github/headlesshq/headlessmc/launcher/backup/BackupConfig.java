@@ -49,8 +49,9 @@ public interface BackupConfig extends DynamicConfig {
     String auto();
 
     /**
-     * How many automatically created backups to keep for each profile,
-     * older ones are deleted automatically. Manually created backups are never deleted automatically.
+     * How many automatically created backups of each origin to keep for each profile,
+     * older ones are deleted automatically. Backups created before launching and before restoring
+     * are counted separately, so launching never deletes the backups created before a restore. Manually created backups are never deleted automatically.
      * Corresponds to the {@code hmc.backup.auto-keep} property, {@code 0} disables automatic pruning.
      *
      * @return how many automatic backups to keep.

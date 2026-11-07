@@ -280,7 +280,8 @@ public class BackupServiceImpl implements BackupService {
     private void pruneAutomatic(Backup backup) {
         int keep = config.get().autoKeep();
         if (keep > 0) {
-            prune(new PruneRequest(backup.provider(), backup.target(), BackupOrigin.AUTOMATIC, keep, null));
+            // each origin has its own retention, so that launching cannot prune the backups created before a restore
+            prune(new PruneRequest(backup.provider(), backup.target(), Set.of(backup.origin()), keep, null));
         }
     }
 

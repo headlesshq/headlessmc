@@ -635,6 +635,27 @@ class BackupServiceImplTest {
     }
 
     @Test
+    void launchBackupsDoNotPruneRestoreBackups() throws IOException {
+        env.getConfig().setAutoKeep(2);
+        Profile profile = server();
+        write(profile.path().resolve("server.jar"), "jar");
+        Backup backup = create(profile, BackupOrigin.MANUAL);
+        write(profile.path().resolve("server.jar"), "changed");
+        env.getClock().advance(Duration.ofSeconds(1));
+        Backup safetyBackup = service.restore(backup, RestoreOptions.DEFAULT).safetyBackup();
+        assertNotNull(safetyBackup);
+
+        for (int i = 0; i < 5; i++) {
+            env.getClock().advance(Duration.ofSeconds(1));
+            create(profile, BackupOrigin.LAUNCH);
+        }
+
+        List<Backup> backups = service.list();
+        assertTrue(backups.contains(safetyBackup));
+        assertEquals(2, backups.stream().filter(b -> b.origin() == BackupOrigin.LAUNCH).count());
+    }
+
+    @Test
     void automaticPruningCanBeDisabled() throws IOException {
         env.getConfig().setAutoKeep(0);
         Profile profile = server();
