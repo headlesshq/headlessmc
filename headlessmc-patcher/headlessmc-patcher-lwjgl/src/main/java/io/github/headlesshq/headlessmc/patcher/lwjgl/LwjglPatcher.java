@@ -5,7 +5,6 @@ import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.os.OSService;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
-import io.github.headlesshq.headlessmc.patcher.PatcherNames;
 import io.github.headlesshq.headlessmc.patcher.asm.AbstractClassPatcher;
 import io.quarkus.runtime.annotations.RegisterResources;
 import jakarta.enterprise.context.Dependent;
@@ -82,7 +81,7 @@ public class LwjglPatcher extends AbstractClassPatcher {
 
     @Override
     public String name() {
-        return PatcherNames.LWJGL;
+        return LWJGL;
     }
 
     @Override

@@ -5,7 +5,6 @@ import io.github.headlesshq.headlessmc.os.OSService;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
-import io.github.headlesshq.headlessmc.patcher.PatcherNames;
 import io.quarkus.runtime.annotations.RegisterResources;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -41,7 +40,6 @@ import java.util.zip.ZipInputStream;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 @RegisterResources(globs = PatchedLwjglPatcher.RESOURCES + "**")
 public class PatchedLwjglPatcher implements Patcher {
-    public static final String NAME = PatcherNames.LWJGL_PRE;
     /**
      * Bump when the patcher itself changes, changes to the patched jars are part of {@link #version()} already.
      */
@@ -176,7 +174,7 @@ public class PatchedLwjglPatcher implements Patcher {
      */
     @Override
     public String name() {
-        return NAME;
+        return LWJGL_PRE;
     }
 
     /**

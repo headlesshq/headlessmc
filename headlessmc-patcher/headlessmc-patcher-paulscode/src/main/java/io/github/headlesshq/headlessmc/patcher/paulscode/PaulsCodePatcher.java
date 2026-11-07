@@ -1,6 +1,5 @@
 package io.github.headlesshq.headlessmc.patcher.paulscode;
 
-import io.github.headlesshq.headlessmc.patcher.PatcherNames;
 import io.github.headlesshq.headlessmc.patcher.asm.AbstractClassPatcher;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -59,7 +58,7 @@ public class PaulsCodePatcher extends AbstractClassPatcher {
 
     @Override
     public String name() {
-        return PatcherNames.PAULSCODE;
+        return PAULSCODE;
     }
 
     @Override
