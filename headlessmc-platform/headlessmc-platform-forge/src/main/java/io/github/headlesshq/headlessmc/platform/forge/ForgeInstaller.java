@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.platform.client.AbstractClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.util.CommonInstallerServices;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.version.Version;
@@ -54,7 +55,7 @@ public class ForgeInstaller extends AbstractClientInstaller implements ClientIns
     }
 
     @Override
-    public Installation installServer(
+    public ServerInstallation installServer(
         VersionID id,
         Path dir,
         TypedMap args
@@ -76,7 +77,7 @@ public class ForgeInstaller extends AbstractClientInstaller implements ClientIns
             services.getFileService().delete(installerJar);
         }
 
-        return new Installation(javaVersion);
+        return new ServerInstallation(javaVersion);
     }
 
 }

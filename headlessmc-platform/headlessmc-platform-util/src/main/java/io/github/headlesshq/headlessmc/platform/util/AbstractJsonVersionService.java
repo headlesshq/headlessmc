@@ -21,6 +21,7 @@ public abstract class AbstractJsonVersionService<V extends PlatformVersion, J>
     private final View<SequencedSet<V>> setView;
     private final View<Map<String, V>> mapView;
     private final View<Map<V, Integer>> indices;
+    private final View<Set<V>> stableView;
 
     public AbstractJsonVersionService(String platformName, Cache<J> cache) {
         super(platformName);
@@ -28,10 +29,17 @@ public abstract class AbstractJsonVersionService<V extends PlatformVersion, J>
         this.setView = cache.view(this::map);
         this.mapView = createMapView(setView);
         this.indices = createIndices(setView);
+        this.stableView = cache.view(this::mapStable);
     }
 
     // it would be nice if we could hide type parameter J as an implementation detail
     protected abstract SequencedSet<V> map(J value, @Nullable SequencedSet<V> previous);
+
+    /**
+     * Maps the cached value to the versions that are considered stable by the platform.
+     * The returned versions must be equal to the corresponding versions returned by {@link #map(Object, SequencedSet)}.
+     */
+    protected abstract Set<V> mapStable(J value, @Nullable Set<V> previous);
 
     // TODO: this is currently broken:
     // [io.github.headlesshq.headlessmc.platform.util.AbstractJsonVersionService] (main) Platform version changed at index 800, expected 1.6.3 but got 13w37b in VanillaManifest[versions=[Version[id=26.3-snapshot-9, type=snapshot, url=https://piston-meta.mojang.com/v1/packages/cc88c84a24aa6e73ec4b0c7b2237a36056b23563/26.3-snapshot-9.json], Versi

@@ -95,7 +95,8 @@ public class ForgeFactory {
         return platformCacheService.versionCache(
             new TypeLiteral<PrismIndex>() {},
             Forge.PLATFORM_NAME,
-            url
+            url,
+            PrismIndex.CACHE_VERSION
         );
     }
 

@@ -94,7 +94,8 @@ public class NeoForgeFactory {
         return platformCacheService.versionCache(
             new TypeLiteral<PrismIndex>() {},
             NeoForge.PLATFORM_NAME,
-            url
+            url,
+            PrismIndex.CACHE_VERSION
         );
     }
 

@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.platform.forge;
 
 import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -30,11 +31,21 @@ import java.util.NoSuchElementException;
 @RegisterForReflection
 public record PrismIndex(String uid, List<Meta> versions) implements ReflectionRegistered {
     /**
+     * The version of the cached {@link PrismIndex}.
+     * Bump this whenever fields are added to the index, so that outdated caches get refreshed.
+     * <ul>
+     *     <li>{@code 1}: added {@link Meta#recommended()} and {@link Meta#type()}</li>
+     * </ul>
+     */
+    public static final long CACHE_VERSION = 1;
+
+    /**
      * </a>
      * <pre>
      * {@code
      * {
      *  "recommended": false,
+     *  "type": "release",
      *  "releaseTime": "2026-06-09T18:25:56+00:00",
      *  "requires": [
      *      {
@@ -48,13 +59,20 @@ public record PrismIndex(String uid, List<Meta> versions) implements ReflectionR
      * }
      * </pre>
      *
-     * @param requires usually only contains the mc version, see example.
-     * @param sha256   the hash (TODO: OF WHAT?)
-     * @param version  the name of the forge build.
+     * @param requires    usually only contains the mc version, see example.
+     * @param sha256      the hash (TODO: OF WHAT?)
+     * @param version     the name of the forge build.
+     * @param recommended if this build is recommended, used by Forge, always {@code false} for NeoForge.
+     * @param type        {@code "release"} or {@code "beta"}, used by NeoForge, not present for Forge.
      */
     @RegisterForReflection
-    public record Meta(List<Requires> requires, String sha256, String version)
-        implements Comparable<Meta>, ReflectionRegistered {
+    public record Meta(
+        List<Requires> requires, String sha256, String version, boolean recommended, @Nullable String type
+    ) implements Comparable<Meta>, ReflectionRegistered {
+        public Meta(List<Requires> requires, String sha256, String version) {
+            this(requires, sha256, version, false, null);
+        }
+
         /**
          * @return the name of the Mc version for this forge version.
          */

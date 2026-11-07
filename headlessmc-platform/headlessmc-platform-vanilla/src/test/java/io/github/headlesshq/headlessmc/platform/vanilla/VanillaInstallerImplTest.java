@@ -14,7 +14,7 @@ import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.server.ServerFinder;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
@@ -246,7 +246,7 @@ class VanillaInstallerImplTest {
 
         Path dir = root.resolve("server");
         Files.createDirectories(dir);
-        ServerInstaller.Installation installation = installer.installServer(id("1.21.1"), dir, new TypedMapImpl());
+        ServerInstallation installation = installer.installServer(id("1.21.1"), dir, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
         assertArrayEquals(SERVER_CONTENT, Files.readAllBytes(dir.resolve(ServerFinder.DEFAULT_JAR)));

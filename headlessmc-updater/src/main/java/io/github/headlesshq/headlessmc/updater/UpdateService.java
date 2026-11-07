@@ -117,7 +117,7 @@ public class UpdateService {
                     ? null
                     : NATIVE_ASSET_PREFIX + os + "-" + arch + (OS.Type.WINDOWS.equals(osType) ? ".exe" : "");
             }
-            case UNKNOWN -> null;
+            case PACKAGE, UNKNOWN -> null;
         };
     }
 

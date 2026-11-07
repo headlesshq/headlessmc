@@ -67,6 +67,116 @@ You can also download the executable for your Operating System from the latest
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-macos-arm64 -o headlessmc-launcher
     ```
 
+### Linux packages
+
+Every release also contains deb, rpm and archlinux packages of the Linux executables for x64 and ARM64.
+They install HeadlessMc as `headlessmc`, replace $VERSION with the HeadlessMc version to download:
+
+=== "Debian/Ubuntu"
+
+    ``` sh
+    curl -LO https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc_${VERSION}_amd64.deb
+    sudo apt install ./headlessmc_${VERSION}_amd64.deb
+    ```
+    Use `arm64` instead of `amd64` on ARM64.
+
+=== "Fedora/RHEL/openSUSE"
+
+    ``` sh
+    sudo dnf install https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-$VERSION.x86_64.rpm
+    ```
+    Use `aarch64` instead of `x86_64` on ARM64, and `zypper install` on openSUSE.
+
+=== "Arch Linux"
+
+    ``` sh
+    curl -LO https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-$VERSION-x86_64.pkg.tar.zst
+    sudo pacman -U headlessmc-$VERSION-x86_64.pkg.tar.zst
+    ```
+    Use `aarch64` instead of `x86_64` on ARM64.
+
+The packages require glibc 2.34 or newer (e.g. Debian 12, Ubuntu 22.04, RHEL 9).
+To update HeadlessMc, install the package of the new release.
+
+### Shell completions
+
+HeadlessMc can complete its commands, options, installed versions, accounts, profiles and more
+in bash, zsh, fish and PowerShell, with a description for every completion.
+
+If you installed one of the [Linux packages](#linux-packages), the completions for bash, zsh and fish
+are already installed and work in every new shell, you do not have to set up anything below:
+bash needs the [bash-completion](https://github.com/scop/bash-completion) package
+(on Arch Linux install it with `sudo pacman -S bash-completion`),
+and zsh needs `compinit` to run, which most distributions and frameworks like Oh My Zsh do.
+If zsh does not find them, remove its completion cache once with `rm ~/.zcompdump*`.
+The package manager updates the completions together with HeadlessMc.
+
+`headlessmc completion <shell>` prints a small script for your shell, or writes it to a file with `-o <file>`,
+which asks the `headlessmc` executable on your `PATH` for completions every time you press tab.
+Use the native executable for this, the `headlessmc.jar` takes too long to start.
+If you named the executable differently, e.g. `headlessmc-launcher-linux-x64`,
+rename it to `headlessmc`, as the scripts only complete that name.
+
+=== "zsh"
+
+    Add this to your `~/.zshrc`, after `compinit` (frameworks like Oh My Zsh run `compinit` for you):
+    ```shell
+    source <(headlessmc completion zsh)
+    ```
+    Alternatively, save the script once into a directory of your `fpath`,
+    so that HeadlessMc does not have to run whenever a shell starts:
+    ```shell
+    headlessmc completion zsh -o ~/.zsh/completions/_headlessmc
+    ```
+    and add `fpath=(~/.zsh/completions $fpath)` before `compinit` runs.
+    If your system runs `compinit` before your `~/.zshrc`, like Ubuntu does in `/etc/zsh/zshrc`,
+    add it to your `~/.zshenv` instead.
+    You might have to remove the completion cache with `rm ~/.zcompdump*` once.
+    Running the command again overwrites the file, do so after updating HeadlessMc.
+
+    Options are shown before you have typed a `-`, to only show them after a `-`:
+    ```shell
+    zstyle ':completion:*:*:headlessmc:*:options' prefix-needed true
+    ```
+
+=== "bash"
+
+    Add this to your `~/.bashrc`:
+    ```shell
+    source <(headlessmc completion bash)
+    ```
+    The script works best with the
+    [bash-completion](https://github.com/scop/bash-completion) package installed,
+    which most Linux distributions do by default.
+    With bash-completion you can also save the script once instead, it is then loaded when you first press tab:
+    ```shell
+    headlessmc completion bash -o ~/.local/share/bash-completion/completions/headlessmc
+    ```
+    Bash cannot show descriptions next to completions,
+    so if there are multiple completions they are listed as `name  (description)`.
+
+=== "fish"
+
+    Save the script into your completions directory, fish loads it automatically:
+    ```shell
+    headlessmc completion fish -o ~/.config/fish/completions/headlessmc.fish
+    ```
+    Running the command again overwrites the file, do so after updating HeadlessMc.
+
+=== "PowerShell"
+
+    Add this to your PowerShell profile, which you can open with `notepad $PROFILE`:
+    ```powershell
+    headlessmc completion powershell | Out-String | Invoke-Expression
+    ```
+    Pressing tab cycles through the completions,
+    to see all completions with their descriptions use `Ctrl+Space`, or enable a menu for tab:
+    ```powershell
+    Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+    ```
+
+To uninstall the completions, remove the line from your shell configuration or delete the saved file again.
+
 ### Java
 
 HeadlessMc has been written in Java with the Quarkus Framework and runs on Java 25.

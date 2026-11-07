@@ -5,7 +5,7 @@ import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ class VersionArgCompletionHelperTest {
     private ServerSupport serverSupport() {
         return new ServerSupport(
             dir -> dir.resolve("server.jar"),
-            (id, dir, args) -> new ServerInstaller.Installation(21)
+            (id, dir, args) -> new ServerInstallation(21)
         );
     }
 
