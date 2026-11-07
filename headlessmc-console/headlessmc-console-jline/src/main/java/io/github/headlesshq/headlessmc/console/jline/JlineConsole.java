@@ -11,6 +11,7 @@ import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp;
 import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
@@ -112,6 +113,12 @@ class JlineConsole implements Console, ConsoleExtensions {
     @Override
     public int getWidth() {
         return wrap(state -> Math.max(55, state.terminal.getColumns()));
+    }
+
+    @Override
+    public boolean supportsCursorMovement() {
+        return wrap(state -> state.terminal.getStringCapability(InfoCmp.Capability.cursor_up) != null
+            && state.terminal.getStringCapability(InfoCmp.Capability.cursor_down) != null);
     }
 
     @Override
