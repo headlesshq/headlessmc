@@ -332,6 +332,77 @@ jobs:
           path: |
             ./headlessmc-application/build/${{ matrix.os.name }}*
 
+  # deb, rpm and archlinux packages of the linux native images, arm64 is only built for releases
+  packages:
+    runs-on: ubuntu-latest
+    needs: [ release-please, build-natives ]
+    if: ${{ !cancelled() && needs.build-natives.result == 'success' }}
+    env:
+      NFPM_RELEASE: 2.48.0
+      NFPM_SHA256: 6d7f9a28b2f397934403950fcbba83f598b08d02edbe79a0815b3b4897341750
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Download linux native images
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: HeadlessMc Native Image headlessmc-launcher-linux-*
+          path: natives
+          merge-multiple: true
+
+      - name: Install nfpm
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/nfpm.tar.gz" \
+            "https://github.com/goreleaser/nfpm/releases/download/v${NFPM_RELEASE}/nfpm_${NFPM_RELEASE}_Linux_x86_64.tar.gz"
+          echo "$NFPM_SHA256  $RUNNER_TEMP/nfpm.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/nfpm.tar.gz" -C "$RUNNER_TEMP" nfpm
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Build packages
+        env:
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          VERSION="${TAG_NAME:-$(sed -n 's/^version=//p' gradle.properties)}"
+          echo "Packaging version $VERSION"
+          for arch in x64 arm64; do
+            if [[ -f "natives/headlessmc-launcher-linux-$arch" ]]; then
+              bash scripts/build-packages.sh "$VERSION" "$arch" "natives/headlessmc-launcher-linux-$arch" build/packages
+            fi
+          done
+
+      - name: Smoke test deb
+        run: |
+          docker run --rm -v "$PWD/build/packages:/packages:ro" ubuntu:24.04 bash -euxc '
+            apt-get update -q
+            apt-get install -y -q /packages/headlessmc_*_amd64.deb
+            dpkg-query -W headlessmc
+            test -f /usr/share/headlessmc/package
+            headlessmc help'
+
+      - name: Smoke test rpm
+        run: |
+          docker run --rm -v "$PWD/build/packages:/packages:ro" fedora:latest bash -euxc '
+            dnf install -y -q /packages/headlessmc-*.x86_64.rpm
+            rpm -q headlessmc
+            test -f /usr/share/headlessmc/package
+            headlessmc help'
+
+      - name: Smoke test archlinux
+        run: |
+          docker run --rm -v "$PWD/build/packages:/packages:ro" archlinux:latest bash -euxc '
+            pacman -Sy --noconfirm
+            pacman -U --noconfirm /packages/headlessmc-*-x86_64.pkg.tar.zst
+            pacman -Q headlessmc
+            test -f /usr/share/headlessmc/package
+            headlessmc help'
+
+      - name: Publish Artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: HeadlessMc Packages
+          path: build/packages/*
+          if-no-files-found: error
+
   # https://github.com/headlesshq/headlessmc/issues/333
   build-mc-runtime-test:
     strategy:
@@ -602,7 +673,7 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     if: needs.release-please.outputs.release_created == 'true'
-    needs: [release-please, build, build-natives, docker-release]
+    needs: [release-please, build, build-natives, packages, docker-release]
     steps:
       - name: Cleanup Docker
         uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
@@ -653,7 +724,10 @@ jobs:
             ./headlessmc-launcher-windows-x64.exe \
             ./headlessmc-launcher-macos-x64 \
             ./headlessmc-launcher-linux-arm64 \
-            ./headlessmc-launcher-macos-arm64
+            ./headlessmc-launcher-macos-arm64 \
+            ./headlessmc_*.deb \
+            ./headlessmc-*.rpm \
+            ./headlessmc-*.pkg.tar.zst
 
   maven-central:
     name: Publish to Maven Central
@@ -665,6 +739,7 @@ jobs:
       - build
       - deploy-pages
       - build-natives
+      - packages
       - build-mc-runtime-test
       - mc-runtime-test
       - server-test

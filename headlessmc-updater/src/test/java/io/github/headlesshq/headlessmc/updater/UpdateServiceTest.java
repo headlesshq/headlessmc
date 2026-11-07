@@ -151,6 +151,7 @@ public class UpdateServiceTest {
         assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.FREE_BSD, CPU.X64));
         assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.X32));
         assertNull(updateService.getAssetName(Installation.Type.UNKNOWN, OS.Type.LINUX, CPU.X64));
+        assertNull(updateService.getAssetName(Installation.Type.PACKAGE, OS.Type.LINUX, CPU.X64));
     }
 
     private static UpdateCheck<LatestRelease> cached(String repository, Duration age, GitHubRelease release) {

@@ -1,0 +1,65 @@
+# Builds the deb, rpm and archlinux packages attached to GitHub releases
+# from the GraalVM native executables. Run it via scripts/build-packages.sh.
+# https://nfpm.goreleaser.com/configuration/
+name: headlessmc
+arch: ${NFPM_ARCH}
+platform: linux
+# The release tag, e.g. 3.0.0-RC8. nfpm turns the prerelease into 3.0.0~RC8 for deb and rpm,
+# so that release candidates are sorted before the final release.
+version: ${NFPM_VERSION}
+version_schema: semver
+release: 1
+section: games
+priority: optional
+maintainer: HeadlessHQ <https://github.com/headlesshq/headlessmc>
+vendor: HeadlessHQ
+homepage: https://github.com/headlesshq/headlessmc
+license: MIT
+description: |-
+  A command line launcher for Minecraft Java Edition.
+  HeadlessMc runs in your terminal and can also run the Minecraft client
+  in headless mode, e.g. on CI/CD runners.
+
+contents:
+  # copied here by scripts/build-packages.sh
+  - src: ./build/packages/staging/headlessmc
+    dst: /usr/bin/headlessmc
+    file_info:
+      mode: 0755
+  - src: ./LICENSE
+    dst: /usr/share/licenses/headlessmc/LICENSE
+    file_info:
+      mode: 0644
+  # where Debian expects the license
+  - src: ./LICENSE
+    dst: /usr/share/doc/headlessmc/copyright
+    file_info:
+      mode: 0644
+  # Tells the HeadlessMc updater that a package manager owns /usr/bin/headlessmc,
+  # see io.github.headlesshq.headlessmc.updater.Installation.
+  - src: ./packaging/package
+    dst: /usr/share/headlessmc/package
+    file_info:
+      mode: 0644
+
+# The native executable links against libc.so.6 (up to GLIBC_2.34) and libz.so.1.
+overrides:
+  deb:
+    depends:
+      - libc6 (>= 2.34)
+      - zlib1g
+  rpm:
+    depends:
+      - glibc >= 2.34
+      - libz.so.1()(64bit)
+  archlinux:
+    depends:
+      - glibc>=2.34
+      - zlib
+
+rpm:
+  group: Amusements/Games
+  summary: A command line launcher for Minecraft Java Edition
+
+archlinux:
+  packager: HeadlessHQ <https://github.com/headlesshq/headlessmc>
