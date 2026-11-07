@@ -4,10 +4,11 @@
 name: headlessmc
 arch: ${NFPM_ARCH}
 platform: linux
-# The release tag, e.g. 3.0.0-RC8. nfpm turns the prerelease into 3.0.0~RC8 for deb and rpm,
-# so that release candidates are sorted before the final release.
+# The release tag, e.g. 3.0.0-RC8. With the semver schema nfpm turns the prerelease into 3.0.0~RC8 for deb and rpm,
+# so that release candidates are sorted before the final release. nfpm drops the prerelease for archlinux,
+# so scripts/build-packages.sh passes 3.0.0rc8 with the none schema for it instead.
 version: ${NFPM_VERSION}
-version_schema: semver
+version_schema: ${NFPM_VERSION_SCHEMA}
 release: 1
 section: games
 priority: optional
@@ -35,14 +36,30 @@ contents:
     dst: /usr/share/doc/headlessmc/copyright
     file_info:
       mode: 0644
-  # Shell completions, loaded automatically from these vendor directories,
-  # the zsh directory differs between distributions, see the overrides.
+  # Shell completions, loaded automatically from these vendor directories.
   - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.bash
     dst: /usr/share/bash-completion/completions/headlessmc
     file_info:
       mode: 0644
   - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.fish
     dst: /usr/share/fish/vendor_completions.d/headlessmc.fish
+    file_info:
+      mode: 0644
+  # Debian's zsh only has vendor-completions on its fpath, Fedora's and Arch's site-functions.
+  # Do not put contents into the overrides, they replace these contents instead of adding to them.
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+    dst: /usr/share/zsh/vendor-completions/_headlessmc
+    packager: deb
+    file_info:
+      mode: 0644
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+    dst: /usr/share/zsh/site-functions/_headlessmc
+    packager: rpm
+    file_info:
+      mode: 0644
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+    dst: /usr/share/zsh/site-functions/_headlessmc
+    packager: archlinux
     file_info:
       mode: 0644
   # Tells the HeadlessMc updater that a package manager owns /usr/bin/headlessmc,
@@ -61,32 +78,16 @@ overrides:
       - zlib1g
     recommends:
       - bash-completion
-    contents:
-      # Debian's zsh only has vendor-completions on its fpath
-      - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
-        dst: /usr/share/zsh/vendor-completions/_headlessmc
-        file_info:
-          mode: 0644
   rpm:
     depends:
       - glibc >= 2.34
       - libz.so.1()(64bit)
     recommends:
       - bash-completion
-    contents:
-      - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
-        dst: /usr/share/zsh/site-functions/_headlessmc
-        file_info:
-          mode: 0644
   archlinux:
     depends:
       - glibc>=2.34
       - zlib
-    contents:
-      - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
-        dst: /usr/share/zsh/site-functions/_headlessmc
-        file_info:
-          mode: 0644
 
 rpm:
   group: Amusements/Games

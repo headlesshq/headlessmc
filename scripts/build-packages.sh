@@ -31,14 +31,20 @@ mkdir -p build/packages/staging "$out"
 cp "$executable" build/packages/staging/headlessmc
 chmod 755 build/packages/staging/headlessmc
 
-NFPM_VERSION="$version"
 NFPM_ARCH="$nfpm_arch"
-export NFPM_VERSION NFPM_ARCH
+export NFPM_ARCH NFPM_VERSION NFPM_VERSION_SCHEMA
 
+# nfpm turns 3.0.0-RC8 into 3.0.0~RC8 for deb and rpm
+NFPM_VERSION="$version"
+NFPM_VERSION_SCHEMA=semver
 nfpm package --config packaging/nfpm.yaml --packager deb \
   --target "$out/headlessmc_${version}_${nfpm_arch}.deb"
 nfpm package --config packaging/nfpm.yaml --packager rpm \
   --target "$out/headlessmc-${version}.${rpm_arch}.rpm"
+
+# but drops the prerelease for archlinux, pacman sorts 3.0.0rc8 before 3.0.0
+NFPM_VERSION="$(echo "$version" | tr -d '-' | tr '[:upper:]' '[:lower:]')"
+NFPM_VERSION_SCHEMA=none
 nfpm package --config packaging/nfpm.yaml --packager archlinux \
   --target "$out/headlessmc-${version}-${pacman_arch}.pkg.tar.zst"
 
