@@ -49,6 +49,15 @@ public interface BackupService {
     BackupDiff diff(Backup backup, boolean checksum);
 
     /**
+     * Computes the changes {@link #restore(Backup, RestoreOptions)} would revert, without changing any files.
+     *
+     * @param backup  the backup to restore.
+     * @param options how the backup would be restored.
+     * @return the changes a restore with the given options would revert.
+     */
+    BackupDiff previewRestore(Backup backup, RestoreOptions options);
+
+    /**
      * Restores the given backup.
      * Afterwards the backed up {@link Backup#paths()} match the backup again:
      * removed and modified files are restored and, unless {@link RestoreOptions#keepNew()},

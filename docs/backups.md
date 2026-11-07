@@ -54,8 +54,8 @@ If the backup fails, the launch fails as well. Launch with `--no-backup` to skip
 Automatically created backups, the ones created before launching and the ones `backup restore` creates,
 are deleted automatically: only the newest `hmc.backup.auto-keep` (default 5) automatic backups of each
 profile or server are kept. Backups created before launching and backups created by `backup restore`
-are counted separately, so launching never deletes the backup of the files a restore replaced. Backups you create with `backup` are never deleted automatically,
-use `backup remove` or `backup prune` for those.
+are counted separately, so launching never deletes the backup of the files a restore replaced.
+Backups you create with `backup` are never deleted automatically, use `backup remove` or `backup prune` for those.
 
 ## Ignoring files
 
@@ -118,11 +118,21 @@ Ignored files are kept, and so are worlds created after a `worlds` backup.
 Before anything is changed, the files that are about to be changed are backed up,
 so a restore can be undone by restoring that backup. Use `--no-backup` to skip this,
 and `--keep-new` to keep files that were added since the backup instead of deleting them.
+`--dry-run` shows which files a restore would delete, restore and revert without changing anything.
+
+``` title="Previewing a restore"
+> backup restore server-paper-1.21.5-2026-10-28_12-30-00 --dry-run
+action    file
+delete    ops.json
+revert    world/level.dat
+Restoring backup server-paper-1.21.5-2026-10-28_12-30-00 to /home/me/.local/share/headlessmc/server/server-paper-1.21.5 would have deleted 1, restored 0 and reverted 1 files, nothing has been changed.
+```
 
 ``` title="Restoring a backup"
 > backup restore server-paper-1.21.5-2026-10-28_12-30-00
 Backed up the current files as server-paper-1.21.5-2026-10-28_14-02-11
 Restored backup server-paper-1.21.5-2026-10-28_12-30-00 to /home/me/.local/share/headlessmc/server/server-paper-1.21.5: deleted 1, restored 0 and reverted 1 files
+Undo with: backup restore server-paper-1.21.5-2026-10-28_14-02-11
 ```
 
 ## Removing backups

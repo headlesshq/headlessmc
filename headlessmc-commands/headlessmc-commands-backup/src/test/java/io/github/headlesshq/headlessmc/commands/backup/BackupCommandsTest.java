@@ -70,7 +70,7 @@ class BackupCommandsTest {
     }
 
     private RestoreCommand restore(String id) {
-        RestoreCommand command = new RestoreCommand(backupService, console);
+        RestoreCommand command = new RestoreCommand(backupService, tables, console);
         command.setId(id);
         return command;
     }
@@ -237,6 +237,27 @@ class BackupCommandsTest {
         assertEquals(2, backupService.list().size());
         assertTrue(console.output().contains("Backed up the current files as srv-2026-10-28_12-30-00-2"));
         assertTrue(console.output().contains("deleted 0, restored 0 and reverted 1 files"));
+        assertTrue(console.output().contains("Undo with: backup restore srv-2026-10-28_12-30-00-2"));
+    }
+
+    @Test
+    void restoreDryRunChangesNothing() throws IOException {
+        backup("srv").run();
+        write(server.path().resolve("world").resolve("level.dat"), "changed");
+        write(server.path().resolve("ops.json"), "[]");
+
+        RestoreCommand command = restore(only().id());
+        command.setDryRun(true);
+        command.run();
+
+        String output = console.output();
+        assertTrue(output.contains("delete"), output);
+        assertTrue(output.contains("ops.json"), output);
+        assertTrue(output.contains("revert"), output);
+        assertTrue(output.contains("would have deleted 1, restored 0 and reverted 1 files"), output);
+        assertEquals("changed", Files.readString(server.path().resolve("world").resolve("level.dat")));
+        assertTrue(Files.exists(server.path().resolve("ops.json")));
+        assertEquals(1, backupService.list().size());
     }
 
     @Test

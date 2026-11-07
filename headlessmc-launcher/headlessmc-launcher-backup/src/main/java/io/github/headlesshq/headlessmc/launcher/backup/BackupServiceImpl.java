@@ -145,6 +145,12 @@ public class BackupServiceImpl implements BackupService {
     }
 
     @Override
+    public BackupDiff previewRestore(Backup backup, RestoreOptions options) {
+        BackupDiff changes = archiveService.diff(getArchive(backup), backup.scope(), backup.paths(), true, getBackupDir());
+        return options.keepNew() ? new BackupDiff(List.of(), changes.removed(), changes.modified()) : changes;
+    }
+
+    @Override
     public RestoreResult restore(Backup backup, RestoreOptions options) {
         BackupProvider provider = providerService.getProvider(backup.provider());
         BackupScope scope = backup.scope();
@@ -155,11 +161,7 @@ public class BackupServiceImpl implements BackupService {
         }
 
         Path archive = getArchive(backup);
-        BackupDiff changes = archiveService.diff(archive, scope, backup.paths(), true, getBackupDir());
-        if (options.keepNew()) {
-            changes = new BackupDiff(List.of(), changes.removed(), changes.modified());
-        }
-
+        BackupDiff changes = previewRestore(backup, options);
         Backup safetyBackup = null;
         if (!changes.isEmpty()) {
             if (options.backupFirst() && archiveService.hasFiles(scope, getBackupDir())) {
