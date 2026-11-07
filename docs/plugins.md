@@ -115,7 +115,7 @@ Every plugin jar contains `META-INF/headlessmc-plugin.json`, the template genera
 | `name`, `description`, `authors`, `license`, `homepage` | Optional information shown to users.                             |
 | `headlessmc`             | Versions of HeadlessMc the plugin works with.                                                 |
 | `java`                   | Minimum Java version, at least 25.                                                            |
-| `dependencies`           | Other plugins this plugin needs, plugins with `optional` dependencies load without them.      |
+| `dependencies`           | Other plugins this plugin needs, plugins with `optional` dependencies load without them. An installed optional dependency must still match `versions`, otherwise the plugin is not loaded. |
 | `libraries`              | Libraries nested in the plugin jar. `group`, `artifact` and `version` may only contain letters, digits, `.`, `-` and `_`. |
 
 Version ranges use the Maven syntax: `[1.0,2.0)` means `1.0 <= version < 2.0`, `[1.0]` exactly `1.0`,

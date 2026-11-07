@@ -75,11 +75,11 @@ public record PluginManifest(
      * A dependency on another plugin.
      *
      * @param id       the id of the other plugin.
-     * @param versions the range of versions of the other plugin this plugin is compatible with.
+     * @param versions the range of versions of the other plugin this plugin is compatible with, {@code null} for any.
      * @param optional if {@code true}, the other plugin does not need to be installed.
      */
     @RegisterForReflection
-    public record Dependency(String id, String versions, boolean optional) implements ReflectionRegistered {
+    public record Dependency(String id, @Nullable String versions, boolean optional) implements ReflectionRegistered {
 
     }
 

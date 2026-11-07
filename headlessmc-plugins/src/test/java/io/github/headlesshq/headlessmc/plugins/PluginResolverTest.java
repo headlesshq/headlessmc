@@ -105,6 +105,28 @@ class PluginResolverTest {
     }
 
     @Test
+    void testOptionalDependency() {
+        PluginFile base = plugin("base");
+        PluginFile compatible = new PluginFile(Path.of("compatible.jar"), "compatible", manifest("compatible", "1.0.0", "3.0.0-RC8",
+            List.of(new PluginManifest.Dependency("base", "[1.0,2)", true)), List.of()), null);
+        PluginFile incompatible = new PluginFile(Path.of("incompatible.jar"), "incompatible", manifest("incompatible", "1.0.0", "3.0.0-RC8",
+            List.of(new PluginManifest.Dependency("base", "[2.0,3)", true)), List.of()), null);
+        PluginResolution resolution = resolver.resolve(List.of(base, compatible, incompatible));
+        assertEquals(List.of(base, compatible), resolution.plugins());
+        assertEquals("optionally depends on plugin 'base' [2.0,3), but 1.0.0 is installed",
+            resolution.problemsOf(incompatible).getFirst().message());
+    }
+
+    @Test
+    void testMissingDependencyWithoutVersions() {
+        PluginFile addon = new PluginFile(Path.of("addon.jar"), "addon", manifest("addon", "1.0.0", "3.0.0-RC8",
+            List.of(new PluginManifest.Dependency("base", null, false)), List.of()), null);
+        PluginResolution resolution = resolver.resolve(List.of(addon));
+        assertEquals("requires plugin 'base', which is not installed or cannot be loaded",
+            resolution.problemsOf(addon).getFirst().message());
+    }
+
+    @Test
     void testDuplicateIdsAndInvalidFiles() {
         PluginFile first = plugin("same");
         PluginFile second = new PluginFile(Path.of("same-2.jar"), "same2", first.manifest(), null);

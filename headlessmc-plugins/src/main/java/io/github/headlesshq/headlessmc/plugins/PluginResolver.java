@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
  * shipping the library is rejected. HeadlessMc's own libraries ({@link CoreLibraries}) cannot be replaced,
  * a plugin shipping one is rejected if the HeadlessMc version is not contained in its range.
  * <p>
+ * An optional dependency does not need to be installed, but if it is, its version has to be in range,
+ * because all plugins share one classpath and the plugin would otherwise see an incompatible version of it.
+ * <p>
  * A rejected plugin may cause other plugins to be rejected, because they depend on it,
  * so resolution repeats until the set of plugins does not change anymore.
  */
@@ -120,7 +123,8 @@ public class PluginResolver {
                 .findFirst();
             if (other.isEmpty()) {
                 if (!dependency.optional()) {
-                    reject(plugin, "requires plugin '" + dependency.id() + "' " + dependency.versions() + ", which is not installed or cannot be loaded", rejected, problems);
+                    String versions = dependency.versions() == null ? "" : " " + dependency.versions();
+                    reject(plugin, "requires plugin '" + dependency.id() + "'" + versions + ", which is not installed or cannot be loaded", rejected, problems);
                     return;
                 }
 
@@ -131,7 +135,9 @@ public class PluginResolver {
                 VersionRange range = VersionRange.parse(dependency.versions() == null ? "*" : dependency.versions());
                 String otherVersion = manifest(other.get()).version();
                 if (!range.contains(Version.parse(otherVersion))) {
-                    reject(plugin, "requires plugin '" + dependency.id() + "' " + range + ", but " + otherVersion + " is installed", rejected, problems);
+                    // all plugins share one classpath, an incompatible optional dependency would still be visible
+                    reject(plugin, (dependency.optional() ? "optionally depends on plugin '" : "requires plugin '")
+                        + dependency.id() + "' " + range + ", but " + otherVersion + " is installed", rejected, problems);
                     return;
                 }
             } catch (IllegalArgumentException e) {
