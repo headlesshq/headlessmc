@@ -13,6 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +33,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,6 +48,10 @@ import java.util.zip.ZipFile;
  * which Quarkus adds as application archives, and {@code quarkus-run.jar} is run with
  * {@code -Dquarkus.launch.rebuild=true}. The result is a regular fast-jar,
  * which is reused for as long as the same plugins are installed.
+ * <p>
+ * Only {@link PluginConfig#keepBuilds()} builds are kept. A JVM running a build holds a shared lock on
+ * {@code <hash>.use}, see {@link #use(Path)}, and builds are only deleted while holding an exclusive lock on it,
+ * as well as on {@code <hash>.lock}, which is held while a build is created.
  */
 @Slf4j
 @ApplicationScoped
@@ -59,6 +65,8 @@ public class PluginBuilder {
      * The file in a build directory, which lists the plugins of the build.
      */
     public static final String PLUGINS_FILE = "plugins.txt";
+    private static final String USE = ".use";
+    private static final Duration USE_TIMEOUT = Duration.ofSeconds(10);
 
     private final Holder<PluginConfig> config;
     private final JavaLauncherService javaLauncherService;
@@ -145,6 +153,58 @@ public class PluginBuilder {
 
         prune(builds, build);
         return build;
+    }
+
+    /**
+     * Marks the given build as in use, so that no other HeadlessMc process deletes it, until the lease is closed.
+     * Also updates the modification time of the build, which decides which builds are deleted first.
+     *
+     * @param build the build directory, as returned by {@link #build}.
+     * @return the lease, or empty if the build does not exist (anymore).
+     */
+    public Optional<Lease> use(Path build) {
+        Path lockFile = build.resolveSibling(build.getFileName() + USE);
+        FileChannel channel = null;
+        try {
+            Files.createDirectories(build.getParent());
+            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+            // a blocking lock would wait forever if the file system does not support shared locks,
+            // the exclusive locks of other processes are only held briefly while deleting the build
+            FileLock lock = null;
+            long deadline = System.nanoTime() + USE_TIMEOUT.toNanos();
+            while (lock == null && System.nanoTime() < deadline) {
+                lock = channel.tryLock(0L, Long.MAX_VALUE, true);
+                if (lock == null) {
+                    Thread.sleep(50L);
+                }
+            }
+
+            if (lock == null) {
+                log.debug("Could not lock {}, running the build without lock", lockFile);
+                channel.close();
+                channel = null;
+            }
+
+            // checked after locking, the build might have been deleted while we were waiting
+            if (!isComplete(build)) {
+                if (channel != null) {
+                    channel.close();
+                }
+
+                return Optional.empty();
+            }
+
+            Files.setLastModifiedTime(build, FileTime.from(Instant.now()));
+            return Optional.of(new Lease(channel));
+        } catch (IOException | OverlappingFileLockException e) {
+            log.debug("Failed to lock {}", lockFile, e);
+            close(channel);
+            return isComplete(build) ? Optional.of(new Lease(null)) : Optional.empty();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            close(channel);
+            throw new HeadlessMcException("Interrupted while waiting for " + lockFile, e);
+        }
     }
 
     /**
@@ -245,7 +305,7 @@ public class PluginBuilder {
             && Files.isRegularFile(build.resolve(QUARKUS_APP).resolve("quarkus-run.jar"));
     }
 
-    private void prune(Path builds, Path current) {
+    void prune(Path builds, Path current) {
         int keep = Math.max(1, config.get().keepBuilds());
         try (Stream<Path> stream = Files.list(builds)) {
             List<Path> directories = stream.filter(Files::isDirectory).toList();
@@ -260,12 +320,45 @@ public class PluginBuilder {
                 .skip(keep - 1L)
                 .toList();
             for (Path path : old) {
-                log.debug("Deleting old plugin build {}", path);
-                fileService.delete(path);
-                Files.deleteIfExists(builds.resolve(path.getFileName() + ".lock"));
+                try {
+                    deleteUnused(builds, path);
+                } catch (IOException | HeadlessMcException e) {
+                    log.debug("Failed to delete old plugin build {}", path, e);
+                }
             }
         } catch (IOException | HeadlessMcException e) {
             log.warn("Failed to delete old plugin builds in {}", builds, e);
+        }
+    }
+
+    /**
+     * Deletes an old build, unless another process is building or running it.
+     */
+    private void deleteUnused(Path builds, Path build) throws IOException {
+        Path buildLock = builds.resolve(build.getFileName() + ".lock");
+        Path useLock = builds.resolve(build.getFileName() + USE);
+        try (FileChannel buildChannel = FileChannel.open(buildLock, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+             FileLock buildFileLock = buildChannel.tryLock();
+             FileChannel useChannel = FileChannel.open(useLock, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+             FileLock useFileLock = useChannel.tryLock()) {
+            if (buildFileLock == null || useFileLock == null) {
+                log.debug("Not deleting old plugin build {}, it is in use", build);
+                return;
+            }
+
+            log.debug("Deleting old plugin build {}", build);
+            fileService.delete(build);
+        } catch (OverlappingFileLockException e) {
+            log.debug("Not deleting old plugin build {}, it is used by this process", build);
+            return;
+        }
+
+        // another process might have opened them in the meantime, it will notice that the build is gone
+        try {
+            Files.deleteIfExists(buildLock);
+            Files.deleteIfExists(useLock);
+        } catch (IOException e) {
+            log.debug("Failed to delete the locks of {}", build, e);
         }
     }
 
@@ -285,6 +378,33 @@ public class PluginBuilder {
         } catch (OverlappingFileLockException e) {
             log.debug("{} is locked by this process", lock);
         }
+    }
+
+    private static void close(@Nullable FileChannel channel) {
+        if (channel != null) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+                log.debug("Failed to close {}", channel, e);
+            }
+        }
+    }
+
+    /**
+     * Marks a build as in use, see {@link #use(Path)}.
+     */
+    public static final class Lease implements AutoCloseable {
+        private final @Nullable FileChannel channel;
+
+        private Lease(@Nullable FileChannel channel) {
+            this.channel = channel;
+        }
+
+        @Override
+        public void close() {
+            PluginBuilder.close(channel);
+        }
+
     }
 
     private static FileTime lastModified(Path path) {

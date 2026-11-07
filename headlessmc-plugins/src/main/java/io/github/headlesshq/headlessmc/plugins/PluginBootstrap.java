@@ -103,17 +103,21 @@ public class PluginBootstrap {
         Path mutableJar = config.get().mutableJar().map(Path::of).orElse(null);
         String fingerprint = launchCache.fingerprint(jars, mutableJar);
         Optional<PluginLaunchCache.Entry> cached = launchCache.get(fingerprint);
-        if (cached.isPresent()) {
-            List<String> problems = cached.get().problems();
-            for (String problem : problems) {
-                log.error("Cannot load plugin {}", problem);
-            }
+        // the build might have been deleted by another HeadlessMc process in the meantime
+        Optional<PluginBuilder.Lease> cachedLease = cached.flatMap(entry -> builder.use(entry.launch().build()));
+        if (cached.isPresent() && cachedLease.isPresent()) {
+            try (PluginBuilder.Lease ignored = cachedLease.get()) {
+                List<String> problems = cached.get().problems();
+                for (String problem : problems) {
+                    log.error("Cannot load plugin {}", problem);
+                }
 
-            if (!problems.isEmpty() && config.get().failOnError()) {
-                return fail(args);
-            }
+                if (!problems.isEmpty() && config.get().failOnError()) {
+                    return fail(args);
+                }
 
-            return OptionalInt.of(launch(cached.get().launch(), args));
+                return OptionalInt.of(launch(cached.get().launch(), args));
+            }
         }
 
         List<PluginFile> files = new ArrayList<>(jars.size());
@@ -148,7 +152,10 @@ public class PluginBootstrap {
         // the problems are remembered, too, so that they are reported on every start
         launchCache.put(fingerprint, launch, resolution.problems().stream().map(PluginResolution.Problem::toString).toList());
 
-        return OptionalInt.of(launch(launch, args));
+        try (PluginBuilder.Lease ignored = builder.use(build).orElseThrow(() -> new HeadlessMcException(
+            "The plugin build " + build + " has been deleted by another HeadlessMc process, please try again"))) {
+            return OptionalInt.of(launch(launch, args));
+        }
     }
 
     private OptionalInt fail(String... args) {
