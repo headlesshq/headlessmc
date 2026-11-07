@@ -6,6 +6,7 @@ dependencies {
     implementation project(':headlessmc-commands:headlessmc-commands-version')
 
     implementation project(':headlessmc-platform')
+    implementation project(':headlessmc-patcher')
 
     implementation project(':headlessmc-console')
     implementation project(':headlessmc-console:headlessmc-console-format')

@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.os.OSService;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
+import io.github.headlesshq.headlessmc.patcher.PatcherNames;
 import io.quarkus.runtime.annotations.RegisterResources;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -40,7 +41,7 @@ import java.util.zip.ZipInputStream;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 @RegisterResources(globs = PatchedLwjglPatcher.RESOURCES + "**")
 public class PatchedLwjglPatcher implements Patcher {
-    public static final String NAME = "lwjgl-pre";
+    public static final String NAME = PatcherNames.LWJGL_PRE;
     static final String RESOURCES = "patcher/lwjgl-patched/";
     static final String API = "headlessmc-lwjgl-api";
     static final String JOML_NO_UNSAFE = "joml.nounsafe";

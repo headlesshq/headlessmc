@@ -15,6 +15,7 @@ import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
+import io.github.headlesshq.headlessmc.patcher.PatcherNames;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
@@ -34,11 +35,6 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 public abstract class AbstractClientAndServerLaunchCommand extends AbstractServerLaunchCommand {
-    /**
-     * The name of the patcher of the patched LWJGL, {@code PatchedLwjglPatcher}, which this module does not depend on.
-     */
-    private static final String PATCHED_LWJGL = "lwjgl-pre";
-
     private final LastUsedAccountService lastUsedAccountService;
     private final ClientLauncher clientLauncher;
     private final XvfbService xvfbService;
@@ -180,16 +176,16 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             patchers = new ArrayList<>();
         }
 
-        patchers.add("log4j");
+        patchers.add(PatcherNames.LOG4J);
         if (headless) {
             // the patched LWJGL of headlessmc-lwjgl is opt-in and replaces the transformer based patcher
             boolean patchedLwjgl = Stream.concat(patchers.stream(), profile.patchers().stream())
-                .anyMatch(PATCHED_LWJGL::equalsIgnoreCase);
+                .anyMatch(PatcherNames.LWJGL_PRE::equalsIgnoreCase);
             if (!patchedLwjgl) {
-                patchers.add("lwjgl");
+                patchers.add(PatcherNames.LWJGL);
             }
 
-            patchers.add("paulscode");
+            patchers.add(PatcherNames.PAULSCODE);
         }
 
         patchers.addAll(profile.patchers());

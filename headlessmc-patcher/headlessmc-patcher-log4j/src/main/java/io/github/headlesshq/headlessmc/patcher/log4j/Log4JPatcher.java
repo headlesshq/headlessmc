@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.patcher.log4j;
 
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
+import io.github.headlesshq.headlessmc.patcher.PatcherNames;
 import io.github.headlesshq.headlessmc.patcher.asm.AbstractClassPatcher;
 import jakarta.enterprise.context.Dependent;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,7 @@ public class Log4JPatcher extends AbstractClassPatcher {
 
     @Override
     public String name() {
-        return "log4j";
+        return PatcherNames.LOG4J;
     }
 
     @Override
