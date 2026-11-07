@@ -89,9 +89,15 @@ overrides:
       - glibc>=2.34
       - zlib
 
+# xz instead of the default gzip, the packages are downloaded from GitHub Pages (headlesshq/apt),
+# which has a size and a bandwidth limit
+deb:
+  compression: xz
+
 rpm:
   group: Amusements/Games
   summary: A command line launcher for Minecraft Java Edition
+  compression: xz
 
 archlinux:
   packager: HeadlessHQ <https://github.com/headlesshq/headlessmc>
