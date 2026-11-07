@@ -222,6 +222,23 @@ class BackupCommandsTest {
     }
 
     @Test
+    void diffMarksNewWorldsThatRestoreKeeps() throws IOException {
+        Profile client = env.getProfileService().getProfile("main").orElseThrow();
+        BackupCommand command = backup("main");
+        command.setType("worlds");
+        command.run();
+        write(client.path().resolve("saves").resolve("C").resolve("level.dat"), "c");
+        write(client.path().resolve("saves").resolve("A").resolve("new.dat"), "new");
+
+        diff("main").run();
+
+        String output = console.output();
+        assertTrue(output.contains("new world"), output);
+        assertTrue(output.contains("2 added, 0 removed, 0 modified"), output);
+        assertTrue(output.contains("1 added files belong to worlds created after the backup"), output);
+    }
+
+    @Test
     void diffUnknownBackupThrows() {
         assertThrows(IllegalArgumentException.class, diff("nope")::run);
     }

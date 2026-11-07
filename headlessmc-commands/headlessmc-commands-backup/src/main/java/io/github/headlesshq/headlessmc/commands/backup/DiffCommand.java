@@ -65,8 +65,10 @@ public class DiffCommand implements Runnable, CachedConsole.Enabled {
             return;
         }
 
+        // a worlds backup is compared with worlds created after it as well, but restoring it keeps them
+        List<String> newWorlds = diff.added().stream().filter(file -> !isBackedUp(resolved, file)).toList();
         List<Change> changes = new ArrayList<>();
-        diff.added().forEach(file -> changes.add(new Change("added", file)));
+        diff.added().forEach(file -> changes.add(new Change(newWorlds.contains(file) ? "new world" : "added", file)));
         diff.removed().forEach(file -> changes.add(new Change("removed", file)));
         diff.modified().forEach(file -> changes.add(new Change("modified", file)));
         changes.sort(Comparator.comparing(Change::file));
@@ -80,6 +82,13 @@ public class DiffCommand implements Runnable, CachedConsole.Enabled {
             diff.added().size() + " added, " + diff.removed().size() + " removed, "
                 + diff.modified().size() + " modified since backup " + resolved.id()
         );
+        if (!newWorlds.isEmpty()) {
+            console.write(newWorlds.size() + " added files belong to worlds created after the backup, restoring it keeps them.");
+        }
+    }
+
+    private boolean isBackedUp(Backup backup, String file) {
+        return backup.paths().stream().anyMatch(path -> path.isEmpty() || file.equals(path) || file.startsWith(path + "/"));
     }
 
     private record Change(String type, String file) {
