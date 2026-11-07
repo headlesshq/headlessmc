@@ -60,6 +60,33 @@ class PluginAotCacheTest {
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void testFailedTrainingIsNotRepeated() throws Exception {
+        PluginAotCache cache = cache(Optional.of(true));
+        PluginLaunchCache.Launch launch = launch(25);
+        Path aot = launch.build().resolve("aot");
+        cache.train(launch, jvmArgs -> List.of("sh", "-c", "echo 'Error: could not create the cache'"));
+        Path pid;
+        try (Stream<Path> trainings = Files.list(aot)) {
+            pid = trainings.filter(path -> path.toString().endsWith(".training")).findFirst().orElseThrow()
+                .resolve(PluginAotCache.TRAINING_PID);
+        }
+
+        ProcessHandle.of(Long.parseLong(Files.readString(pid).trim())).ifPresent(process -> process.onExit().join());
+        // the training exited without creating the cache: marked as failed, not started again
+        cache.train(launch, jvmArgs -> fail("trained again after the training failed"));
+        cache.train(launch, jvmArgs -> fail("trained again after the training failed"));
+        try (Stream<Path> files = Files.list(aot)) {
+            List<Path> list = files.toList();
+            assertEquals(1, list.size(), list.toString());
+            assertTrue(list.getFirst().toString().endsWith(".failed"));
+            assertTrue(Files.readString(list.getFirst()).contains("could not create the cache"));
+        }
+
+        assertEquals(List.of(), cache.jvmArgs(launch));
+    }
+
+    @Test
     void testDisabled() {
         PluginLaunchCache.Launch launch = launch(25);
         cache(Optional.of(false)).train(launch, jvmArgs -> fail("training although disabled"));

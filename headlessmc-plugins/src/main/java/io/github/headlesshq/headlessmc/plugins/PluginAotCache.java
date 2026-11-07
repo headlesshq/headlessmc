@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -30,12 +31,18 @@ import java.util.stream.Stream;
  * with its output redirected into {@value #TRAINING_LOG}. The next start moves the finished cache into place.
  * AOT caches only work with the exact JVM they have been created with,
  * so they are keyed by the Java executable, its size and modification time.
+ * If a training fails, a {@code .failed} marker containing its log prevents
+ * further trainings for the same Java and build.
  */
 @Slf4j
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class PluginAotCache {
     static final String TRAINING_LOG = "training.log";
+    /**
+     * Contains the process id of the training JVM.
+     */
+    static final String TRAINING_PID = "training.pid";
     /**
      * Printed by the JVM when it has written the AOT cache.
      */
@@ -102,11 +109,24 @@ public class PluginAotCache {
         try {
             Paths paths = paths(launch);
             // a finished training is moved into place by the next jvmArgs call
-            if (Files.isRegularFile(paths.cache()) || isFinished(paths.training()) || isRunning(paths.training())) {
+            if (Files.isRegularFile(paths.cache()) || Files.exists(paths.failed()) || isFinished(paths.training())) {
                 return;
             }
 
-            fileService.delete(paths.training());
+            if (Files.isDirectory(paths.training())) {
+                if (isRunning(paths.training())) {
+                    return;
+                }
+
+                // the training exited or timed out without creating the cache, it would most likely fail again
+                Path trainingLog = paths.training().resolve(TRAINING_LOG);
+                String output = Files.isRegularFile(trainingLog) ? Files.readString(trainingLog, StandardCharsets.UTF_8) : "";
+                Files.writeString(paths.failed(), output, StandardCharsets.UTF_8);
+                fileService.delete(paths.training());
+                log.debug("Training the AOT cache {} failed, see {}", paths.cache(), paths.failed());
+                return;
+            }
+
             Files.createDirectories(paths.training());
             List<String> jvmArgs = new ArrayList<>();
             jvmArgs.add("-XX:AOTCacheOutput=" + paths.training().resolve("cache.aot"));
@@ -116,6 +136,7 @@ public class PluginAotCache {
                 .redirectOutput(paths.training().resolve(TRAINING_LOG).toFile())
                 .start();
             process.getOutputStream().close();
+            Files.writeString(paths.training().resolve(TRAINING_PID), String.valueOf(process.pid()), StandardCharsets.UTF_8);
             log.debug("Training the AOT cache {} in process {}", paths.cache(), process.pid());
         } catch (IOException | RuntimeException e) {
             log.debug("Failed to start training the AOT cache for {}", launch, e);
@@ -132,7 +153,7 @@ public class PluginAotCache {
         Path executable = launch.javaExecutable().toRealPath();
         String key = launchCache.fingerprint(List.of(executable), null).substring(0, 16) + "-" + launch.javaVersion();
         Path directory = launch.build().resolve("aot");
-        return new Paths(directory.resolve(key + ".aot"), directory.resolve(key + ".training"));
+        return new Paths(directory.resolve(key + ".aot"), directory.resolve(key + ".training"), directory.resolve(key + ".failed"));
     }
 
     private static boolean isFinished(Path training) throws IOException {
@@ -148,10 +169,29 @@ public class PluginAotCache {
         }
 
         FileTime started = Files.getLastModifiedTime(training);
-        return started.toInstant().isAfter(Instant.now().minus(TRAINING_TIMEOUT));
+        boolean timedOut = !started.toInstant().isAfter(Instant.now().minus(TRAINING_TIMEOUT));
+        Path pidFile = training.resolve(TRAINING_PID);
+        if (!Files.isRegularFile(pidFile)) {
+            // the process has just been started and its pid not written yet
+            return !timedOut;
+        }
+
+        Optional<ProcessHandle> process;
+        try {
+            process = ProcessHandle.of(Long.parseLong(Files.readString(pidFile, StandardCharsets.UTF_8).trim()));
+        } catch (NumberFormatException e) {
+            return false;
+        }
+
+        if (timedOut) {
+            process.ifPresent(ProcessHandle::destroy);
+            return false;
+        }
+
+        return process.map(ProcessHandle::isAlive).orElse(false);
     }
 
-    private record Paths(Path cache, Path training) {
+    private record Paths(Path cache, Path training, Path failed) {
 
     }
 
