@@ -47,7 +47,7 @@ public final class BundledVersions {
      */
     public static FakeVanillaVersionService vanillaVersionService() {
         List<String> names = new ArrayList<>();
-        for (JsonNode version : read(VANILLA).get("versions")) {
+        for (JsonNode version : cacheObject(VANILLA).get("versions")) {
             names.add(version.get("id").asString());
         }
 

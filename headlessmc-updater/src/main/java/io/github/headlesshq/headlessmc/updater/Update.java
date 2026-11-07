@@ -36,7 +36,11 @@ public record Update(
             + currentVersion + " -> " + release.tagName());
         lines.add("Release: " + release.htmlUrl());
         Path path = installation.path();
-        if (asset == null) {
+        if (installation.type() == Installation.Type.PACKAGE) {
+            lines.add((path == null ? HeadlessMc.NAME : path) + " has been installed by a package manager,"
+                + " update it by installing the new deb, rpm or archlinux package from the release.");
+            return lines;
+        } else if (asset == null) {
             return lines;
         } else if (path == null) {
             lines.add("Download: " + asset.downloadUrl());

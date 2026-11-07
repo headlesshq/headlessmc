@@ -27,6 +27,7 @@ import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.client.DefaultVersionMatcher;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherServiceImpl;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.util.CommonInstallerServices;
 import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import io.github.headlesshq.headlessmc.util.maven.Artifact;
@@ -176,8 +177,8 @@ class FabricInstallationTest {
             }
 
             @Override
-            public Installation installServer(VersionID id, Path dir, TypedMap args) {
-                return new Installation(21);
+            public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) {
+                return new ServerInstallation(21);
             }
         };
     }

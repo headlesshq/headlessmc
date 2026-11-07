@@ -8,8 +8,10 @@ import io.github.headlesshq.headlessmc.platform.util.AbstractJsonVersionService;
 import io.quarkus.runtime.annotations.RegisterResources;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.SequencedSet;
+import java.util.Set;
 
 @RegisterResources(globs = "forge/forge-versions.json")
 public class ForgeVersionService extends AbstractJsonVersionService<BoundPlatformVersion, PrismIndex> {
@@ -24,10 +26,34 @@ public class ForgeVersionService extends AbstractJsonVersionService<BoundPlatfor
     ) {
         SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
         for (PrismIndex.Meta meta : value.versions()) {
-            result.add(createVersion(meta.version(), meta.getMcVersion()));
+            result.add(toVersion(meta));
         }
 
         return verify(value, result, previous);
+    }
+
+    @Override
+    protected Set<BoundPlatformVersion> mapStable(PrismIndex value, @Nullable Set<BoundPlatformVersion> previous) {
+        Set<BoundPlatformVersion> result = new HashSet<>();
+        for (PrismIndex.Meta meta : value.versions()) {
+            if (isStable(meta)) {
+                result.add(toVersion(meta));
+            }
+        }
+
+        return result;
+    }
+
+    protected BoundPlatformVersion toVersion(PrismIndex.Meta meta) {
+        return createVersion(meta.version(), meta.getMcVersion());
+    }
+
+    /**
+     * @param meta the entry in the prism index.
+     * @return {@code true} if the Forge build is recommended.
+     */
+    protected boolean isStable(PrismIndex.Meta meta) {
+        return meta.recommended();
     }
 
     @Override

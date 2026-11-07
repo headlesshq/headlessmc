@@ -6,6 +6,7 @@ dependencies {
     implementation libs.cdi
     implementation project(':headlessmc-os')
     implementation project(':headlessmc-config')
+    implementation project(':headlessmc-util:headlessmc-util-json')
     runtimeOnly project(':headlessmc-os:headlessmc-os-apache')
 
     testFixturesImplementation libs.jspecify

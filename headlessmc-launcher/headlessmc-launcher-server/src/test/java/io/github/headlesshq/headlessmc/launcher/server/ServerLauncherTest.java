@@ -17,7 +17,7 @@ import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
 import io.github.headlesshq.headlessmc.platform.VanillaInstaller;
 import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
@@ -84,7 +84,7 @@ class ServerLauncherTest {
         }
 
         @Override
-        public Installation installServer(VersionID id, Path dir, TypedMap args) {
+        public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) {
             throw new UnsupportedOperationException();
         }
     };
@@ -133,7 +133,7 @@ class ServerLauncherTest {
     private ServerSupport serverSupport(String jarName) {
         return new ServerSupport(
             dir -> dir.resolve(jarName),
-            (id, dir, args) -> new ServerInstaller.Installation(21)
+            (id, dir, args) -> new ServerInstallation(21)
         );
     }
 

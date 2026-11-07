@@ -4,11 +4,13 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.net.DownloadService;
 import io.github.headlesshq.headlessmc.platform.VanillaInstaller;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.platform.paper.PaperJvmArgsService;
 import io.github.headlesshq.headlessmc.platform.purpur.api.BuildResponse;
 import io.github.headlesshq.headlessmc.platform.purpur.api.PurpurAPI;
 import io.github.headlesshq.headlessmc.platform.purpur.api.VersionResponse;
 import io.github.headlesshq.headlessmc.platform.server.ServerFinder;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.version.Version;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,6 +20,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.nio.file.Path;
 
+/**
+ * Installs jars from the Purpur API to {@link ServerFinder#DEFAULT_JAR}.
+ * Purpur is a Paper fork, so the installed server uses the jvm args recommended by Paper,
+ * see {@link PaperJvmArgsService}.
+ */
 @Purpur
 @ApplicationScoped
 @RequiredArgsConstructor
@@ -26,15 +33,21 @@ public class PurpurInstaller implements ServerInstaller {
     private final String url;
     private final VanillaInstaller vanillaInstaller;
     private final DownloadService downloadService;
+    private final PaperJvmArgsService jvmArgsService;
     private final PurpurAPI api;
 
     @Inject
-    public PurpurInstaller(DownloadService downloadService, VanillaInstaller vanillaInstaller, @RestClient PurpurAPI api) {
-        this(PurpurAPI.PURPUR_PROJECT, PurpurAPI.V2_URL, vanillaInstaller, downloadService, api);
+    public PurpurInstaller(
+        DownloadService downloadService,
+        VanillaInstaller vanillaInstaller,
+        PaperJvmArgsService jvmArgsService,
+        @RestClient PurpurAPI api
+    ) {
+        this(PurpurAPI.PURPUR_PROJECT, PurpurAPI.V2_URL, vanillaInstaller, downloadService, jvmArgsService, api);
     }
 
     @Override
-    public Installation installServer(
+    public ServerInstallation installServer(
         VersionID id,
         Path dir,
         TypedMap args
@@ -47,7 +60,10 @@ public class PurpurInstaller implements ServerInstaller {
             .hash("MD5", build.md5())
             .toFile(file);
 
-        return new Installation(vanillaVersion.requireJavaVersion());
+        return new ServerInstallation(
+            vanillaVersion.requireJavaVersion(),
+            jvmArgsService.getRecommendedJvmArgs(id.getVersion().getName())
+        );
     }
 
     private BuildResponse getBuild(VersionID id) {

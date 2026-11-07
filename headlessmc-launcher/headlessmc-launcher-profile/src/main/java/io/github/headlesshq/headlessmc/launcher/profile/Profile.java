@@ -33,7 +33,14 @@ public record Profile(
     // java version?
     int hmcVersion // versionIdentifier to check if we are outdated,
 ) implements ReflectionRegistered {
-    public static final int PROFILE_VERSION = 0;
+    /**
+     * The current profile format version, older HeadlessMc versions ignore profiles with a newer version.
+     * <ul>
+     *     <li>0: initial format.</li>
+     *     <li>1: {@link #path()} is written as a relative path object instead of a plain string.</li>
+     * </ul>
+     */
+    public static final int PROFILE_VERSION = 1;
 
     public Side side() {
         return version.side().orElse(Side.CLIENT);

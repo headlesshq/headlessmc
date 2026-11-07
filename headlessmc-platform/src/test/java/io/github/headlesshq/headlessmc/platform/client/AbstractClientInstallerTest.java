@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.platform.FakeVersionService;
 import io.github.headlesshq.headlessmc.platform.VanillaInstaller;
 import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
@@ -49,7 +50,7 @@ class AbstractClientInstallerTest {
         }
 
         @Override
-        public Installation installServer(VersionID id, Path dir, TypedMap args) {
+        public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) {
             throw new UnsupportedOperationException();
         }
     };

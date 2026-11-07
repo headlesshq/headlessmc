@@ -31,7 +31,14 @@ It can run the Minecraft client in headless mode, e.g. enabling you to run it on
 What's more, it handles various mod loaders, modpacks, mods, resourcepacks, shaderpacks, datapacks...
 Even servers can be managed using HeadlessMc.
 
-Download the latest release and visit our [Getting Started](https://headlesshq.github.io/headlessmc/getting-started/)
+Install HeadlessMc with
+```shell
+# Linux & MacOS
+curl -fsSL https://headlesshq.github.io/headlessmc/install.sh | sh
+# Windows (PowerShell)
+irm https://headlesshq.github.io/headlessmc/install.ps1 | iex
+```
+or download the latest release and visit our [Getting Started](https://headlesshq.github.io/headlessmc/getting-started/)
 page to get started, it's as easy as:
 ```shell
 > headlessmc login

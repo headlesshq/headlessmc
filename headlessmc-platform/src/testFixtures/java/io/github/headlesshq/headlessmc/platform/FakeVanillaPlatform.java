@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.platform;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.mods.ModSupport;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerSupport;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
@@ -122,9 +123,9 @@ public class FakeVanillaPlatform implements VanillaPlatform {
             }
 
             @Override
-            public Installation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException {
+            public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException {
                 installedServers.add(id);
-                return new Installation(serverJavaVersion);
+                return new ServerInstallation(serverJavaVersion);
             }
         };
     }

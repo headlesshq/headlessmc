@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -134,6 +135,36 @@ class ProfileServiceImplTest {
 
         assertTrue(service.getProfile("future").isEmpty());
         assertTrue(service.getProfiles().isEmpty());
+    }
+
+    @Test
+    void saveWritesCurrentProfileVersion() {
+        Profile legacy = sampleProfile("legacy", version()).withHmcVersion(0);
+
+        Profile saved = service.save(legacy);
+
+        assertEquals(Profile.PROFILE_VERSION, saved.hmcVersion());
+        assertEquals(Optional.of(saved), service.getProfile("legacy"));
+    }
+
+    @Test
+    void getProfileReadsLegacyStringPath() throws Exception {
+        // version 0 profiles were written with Jackson's default Path serializer, a file: URI string
+        Path gameDir = profilesDir.resolve("legacy").toAbsolutePath();
+        service.save(sampleProfile("legacy", version()));
+        Path file = profilesDir.resolve("legacy.json");
+        String json = Files.readString(file)
+            .replaceFirst(
+                "\"path\"\\s*:\\s*\\{[^}]*}",
+                Matcher.quoteReplacement("\"path\": \"" + gameDir.toUri() + "\"")
+            ).replaceFirst("\"hmcVersion\"\\s*:\\s*\\d+", "\"hmcVersion\": 0");
+        Files.writeString(file, json);
+
+        Optional<Profile> loaded = service.getProfile("legacy");
+
+        assertTrue(loaded.isPresent(), json);
+        assertEquals(gameDir, loaded.get().path());
+        assertEquals(0, loaded.get().hmcVersion());
     }
 
     @Test

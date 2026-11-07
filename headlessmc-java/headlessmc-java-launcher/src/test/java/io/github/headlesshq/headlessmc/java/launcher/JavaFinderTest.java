@@ -157,6 +157,11 @@ class JavaFinderTest {
             public boolean checkForUpdates() {
                 return false;
             }
+
+            @Override
+            public List<String> jmodsDistributions() {
+                return List.of("zulu");
+            }
         };
 
         finder = new JavaFinder(providerService, installedRuntimes, javaService, config, appFiles, CPU.X64,

@@ -1,0 +1,103 @@
+# Builds the deb, rpm and archlinux packages attached to GitHub releases
+# from the GraalVM native executables. Run it via scripts/build-packages.sh.
+# https://nfpm.goreleaser.com/configuration/
+name: headlessmc
+arch: ${NFPM_ARCH}
+platform: linux
+# The release tag, e.g. 3.0.0-RC8. With the semver schema nfpm turns the prerelease into 3.0.0~RC8 for deb and rpm,
+# so that release candidates are sorted before the final release. nfpm drops the prerelease for archlinux,
+# so scripts/build-packages.sh passes 3.0.0rc8 with the none schema for it instead.
+version: ${NFPM_VERSION}
+version_schema: ${NFPM_VERSION_SCHEMA}
+release: 1
+section: games
+priority: optional
+maintainer: HeadlessHQ <https://github.com/headlesshq/headlessmc>
+vendor: HeadlessHQ
+homepage: https://github.com/headlesshq/headlessmc
+license: MIT
+description: |-
+  A command line launcher for Minecraft Java Edition.
+  HeadlessMc runs in your terminal and can also run the Minecraft client
+  in headless mode, e.g. on CI/CD runners.
+
+contents:
+  # copied here by scripts/build-packages.sh
+  - src: ./build/packages/staging/headlessmc
+    dst: /usr/bin/headlessmc
+    file_info:
+      mode: 0755
+  - src: ./LICENSE
+    dst: /usr/share/licenses/headlessmc/LICENSE
+    file_info:
+      mode: 0644
+  # where Debian expects the license
+  - src: ./LICENSE
+    dst: /usr/share/doc/headlessmc/copyright
+    file_info:
+      mode: 0644
+  # Shell completions, loaded automatically from these vendor directories.
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.bash
+    dst: /usr/share/bash-completion/completions/headlessmc
+    file_info:
+      mode: 0644
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.fish
+    dst: /usr/share/fish/vendor_completions.d/headlessmc.fish
+    file_info:
+      mode: 0644
+  # Debian's zsh only has vendor-completions on its fpath, Fedora's and Arch's site-functions.
+  # Do not put contents into the overrides, they replace these contents instead of adding to them.
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+    dst: /usr/share/zsh/vendor-completions/_headlessmc
+    packager: deb
+    file_info:
+      mode: 0644
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+    dst: /usr/share/zsh/site-functions/_headlessmc
+    packager: rpm
+    file_info:
+      mode: 0644
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+    dst: /usr/share/zsh/site-functions/_headlessmc
+    packager: archlinux
+    file_info:
+      mode: 0644
+  # Tells the HeadlessMc updater that a package manager owns /usr/bin/headlessmc,
+  # see io.github.headlesshq.headlessmc.updater.Installation.
+  - src: ./packaging/package
+    dst: /usr/share/headlessmc/package
+    file_info:
+      mode: 0644
+
+# The native executable links against libc.so.6 (up to GLIBC_2.34) and libz.so.1.
+# The bash completion needs bash-completion, which nfpm cannot declare as optdepends for archlinux.
+overrides:
+  deb:
+    depends:
+      - libc6 (>= 2.34)
+      - zlib1g
+    recommends:
+      - bash-completion
+  rpm:
+    depends:
+      - glibc >= 2.34
+      - libz.so.1()(64bit)
+    recommends:
+      - bash-completion
+  archlinux:
+    depends:
+      - glibc>=2.34
+      - zlib
+
+# xz instead of the default gzip, the packages are downloaded from GitHub Pages (headlesshq/apt),
+# which has a size and a bandwidth limit
+deb:
+  compression: xz
+
+rpm:
+  group: Amusements/Games
+  summary: A command line launcher for Minecraft Java Edition
+  compression: xz
+
+archlinux:
+  packager: HeadlessHQ <https://github.com/headlesshq/headlessmc>

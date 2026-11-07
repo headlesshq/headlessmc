@@ -10,6 +10,7 @@ import io.github.headlesshq.headlessmc.platform.FakeVanillaVersionService;
 import io.github.headlesshq.headlessmc.platform.FakeVersionService;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.PlatformVersion;
+import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.forge.Forge;
 import io.github.headlesshq.headlessmc.platform.forge.PrismIndex;
@@ -98,6 +99,30 @@ class NeoForgeVersionsTest {
         """)
     void buildNamesCutOffTheMcVersion(String neoForgeVersion, String mcVersion, String build) {
         assertEquals(build, NeoForgeVersionService.getBuildName(neoForgeVersion, mcVersion));
+    }
+
+    @Test
+    void onlyReleasesWithoutAlphaOrBetaInTheirNameAreStable() {
+        metas.add(typed("26.1.0.0-alpha.15+pre-3", "26.1", "release"));
+        metas.add(typed("21.10.63-beta", "1.21.10", "beta"));
+        metas.add(typed("21.10.62", "1.21.10", "release"));
+        metas.add(typed("21.10.61", "1.21.10", "release"));
+
+        NeoForgeVersionService service = service();
+
+        assertEquals("63-beta", service.getLatestBuild(vanilla("1.21.10")).orElseThrow().getName());
+        assertEquals("62", service.getStableBuild(vanilla("1.21.10")).orElseThrow().getName());
+        assertEquals(Optional.empty(), service.getStableBuild(vanilla("26.1")));
+    }
+
+    private static PrismIndex.Meta typed(String version, String mcVersion, String type) {
+        return new PrismIndex.Meta(
+            List.of(new PrismIndex.Meta.Requires(mcVersion, "net.minecraft")), "sha", version, false, type
+        );
+    }
+
+    private static VanillaVersion vanilla(String name) {
+        return new FakeVanillaPlatform(name).getVersionService().getVersion(name).orElseThrow();
     }
 
     @Test

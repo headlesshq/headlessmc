@@ -5,11 +5,13 @@ import org.jspecify.annotations.Nullable;
 
 import java.net.URISyntaxException;
 import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Describes how the running HeadlessMc has been installed.
@@ -23,6 +25,11 @@ public record Installation(Type type, @Nullable Path path) {
      * Set to {@code runtime} by GraalVM inside a native image.
      */
     private static final String IMAGE_CODE_PROPERTY = "org.graalvm.nativeimage.imagecode";
+    /**
+     * Installed by the deb, rpm and archlinux packages, relative to the directory containing the bin directory,
+     * e.g. {@code /usr/share/headlessmc/package} for {@code /usr/bin/headlessmc}.
+     */
+    static final Path PACKAGE_MARKER = Path.of("share", "headlessmc", "package");
 
     /**
      * Detects the installation of the running HeadlessMc.
@@ -30,7 +37,7 @@ public record Installation(Type type, @Nullable Path path) {
      * @return the installation of the running HeadlessMc.
      */
     public static Installation detect() {
-        return detect(System::getProperty, ProcessHandle.current().info().command(), getCodeSource());
+        return detect(System::getProperty, ProcessHandle.current().info().command(), getCodeSource(), Installation::isRegularFile);
     }
 
     /**
@@ -39,12 +46,22 @@ public record Installation(Type type, @Nullable Path path) {
      * @param properties the system properties of the process.
      * @param command    the executable of the process.
      * @param codeSource the jar or directory the classes of HeadlessMc have been loaded from.
+     * @param isFile     checks if a file exists, used to find the {@link #PACKAGE_MARKER}.
      * @return the detected installation.
      */
     @VisibleForTesting
-    static Installation detect(Function<String, @Nullable String> properties, Optional<String> command, Optional<Path> codeSource) {
+    static Installation detect(Function<String, @Nullable String> properties,
+                               Optional<String> command,
+                               Optional<Path> codeSource,
+                               Predicate<Path> isFile) {
         if ("runtime".equals(properties.apply(IMAGE_CODE_PROPERTY))) {
-            return new Installation(Type.NATIVE, command.map(Installation::toPath).orElse(null));
+            Path executable = command.map(Installation::toPath).orElse(null);
+            Path prefix = executable == null || executable.getParent() == null ? null : executable.getParent().getParent();
+            if (prefix != null && isFile.test(prefix.resolve(PACKAGE_MARKER))) {
+                return new Installation(Type.PACKAGE, executable);
+            }
+
+            return new Installation(Type.NATIVE, executable);
         }
 
         // java -jar headlessmc.jar puts only the jar on the class path.
@@ -73,6 +90,14 @@ public record Installation(Type type, @Nullable Path path) {
         return path.toAbsolutePath().normalize();
     }
 
+    private static boolean isRegularFile(Path path) {
+        try {
+            return Files.isRegularFile(path);
+        } catch (SecurityException e) {
+            return false;
+        }
+    }
+
     private static Optional<Path> getCodeSource() {
         try {
             CodeSource codeSource = Installation.class.getProtectionDomain().getCodeSource();
@@ -94,6 +119,11 @@ public record Installation(Type type, @Nullable Path path) {
          * A native executable built with GraalVM.
          */
         NATIVE,
+        /**
+         * A native executable installed by a package manager from a deb, rpm or archlinux package.
+         * It must not be replaced manually, but updated with the package manager.
+         */
+        PACKAGE,
         /**
          * The {@code headlessmc.jar}, started with {@code java -jar}.
          */

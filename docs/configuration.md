@@ -41,6 +41,7 @@ hmc.github.token                                           -                    
 hmc.java.check-for-updates                                 true                                       Whether the java updater checks the Java installations installed by HeadlessMc for updates, see hmc.updater.enabled.
 hmc.java.download                                          true                                       Whether missing Java versions may be downloaded automatically.
 hmc.java.fail-on-parsing-failure                           false                                      Whether parsing a Java installation that fails should abort instead of being skipped.
+hmc.java.jmods-distributions                               zulu,corretto,temurin                      The Java distributions to try, in order, when jmods have to be downloaded for a Java version, e.g. because the installed Java does not ship them (JEP 493).
 hmc.java.max-scan-depth                                    6                                          How deep to scan Java installation directories.
 hmc.jline.ansi-colors                                      false                                      Allows you to enable colored terminal output, even if the Jline terminal is disabled.
 hmc.jline.enabled                                          true                                       If Jline terminal support is enabled. Might need to be disabled on termux or in IDE terminals.

@@ -4,7 +4,9 @@ import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaService;
 import io.github.headlesshq.headlessmc.java.JavaSource;
 import io.github.headlesshq.headlessmc.java.SafePath;
+import io.github.headlesshq.headlessmc.java.launcher.JModsService;
 import io.github.headlesshq.headlessmc.java.launcher.JavaFinder;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcessException;
 import io.github.headlesshq.headlessmc.patcher.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,6 +117,9 @@ class ClassSourceFactoryTest {
 
     private Java downloaded;
 
+    /** The directory {@link JModsService#getJMods(int)} returns, or {@code null} if it should fail. */
+    private Path downloadedJMods;
+
     private ClassSourceFactory factory;
 
     @BeforeEach
@@ -128,7 +133,22 @@ class ClassSourceFactoryTest {
             return downloaded;
         });
 
-        factory = new ClassSourceFactory(javaService, javaFinder);
+        JModsService jModsService = Mockito.mock(JModsService.class);
+        Mockito.when(jModsService.findJMods(Mockito.any())).thenAnswer(invocation -> {
+            Java java = invocation.getArgument(0);
+            return java.home().getUnchecked()
+                .map(home -> home.resolve("jmods"))
+                .filter(Files::isDirectory);
+        });
+        Mockito.when(jModsService.getJMods(Mockito.anyInt())).thenAnswer(invocation -> {
+            if (downloadedJMods == null) {
+                throw new JavaProcessException("no jmods " + invocation.getArgument(0));
+            }
+
+            return downloadedJMods;
+        });
+
+        factory = new ClassSourceFactory(javaService, javaFinder, jModsService);
     }
 
     private static byte[] classBytes() {
@@ -237,12 +257,36 @@ class ClassSourceFactoryTest {
     }
 
     @Test
-    void aJavaVersionIsDownloadedIfNoneIsInstalled() {
-        Path home = root.resolve("downloaded");
-        zip(home.resolve("jmods").resolve("java.base.jmod"), "classes/" + TYPE + ".class");
-        downloaded = java(21, home);
+    void onlyJmodsAreDownloadedIfNoJavaIsInstalled() {
+        downloadedJMods = root.resolve("cache").resolve("21");
+        zip(downloadedJMods.resolve("java.base.jmod"), "classes/" + TYPE + ".class");
+        // a downloaded java without jmods must not be used
+        downloaded = java(21, root.resolve("downloaded"));
 
         assertEquals(1, factory.jvmProviders(context()).size());
+    }
+
+    @Test
+    void jmodsAreDownloadedIfTheInstalledJavaHasNone() {
+        javas.add(java(21, root.resolve("java25-without-jmods")));
+        downloadedJMods = root.resolve("cache").resolve("21");
+        zip(downloadedJMods.resolve("java.base.jmod"), "classes/" + TYPE + ".class");
+
+        assertEquals(1, factory.jvmProviders(context()).size());
+    }
+
+    @Test
+    void java8IsDownloadedForItsRtJar() throws IOException {
+        Path home = root.resolve("downloaded8");
+        jar(home.resolve("jre").resolve("lib").resolve("rt.jar"), TYPE + ".class");
+        downloaded = java(8, home);
+
+        PatchContext context = new TestContext(new PatchResult(new LinkedHashSet<>(), new LinkedHashSet<>()), 8);
+        List<ClassSource.Provider> providers = factory.jvmProviders(context);
+        assertEquals(1, providers.size());
+        try (ClassSource source = providers.getFirst().open()) {
+            assertTrue(source.getClass(TYPE).isPresent());
+        }
     }
 
     @Test

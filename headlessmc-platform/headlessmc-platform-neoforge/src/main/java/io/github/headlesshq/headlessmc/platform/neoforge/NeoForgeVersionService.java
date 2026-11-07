@@ -6,10 +6,6 @@ import io.github.headlesshq.headlessmc.platform.VersionService;
 import io.github.headlesshq.headlessmc.platform.forge.ForgeVersionService;
 import io.github.headlesshq.headlessmc.platform.forge.PrismIndex;
 import io.quarkus.runtime.annotations.RegisterResources;
-import org.jspecify.annotations.Nullable;
-
-import java.util.LinkedHashSet;
-import java.util.SequencedSet;
 
 @RegisterResources(globs = "neoforge/neoforge-versions.json")
 public class NeoForgeVersionService extends ForgeVersionService implements VersionService {
@@ -18,16 +14,22 @@ public class NeoForgeVersionService extends ForgeVersionService implements Versi
     }
 
     @Override
-    protected SequencedSet<BoundPlatformVersion> map(
-        PrismIndex value,
-        @Nullable SequencedSet<BoundPlatformVersion> previous
-    ) {
-        SequencedSet<BoundPlatformVersion> result = new LinkedHashSet<>();
-        for (PrismIndex.Meta meta : value.versions()) {
-            result.add(createVersion(getBuildName(meta.version(), meta.getMcVersion()), meta.getMcVersion()));
-        }
+    protected BoundPlatformVersion toVersion(PrismIndex.Meta meta) {
+        return createVersion(getBuildName(meta.version(), meta.getMcVersion()), meta.getMcVersion());
+    }
 
-        return verify(value, result, previous);
+    /**
+     * NeoForge does not recommend builds, but marks them as release or beta.
+     * Some alpha builds for snapshots are marked as release, so we also check the name.
+     *
+     * @param meta the entry in the prism index.
+     * @return {@code true} if the NeoForge build is a release.
+     */
+    @Override
+    protected boolean isStable(PrismIndex.Meta meta) {
+        return "release".equals(meta.type())
+            && !meta.version().contains("alpha")
+            && !meta.version().contains("beta");
     }
 
     /**
