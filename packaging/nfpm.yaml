@@ -35,6 +35,16 @@ contents:
     dst: /usr/share/doc/headlessmc/copyright
     file_info:
       mode: 0644
+  # Shell completions, loaded automatically from these vendor directories,
+  # the zsh directory differs between distributions, see the overrides.
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.bash
+    dst: /usr/share/bash-completion/completions/headlessmc
+    file_info:
+      mode: 0644
+  - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.fish
+    dst: /usr/share/fish/vendor_completions.d/headlessmc.fish
+    file_info:
+      mode: 0644
   # Tells the HeadlessMc updater that a package manager owns /usr/bin/headlessmc,
   # see io.github.headlesshq.headlessmc.updater.Installation.
   - src: ./packaging/package
@@ -43,19 +53,40 @@ contents:
       mode: 0644
 
 # The native executable links against libc.so.6 (up to GLIBC_2.34) and libz.so.1.
+# The bash completion needs bash-completion, which nfpm cannot declare as optdepends for archlinux.
 overrides:
   deb:
     depends:
       - libc6 (>= 2.34)
       - zlib1g
+    recommends:
+      - bash-completion
+    contents:
+      # Debian's zsh only has vendor-completions on its fpath
+      - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+        dst: /usr/share/zsh/vendor-completions/_headlessmc
+        file_info:
+          mode: 0644
   rpm:
     depends:
       - glibc >= 2.34
       - libz.so.1()(64bit)
+    recommends:
+      - bash-completion
+    contents:
+      - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+        dst: /usr/share/zsh/site-functions/_headlessmc
+        file_info:
+          mode: 0644
   archlinux:
     depends:
       - glibc>=2.34
       - zlib
+    contents:
+      - src: ./headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.zsh
+        dst: /usr/share/zsh/site-functions/_headlessmc
+        file_info:
+          mode: 0644
 
 rpm:
   group: Amusements/Games

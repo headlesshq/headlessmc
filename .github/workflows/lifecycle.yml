@@ -370,31 +370,29 @@ jobs:
             fi
           done
 
+      # installs the package and checks the executable and that bash, zsh and fish pick up the completions
       - name: Smoke test deb
         run: |
-          docker run --rm -v "$PWD/build/packages:/packages:ro" ubuntu:24.04 bash -euxc '
+          docker run --rm -v "$PWD/build/packages:/packages:ro" -v "$PWD/packaging:/packaging:ro" ubuntu:24.04 bash -euxc '
             apt-get update -q
-            apt-get install -y -q /packages/headlessmc_*_amd64.deb
+            apt-get install -y -q bash-completion zsh fish /packages/headlessmc_*_amd64.deb
             dpkg-query -W headlessmc
-            test -f /usr/share/headlessmc/package
-            headlessmc help'
+            bash /packaging/test-installed.sh'
 
       - name: Smoke test rpm
         run: |
-          docker run --rm -v "$PWD/build/packages:/packages:ro" fedora:latest bash -euxc '
-            dnf install -y -q /packages/headlessmc-*.x86_64.rpm
+          docker run --rm -v "$PWD/build/packages:/packages:ro" -v "$PWD/packaging:/packaging:ro" fedora:latest bash -euxc '
+            dnf install -y -q bash-completion zsh fish /packages/headlessmc-*.x86_64.rpm
             rpm -q headlessmc
-            test -f /usr/share/headlessmc/package
-            headlessmc help'
+            bash /packaging/test-installed.sh'
 
       - name: Smoke test archlinux
         run: |
-          docker run --rm -v "$PWD/build/packages:/packages:ro" archlinux:latest bash -euxc '
-            pacman -Sy --noconfirm
+          docker run --rm -v "$PWD/build/packages:/packages:ro" -v "$PWD/packaging:/packaging:ro" archlinux:latest bash -euxc '
+            pacman -Syu --noconfirm bash-completion zsh fish
             pacman -U --noconfirm /packages/headlessmc-*-x86_64.pkg.tar.zst
             pacman -Q headlessmc
-            test -f /usr/share/headlessmc/package
-            headlessmc help'
+            bash /packaging/test-installed.sh'
 
       - name: Publish Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
