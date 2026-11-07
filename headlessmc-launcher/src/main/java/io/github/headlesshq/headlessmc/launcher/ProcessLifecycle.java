@@ -2,7 +2,9 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcessManager;
 import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
+import io.github.headlesshq.headlessmc.java.launcher.RunningProcess;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.test.CommandTest;
@@ -35,6 +37,7 @@ public class ProcessLifecycle implements Callable<Integer> {
     private final TestConfig testConfig;
     private final Console console;
     private final Path gameDir;
+    private final JavaProcessManager processManager;
     private int retries;
 
     @Override
@@ -47,9 +50,11 @@ public class ProcessLifecycle implements Callable<Integer> {
 
             AtomicReference<Process> processRef = new AtomicReference<>();
             AtomicReference<Path> crashReport = new AtomicReference<>();
+            RunningProcess registered = null;
             // CrashReportWatcher listens and kills process if crash-report appears
             try (CrashReportWatcher _ = createCrashReportWatcher(processRef, crashReport, gameDir)) {
                 McProcess process = processFactory.launch(testService.isTestActive());
+                registered = process.process().map(this::register).orElse(null);
                 process.process().ifPresent(javaProcess -> {
                     processRef.set(javaProcess);
                     runTest(javaProcess);
@@ -78,10 +83,23 @@ public class ProcessLifecycle implements Callable<Integer> {
                 throw new io.github.headlesshq.headlessmc.launcher.process.LaunchException(e);
             } catch (InterruptedException e) {
                 throw new UncheckedInterruptedException(e);
+            } finally {
+                if (registered != null) {
+                    processManager.unregister(registered);
+                }
             }
         }
 
         return status;
+    }
+
+    private @Nullable RunningProcess register(Process process) {
+        try {
+            return processManager.register(processFactory.getId(), process, gameDir);
+        } catch (UnsupportedOperationException e) {
+            log.debug("Cannot register process {}, its pid is not available", processFactory.getId(), e);
+            return null;
+        }
     }
 
     private void garbageCollectHmc(Process process) {

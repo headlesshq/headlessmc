@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.commands.auth.AccountCommand;
 import io.github.headlesshq.headlessmc.commands.auth.LoginShortcutCommand;
+import io.github.headlesshq.headlessmc.commands.backup.BackupCommand;
 import io.github.headlesshq.headlessmc.commands.config.ConfigCommand;
 import io.github.headlesshq.headlessmc.commands.java.JavaCommand;
 import io.github.headlesshq.headlessmc.commands.launcher.LaunchCommand;
@@ -50,6 +51,7 @@ import java.util.concurrent.Callable;
         ProfileCommand.class,
         ServerCommand.class,
         ModCommand.class,
+        BackupCommand.class,
         CommandLine.HelpCommand.class,
         DebugCommand.class,
         InstallShortcutCommand.class,

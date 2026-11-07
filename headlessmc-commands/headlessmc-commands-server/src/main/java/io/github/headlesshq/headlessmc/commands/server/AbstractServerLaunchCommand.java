@@ -63,6 +63,12 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     )
     private int retries = 0;
 
+    @CommandLine.Option(
+        names = {"--no-backup"},
+        description = "Does not back up the profile before launching, see hmc.backup.auto."
+    )
+    private boolean noBackup;
+
     @Override
     public void run() {
         call();
@@ -70,10 +76,22 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
 
     @Override
     public Integer call() {
-        Profile profile = prepareProfile(getProfile());
+        Profile baseProfile = getProfile();
+        beforeLaunch(baseProfile);
+        Profile profile = prepareProfile(baseProfile);
         maybeEulaLaunch(profile);
         // TODO: patchers for server
         return handle(serverLauncher.launcher(profile));
+    }
+
+    /**
+     * Notifies observers, e.g. automatic backups, that the given profile is about to be launched.
+     * Call this before anything is installed or launched for the profile.
+     *
+     * @param profile the profile that is about to be launched.
+     */
+    protected void beforeLaunch(Profile profile) {
+        lifecycleService.beforeLaunch(profile, !noBackup);
     }
 
     protected void maybeEulaLaunch(Profile profile) {
