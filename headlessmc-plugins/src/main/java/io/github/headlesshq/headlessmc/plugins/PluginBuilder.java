@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
@@ -76,11 +77,18 @@ public class PluginBuilder {
     public String hash(PluginResolution resolution, Path mutableJar) {
         List<Path> mutableFiles = new ArrayList<>();
         mutableFiles.add(mutableJar.resolve("quarkus").resolve("quarkus-application.dat"));
+        // the model of the deployment dependencies, hashing them all would take too long
         mutableFiles.add(mutableJar.resolve("lib").resolve("deployment").resolve("appmodel.dat"));
-        try (Stream<Path> app = Files.list(mutableJar.resolve("app"))) {
-            app.sorted().forEach(mutableFiles::add);
-        } catch (IOException e) {
-            throw new HeadlessMcException("Failed to list " + mutableJar.resolve("app"), e);
+        for (Path directory : List.of(mutableJar.resolve("app"), mutableJar.resolve("lib").resolve("main"), mutableJar.resolve("lib").resolve("boot"))) {
+            if (!Files.isDirectory(directory)) {
+                continue;
+            }
+
+            try (Stream<Path> files = Files.walk(directory)) {
+                files.filter(Files::isRegularFile).sorted().forEach(mutableFiles::add);
+            } catch (IOException | UncheckedIOException e) {
+                throw new HeadlessMcException("Failed to list " + directory, e);
+            }
         }
 
         StringBuilder input = new StringBuilder()

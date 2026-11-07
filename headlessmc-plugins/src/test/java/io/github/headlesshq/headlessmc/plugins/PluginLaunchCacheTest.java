@@ -46,6 +46,20 @@ class PluginLaunchCacheTest {
     }
 
     @Test
+    void testFingerprintOfMutableJarDirectory() throws IOException {
+        PluginLaunchCache cache = cache();
+        Path mutable = Files.createDirectories(root.resolve("quarkus-app").resolve("lib").resolve("main")).getParent().getParent();
+        Path library = Files.writeString(mutable.resolve("lib").resolve("main").resolve("library.jar"), "a");
+        Files.setLastModifiedTime(library, FileTime.fromMillis(1000L));
+        String fingerprint = cache.fingerprint(List.of(), mutable);
+        assertEquals(fingerprint, cache.fingerprint(List.of(), mutable));
+
+        Files.writeString(library, "b");
+        Files.setLastModifiedTime(library, FileTime.fromMillis(2000L));
+        assertNotEquals(fingerprint, cache.fingerprint(List.of(), mutable));
+    }
+
+    @Test
     void testPutAndGet() throws IOException {
         PluginLaunchCache cache = cache();
         AppFiles appFiles = TestFiles.appFiles(root);
@@ -60,6 +74,12 @@ class PluginLaunchCacheTest {
         cache.put("fingerprint", launch);
         assertEquals(Optional.of(launch), cache.get("fingerprint"));
         assertEquals(Optional.empty(), cache.get("other"));
+
+        // the JDK might have been updated in place
+        Files.writeString(root.resolve("release"), "JAVA_VERSION=\"25.0.2\"");
+        assertEquals(Optional.empty(), cache.get("fingerprint"));
+        cache.put("fingerprint", launch);
+        assertEquals(Optional.of(launch), cache.get("fingerprint"));
 
         // the build or the Java might have been deleted in the meantime
         Files.delete(runJar);

@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,14 +21,16 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 /**
  * Remembers which build and which Java to launch for a set of plugins, so that HeadlessMc does not have to
  * hash the plugins, resolve them and search for Java installations on every start.
  * <p>
  * Like Gradle's file snapshots or git's index, the {@link #fingerprint(List, Path)} of the inputs only uses
- * file metadata (size, modification time and file key), not the content. If the metadata of any input changes,
- * the fingerprint changes and the slow path hashes the files again, which then decides whether a rebuild is needed.
+ * file metadata (size, modification time, creation time and file key), not the content. If the metadata of any input
+ * changes, the fingerprint changes and the slow path hashes the files again, which then decides whether a rebuild is needed.
+ * The metadata of the Java installation is remembered, too, so that an in-place update of the JDK is noticed.
  */
 @Slf4j
 @ApplicationScoped
@@ -48,8 +51,14 @@ public class PluginLaunchCache {
         if (mutableJar == null) {
             input.append("mutable=").append(MutableJarLock.load().map(MutableJarLock::sha256).orElse("none")).append('\n');
         } else if (Files.isDirectory(mutableJar)) {
-            input.append("mutable=").append(stat(mutableJar.resolve("quarkus").resolve("quarkus-application.dat"))).append('\n');
-            input.append("mutable=").append(stat(mutableJar.resolve("lib").resolve("deployment").resolve("appmodel.dat"))).append('\n');
+            // only used during development, so the cost of walking the whole directory is fine
+            try (Stream<Path> files = Files.walk(mutableJar)) {
+                files.filter(Files::isRegularFile)
+                    .sorted()
+                    .forEach(file -> input.append("mutable=").append(stat(file)).append('\n'));
+            } catch (IOException | UncheckedIOException e) {
+                input.append("mutable=").append(stat(mutableJar)).append(":unreadable\n");
+            }
         } else {
             input.append("mutable=").append(stat(mutableJar)).append('\n');
         }
@@ -93,7 +102,8 @@ public class PluginLaunchCache {
             );
 
             if (Files.isRegularFile(launch.build().resolve(PluginBuilder.QUARKUS_APP).resolve("quarkus-run.jar"))
-                && Files.isExecutable(launch.javaExecutable())) {
+                && Files.isExecutable(launch.javaExecutable())
+                && stat(launch).equals(properties.getProperty("java.stat"))) {
                 return Optional.of(launch);
             }
         } catch (RuntimeException e) {
@@ -116,6 +126,7 @@ public class PluginLaunchCache {
         properties.setProperty("java.home", launch.javaHome().toString());
         properties.setProperty("java.executable", launch.javaExecutable().toString());
         properties.setProperty("java.version", String.valueOf(launch.javaVersion()));
+        properties.setProperty("java.stat", stat(launch));
         Path file = getFile();
         Path temp = file.resolveSibling(FILE + "." + ProcessHandle.current().pid() + ".tmp");
         try {
@@ -134,11 +145,19 @@ public class PluginLaunchCache {
         return appFiles.getCacheDir().resolve("plugins").resolve("builds").resolve(FILE);
     }
 
+    /**
+     * @return the metadata of the Java of the launch, its {@code release} file changes with every update of the JDK.
+     */
+    private static String stat(Launch launch) {
+        return stat(launch.javaHome().resolve("release")) + "|" + stat(launch.javaExecutable());
+    }
+
     private static String stat(Path path) {
         try {
             BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+            // the file key is null on Windows, there the creation time changes if a file is replaced
             return path.toAbsolutePath() + ":" + attributes.size() + ":" + attributes.lastModifiedTime().toMillis()
-                + ":" + attributes.fileKey();
+                + ":" + attributes.creationTime().toMillis() + ":" + attributes.fileKey();
         } catch (IOException e) {
             return path.toAbsolutePath() + ":missing";
         }
