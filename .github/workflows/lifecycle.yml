@@ -700,6 +700,8 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
+    # needs the mutable jar lock from the build job
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -742,10 +744,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      # without the lock the image could not load plugins
+      - name: Download mutable jar lock
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: HeadlessMc Mutable Jar Lock
+          path: headlessmc-application/build
+
       # TODO: actually we could just include the uber-jar from the build job
       # TODO: even better, we could just build a native Docker image?
       - name: Build quick
-        run: ./gradlew :headlessmc-application:quarkusBuild --stacktrace
+        run: ./gradlew :headlessmc-application:quarkusBuild -PmutableJarLock=headlessmc-application/build/headlessmc-mutable.properties --stacktrace
 
       - name: Build and push by digest
         id: build
