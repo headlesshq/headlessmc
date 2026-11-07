@@ -54,6 +54,13 @@ public final class Prompt {
         return new Prompt(id, message, type, required, defaultValue, choices);
     }
 
+    /**
+     * @return a copy of this prompt with another default value, e.g. none if the default contains secrets.
+     */
+    public Prompt withDefaultValue(@Nullable String defaultValue) {
+        return new Prompt(id, message, type, required, defaultValue, choices);
+    }
+
     public enum Type {
         /**
          * A line of text, the answer is a {@link String}.

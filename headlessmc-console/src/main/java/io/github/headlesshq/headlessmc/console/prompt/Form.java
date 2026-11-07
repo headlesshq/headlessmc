@@ -56,12 +56,21 @@ public final class Form {
      * @return a copy of this form with the title and the message of every prompt mapped, e.g. to censor secrets.
      */
     public Form mapMessages(UnaryOperator<String> mapper) {
+        return map(mapper, prompt -> prompt.withMessage(mapper.apply(prompt.getMessage())));
+    }
+
+    /**
+     * @param titleMapper  maps the title.
+     * @param promptMapper maps every prompt, must keep its id and type.
+     * @return a copy of this form with the title and prompts mapped.
+     */
+    public Form map(UnaryOperator<String> titleMapper, UnaryOperator<Prompt> promptMapper) {
         List<Prompt> mapped = new ArrayList<>(prompts.size());
         for (Prompt prompt : prompts) {
-            mapped.add(prompt.withMessage(mapper.apply(prompt.getMessage())));
+            mapped.add(promptMapper.apply(prompt));
         }
 
-        return new Form(mapper.apply(title), mapped);
+        return new Form(titleMapper.apply(title), mapped);
     }
 
     public static Builder builder(String title) {

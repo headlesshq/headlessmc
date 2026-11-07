@@ -333,13 +333,29 @@ class ProfileCommandsTest {
     }
 
     @Test
-    void editWithoutValueRequiresConsoleExtensions() {
+    void editWithoutValueAsksWithAFormWithoutConsoleExtensions() {
         profileService.createDefault("main", VersionArg.parse("1.21.1"));
 
-        EditCommand command = edit(console);
+        EditCommand command = edit(console.addInput("1024x768"));
+        command.setName("main");
+        command.setField("resolution");
+        command.run();
+
+        Profile profile = profileService.getProfile("main").orElseThrow();
+        assertEquals(Optional.of(new LaunchOptions.Resolution(1024, 768)), profile.options().resolution());
+    }
+
+    @Test
+    void editWithoutValueKeepsTheCurrentValueIfTheFormIsLeftEmpty() {
+        profileService.createDefault("main", VersionArg.parse("1.21.1"));
+        Path before = profileService.getProfile("main").orElseThrow().path();
+
+        EditCommand command = edit(console.addInput(""));
         command.setName("main");
         command.setField("path");
-        assertThrows(ConsoleException.class, command::run);
+        command.run();
+
+        assertEquals(before, profileService.getProfile("main").orElseThrow().path());
     }
 
     @Test

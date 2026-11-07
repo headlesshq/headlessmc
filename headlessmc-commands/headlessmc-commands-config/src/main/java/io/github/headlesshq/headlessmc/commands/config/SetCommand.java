@@ -5,6 +5,8 @@ import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
+
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -60,16 +64,30 @@ public class SetCommand implements Runnable {
 
         String value = this.value;
         if (value == null) {
-            ConsoleExtensions extensions = console.extensions()
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "Please specify the value to set " + property + " to, or use another terminal."
-                ));
-
-            value = extensions.edit(configService.getConfig().getValue(property, String.class));
+            value = edit(property, configService.getConfig().getValue(property, String.class));
         }
 
         configService.set(property, value, !temp);
         console.write("Set " + property + " to " + value + (temp ? " temporarily" : ""));
     }
-    
+
+    /**
+     * Edits the current value in the line editor of the console if it has one,
+     * otherwise, e.g. over MCP, asks for the new value with a {@link Form}, keeping the current value if left empty.
+     */
+    private String edit(String property, String current) {
+        Optional<ConsoleExtensions> extensions = console.extensions();
+        if (extensions.isPresent()) {
+            return extensions.get().edit(current);
+        }
+
+        Form form = Form.builder("Set " + property)
+            .optionalText("value", "New value for " + property + ", leave empty to keep it", current)
+            .build();
+        try (Answers answers = console.ask(form)) {
+            String value = answers.getString("value");
+            return value.trim().isEmpty() ? current : value;
+        }
+    }
+
 }

@@ -4,6 +4,8 @@ import io.github.headlesshq.headlessmc.commands.server.VmArgsUtil;
 import io.github.headlesshq.headlessmc.console.*;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.format.TableProvider;
+import io.github.headlesshq.headlessmc.console.prompt.Answers;
+import io.github.headlesshq.headlessmc.console.prompt.Form;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
@@ -105,17 +107,32 @@ public class EditCommand implements Runnable, CachedConsole.Enabled {
             return;
         }
 
-        ConsoleExtensions extensions = console.extensions()
-            .orElseThrow(() -> new ConsoleException(
-                "Editing is not possible in this terminal. Use Jline (hmc.jline.enabled=true) for editing."
-            ));
-
-        edit(fieldToEdit, extensions, profile);
+        edit(fieldToEdit, profile);
     }
 
-    private <T> void edit(EditField<T> field, ConsoleExtensions extensions, Profile profile) {
+    /**
+     * Edits the current value in the line editor of the console if it has one,
+     * otherwise, e.g. over MCP, asks for the new value with a {@link Form}, keeping the current value if left empty.
+     */
+    private <T> void edit(EditField<T> field, Profile profile) {
         String current = field.edit.apply(field.getter.apply(profile));
-        String newValue = extensions.edit(current);
+        Optional<ConsoleExtensions> extensions = console.extensions();
+        String newValue;
+        if (extensions.isPresent()) {
+            newValue = extensions.get().edit(current);
+        } else {
+            Form form = Form.builder("Edit " + this.field + " of profile " + profile.name())
+                .optionalText("value", "New " + this.field + ", leave empty to keep it", current)
+                .build();
+            try (Answers answers = console.ask(form)) {
+                newValue = answers.getString("value");
+            }
+
+            if (newValue.trim().isEmpty()) {
+                newValue = current;
+            }
+        }
+
         finishEdit(field, newValue, profile);
     }
 

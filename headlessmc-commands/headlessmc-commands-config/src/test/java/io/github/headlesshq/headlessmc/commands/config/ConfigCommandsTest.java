@@ -197,11 +197,41 @@ public class ConfigCommandsTest {
     }
 
     @Test
-    public void setWithoutValueThrowsWithoutConsoleExtensions() {
-        SetCommand command = new SetCommand(descriptionService, configService.fork(), tables, console);
+    public void setWithoutValueAsksWithAFormWithoutConsoleExtensions() {
+        ConfigService fork = configService.fork();
+        SetCommand command = new SetCommand(descriptionService, fork, tables, console.addInput("false"));
         command.setTemp(true);
         command.setProperty(PROPERTY);
-        assertThrows(IllegalArgumentException.class, command::run);
+        command.run();
+
+        assertEquals("false", fork.getConfig().getValue(PROPERTY, String.class));
+        assertTrue(output().contains("(default: true)"), () -> "was: " + output());
+    }
+
+    @Test
+    public void setWithoutValueKeepsTheCurrentValueIfTheFormIsLeftEmpty() {
+        ConfigService fork = configService.fork();
+        SetCommand command = new SetCommand(descriptionService, fork, tables, console.addInput(""));
+        command.setTemp(true);
+        command.setProperty(PROPERTY);
+        command.run();
+
+        assertEquals("true", fork.getConfig().getValue(PROPERTY, String.class));
+    }
+
+    @Test
+    public void askingForASecretDoesNotShowItAsDefault() {
+        configService.set(TOKEN, SECRET, false);
+        Console censoring = new CensoringConsole(console.addInput(""), secretService);
+        SetCommand command = new SetCommand(descriptionService, configService, tables, censoring);
+        command.setTemp(true);
+        command.setProperty(TOKEN);
+
+        command.run();
+
+        assertFalse(output().contains(SECRET), () -> "was: " + output());
+        assertFalse(output().contains("default:"), () -> "was: " + output());
+        assertEquals(SECRET, configService.getConfig().getValue(TOKEN, String.class), "empty keeps the secret");
     }
 
     @Test
