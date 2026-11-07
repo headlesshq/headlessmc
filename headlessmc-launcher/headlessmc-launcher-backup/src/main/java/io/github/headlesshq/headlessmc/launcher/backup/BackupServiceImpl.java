@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -252,11 +253,10 @@ public class BackupServiceImpl implements BackupService {
 
         Instant created = clock.instant();
         Path dir = getTargetDir(provider.getName(), plan.target());
-        String id = createId(dir, plan.target(), created);
+        String id = claimId(dir, plan.target(), created);
         Path archive = dir.resolve(id + ZIP);
         Path temp = dir.resolve(id + ZIP + ".tmp");
         try {
-            Files.createDirectories(dir);
             BackupArchiveService.ArchiveResult result = archiveService.write(scope, temp, getBackupDir());
             fileService.saveMove(temp, archive);
             Backup backup = new Backup(
@@ -305,6 +305,28 @@ public class BackupServiceImpl implements BackupService {
             .filter(pattern -> !pattern.isEmpty())
             .distinct()
             .toList();
+    }
+
+    /**
+     * Reserves a new id by creating its (empty) archive, so that another HeadlessMc instance
+     * creating a backup of the same target at the same time cannot get the same id and overwrite the archive.
+     * Backups are listed by their json files, so the empty archive is never visible as a backup.
+     */
+    private String claimId(Path dir, String target, Instant created) {
+        try {
+            Files.createDirectories(dir);
+            while (true) {
+                String id = createId(dir, target, created);
+                try {
+                    Files.createFile(dir.resolve(id + ZIP));
+                    return id;
+                } catch (FileAlreadyExistsException ignored) {
+                    // another instance claimed this id first, try the next one
+                }
+            }
+        } catch (IOException e) {
+            throw new HeadlessMcIOException("Failed to create a backup of " + target + " in " + dir, e);
+        }
     }
 
     private String createId(Path dir, String target, Instant created) {
