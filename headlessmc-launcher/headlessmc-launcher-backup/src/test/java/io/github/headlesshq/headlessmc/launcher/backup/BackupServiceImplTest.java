@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.backup;
 
+import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import org.jspecify.annotations.Nullable;
@@ -465,6 +466,50 @@ class BackupServiceImplTest {
         assertEquals("a", Files.readString(profile.path().resolve("saves").resolve("A").resolve("level.dat")));
         assertEquals(List.of("saves/A/level.dat"), service.diff(safetyBackup, true).modified());
         assertEquals(List.of(backup, safetyBackup), service.list());
+    }
+
+    @Test
+    void failedRestoreKeepsFilesAndReportsSafetyBackup() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("a.txt"), "a");
+        write(profile.path().resolve("m.txt"), "m");
+        write(profile.path().resolve("z.txt"), "z");
+        Backup backup = create(profile, null, null);
+
+        Files.delete(profile.path().resolve("a.txt"));
+        write(profile.path().resolve("m.txt"), "changed");
+        Files.delete(profile.path().resolve("z.txt"));
+        // a non-empty directory in place of z.txt, kept with --keep-new, makes replacing z.txt fail
+        write(profile.path().resolve("z.txt").resolve("new.txt"), "new");
+
+        HeadlessMcIOException e = assertThrows(
+            HeadlessMcIOException.class,
+            () -> service.restore(backup, new RestoreOptions(true, true, false))
+        );
+
+        Backup safetyBackup = service.list().stream()
+            .filter(b -> b.origin() == BackupOrigin.RESTORE)
+            .findFirst()
+            .orElseThrow();
+        assertTrue(e.getMessage().contains(safetyBackup.id()), e.getMessage());
+        assertEquals("changed", Files.readString(profile.path().resolve("m.txt")));
+        assertEquals("new", Files.readString(profile.path().resolve("z.txt").resolve("new.txt")));
+        try (var paths = Files.list(profile.path())) {
+            assertTrue(paths.noneMatch(p -> p.getFileName().toString().startsWith(".hmc-restore-")));
+        }
+    }
+
+    @Test
+    void restoreReplacesAddedFileInTheWay() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("a").resolve("b.txt"), "b");
+        Backup backup = create(profile, null, null);
+        env.getFileService().delete(profile.path().resolve("a"));
+        write(profile.path().resolve("a"), "file");
+
+        service.restore(backup, new RestoreOptions(false, false, false));
+
+        assertEquals("b", Files.readString(profile.path().resolve("a").resolve("b.txt")));
     }
 
     @Test

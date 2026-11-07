@@ -162,10 +162,27 @@ public class BackupServiceImpl implements BackupService {
         if (!changes.isEmpty()) {
             if (options.backupFirst() && archiveService.hasFiles(scope, getBackupDir())) {
                 BackupPlan plan = provider.replan(backup);
-                safetyBackup = write(provider, plan, new BackupScope(plan.source(), plan.paths(), scope.ignored()), BackupOrigin.RESTORE);
+                try {
+                    safetyBackup = write(provider, plan, new BackupScope(plan.source(), plan.paths(), scope.ignored()), BackupOrigin.RESTORE);
+                } catch (RuntimeException e) {
+                    throw new HeadlessMcIOException(
+                        "Failed to back up the current files of " + backup.target() + " before restoring " + backup.id()
+                            + ", nothing has been restored. Restoring without a backup first (--no-backup)"
+                            + " cannot be rolled back if it fails: " + e.getMessage(), e
+                    );
+                }
             }
 
-            archiveService.restore(archive, scope, changes);
+            try {
+                archiveService.restore(archive, scope, changes);
+            } catch (RuntimeException e) {
+                throw new HeadlessMcIOException(
+                    e.getMessage() + (safetyBackup == null
+                        ? ", files might be partially restored and no backup of the previous files exists."
+                        : ", files might be partially restored, the previous files have been backed up as " + safetyBackup.id()),
+                    e
+                );
+            }
         }
 
         provider.afterRestore(backup);

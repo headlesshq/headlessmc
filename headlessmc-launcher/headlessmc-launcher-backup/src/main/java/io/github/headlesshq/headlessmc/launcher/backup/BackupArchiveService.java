@@ -113,36 +113,103 @@ public class BackupArchiveService {
      * @param scope   the scope the archive was created with.
      * @param changes the changes to revert, as returned by {@link #diff(Path, BackupScope, List, boolean, Path)}.
      *                Added files are deleted, removed and modified files are restored from the archive.
+     *                <p>To not lose files if the restore fails, all paths and entries are verified
+     *                and all files are extracted to a staging directory inside the source first.
+     *                Only then the files on disk are replaced, each with an atomic move, and added files are deleted last.
+     * @throws HeadlessMcIOException if the restore fails.
+     *                               If it fails while files are being replaced, some files might already be restored.
      */
     public void restore(Path archive, BackupScope scope, BackupDiff changes) {
         Path source = scope.source();
+        Path staging = null;
         try (ZipFile zip = open(archive)) {
+            List<Path> deleted = new ArrayList<>();
             for (String name : changes.added()) {
-                Path file = resolve(source, name);
-                Files.deleteIfExists(file);
-                deleteEmptyParents(file.getParent(), source);
+                deleted.add(resolve(source, name));
             }
 
-            List<String> restored = new ArrayList<>(changes.removed());
-            restored.addAll(changes.modified());
-            for (String name : restored) {
+            List<String> restoredNames = new ArrayList<>(changes.removed());
+            restoredNames.addAll(changes.modified());
+            Map<Path, ZipEntry> restored = new LinkedHashMap<>();
+            for (String name : restoredNames) {
                 ZipEntry entry = zip.getEntry(name);
-                if (entry == null) {
+                if (entry == null || entry.isDirectory()) {
                     throw new IOException("Archive " + archive + " does not contain " + name);
                 }
 
-                Path file = resolve(source, name);
-                try (InputStream is = zip.getInputStream(entry)) {
-                    fileService.create(file, is);
+                restored.put(resolve(source, name), entry);
+            }
+
+            Files.createDirectories(source);
+            staging = Files.createTempDirectory(source, ".hmc-restore-");
+            Map<Path, Path> staged = new LinkedHashMap<>();
+            int index = 0;
+            for (Map.Entry<Path, ZipEntry> entry : restored.entrySet()) {
+                Path temp = staging.resolve(String.valueOf(index++));
+                try (InputStream is = zip.getInputStream(entry.getValue())) {
+                    Files.copy(is, temp);
                 }
 
-                FileTime lastModified = entry.getLastModifiedTime();
+                FileTime lastModified = entry.getValue().getLastModifiedTime();
                 if (lastModified != null) {
-                    Files.setLastModifiedTime(file, lastModified);
+                    Files.setLastModifiedTime(temp, lastModified);
+                }
+
+                staged.put(entry.getKey(), temp);
+            }
+
+            // files that are in the way of a restored file, e.g. an added file a, when a/b is restored
+            List<Path> conflicting = deleted.stream()
+                .filter(file -> restored.keySet().stream().anyMatch(r -> r.startsWith(file) || file.startsWith(r)))
+                .toList();
+            for (Path file : conflicting) {
+                delete(file, source);
+            }
+
+            for (Map.Entry<Path, Path> entry : staged.entrySet()) {
+                Path file = entry.getKey();
+                Path parent = file.getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+
+                move(entry.getValue(), file);
+            }
+
+            for (Path file : deleted) {
+                if (!conflicting.contains(file)) {
+                    delete(file, source);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | HeadlessMcIOException e) {
             throw new HeadlessMcIOException("Failed to restore " + archive + " to " + source, e);
+        } finally {
+            if (staging != null) {
+                deleteStaging(staging);
+            }
+        }
+    }
+
+    private void delete(Path file, Path source) throws IOException {
+        Files.deleteIfExists(file);
+        deleteEmptyParents(file.getParent(), source);
+    }
+
+    private void move(Path from, Path to) throws IOException {
+        try {
+            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private void deleteStaging(Path staging) {
+        try (Stream<Path> paths = Files.walk(staging)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to delete restore staging directory {}", staging, e);
         }
     }
 
