@@ -78,4 +78,40 @@ public class PatchedLwjglJarsTest {
         assertThrows(Exception.class, () -> jars.get("lwjgl3/lwjgl-glfw.jar"));
     }
 
+    @Test
+    public void theVersionChangesWithThePatchedJars(@TempDir Path root) {
+        PatchedLwjglJar glfw = new PatchedLwjglJar("headlessmc-lwjgl3-glfw-1.2.3.jar", 1, "a".repeat(64), "https://example.com/a.jar");
+        PatchedLwjglJar rebuilt = new PatchedLwjglJar("headlessmc-lwjgl3-glfw-1.2.4.jar", 1, "b".repeat(64), "https://example.com/b.jar");
+        long version = jars(root, glfw).version();
+
+        assertEquals(version, jars(root, glfw).version());
+        assertNotEquals(version, jars(root, rebuilt).version());
+    }
+
+    @Test
+    public void theVersionOfALocalBuildChangesWithItsJars(@TempDir Path root, @TempDir Path directory) throws IOException {
+        PatchedLwjglJar glfw = new PatchedLwjglJar("headlessmc-lwjgl3-glfw-1.2.3.jar", 1, "a".repeat(64), "https://example.com/a.jar");
+        Path jar = directory.resolve("lwjgl3/lwjgl-glfw.jar");
+        Files.createDirectories(jar.getParent());
+        Files.writeString(jar, "build 1");
+        String before = System.getProperty(PatchedLwjglJars.DIRECTORY_PROPERTY);
+        System.setProperty(PatchedLwjglJars.DIRECTORY_PROPERTY, directory.toString());
+        try {
+            long version = jars(root, glfw).version();
+            Files.writeString(jar, "second build");
+            assertNotEquals(version, jars(root, glfw).version());
+        } finally {
+            if (before == null) {
+                System.clearProperty(PatchedLwjglJars.DIRECTORY_PROPERTY);
+            } else {
+                System.setProperty(PatchedLwjglJars.DIRECTORY_PROPERTY, before);
+            }
+        }
+    }
+
+    private static PatchedLwjglJars jars(Path root, PatchedLwjglJar glfw) {
+        return new PatchedLwjglJars(new MockDownloadService(), TestFiles.appFiles(root),
+                                    new PatchedLwjglLock("1.2.3", Map.of("lwjgl3/lwjgl-glfw.jar", glfw)));
+    }
+
 }

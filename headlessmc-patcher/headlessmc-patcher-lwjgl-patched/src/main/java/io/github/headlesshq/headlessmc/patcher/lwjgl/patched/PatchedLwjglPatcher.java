@@ -42,6 +42,10 @@ import java.util.zip.ZipInputStream;
 @RegisterResources(globs = PatchedLwjglPatcher.RESOURCES + "**")
 public class PatchedLwjglPatcher implements Patcher {
     public static final String NAME = PatcherNames.LWJGL_PRE;
+    /**
+     * Bump when the patcher itself changes, changes to the patched jars are part of {@link #version()} already.
+     */
+    static final long REVISION = 1;
     static final String RESOURCES = "patcher/lwjgl-patched/";
     static final String API = "headlessmc-lwjgl-api";
     static final String JOML_NO_UNSAFE = "joml.nounsafe";
@@ -175,9 +179,13 @@ public class PatchedLwjglPatcher implements Patcher {
         return NAME;
     }
 
+    /**
+     * Combines {@link #REVISION} with the {@link PatchedLwjglJars#version() version of the patched jars}, so a new
+     * headlessmc-lwjgl release, or a changed local build, invalidates the patch cache.
+     */
     @Override
     public long version() {
-        return 1;
+        return REVISION * 31 + jars.version();
     }
 
 }

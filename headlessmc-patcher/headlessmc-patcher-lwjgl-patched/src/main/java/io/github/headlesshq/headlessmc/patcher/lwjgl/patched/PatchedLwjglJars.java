@@ -12,9 +12,15 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Provides the patched jars of <a href="https://github.com/headlesshq/headlessmc-lwjgl">headlessmc-lwjgl</a>.
@@ -49,6 +55,45 @@ class PatchedLwjglJars {
 
     public PatchedLwjglLock getLock() {
         return lock;
+    }
+
+    /**
+     * Identifies the patched jars, so that a cached, patched classpath is invalidated when they change: the locked
+     * release, by the checksums of its jars, or, if {@link #DIRECTORY_PROPERTY} is set, the size and modification time
+     * of the jars in that directory.
+     *
+     * @return a hash of the patched jars.
+     */
+    public long version() {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+
+        Path directory = directory();
+        for (Map.Entry<String, PatchedLwjglJar> entry : new TreeMap<>(lock.jars()).entrySet()) {
+            digest.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
+            if (directory == null) {
+                digest.update(entry.getValue().sha256().getBytes(StandardCharsets.UTF_8));
+                continue;
+            }
+
+            Path jar = directory.resolve(entry.getKey());
+            try {
+                if (Files.isRegularFile(jar)) {
+                    digest.update(ByteBuffer.allocate(2 * Long.BYTES)
+                                      .putLong(Files.size(jar))
+                                      .putLong(Files.getLastModifiedTime(jar).toMillis())
+                                      .array());
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+
+        return ByteBuffer.wrap(digest.digest()).getLong();
     }
 
     /**
