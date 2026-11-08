@@ -4,6 +4,8 @@ before_install:
   - sdk update
   - sdk install java 25-open
   - sdk use java 25-open
+  # downloading the Gradle distribution often times out on JitPack
+  - sed -i -e 's/^networkTimeout=.*/networkTimeout=120000/' -e 's/^retries=.*/retries=3/' gradle/wrapper/gradle-wrapper.properties
 install:
   # The mutable jar, which HeadlessMc needs to load plugins, downloaded from JitPack instead of the GitHub release
   - ./gradlew :headlessmc-application:mutableJarLock -PmutableJar -Pversion=$VERSION -PapplicationVersion=3.0.0-RC9-SNAPSHOT -PmutableJarUrl=https://jitpack.io/com/github/headlesshq/headlessmc/headlessmc-application/$VERSION/headlessmc-application-$VERSION-mutable.zip --console=plain
