@@ -4,10 +4,13 @@ plugins {
     alias(libs.plugins.nmcp)
 }
 
+// -PapplicationVersion=<version> sets the version HeadlessMc reports, if it differs from the published version,
+// e.g. for JitPack, which publishes under the commit hash, see jitpack.yml.
+def applicationVersion = providers.gradleProperty('applicationVersion').orElse(provider { project.version.toString() })
 def generateVersionSource = tasks.register('generateVersionSource', Sync) {
-    inputs.property('version', project.version)
+    inputs.property('version', applicationVersion)
     from('src/main/templates') {
-        expand(version: project.version)
+        expand(version: applicationVersion.get())
     }
     into(layout.buildDirectory.dir('generated/sources/templates/java/main'))
 }

@@ -34,11 +34,15 @@ if (providers.gradleProperty('mutableJar').present) {
 
     // Writes the lock for the mutable-jar, which the builds of the uber-jar and native image
     // embed with -PmutableJarLock=<file>, so that they can download and verify the mutable-jar.
+    // -PmutableJarUrl=<url> changes where it is downloaded from, by default the GitHub release.
     def releaseVersion = version
+    def mutableJarUrl = providers.gradleProperty('mutableJarUrl')
+        .orElse("https://github.com/headlesshq/headlessmc/releases/download/${releaseVersion}/headlessmc-mutable.zip")
     tasks.register('mutableJarLock') {
         def zip = tasks.named('mutableJarZip', Zip).flatMap { it.archiveFile }
         def lock = layout.buildDirectory.file('headlessmc-mutable.properties')
         inputs.file(zip)
+        inputs.property('url', mutableJarUrl)
         outputs.file(lock)
         group = 'build'
         doLast {
@@ -48,7 +52,7 @@ if (providers.gradleProperty('mutableJar').present) {
                 version=${releaseVersion}
                 sha256=${sha256}
                 size=${zipFile.length()}
-                url=https://github.com/headlesshq/headlessmc/releases/download/${releaseVersion}/headlessmc-mutable.zip
+                url=${mutableJarUrl.get()}
                 """.stripIndent()
         }
     }
@@ -94,6 +98,18 @@ tasks.register("runApp", JavaExec) {
     jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED"]
     mainClass = "io.quarkus.bootstrap.runner.QuarkusEntryPoint"
     standardInput = System.in
+}
+
+// -PmutableJarZip=<path> attaches the headlessmc-mutable.zip built with -PmutableJar to the publication as
+// io.github.headlesshq:headlessmc-application:<version>:mutable@zip, e.g. for JitPack, see jitpack.yml.
+def mutableJarZip = providers.gradleProperty('mutableJarZip')
+if (mutableJarZip.present) {
+    publishing.publications.named('mavenJava', MavenPublication) {
+        artifact(rootProject.file(mutableJarZip.get())) {
+            classifier = 'mutable'
+            extension = 'zip'
+        }
+    }
 }
 
 // Attaches the uber-jar to the publication as io.github.headlesshq:headlessmc-application:<version>:runner.
