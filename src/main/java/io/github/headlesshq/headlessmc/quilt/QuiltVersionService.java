@@ -7,10 +7,12 @@ import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.util.AbstractJsonVersionService;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.SequencedSet;
+import java.util.Set;
 
 /**
  * The Quilt loader versions. Like on Fabric, builds are loader versions,
@@ -31,7 +33,7 @@ final class QuiltVersionService extends AbstractJsonVersionService<PlatformVersi
     public Optional<PlatformVersion> getLatestBuild(VanillaVersion version) throws HeadlessMcException {
         SequencedSet<PlatformVersion> builds = getBuilds(version);
         return builds.stream()
-            .filter(build -> !build.getName().contains("-"))
+            .filter(QuiltVersionService::isStable)
             .findFirst()
             .or(() -> builds.stream().findFirst());
     }
@@ -47,6 +49,29 @@ final class QuiltVersionService extends AbstractJsonVersionService<PlatformVersi
         }
 
         return verify(value, result, previous);
+    }
+
+    @Override
+    protected Set<PlatformVersion> mapStable(List<QuiltBuildData> value, @Nullable Set<PlatformVersion> previous) {
+        Set<PlatformVersion> result = new HashSet<>();
+        for (QuiltBuildData buildData : value) {
+            if (isStable(buildData.version())) {
+                result.add(createVersion(buildData.version()));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * The Quilt meta has no stable flag, betas and release candidates have a qualifier, e.g. {@code 0.31.0-beta.4}.
+     */
+    private static boolean isStable(PlatformVersion version) {
+        return isStable(version.getName());
+    }
+
+    private static boolean isStable(String version) {
+        return !version.contains("-");
     }
 
 }

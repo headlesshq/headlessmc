@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.AbstractClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
+import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
 import io.github.headlesshq.headlessmc.platform.util.CommonInstallerServices;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
@@ -41,12 +42,12 @@ class QuiltInstaller extends AbstractClientInstaller implements ClientInstaller,
     }
 
     @Override
-    public Installation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException {
-        Installation vanillaInstallation = services.getVanillaInstaller()
+    public ServerInstallation installServer(VersionID id, Path dir, TypedMap args) throws HeadlessMcException {
+        ServerInstallation vanillaInstallation = services.getVanillaInstaller()
             .installServer(id.asVanillaVersion(), dir, args);
 
         install(id, dir, args, true, vanillaInstallation.javaVersion());
-        return new Installation(vanillaInstallation.javaVersion());
+        return new ServerInstallation(vanillaInstallation.javaVersion());
     }
 
     @Override
