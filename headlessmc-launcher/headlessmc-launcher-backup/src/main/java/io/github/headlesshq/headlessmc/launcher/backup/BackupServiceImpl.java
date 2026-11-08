@@ -78,15 +78,7 @@ public class BackupServiceImpl implements BackupService {
     public Backup create(BackupRequest request) {
         BackupProvider provider = providerService.getProvider(request.provider());
         BackupPlan plan = provider.plan(request);
-        requireInsideSource(plan);
-        List<String> ignored = new ArrayList<>();
-        if (request.defaultIgnore()) {
-            ignored.addAll(config.get().ignore());
-            ignored.addAll(plan.defaultIgnored());
-        }
-
-        ignored.addAll(request.ignore());
-        BackupScope scope = new BackupScope(plan.source(), plan.paths(), normalize(ignored));
+        BackupScope scope = getScope(plan, request);
         if (!request.force()) {
             provider.getUsage(scope, plan.profile()).ifPresent(reason -> {
                 throw new BackupInUseException(reason + ", stop it first or force the backup.");
@@ -99,6 +91,23 @@ public class BackupServiceImpl implements BackupService {
         }
 
         return backup;
+    }
+
+    @Override
+    public BackupScope getScope(BackupRequest request) {
+        return getScope(providerService.getProvider(request.provider()).plan(request), request);
+    }
+
+    private BackupScope getScope(BackupPlan plan, BackupRequest request) {
+        requireInsideSource(plan);
+        List<String> ignored = new ArrayList<>();
+        if (request.defaultIgnore()) {
+            ignored.addAll(config.get().ignore());
+            ignored.addAll(plan.defaultIgnored());
+        }
+
+        ignored.addAll(request.ignore());
+        return new BackupScope(plan.source(), plan.paths(), normalize(ignored));
     }
 
     @Override

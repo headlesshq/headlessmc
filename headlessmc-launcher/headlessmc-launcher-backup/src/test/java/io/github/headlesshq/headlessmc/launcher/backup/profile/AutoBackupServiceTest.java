@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.launcher.backup.profile;
 
 import io.github.headlesshq.headlessmc.launcher.backup.Backup;
 import io.github.headlesshq.headlessmc.launcher.backup.BackupOrigin;
+import io.github.headlesshq.headlessmc.launcher.backup.BackupRequest;
 import io.github.headlesshq.headlessmc.launcher.backup.TestBackupEnvironment;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileLaunchEvent;
@@ -86,6 +87,38 @@ class AutoBackupServiceTest {
         write(profile.path().resolve("saves").resolve("B").resolve("level.dat"), "b");
         env.getClock().advance(Duration.ofSeconds(1));
         assertTrue(service.backupBeforeLaunch(profile).isPresent());
+    }
+
+    @Test
+    void backupThatIgnoredMoreFilesDoesNotCountAsUnchanged() throws IOException {
+        write(profile.path().resolve("mods").resolve("a.jar"), "a");
+        manual("full", List.of("mods"));
+        env.getConfig().setAuto("full");
+        env.getClock().advance(Duration.ofSeconds(1));
+        write(profile.path().resolve("mods").resolve("a.jar"), "changed");
+
+        Backup backup = service.backupBeforeLaunch(profile).orElseThrow();
+
+        assertFalse(backup.ignored().contains("mods"));
+        env.getClock().advance(Duration.ofSeconds(1));
+        assertEquals(Optional.empty(), service.backupBeforeLaunch(profile));
+    }
+
+    @Test
+    void worldsBackupThatIgnoredMoreFilesDoesNotCountAsUnchanged() throws IOException {
+        write(profile.path().resolve("saves").resolve("A").resolve("region").resolve("r.0.0.mca"), "r");
+        manual("worlds", List.of("**/region"));
+        env.getConfig().setAuto("worlds");
+        env.getClock().advance(Duration.ofSeconds(1));
+        write(profile.path().resolve("saves").resolve("A").resolve("region").resolve("r.0.0.mca"), "changed");
+
+        assertTrue(service.backupBeforeLaunch(profile).isPresent());
+    }
+
+    private void manual(String type, List<String> ignore) {
+        env.getBackupService().create(new BackupRequest(
+            "profile", profile.name(), profile, type, null, ignore, true, BackupOrigin.MANUAL, false
+        ));
     }
 
     @Test

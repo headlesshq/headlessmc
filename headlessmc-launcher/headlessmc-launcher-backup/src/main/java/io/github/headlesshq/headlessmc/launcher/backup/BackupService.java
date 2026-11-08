@@ -22,6 +22,15 @@ public interface BackupService {
     Backup create(BackupRequest request);
 
     /**
+     * Resolves which files {@link #create(BackupRequest)} would back up for the given request, without backing them up.
+     *
+     * @param request what to back up.
+     * @return the files a backup created with the given request would contain.
+     * @throws IllegalArgumentException if there is nothing to back up.
+     */
+    BackupScope getScope(BackupRequest request);
+
+    /**
      * @return all backups, sorted from oldest to newest.
      */
     List<Backup> list();

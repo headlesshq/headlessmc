@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Backs up profiles before they are launched, as configured by {@link BackupConfig#auto()}.
@@ -60,14 +61,14 @@ public class AutoBackupService {
             provider.getName(), profile.name(), profile, type.get().getName(), null,
             List.of(), true, BackupOrigin.LAUNCH, true
         );
-        BackupPlan plan = provider.plan(request);
-        Optional<String> usage = provider.getUsage(new BackupScope(plan.source(), plan.paths(), List.of()), profile);
+        BackupScope scope = backupService.getScope(request);
+        Optional<String> usage = provider.getUsage(scope, profile);
         if (usage.isPresent()) {
             log.warn("Not backing up {} before launching: {}", profile.name(), usage.get());
             return Optional.empty();
         }
 
-        if (isUnchanged(profile, type.get())) {
+        if (isUnchanged(profile, type.get(), scope)) {
             log.info("Not backing up {} before launching, nothing changed since the last backup", profile.name());
             return Optional.empty();
         }
@@ -110,13 +111,23 @@ public class AutoBackupService {
         return type != ProfileBackupType.WORLDS || !worldService.listWorlds(profile).isEmpty();
     }
 
-    private boolean isUnchanged(Profile profile, ProfileBackupType type) {
+    /**
+     * Only a backup of the same files counts, a backup that ignored more files,
+     * e.g. one created with {@code backup --ignore mods}, would hide changes to the files it ignored.
+     */
+    private boolean isUnchanged(Profile profile, ProfileBackupType type, BackupScope scope) {
         return backupService.list(provider.getName(), profile.name()).stream()
             .filter(backup -> type.getName().equals(backup.type()))
-            .filter(backup -> backup.source().toAbsolutePath().normalize().equals(profile.path().toAbsolutePath().normalize()))
+            .filter(backup -> covers(backup, scope))
             .max(Comparator.comparing(Backup::created))
             .map(backup -> backupService.diff(backup, false).isEmpty())
             .orElse(false);
+    }
+
+    private boolean covers(Backup backup, BackupScope scope) {
+        return backup.source().toAbsolutePath().normalize().equals(scope.source().toAbsolutePath().normalize())
+            && Set.copyOf(backup.paths()).equals(Set.copyOf(scope.paths()))
+            && Set.copyOf(backup.ignored()).equals(Set.copyOf(scope.ignored()));
     }
 
 }
