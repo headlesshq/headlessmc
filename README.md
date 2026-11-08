@@ -50,10 +50,15 @@ page to get started, it's as easy as:
 The repository contains a [devcontainer](https://containers.dev/) in `.devcontainer/`.
 Open it with "Reopen in Container" in VS Code, in GitHub Codespaces,
 or with `npx @devcontainers/cli up --workspace-folder .`.
+It needs at least 4 CPUs and 16 GB of memory.
 
 The container has the same JDKs as CI:
 - Temurin 25, the default `JAVA_HOME`, used for `./gradlew build`.
-- Temurin 21, for running older Minecraft versions.
+- Temurin 21, for testing older Minecraft versions.
+- Oracle GraalVM 25 with `native-image`, available through `GRAALVM_HOME`.
 
-Gradle comes from the wrapper, and the Gradle home is kept on a named volume.
-The container does not include GraalVM, native image builds only run in CI.
+To build the native launcher run `sh scripts/build-native.sh`.
+Quarkus uses `GRAALVM_HOME` and builds directly in the container,
+the runner ends up in `headlessmc-application/build/`.
+The build takes several minutes,
+and only the Linux binary for the container's architecture can be built there.
