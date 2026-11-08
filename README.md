@@ -44,3 +44,16 @@ page to get started, it's as easy as:
 > headlessmc login
 > headlessmc launch fabric 26.3
 ```
+
+## Development container
+
+The repository contains a [devcontainer](https://containers.dev/) in `.devcontainer/`.
+Open it with "Reopen in Container" in VS Code, in GitHub Codespaces,
+or with `npx @devcontainers/cli up --workspace-folder .`.
+
+The container has the same JDKs as CI:
+- Temurin 25, the default `JAVA_HOME`, used for `./gradlew build`.
+- Temurin 21, for running older Minecraft versions.
+
+Gradle comes from the wrapper, and the Gradle home is kept on a named volume.
+The container does not include GraalVM, native image builds only run in CI.
