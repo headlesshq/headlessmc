@@ -1,14 +1,22 @@
 pluginManagement {
     repositories {
-        mavenCentral()
         gradlePluginPortal()
-        // for HeadlessMc builds published with ./gradlew publishToMavenLocal
-        mavenLocal()
+        mavenCentral()
     }
-    plugins {
-        // released with HeadlessMc, under the same version
-        id 'io.github.headlesshq.hmc-plugin-gradle-plugin' version "${headlessmc_version}"
-    }
+    // The HeadlessMc Gradle plugin is not released yet, it is a git submodule:
+    // git submodule update --init
+    includeBuild('deps/headlessmc-gradle-plugin')
 }
+
+plugins {
+    // downloads a Java 25 toolchain for HeadlessMc, if there is none
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+// HeadlessMc 3.0.0-RC9, the first version supporting plugins, is not released yet, it is a git submodule, too.
+// The included HeadlessMc builds its mutable jar, which it needs to load plugins,
+// and reports itself as the version it will be released as.
+gradle.startParameter.projectProperties += [mutableJar: 'true', applicationVersion: '3.0.0-RC9-SNAPSHOT']
+includeBuild('deps/headlessmc')
 
 rootProject.name = 'headlessmc-example-plugin'

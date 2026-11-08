@@ -4,3 +4,4 @@ build/
 *.iml
 out/
 HeadlessMC/
+run/

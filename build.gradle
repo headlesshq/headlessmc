@@ -1,13 +1,17 @@
 plugins {
-    // nests the include dependencies into the jar and generates META-INF/headlessmc-plugin.json,
-    // see https://headlesshq.github.io/headlessmc/plugins/#the-gradle-plugin
+    // nests the include dependencies into the jar, generates META-INF/headlessmc-plugin.json
+    // and runs the plugin with a HeadlessMc in run/headlessmc,
+    // see https://github.com/headlesshq/headlessmc-gradle-plugin#writing-headlessmc-plugins
     id 'io.github.headlesshq.hmc-plugin-gradle-plugin'
 }
 
 repositories {
     mavenCentral()
-    // for HeadlessMc builds published with ./gradlew publishToMavenLocal
-    mavenLocal()
+}
+
+headlessmc {
+    // compile against, build and run the HeadlessMc in deps/headlessmc, see settings.gradle
+    includedBuild = 'headlessmc'
 }
 
 headlessmcPlugin {
@@ -17,8 +21,8 @@ headlessmcPlugin {
     description = 'An example HeadlessMc plugin, adds the hello command.'
     authors = ['You']
     license = 'MIT'
-    homepage = 'https://github.com/headlesshq/headlessmc/tree/plugin-template'
-    // The HeadlessMc versions this plugin works with, defaults to headlessmcVersion up to the next major version.
+    homepage = 'https://github.com/headlesshq/headlessmc-plugin-template'
+    // The HeadlessMc versions this plugin works with, [3.0.0-RC9,4) by default.
     // headlessmc = '[3.0.0-RC9,4)'
     // java = 25
 
@@ -44,4 +48,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// ./gradlew hello runs the command of this plugin, with the plugin installed into the HeadlessMc in run/headlessmc
+tasks.register('hello', HeadlessMcExec) {
+    description = 'Runs the hello command of this plugin.'
+    args 'hello', '--banner', 'HeadlessMc'
 }

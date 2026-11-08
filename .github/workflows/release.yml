@@ -1,0 +1,51 @@
+name: Release
+
+# Publish a GitHub release with the tag <version>, e.g. 1.0.0, to build the plugin and attach its jar.
+# The job summary contains the entry for https://github.com/headlesshq/headlessmc-plugins.
+"on":
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: true
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Build
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          chmod +x gradlew
+          ./gradlew build --stacktrace -Pversion="${TAG#v}"
+      - name: Upload the plugin jar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          jar=$(ls build/libs/*.jar | grep -v -- '-sources.jar$' | grep -v -- '-javadoc.jar$')
+          gh release upload "$TAG" "$jar" --clobber
+          echo "JAR=$jar" >> "$GITHUB_ENV"
+      - name: Plugin index entry
+        env:
+          URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}
+        run: |
+          python3 - "$JAR" "$URL" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import hashlib, json, os, sys, zipfile
+          jar, url = sys.argv[1], sys.argv[2]
+          data = open(jar, "rb").read()
+          manifest = json.loads(zipfile.ZipFile(jar).read("META-INF/headlessmc-plugin.json"))
+          entry = {"version": manifest["version"], "headlessmc": manifest["headlessmc"], "java": manifest["java"],
+                   "url": f"{url}/{os.path.basename(jar)}", "sha256": hashlib.sha256(data).hexdigest(), "size": len(data)}
+          print("Add this to `downloads` in `plugins/%s.json` of "
+                "[headlessmc-plugins](https://github.com/headlesshq/headlessmc-plugins):\n" % manifest["id"])
+          print("```json\n" + json.dumps(entry, indent=2) + "\n```")
+          PY

@@ -1,0 +1,8 @@
+[submodule "deps/headlessmc"]
+	path = deps/headlessmc
+	url = https://github.com/headlesshq/headlessmc.git
+	branch = feat/plugins
+[submodule "deps/headlessmc-gradle-plugin"]
+	path = deps/headlessmc-gradle-plugin
+	url = https://github.com/headlesshq/headlessmc-gradle-plugin.git
+	branch = feat/headlessmc-3
