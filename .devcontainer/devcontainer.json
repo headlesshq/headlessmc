@@ -16,7 +16,9 @@
   "mounts": [
     "source=headlessmc-gradle,target=/home/vscode/.gradle,type=volume"
   ],
+  "remoteUser": "${localEnv:DEVCONTAINER_USER:vscode}",
   "containerEnv": {
+    "GRADLE_USER_HOME": "/home/vscode/.gradle",
     "GRAALVM_HOME": "/opt/graalvm-25"
   },
   "remoteEnv": {

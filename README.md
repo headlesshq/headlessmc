@@ -52,6 +52,17 @@ Open it with "Reopen in Container" in VS Code, in GitHub Codespaces,
 or with `npx @devcontainers/cli up --workspace-folder .`.
 It needs at least 4 CPUs and 16 GB of memory.
 
+The container user depends on how Docker runs:
+- Rootful Docker, Docker Desktop and Codespaces: nothing to configure.
+  The container runs as `vscode`, which gets the same UID as your host user.
+- Rootless Docker: container `root` is your host user,
+  so the workspace looks root-owned and `vscode` cannot write to it.
+  Run `export DEVCONTAINER_USER=root` before starting VS Code or the devcontainer CLI,
+  and keep it set for `devcontainer exec`.
+  Files the container creates are still owned by your host user.
+
+The Gradle home is a named volume at `/home/vscode/.gradle` (`GRADLE_USER_HOME`) for both users.
+
 The container has the same JDKs as CI:
 - Temurin 25, the default `JAVA_HOME`, used for `./gradlew build`.
 - Temurin 21, for testing older Minecraft versions.
