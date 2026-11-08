@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.version.VersionProcessor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
@@ -88,6 +89,22 @@ public abstract class PatternVersionMatcher extends DefaultVersionMatcher {
      */
     protected boolean canFallBack(Version version) {
         return true;
+    }
+
+    /**
+     * @param version  the version that is being matched.
+     * @param prefixes the prefixes to check.
+     * @return {@code true} if the id of the version starts with any of the prefixes, ignoring case.
+     */
+    protected static boolean startsWithIgnoreCase(Version version, String... prefixes) {
+        String id = version.getId().toLowerCase(Locale.ENGLISH);
+        for (String prefix : prefixes) {
+            if (id.startsWith(prefix.toLowerCase(Locale.ENGLISH))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

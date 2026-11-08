@@ -213,6 +213,15 @@ class NeoForgeVersionMatcherTest {
         assertThrows(VersionMatchException.class, () -> matcher.match(version));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"NeoForge-21.1.240", "NEOFORGE-21.1.240 "})
+    void reservedPrefixIsCheckedIgnoringCase(String id) {
+        Version version = new FakeVersion(id).withInheritsFrom("1.21.1");
+
+        assertFalse(matcher.canMatch(version));
+        assertThrows(VersionMatchException.class, () -> matcher.match(version));
+    }
+
     @Test
     void customNamesFallBackToTheDefaultMatcher() {
         Version version = new FakeVersion("my-neoforge-pack-240").withInheritsFrom("1.21.1");

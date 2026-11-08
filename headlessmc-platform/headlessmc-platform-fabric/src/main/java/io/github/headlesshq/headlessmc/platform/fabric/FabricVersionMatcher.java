@@ -40,7 +40,7 @@ final class FabricVersionMatcher extends PatternVersionMatcher {
      */
     @Override
     protected boolean canFallBack(Version version) {
-        return !version.getId().startsWith("fabric-loader-");
+        return !startsWithIgnoreCase(version, "fabric-loader-");
     }
 
 }

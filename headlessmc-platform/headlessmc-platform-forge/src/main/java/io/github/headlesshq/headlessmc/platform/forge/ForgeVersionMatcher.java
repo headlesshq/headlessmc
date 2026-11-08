@@ -8,7 +8,6 @@ import io.github.headlesshq.headlessmc.platform.client.VersionPattern;
 import io.github.headlesshq.headlessmc.version.Version;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -60,8 +59,7 @@ public class ForgeVersionMatcher extends PatternVersionMatcher {
      */
     @Override
     protected boolean canFallBack(Version version) {
-        String id = version.getId().toLowerCase(Locale.ENGLISH);
-        return !id.startsWith("neoforge-") && !id.startsWith("fabric-loader-");
+        return !startsWithIgnoreCase(version, "neoforge-", "fabric-loader-");
     }
 
 }
