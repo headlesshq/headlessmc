@@ -80,7 +80,7 @@
 # You can find more information about the UBI base runtime images and their configuration here:
 # https://rh-openjdk.github.io/redhat-openjdk-containers/
 ###
-FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
+FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24-3.1793323806@sha256:2ddacad5332f4e481353668f210623f7e7420f1561515f5686e5abd33cd6d38f
 
 ENV LANGUAGE='en_US:en'
 
