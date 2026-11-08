@@ -232,6 +232,29 @@ class BackupServiceImplTest {
     }
 
     @Test
+    void metadataIsWrittenThroughTemporaryFile() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("server.jar"), "jar");
+        Backup backup = create(profile, null, null);
+
+        Path dir = service.getArchive(backup).getParent();
+        try (var files = Files.list(dir)) {
+            assertEquals(
+                List.of(backup.id() + ".json", backup.id() + ".zip"),
+                files.map(file -> file.getFileName().toString()).sorted().toList()
+            );
+        }
+
+        // a directory in place of the temporary json makes writing the metadata fail
+        env.getClock().advance(Duration.ofSeconds(1));
+        Files.createDirectories(dir.resolve("srv-2026-10-28_12-30-01.json.tmp").resolve("blocked"));
+        assertThrows(RuntimeException.class, () -> create(profile, null, null));
+        assertEquals(List.of(backup), service.list());
+        assertFalse(Files.exists(dir.resolve("srv-2026-10-28_12-30-01.zip")));
+        assertFalse(Files.exists(dir.resolve("srv-2026-10-28_12-30-01.json")));
+    }
+
+    @Test
     void listReadsBackups() throws IOException {
         write(client().path().resolve("options.txt"), "fov:70");
         write(server().path().resolve("server.jar"), "jar");

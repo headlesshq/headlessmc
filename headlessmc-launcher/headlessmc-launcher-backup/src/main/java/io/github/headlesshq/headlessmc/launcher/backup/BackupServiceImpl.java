@@ -35,6 +35,7 @@ public class BackupServiceImpl implements BackupService {
     private static final DateTimeFormatter ID_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
     private static final String JSON = ".json";
     private static final String ZIP = ".zip";
+    private static final String TMP = ".tmp";
 
     private final Holder<BackupConfig> config;
     private final BackupProviderService providerService;
@@ -267,7 +268,9 @@ public class BackupServiceImpl implements BackupService {
         Path dir = getTargetDir(provider.getName(), plan.target());
         String id = claimId(dir, plan.target(), created);
         Path archive = dir.resolve(id + ZIP);
-        Path temp = dir.resolve(id + ZIP + ".tmp");
+        Path temp = dir.resolve(id + ZIP + TMP);
+        Path json = dir.resolve(id + JSON);
+        Path jsonTemp = dir.resolve(id + JSON + TMP);
         try {
             BackupArchiveService.ArchiveResult result = archiveService.write(scope, temp, getBackupDir());
             fileService.saveMove(temp, archive);
@@ -277,15 +280,15 @@ public class BackupServiceImpl implements BackupService {
                 result.files(), result.size(), Backup.BACKUP_VERSION
             );
 
-            jsonService.write(dir.resolve(id + JSON), backup, true);
+            // backups are listed by their json, a half-written json would hide the backup and leave its archive behind
+            jsonService.write(jsonTemp, backup, true);
+            fileService.saveMove(jsonTemp, json);
             return backup;
         } catch (IOException e) {
-            deleteQuietly(temp, e);
-            deleteQuietly(archive, e);
+            deleteQuietly(e, temp, archive, jsonTemp);
             throw new HeadlessMcIOException("Failed to create backup " + id + " of " + source, e);
         } catch (RuntimeException e) {
-            deleteQuietly(temp, e);
-            deleteQuietly(archive, e);
+            deleteQuietly(e, temp, archive, jsonTemp);
             throw e;
         }
     }
@@ -393,11 +396,13 @@ public class BackupServiceImpl implements BackupService {
         }
     }
 
-    private void deleteQuietly(Path file, Exception cause) {
-        try {
-            Files.deleteIfExists(file);
-        } catch (IOException e) {
-            cause.addSuppressed(e);
+    private void deleteQuietly(Exception cause, Path... files) {
+        for (Path file : files) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                cause.addSuppressed(e);
+            }
         }
     }
 
