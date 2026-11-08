@@ -50,4 +50,11 @@ public interface PluginConfig extends DynamicConfig {
      */
     Optional<List<String>> jvmArgs();
 
+    /**
+     * @return the URL of the index of officially supported plugins, used by {@code plugin search} and
+     * {@code plugin download}, see {@link PluginIndexService}.
+     */
+    @WithDefault(PluginIndexService.DEFAULT_INDEX_URL)
+    String indexUrl();
+
 }

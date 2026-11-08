@@ -18,6 +18,7 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.util.List;
@@ -101,7 +102,15 @@ public class ListCommand implements Runnable, CachedConsole.Enabled {
     }
 
     private String describe(PluginManifest manifest) {
-        String description = manifest.description();
+        return shorten(manifest.description(), verbose);
+    }
+
+    /**
+     * @param description the description of a plugin.
+     * @param verbose     {@code true} to keep the full description.
+     * @return the description, shortened to {@value #MAX_DESCRIPTION_LENGTH} characters unless verbose.
+     */
+    static String shorten(@Nullable String description, boolean verbose) {
         if (description == null) {
             return "";
         }

@@ -6,6 +6,32 @@ A plugin is a jar file, which you place into the `plugins` directory in the Head
 Use `plugin ls` to see the installed plugins, their descriptions and whether they have been loaded,
 `plugin ls --verbose` shows the full descriptions and `plugin ls --libraries` lists the libraries they ship.
 
+## Finding and installing plugins
+
+The officially supported plugins are listed in the
+[headlessmc-plugins](https://github.com/headlesshq/headlessmc-plugins) repository,
+where you can also submit your own plugin.
+
+```
+> plugin search quilt
+id      name    version   authors      description                                   installed
+quilt   Quilt   1.0.0     headlesshq   Adds the Quilt mod loader as a platform.
+> plugin download quilt
+Downloaded Quilt 1.0.0 to /home/user/.local/share/headlessmc/plugins/quilt-1.0.0.jar.
+The plugin will be loaded the next time HeadlessMc starts, ...
+```
+
+`plugin search [query...]` lists the plugins whose id, name, description or authors contain all words of the query,
+or all plugins without a query. The `version` column shows the newest version compatible with your HeadlessMc,
+`-` if there is none, and `installed` the version you have installed. `--verbose` shows the full descriptions.
+
+`plugin download <id> [version]` (or `plugin install`) downloads the given version, by default the newest compatible
+one, into the `plugins` directory as `<id>-<version>.jar` and verifies its size and SHA-256 hash.
+Other versions of the plugin in the `plugins` directory are removed, so this also updates or downgrades a plugin.
+`--force` installs a version even if it is not compatible with your HeadlessMc.
+The plugin is loaded the next time HeadlessMc starts, which builds HeadlessMc again with the new set of plugins,
+see below. To remove a plugin, delete its jar from the `plugins` directory.
+
 ## How plugins are loaded
 
 HeadlessMc is built with [Quarkus](https://quarkus.io), which resolves everything,
@@ -42,6 +68,7 @@ because there every run usually starts with an empty cache.
 | `hmc.plugins.aot-cache`      | `true`, `false` in CI | Speeds up the start of the Java process with an AOT cache, see below.               |
 | `hmc.plugins.jvm-args`       |         | Additional JVM arguments, comma separated, for the process running HeadlessMc with plugins.       |
 | `hmc.plugins.mutable-jar`    |         | A `quarkus-app` directory or `headlessmc-mutable.zip` to use instead of downloading it.           |
+| `hmc.plugins.index-url`      | `https://raw.githubusercontent.com/headlesshq/headlessmc-plugins/main/index.json` | The plugin index used by `plugin search` and `plugin download`. |
 
 !!! warning
 
