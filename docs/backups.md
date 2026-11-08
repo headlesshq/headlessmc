@@ -55,6 +55,7 @@ Automatically created backups, the ones created before launching and the ones `b
 are deleted automatically: only the newest `hmc.backup.auto-keep` (default 5) automatic backups of each
 profile or server are kept. Backups created before launching and backups created by `backup restore`
 are counted separately, so launching never deletes the backup of the files a restore replaced.
+Restoring a backup never deletes that backup, so a restore can always be undone, even right after undoing another one.
 Backups you create with `backup` are never deleted automatically, use `backup remove` or `backup prune` for those.
 
 ## Ignoring files
@@ -115,6 +116,8 @@ modified   world/level.dat
 files that were added since the backup are deleted, removed and modified files are restored.
 Restoring a `full` backup also restores the profile or server itself.
 Ignored files are kept, and so are worlds created after a `worlds` backup.
+Anything in the way of a restored file is deleted, e.g. a directory, even with ignored or kept files in it,
+where the backup contains a file.
 
 Before anything is changed, the files that are about to be changed are backed up,
 so a restore can be undone by restoring that backup. Use `--no-backup` to skip this,
