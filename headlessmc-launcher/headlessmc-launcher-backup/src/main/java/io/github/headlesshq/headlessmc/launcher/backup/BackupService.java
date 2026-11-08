@@ -70,7 +70,8 @@ public interface BackupService {
      * Restores the given backup.
      * Afterwards the backed up {@link Backup#paths()} match the backup again:
      * removed and modified files are restored and, unless {@link RestoreOptions#keepNew()},
-     * files added since the backup are deleted. Ignored files are kept.
+     * files added since the backup are deleted. Ignored files are kept,
+     * unless they are in the way of a restored file, e.g. inside a directory that is a file in the backup.
      *
      * @param backup  the backup to restore.
      * @param options how to restore the backup.

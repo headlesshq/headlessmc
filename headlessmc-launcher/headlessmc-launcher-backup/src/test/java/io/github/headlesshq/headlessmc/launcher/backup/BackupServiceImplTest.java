@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,8 @@ import java.util.Set;
 import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class BackupServiceImplTest {
     @TempDir
@@ -503,34 +506,91 @@ class BackupServiceImplTest {
     }
 
     @Test
-    void failedRestoreKeepsFilesAndReportsSafetyBackup() throws IOException {
+    void failedRestoreReportsSafetyBackup() throws IOException {
         Profile profile = server();
-        write(profile.path().resolve("a.txt"), "a");
+        write(profile.path().resolve("a").resolve("z.txt"), "z");
         write(profile.path().resolve("m.txt"), "m");
-        write(profile.path().resolve("z.txt"), "z");
         Backup backup = create(profile, null, null);
 
-        Files.delete(profile.path().resolve("a.txt"));
+        Files.delete(profile.path().resolve("a").resolve("z.txt"));
         write(profile.path().resolve("m.txt"), "changed");
-        Files.delete(profile.path().resolve("z.txt"));
-        // a non-empty directory in place of z.txt, kept with --keep-new, makes replacing z.txt fail
-        write(profile.path().resolve("z.txt").resolve("new.txt"), "new");
+        // a read-only directory makes restoring a/z.txt fail
+        Path locked = profile.path().resolve("a");
+        assumeTrue(locked.getFileSystem().supportedFileAttributeViews().contains("posix"));
+        Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("r-xr-xr-x"));
+        try {
+            assumeFalse(Files.isWritable(locked), "running as root");
+            HeadlessMcIOException e = assertThrows(HeadlessMcIOException.class, () -> service.restore(backup, RestoreOptions.DEFAULT));
 
-        HeadlessMcIOException e = assertThrows(
-            HeadlessMcIOException.class,
-            () -> service.restore(backup, new RestoreOptions(true, true, false))
-        );
-
-        Backup safetyBackup = service.list().stream()
-            .filter(b -> b.origin() == BackupOrigin.RESTORE)
-            .findFirst()
-            .orElseThrow();
-        assertTrue(e.getMessage().contains(safetyBackup.id()), e.getMessage());
-        assertEquals("changed", Files.readString(profile.path().resolve("m.txt")));
-        assertEquals("new", Files.readString(profile.path().resolve("z.txt").resolve("new.txt")));
-        try (var paths = Files.list(profile.path())) {
-            assertTrue(paths.noneMatch(p -> p.getFileName().toString().startsWith(".hmc-restore-")));
+            Backup safetyBackup = service.list().stream()
+                .filter(b -> b.origin() == BackupOrigin.RESTORE)
+                .findFirst()
+                .orElseThrow();
+            assertTrue(e.getMessage().contains(safetyBackup.id()), e.getMessage());
+            assertEquals("changed", Files.readString(profile.path().resolve("m.txt")));
+            try (var paths = Files.list(profile.path())) {
+                assertTrue(paths.noneMatch(p -> p.getFileName().toString().startsWith(".hmc-restore-")));
+            }
+        } finally {
+            Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("rwxr-xr-x"));
         }
+    }
+
+    @Test
+    void restoreReplacesKeptDirectoryInTheWay() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("a").resolve("x.txt"), "x");
+        write(profile.path().resolve("config").resolve("foo"), "foo");
+        Backup backup = create(profile, null, null);
+        Files.delete(profile.path().resolve("a").resolve("x.txt"));
+        Files.delete(profile.path().resolve("config").resolve("foo"));
+        write(profile.path().resolve("config").resolve("foo").resolve("new.txt"), "new");
+
+        service.restore(backup, new RestoreOptions(true, true, false));
+
+        assertEquals("x", Files.readString(profile.path().resolve("a").resolve("x.txt")));
+        assertEquals("foo", Files.readString(profile.path().resolve("config").resolve("foo")));
+    }
+
+    @Test
+    void restoreReplacesKeptFileInTheWay() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("a").resolve("b.txt"), "b");
+        Backup backup = create(profile, null, null);
+        env.getFileService().delete(profile.path().resolve("a"));
+        write(profile.path().resolve("a"), "file");
+
+        service.restore(backup, new RestoreOptions(true, true, false));
+
+        assertEquals("b", Files.readString(profile.path().resolve("a").resolve("b.txt")));
+    }
+
+    @Test
+    void restoreReplacesIgnoredFilesInTheWay() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("config").resolve("foo"), "foo");
+        Backup backup = createIgnoring(profile, null, null, List.of("**/*.log"));
+        Files.delete(profile.path().resolve("config").resolve("foo"));
+        write(profile.path().resolve("config").resolve("foo").resolve("debug.log"), "log");
+
+        service.restore(backup, RestoreOptions.DEFAULT);
+
+        assertEquals("foo", Files.readString(profile.path().resolve("config").resolve("foo")));
+    }
+
+    @Test
+    void restoreOfRenamedFile() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("options.txt"), "fov:70");
+        Backup backup = create(profile, null, null);
+        Files.move(profile.path().resolve("options.txt"), profile.path().resolve("Options.txt"));
+
+        service.restore(backup, RestoreOptions.DEFAULT);
+
+        try (var paths = Files.list(profile.path())) {
+            assertEquals(List.of("options.txt"), paths.map(p -> p.getFileName().toString()).toList());
+        }
+        assertEquals("fov:70", Files.readString(profile.path().resolve("options.txt")));
     }
 
     @Test

@@ -112,11 +112,14 @@ public class BackupArchiveService {
      * @param scope   the scope the archive was created with.
      * @param changes the changes to revert, as returned by {@link #diff(Path, BackupScope, List, boolean, Path)}.
      *                Added files are deleted, removed and modified files are restored from the archive.
-     *                <p>To not lose files if the restore fails, all paths and entries are verified
-     *                and all files are extracted to a staging directory inside the source first.
-     *                Only then the files on disk are replaced, each with an atomic move, and added files are deleted last.
+     *                <p>All paths and entries are verified and all files are extracted to a staging directory
+     *                inside the source first, so that an invalid or corrupt archive fails before any file is changed.
+     *                Then the added files are deleted and the restored files are moved into place.
+     *                Anything in the way of a restored file is deleted as well, e.g. a directory in its place,
+     *                containing files that are kept or ignored, or a file in place of one of its parent directories.
+     *                Callers that want to be able to undo the restore back up the files first.
      * @throws HeadlessMcIOException if the restore fails.
-     *                               If it fails while files are being replaced, some files might already be restored.
+     *                               If it fails while files are being deleted or replaced, some files might already be restored.
      */
     public void restore(Path archive, BackupScope scope, BackupDiff changes) {
         Path source = scope.source();
@@ -157,22 +160,15 @@ public class BackupArchiveService {
                 staged.put(entry.getKey(), temp);
             }
 
-            // files that are in the way of a restored file, e.g. an added file a, when a/b is restored
-            List<Path> conflicting = deleted.stream()
-                .filter(file -> restored.keySet().stream().anyMatch(r -> r.startsWith(file) || file.startsWith(r)))
-                .toList();
-            for (Path file : conflicting) {
+            for (Path file : deleted) {
                 delete(file, source);
             }
 
+            Path root = source.normalize();
+            Set<Path> directories = new HashSet<>();
             for (Map.Entry<Path, Path> entry : staged.entrySet()) {
+                clearWay(entry.getKey(), root, directories);
                 fileService.saveMove(entry.getValue(), entry.getKey());
-            }
-
-            for (Path file : deleted) {
-                if (!conflicting.contains(file)) {
-                    delete(file, source);
-                }
             }
         } catch (IOException | HeadlessMcIOException e) {
             throw new HeadlessMcIOException("Failed to restore " + archive + " to " + source, e);
@@ -186,6 +182,30 @@ public class BackupArchiveService {
     private void delete(Path file, Path source) {
         fileService.delete(file);
         fileService.deleteEmptyParentDirs(file.getParent(), source);
+    }
+
+    /**
+     * Deletes what is in the way of restoring the given file: a directory in its place
+     * and files in place of its parent directories.
+     *
+     * @param directories parent directories that have already been checked, together with all of their parents.
+     */
+    private void clearWay(Path file, Path root, Set<Path> directories) {
+        // not following links: a link in place of the file is replaced by the move itself
+        if (Files.isDirectory(file, LinkOption.NOFOLLOW_LINKS)) {
+            log.warn("Deleting directory {}, it is in the way of a restored file", file);
+            fileService.delete(file);
+        }
+
+        for (Path parent = file.getParent();
+             parent != null && !parent.equals(root) && directories.add(parent);
+             parent = parent.getParent()) {
+            // following links: a link to a directory, e.g. a linked mods directory, is fine
+            if (Files.exists(parent) && !Files.isDirectory(parent)) {
+                log.warn("Deleting file {}, it is in the way of a restored file", parent);
+                fileService.delete(parent);
+            }
+        }
     }
 
     private void deleteStaging(Path staging) {
