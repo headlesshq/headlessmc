@@ -23,6 +23,7 @@
     'github-actions',
     'dockerfile',
     'nix',
+    'devcontainer',
     'custom.regex',
   ],
   // the nix manager is in beta and disabled by default
