@@ -49,7 +49,7 @@ public class NeoForgeVersionMatcher extends PatternVersionMatcher {
      */
     @Override
     protected boolean canFallBack(Version version) {
-        return !version.getId().startsWith("neoforge-");
+        return !startsWithIgnoreCase(version, "neoforge-");
     }
 
     private Optional<VersionID> resolveNeoForgeVersion(
