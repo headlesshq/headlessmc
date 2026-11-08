@@ -28,7 +28,7 @@ directory (`~/.local/share/headlessmc/plugins` on Linux) and run `headlessmc plu
 
 Everything is configured in [build.gradle](build.gradle) with the
 [HeadlessMc Gradle plugin](https://github.com/headlesshq/headlessmc-gradle-plugin#writing-headlessmc-plugins)
-`io.github.headlesshq.hmc-plugin-gradle-plugin`:
+`io.github.headlesshq.headlessmc-dev-plugin`:
 
 * `headlessmcPlugin { ... }` describes the plugin. It is written into `META-INF/headlessmc-plugin.json`,
   the manifest HeadlessMc reads: id, version, name, description, authors, license, homepage,
