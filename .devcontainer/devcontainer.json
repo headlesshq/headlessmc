@@ -9,20 +9,10 @@
       "installGradle": false
     }
   },
-  "hostRequirements": {
-    "cpus": 4,
-    "memory": "16gb"
-  },
   "mounts": [
     "source=headlessmc-gradle,target=/home/vscode/.gradle,type=volume"
   ],
-  "containerEnv": {
-    "GRAALVM_HOME": "/opt/graalvm-25"
-  },
-  "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/opt/graalvm-25/bin"
-  },
-  "onCreateCommand": "bash .devcontainer/on-create.sh",
+  "onCreateCommand": "sudo chown vscode:vscode /home/vscode/.gradle",
   "postCreateCommand": "./gradlew --version",
   "customizations": {
     "vscode": {
