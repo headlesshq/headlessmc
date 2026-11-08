@@ -10,12 +10,13 @@
     }
   },
   "hostRequirements": {
-    "cpus": 4,
-    "memory": "16gb"
+    "cpus": 2,
+    "memory": "8gb"
   },
   "mounts": [
     "source=headlessmc-gradle,target=/home/vscode/.gradle,type=volume"
   ],
+  // Set DEVCONTAINER_USER=root when using rootless Docker.
   "remoteUser": "${localEnv:DEVCONTAINER_USER:vscode}",
   "containerEnv": {
     "GRADLE_USER_HOME": "/home/vscode/.gradle",
