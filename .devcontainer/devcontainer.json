@@ -22,7 +22,7 @@
   "remoteEnv": {
     "PATH": "${containerEnv:PATH}:/opt/graalvm-25/bin"
   },
-  "onCreateCommand": "sh .devcontainer/on-create.sh",
+  "onCreateCommand": "bash .devcontainer/on-create.sh",
   "postCreateCommand": "./gradlew --version",
   "customizations": {
     "vscode": {
