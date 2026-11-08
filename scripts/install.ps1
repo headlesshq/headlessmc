@@ -35,7 +35,21 @@
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
     Write-Host "Downloading $url"
     try {
-        Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing
+        # GitHub release downloads sometimes time out or fail with a 5xx, so retry a few times
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing
+                break
+            } catch {
+                $status = $_.Exception.Response.StatusCode.value__
+                # a 4xx, e.g. 404 for a version that does not exist, will not go away by retrying
+                if ($attempt -ge 4 -or ($status -ge 400 -and $status -lt 500)) {
+                    throw
+                }
+                Write-Host "Download failed, retrying ($attempt/3): $_"
+                Start-Sleep -Seconds (2 * $attempt)
+            }
+        }
         try {
             Move-Item -Force -Path $tmp -Destination $exe
         } catch {

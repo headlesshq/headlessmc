@@ -174,7 +174,7 @@ version_lt() {
 
 download() {
   if command -v curl >/dev/null 2>&1; then
-    curl -fL --proto '=https' --tlsv1.2 --progress-bar -o "$2" "$1" || err "download of $1 failed"
+    curl -fL --proto '=https' --tlsv1.2 --retry 3 --retry-delay 2 --progress-bar -o "$2" "$1" || err "download of $1 failed"
   elif command -v wget >/dev/null 2>&1; then
     wget -q -O "$2" "$1" || err "download of $1 failed"
   else
