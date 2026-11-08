@@ -101,7 +101,7 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private BackupScope getScope(BackupPlan plan, BackupRequest request) {
-        requireInsideSource(plan);
+        requireInsideSource(plan.source(), plan.paths(), plan.target());
         List<String> ignored = new ArrayList<>();
         if (request.defaultIgnore()) {
             ignored.addAll(config.get().ignore());
@@ -149,20 +149,24 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public BackupDiff diff(Backup backup, boolean checksum) {
+        requireInsideSource(backup);
         List<String> paths = providerService.findProvider(backup.provider())
             .map(provider -> provider.getDiffPaths(backup))
             .orElse(backup.paths());
+        requireInsideSource(backup.source(), paths, backup.target());
         return archiveService.diff(getArchive(backup), backup.scope(), paths, checksum, getBackupDir());
     }
 
     @Override
     public BackupDiff previewRestore(Backup backup, RestoreOptions options) {
+        requireInsideSource(backup);
         BackupDiff changes = archiveService.diff(getArchive(backup), backup.scope(), backup.paths(), true, getBackupDir());
         return options.keepNew() ? new BackupDiff(List.of(), changes.removed(), changes.modified()) : changes;
     }
 
     @Override
     public RestoreResult restore(Backup backup, RestoreOptions options) {
+        requireInsideSource(backup);
         BackupProvider provider = providerService.getProvider(backup.provider());
         BackupScope scope = backup.scope();
         if (!options.force()) {
@@ -298,14 +302,23 @@ public class BackupServiceImpl implements BackupService {
     }
 
     /**
+     * The paths of a backup are read from its json, which might have been edited or come from another machine.
+     * They are checked before any files are compared, backed up or restored,
+     * so that a path like {@code ..} never makes HeadlessMc read or archive files outside the source.
+     */
+    private void requireInsideSource(Backup backup) {
+        requireInsideSource(backup.source(), backup.paths(), "backup " + backup.id());
+    }
+
+    /**
      * Paths outside the source would be archived as {@code ../} entries, which cannot be restored.
      */
-    private void requireInsideSource(BackupPlan plan) {
-        Path source = plan.source().toAbsolutePath().normalize();
-        for (String path : plan.paths()) {
-            Path resolved = source.resolve(path).normalize();
-            if (!resolved.startsWith(source) || !path.isEmpty() && resolved.equals(source)) {
-                throw new IllegalArgumentException("Path '" + path + "' of " + plan.target() + " is not inside " + source);
+    private void requireInsideSource(Path source, List<String> paths, String target) {
+        Path normalizedSource = source.toAbsolutePath().normalize();
+        for (String path : paths) {
+            Path resolved = normalizedSource.resolve(path).normalize();
+            if (!resolved.startsWith(normalizedSource) || !path.isEmpty() && resolved.equals(normalizedSource)) {
+                throw new IllegalArgumentException("Path '" + path + "' of " + target + " is not inside " + normalizedSource);
             }
         }
     }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
@@ -20,7 +21,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -187,6 +190,48 @@ class BackupServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> create(profile, null, ".."));
         assertThrows(IllegalArgumentException.class, () -> create(profile, null, "../other"));
         assertEquals(List.of(), service.list());
+    }
+
+    @Test
+    void backupWithPathsOutsideOfSourceIsRejected() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("server.jar"), "jar");
+        write(root.resolve("secret").resolve("token.txt"), "token");
+        Backup backup = create(profile, null, null);
+
+        // an edited json, or one from another machine
+        Path json = service.getArchive(backup).resolveSibling(backup.id() + ".json");
+        String text = Files.readString(json);
+        String edited = text.replaceFirst("\"paths\"\\s*:\\s*\\[\\s*\"\"\\s*]", "\"paths\" : [ \"..\" ]");
+        assertNotEquals(text, edited);
+        Files.writeString(json, edited);
+        Backup loaded = service.get(backup.id()).orElseThrow();
+        write(profile.path().resolve("server.jar"), "changed");
+
+        assertThrows(IllegalArgumentException.class, () -> service.diff(loaded, false));
+        assertThrows(IllegalArgumentException.class, () -> service.previewRestore(loaded, RestoreOptions.DEFAULT));
+        assertThrows(IllegalArgumentException.class, () -> service.restore(loaded, RestoreOptions.DEFAULT));
+        assertEquals(List.of(loaded), service.list(), "no safety backup of the parent directory");
+        assertEquals("changed", Files.readString(profile.path().resolve("server.jar")));
+        assertEquals("token", Files.readString(root.resolve("secret").resolve("token.txt")));
+    }
+
+    @Test
+    void archiveEntriesOutsideOfSourceAreNotRestored() throws IOException {
+        Profile profile = server();
+        write(profile.path().resolve("server.jar"), "jar");
+        Backup backup = create(profile, null, null);
+        try (var os = Files.newOutputStream(service.getArchive(backup)); var zip = new ZipOutputStream(os)) {
+            zip.putNextEntry(new ZipEntry("server.jar"));
+            zip.write("jar".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("../evil.txt"));
+            zip.write("evil".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+
+        assertThrows(HeadlessMcIOException.class, () -> service.restore(backup, new RestoreOptions(false, false, false)));
+        assertFalse(Files.exists(root.resolve("evil.txt")));
     }
 
     @Test
