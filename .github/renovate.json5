@@ -22,8 +22,13 @@
     'gradle-wrapper',
     'github-actions',
     'dockerfile',
+    'nix',
     'custom.regex',
   ],
+  // the nix manager is in beta and disabled by default
+  nix: {
+    enabled: true,
+  },
   customManagers: [
     {
       // the headlessmc-lwjgl release the lwjgl patcher downloads, CI regenerates its lock file on renovate PRs
@@ -56,6 +61,19 @@
       matchManagers: [
         'gradle-wrapper',
       ],
+      semanticCommitType: 'build',
+      semanticCommitScope: 'deps',
+    },
+    {
+      // the flake only provides the dev shell, so its inputs are updated together once a month
+      matchManagers: [
+        'nix',
+      ],
+      groupName: 'nix flake inputs',
+      schedule: [
+        'on the first day of the month',
+      ],
+      automerge: false,
       semanticCommitType: 'build',
       semanticCommitScope: 'deps',
     },
