@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.files;
 
 import io.github.headlesshq.headlessmc.exceptions.FileException;
+import org.jspecify.annotations.Nullable;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,5 +32,15 @@ public interface FileService {
     void ensureFileExists(Path file, byte[] defaultContent) throws FileException;
 
     void deleteFileAndEmptyParentDirs(Path file) throws FileException;
+
+    /**
+     * Deletes the given directory and its parents, as long as they are empty.
+     * Stops at {@code root}, which is never deleted, and never deletes directories outside of {@code root}.
+     *
+     * @param dir  the first directory to delete if it is empty, {@code null} does nothing.
+     * @param root the directory to stop at.
+     * @throws FileException if a directory cannot be checked or deleted.
+     */
+    void deleteEmptyParentDirs(@Nullable Path dir, Path root) throws FileException;
 
 }

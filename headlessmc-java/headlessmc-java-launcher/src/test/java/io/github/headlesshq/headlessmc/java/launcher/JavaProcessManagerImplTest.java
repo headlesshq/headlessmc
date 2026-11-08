@@ -1,5 +1,7 @@
 package io.github.headlesshq.headlessmc.java.launcher;
 
+import io.github.headlesshq.headlessmc.files.DefaultFileService;
+import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,9 @@ class JavaProcessManagerImplTest {
     Path root;
 
     private JavaProcessManagerImpl manager() {
-        return new JavaProcessManagerImpl(new DefaultJacksonJsonService(), TestFiles.appFiles(root));
+        return new JavaProcessManagerImpl(
+            new DefaultJacksonJsonService(), TestFiles.appFiles(root), new DefaultFileService(new DefaultFileSystemProvider())
+        );
     }
 
     private Path processDir() {

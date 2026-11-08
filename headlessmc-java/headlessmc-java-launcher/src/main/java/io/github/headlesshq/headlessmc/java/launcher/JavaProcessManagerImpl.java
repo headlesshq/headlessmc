@@ -1,6 +1,8 @@
 package io.github.headlesshq.headlessmc.java.launcher;
 
+import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.files.AppFiles;
+import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.util.json.JsonParseException;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -9,10 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -36,6 +36,7 @@ public class JavaProcessManagerImpl implements JavaProcessManager {
 
     private final JsonService jsonService;
     private final AppFiles appFiles;
+    private final FileService fileService;
 
     @Override
     public RunningProcess register(String id, Process process, Path directory) {
@@ -45,8 +46,8 @@ public class JavaProcessManagerImpl implements JavaProcessManager {
         Path temp = file.resolveSibling(file.getFileName() + ".tmp");
         try {
             jsonService.write(temp, running, true);
-            move(temp, file);
-        } catch (JsonParseException | IOException e) {
+            fileService.saveMove(temp, file);
+        } catch (JsonParseException | FileException e) {
             log.warn("Failed to register process {} ({})", id, running.pid(), e);
             try {
                 Files.deleteIfExists(temp);
@@ -102,14 +103,6 @@ public class JavaProcessManagerImpl implements JavaProcessManager {
             return ProcessHandle.of(pid).map(ProcessHandle::isAlive).orElse(false);
         } catch (NumberFormatException e) {
             return true;
-        }
-    }
-
-    private void move(Path from, Path to) throws IOException {
-        try {
-            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        } catch (AtomicMoveNotSupportedException e) {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

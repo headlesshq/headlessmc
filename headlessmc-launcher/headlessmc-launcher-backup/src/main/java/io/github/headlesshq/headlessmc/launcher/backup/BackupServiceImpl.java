@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.launcher.backup;
 
 import io.github.headlesshq.headlessmc.config.Holder;
+import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
@@ -213,8 +214,11 @@ public class BackupServiceImpl implements BackupService {
         // the json first, so that a failure never leaves a listed backup without its archive
         fileService.delete(fileService.getPath(dir, backup.id() + JSON));
         fileService.delete(getArchive(backup));
-        deleteIfEmpty(dir);
-        deleteIfEmpty(dir.getParent());
+        try {
+            fileService.deleteEmptyParentDirs(dir, getBackupDir());
+        } catch (FileException e) {
+            log.warn("Failed to delete empty backup directory {}", dir, e);
+        }
     }
 
     @Override
@@ -361,20 +365,6 @@ public class BackupServiceImpl implements BackupService {
 
     private String toFileName(String name) {
         return name.toLowerCase(Locale.ENGLISH).replaceAll("[^a-z0-9._-]", "-");
-    }
-
-    private void deleteIfEmpty(@Nullable Path dir) {
-        if (dir == null || !Files.isDirectory(dir)) {
-            return;
-        }
-
-        try (Stream<Path> entries = Files.list(dir)) {
-            if (entries.findFirst().isEmpty()) {
-                fileService.delete(dir);
-            }
-        } catch (IOException e) {
-            log.warn("Failed to check if backup directory {} is empty", dir, e);
-        }
     }
 
     private Optional<Backup> readBackup(Path json) {

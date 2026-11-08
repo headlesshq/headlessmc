@@ -321,6 +321,20 @@ public class DefaultFileService implements FileService {
         }
     }
 
+    @Override
+    public void deleteEmptyParentDirs(@Nullable Path dir, Path root) throws FileException {
+        Path normalizedRoot = root.toAbsolutePath().normalize();
+        while (dir != null) {
+            Path normalized = dir.toAbsolutePath().normalize();
+            if (normalized.equals(normalizedRoot) || !normalized.startsWith(normalizedRoot) || !isEmptyDirectory(dir)) {
+                return;
+            }
+
+            delete(dir);
+            dir = dir.getParent();
+        }
+    }
+
     private boolean isEmptyDirectory(Path dir) {
         if (!Files.isDirectory(dir)) {
             return false;

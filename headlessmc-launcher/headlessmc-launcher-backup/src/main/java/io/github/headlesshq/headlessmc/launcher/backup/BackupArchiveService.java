@@ -1,12 +1,12 @@
 package io.github.headlesshq.headlessmc.launcher.backup;
 
+import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.files.FileService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -167,13 +166,7 @@ public class BackupArchiveService {
             }
 
             for (Map.Entry<Path, Path> entry : staged.entrySet()) {
-                Path file = entry.getKey();
-                Path parent = file.getParent();
-                if (parent != null) {
-                    Files.createDirectories(parent);
-                }
-
-                move(entry.getValue(), file);
+                fileService.saveMove(entry.getValue(), entry.getKey());
             }
 
             for (Path file : deleted) {
@@ -190,25 +183,15 @@ public class BackupArchiveService {
         }
     }
 
-    private void delete(Path file, Path source) throws IOException {
-        Files.deleteIfExists(file);
-        deleteEmptyParents(file.getParent(), source);
-    }
-
-    private void move(Path from, Path to) throws IOException {
-        try {
-            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        } catch (AtomicMoveNotSupportedException e) {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
-        }
+    private void delete(Path file, Path source) {
+        fileService.delete(file);
+        fileService.deleteEmptyParentDirs(file.getParent(), source);
     }
 
     private void deleteStaging(Path staging) {
-        try (Stream<Path> paths = Files.walk(staging)) {
-            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
-                Files.deleteIfExists(path);
-            }
-        } catch (IOException e) {
+        try {
+            fileService.delete(staging);
+        } catch (FileException e) {
             log.warn("Failed to delete restore staging directory {}", staging, e);
         }
     }
@@ -369,25 +352,6 @@ public class BackupArchiveService {
 
     private Path resolve(Path source, String name) {
         return fileService.getPath(source, name.split("/"));
-    }
-
-    private void deleteEmptyParents(@Nullable Path dir, Path root) throws IOException {
-        Path normalizedRoot = root.toAbsolutePath().normalize();
-        while (dir != null) {
-            Path normalized = dir.toAbsolutePath().normalize();
-            if (normalized.equals(normalizedRoot) || !normalized.startsWith(normalizedRoot)) {
-                return;
-            }
-
-            try (Stream<Path> entries = Files.list(dir)) {
-                if (entries.findFirst().isPresent()) {
-                    return;
-                }
-            }
-
-            Files.delete(dir);
-            dir = dir.getParent();
-        }
     }
 
     /**
