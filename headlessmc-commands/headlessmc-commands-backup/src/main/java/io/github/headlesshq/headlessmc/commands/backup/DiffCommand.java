@@ -19,6 +19,8 @@ import picocli.CommandLine;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -65,10 +67,13 @@ public class DiffCommand implements Runnable, CachedConsole.Enabled {
             return;
         }
 
-        // a worlds backup is compared with worlds created after it as well, but restoring it keeps them
-        List<String> newWorlds = diff.added().stream().filter(file -> !isBackedUp(resolved, file)).toList();
+        // providers can compare more than the backed up paths, e.g. worlds created after a worlds backup,
+        // restoring the backup keeps the files outside of its paths
+        Set<String> kept = diff.added().stream()
+            .filter(file -> !isBackedUp(resolved, file))
+            .collect(Collectors.toSet());
         List<Change> changes = new ArrayList<>();
-        diff.added().forEach(file -> changes.add(new Change(newWorlds.contains(file) ? "new world" : "added", file)));
+        diff.added().forEach(file -> changes.add(new Change(kept.contains(file) ? "added (kept)" : "added", file)));
         diff.removed().forEach(file -> changes.add(new Change("removed", file)));
         diff.modified().forEach(file -> changes.add(new Change("modified", file)));
         changes.sort(Comparator.comparing(Change::file));
@@ -82,8 +87,8 @@ public class DiffCommand implements Runnable, CachedConsole.Enabled {
             diff.added().size() + " added, " + diff.removed().size() + " removed, "
                 + diff.modified().size() + " modified since backup " + resolved.id()
         );
-        if (!newWorlds.isEmpty()) {
-            console.write(newWorlds.size() + " added files belong to worlds created after the backup, restoring it keeps them.");
+        if (!kept.isEmpty()) {
+            console.write(kept.size() + " added files are not part of the backup, restoring it keeps them.");
         }
     }
 

@@ -97,7 +97,7 @@ before launching and `restore` for the backups `backup restore` creates.
 `backup diff <backup>` shows which files have been added, removed or modified since a backup.
 Instead of the id of a backup you can also pass the name of a profile or server, to compare its latest backup.
 The diff of a `worlds` backup also contains worlds that have been created after the backup,
-they are listed as `new world`, because restoring the backup keeps them.
+they are listed as `added (kept)`, because restoring the backup keeps them.
 Files whose size and modification time did not change are considered unchanged,
 use `--checksum` to compare their contents as well.
 

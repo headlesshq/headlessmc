@@ -222,7 +222,7 @@ class BackupCommandsTest {
     }
 
     @Test
-    void diffMarksNewWorldsThatRestoreKeeps() throws IOException {
+    void diffMarksNewWorldsAsKept() throws IOException {
         Profile client = env.getProfileService().getProfile("main").orElseThrow();
         BackupCommand command = backup("main");
         command.setType("worlds");
@@ -233,9 +233,9 @@ class BackupCommandsTest {
         diff("main").run();
 
         String output = console.output();
-        assertTrue(output.contains("new world"), output);
+        assertTrue(output.contains("added (kept)"), output);
         assertTrue(output.contains("2 added, 0 removed, 0 modified"), output);
-        assertTrue(output.contains("1 added files belong to worlds created after the backup"), output);
+        assertTrue(output.contains("1 added files are not part of the backup, restoring it keeps them."), output);
     }
 
     @Test
