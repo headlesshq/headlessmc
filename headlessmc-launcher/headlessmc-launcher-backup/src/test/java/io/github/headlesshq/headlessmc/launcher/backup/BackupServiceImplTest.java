@@ -795,6 +795,31 @@ class BackupServiceImplTest {
     }
 
     @Test
+    void restoringSafetyBackupDoesNotPruneIt() throws IOException {
+        env.getConfig().setAutoKeep(1);
+        Profile profile = server();
+        write(profile.path().resolve("server.jar"), "jar");
+        Backup backup = create(profile, BackupOrigin.MANUAL);
+        write(profile.path().resolve("server.jar"), "changed");
+        env.getClock().advance(Duration.ofSeconds(1));
+        Backup first = service.restore(backup, RestoreOptions.DEFAULT).safetyBackup();
+        assertNotNull(first);
+
+        // undoing the restore
+        env.getClock().advance(Duration.ofSeconds(1));
+        Backup second = service.restore(first, RestoreOptions.DEFAULT).safetyBackup();
+        assertNotNull(second);
+
+        assertEquals(List.of(backup, first, second), service.list());
+        assertEquals("changed", Files.readString(profile.path().resolve("server.jar")));
+
+        // the next restore prunes it again
+        env.getClock().advance(Duration.ofSeconds(1));
+        Backup third = service.restore(backup, RestoreOptions.DEFAULT).safetyBackup();
+        assertEquals(List.of(backup, third), service.list());
+    }
+
+    @Test
     void automaticPruningCanBeDisabled() throws IOException {
         env.getConfig().setAutoKeep(0);
         Profile profile = server();

@@ -89,7 +89,7 @@ public class BackupServiceImpl implements BackupService {
 
         Backup backup = write(provider, plan, scope, request.origin());
         if (request.origin().isAutomatic()) {
-            pruneAutomatic(backup);
+            pruneAutomatic(backup, Set.of());
         }
 
         return backup;
@@ -206,7 +206,8 @@ public class BackupServiceImpl implements BackupService {
 
         provider.afterRestore(backup);
         if (safetyBackup != null) {
-            pruneAutomatic(safetyBackup);
+            // the restored backup might be an earlier safety backup, which is still needed to undo this restore
+            pruneAutomatic(safetyBackup, Set.of(backup.id()));
         }
 
         return new RestoreResult(changes, safetyBackup);
@@ -227,8 +228,16 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public List<Backup> prune(PruneRequest request) {
+        return prune(request, Set.of());
+    }
+
+    /**
+     * @param excluded the ids of backups to never delete, they do not count towards {@link PruneRequest#keep()}.
+     */
+    private List<Backup> prune(PruneRequest request, Set<String> excluded) {
         Instant cutoff = request.olderThan() == null ? null : clock.instant().minus(request.olderThan());
         Map<String, List<Backup>> groups = list(request.provider(), request.target()).stream()
+            .filter(backup -> !excluded.contains(backup.id()))
             .filter(backup -> request.origins().isEmpty() || request.origins().contains(backup.origin()))
             .collect(Collectors.groupingBy(
                 backup -> backup.provider() + "/" + backup.target(),
@@ -323,11 +332,11 @@ public class BackupServiceImpl implements BackupService {
         }
     }
 
-    private void pruneAutomatic(Backup backup) {
+    private void pruneAutomatic(Backup backup, Set<String> excluded) {
         int keep = config.get().autoKeep();
         if (keep > 0) {
             // each origin has its own retention, so that launching cannot prune the backups created before a restore
-            prune(new PruneRequest(backup.provider(), backup.target(), Set.of(backup.origin()), keep, null));
+            prune(new PruneRequest(backup.provider(), backup.target(), Set.of(backup.origin()), keep, null), excluded);
         }
     }
 
