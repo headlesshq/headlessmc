@@ -198,6 +198,7 @@ class ClientLauncherTest {
             Mockito.mock(LastUsedAccountService.class),
             Mockito.mock(SpecificsPropertiesService.class),
             Mockito.mock(SpecificsDownloader.class),
+            new MuslClientSupport(new OS("linux", OS.Type.LINUX, "1")),
             versionMatcherService,
             versionJsonService,
             new TemplateStringService(mcFiles, CPU.X64),
