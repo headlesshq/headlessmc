@@ -16,7 +16,7 @@ concurrency: # FIXME: prevent release commit cancellation
   group: >
     ${{ github.workflow }}-
     ${{ github.event_name }}-
-    ${{ github.event.inputs.ref || github.ref }}
+    ${{ github.ref }}
   # never cancel runs on main, they might be creating a release
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
