@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.java.distribution.foojay;
 
 import eu.hansolo.jdktools.Architecture;
 import eu.hansolo.jdktools.Bitness;
+import eu.hansolo.jdktools.LibCType;
 import eu.hansolo.jdktools.OperatingSystem;
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
 import io.github.headlesshq.headlessmc.distribution.JavaDistributionException;
@@ -11,6 +12,8 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.net.DownloadService;
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibC;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -38,6 +41,7 @@ public class FoojayProvider implements JavaDistributionProvider {
     private final FoojayInstallerService archiveService;
     private final DownloadService downloadService;
     private final @RestClient FoojayAPI api;
+    private final LibCDetector libCDetector;
 
     @Override
     public String getName() {
@@ -86,7 +90,7 @@ public class FoojayProvider implements JavaDistributionProvider {
                     archiveService.getSupportedArchiveTypes(),
                     null,
                     null, // true?
-                    List.of(operatingSystem.getLibCType().getApiString()),
+                    List.of(libCType(os, operatingSystem).getApiString()),
                     LATEST_AVAILABLE,
                     List.of(RELEASE_STATUS_GA),
                     false
@@ -97,6 +101,33 @@ public class FoojayProvider implements JavaDistributionProvider {
         } catch (ApiException | ProcessingException e) {
             throw new JavaDistributionException(e);
         }
+    }
+
+    /**
+     * Determines the C library the Java runtimes have to be built against.
+     * On {@link OS.Type#LINUX} the C library of the host is detected, because e.g. a musl system
+     * can only run Java runtimes built against musl, even if the OS has not been detected as {@link OS.Type#LINUX_MUSL}.
+     * An OS that is explicitly {@link OS.Type#LINUX_MUSL} always uses musl.
+     *
+     * @param os              the operating system to find Java runtimes for.
+     * @param operatingSystem the Foojay operating system for the given OS.
+     * @return the C library of the host, or the default C library of the operating system if it cannot be detected.
+     */
+    private LibCType libCType(OS os, OperatingSystem operatingSystem) {
+        if (OS.Type.LINUX_MUSL.equals(os.type())) {
+            return LibCType.MUSL;
+        }
+
+        if (OS.Type.LINUX.equals(os.type())) {
+            LibC libC = libCDetector.detectSystem();
+            if (libC == LibC.MUSL) {
+                return LibCType.MUSL;
+            } else if (libC == LibC.GLIBC) {
+                return LibCType.GLIBC;
+            }
+        }
+
+        return operatingSystem.getLibCType();
     }
 
     @Override
