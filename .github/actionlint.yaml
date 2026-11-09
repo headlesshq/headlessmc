@@ -1,0 +1,9 @@
+# actionlint configuration, see
+# https://github.com/rhysd/actionlint/blob/main/docs/config.md
+paths:
+  .github/workflows/lifecycle.yml:
+    ignore:
+      # False positive: the mc-runtime-test matrices declare their entries as a
+      # `version:` list of flow mappings, which actionlint cannot type and reports
+      # as `{${{ insert }}: any}`. `matrix.version.*` is defined at runtime.
+      - 'property "version" is not defined in object type \{\$\{\{ insert \}\}: any\}'
