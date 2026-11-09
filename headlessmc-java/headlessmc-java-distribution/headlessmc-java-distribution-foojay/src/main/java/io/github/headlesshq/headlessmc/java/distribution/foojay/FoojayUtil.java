@@ -31,13 +31,23 @@ final class FoojayUtil {
         return Architecture.NONE;
     }
 
+    /**
+     * Finds the Foojay operating system for the given OS.
+     * The type is preferred over the name, because e.g. {@link OS.Type#LINUX_MUSL} is still called {@code Linux},
+     * but needs Java runtimes built against musl.
+     *
+     * @param os the operating system.
+     * @return the matching Foojay operating system, or {@link OperatingSystem#NONE}.
+     */
     public static OperatingSystem os2OperatingSystem(OS os) {
+        OperatingSystem byName = null;
         OperatingSystem byType = null;
         OperatingSystem byApiString = null;
         for (OperatingSystem operatingSystem : OperatingSystem.values()) {
-            if (os.name().equalsIgnoreCase(operatingSystem.name())
-                || os.name().equalsIgnoreCase(operatingSystem.getUiString())) {
-                return operatingSystem;
+            if (byName == null
+                && (os.name().equalsIgnoreCase(operatingSystem.name())
+                    || os.name().equalsIgnoreCase(operatingSystem.getUiString()))) {
+                byName = operatingSystem;
             }
 
             if (os.type().name().equalsIgnoreCase(operatingSystem.getUiString())
@@ -51,7 +61,11 @@ final class FoojayUtil {
             }
         }
 
-        return byType == null ? (byApiString == null ? OperatingSystem.NONE : byApiString) : byType;
+        if (byType != null) {
+            return byType;
+        }
+
+        return byName == null ? (byApiString == null ? OperatingSystem.NONE : byApiString) : byName;
     }
 
 }

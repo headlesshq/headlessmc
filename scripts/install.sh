@@ -7,6 +7,8 @@
 #   HEADLESSMC_VERSION      release tag to install, e.g. 3.0.0 (default: latest release)
 #   HEADLESSMC_INSTALL_DIR  directory to install into (default: ~/.local/bin)
 #   HEADLESSMC_NO_COMPLETIONS  if set, does not install the bash, zsh and fish completions
+#   HEADLESSMC_MUSL         if set, installs the fully static musl executable on Linux x64,
+#                           which is used automatically on musl systems, NixOS and with an older glibc
 #
 # On Windows use install.ps1 instead.
 set -eu
@@ -20,8 +22,9 @@ DOCS="https://headlesshq.github.io/headlessmc/getting-started/"
 MIN_GLIBC="2.34"
 
 main() {
+  variant=""
   detect_platform
-  asset="headlessmc-launcher-$os-$arch"
+  asset="headlessmc-launcher-$os-$arch$variant"
   if [ -n "${HEADLESSMC_VERSION:-}" ]; then
     url="https://github.com/$REPO/releases/download/$HEADLESSMC_VERSION/$asset"
   else
@@ -149,14 +152,33 @@ detect_platform() {
     if [ "$(uname -o 2>/dev/null || true)" = Android ]; then
       unsupported "Android/Termux"
     fi
-    if ldd --version 2>&1 | grep -qi musl || ls /lib/ld-musl-* >/dev/null 2>&1; then
-      unsupported "musl libc (e.g. Alpine Linux)"
+    static_reason=""
+    if [ -n "${HEADLESSMC_MUSL:-}" ]; then
+      static_reason="HEADLESSMC_MUSL"
+    elif ldd --version 2>&1 | grep -qi musl || ls /lib/ld-musl-* >/dev/null 2>&1; then
+      static_reason="musl libc (e.g. Alpine Linux)"
+    elif [ ! -e "$(glibc_loader)" ]; then
+      static_reason="a system without $(glibc_loader) (e.g. NixOS)"
+    else
+      glibc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{ print $2 }' || true)"
+      if [ -n "$glibc" ] && version_lt "$glibc" "$MIN_GLIBC"; then
+        static_reason="glibc $glibc, the glibc executable needs glibc $MIN_GLIBC or newer"
+      fi
     fi
-    glibc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{ print $2 }' || true)"
-    if [ -n "$glibc" ] && version_lt "$glibc" "$MIN_GLIBC"; then
-      unsupported "glibc $glibc, the executable needs glibc $MIN_GLIBC or newer"
+    if [ -n "$static_reason" ]; then
+      [ "$arch" = x64 ] || unsupported "$static_reason on $arch"
+      say "Using the static musl executable, detected $static_reason"
+      variant="-musl"
     fi
   fi
+}
+
+# The dynamic loader the glibc executables are linked against.
+glibc_loader() {
+  case "$arch" in
+    x64) echo /lib64/ld-linux-x86-64.so.2 ;;
+    arm64) echo /lib/ld-linux-aarch64.so.1 ;;
+  esac
 }
 
 # version_lt a b: true if version a is lower than version b

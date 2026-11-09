@@ -358,6 +358,7 @@ jobs:
       matrix:
         os:
           - { os: ubuntu-latest,    name: headlessmc-launcher-linux-x64 }
+          - { os: ubuntu-latest,    name: headlessmc-launcher-linux-x64-musl, musl: true }
         # native builds on the other platforms take verrryyy long (macOS up to an hour), so only build them for releases
         #- { os: windows-11-arm, name: headlessmc-launcher-windows-arm64 } no graalvm for windows arm64 :(
         include: >-
@@ -384,6 +385,7 @@ jobs:
           java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-musl: ${{ matrix.os.musl == true }}
 
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
         if: steps.native-cache.outputs.cache-hit != 'true'
@@ -415,6 +417,8 @@ jobs:
             ulimit -n 524288
           fi
           bash scripts/build-native.sh
+        env:
+          NATIVE_MUSL: ${{ matrix.os.musl == true }}
 
       - name: List files
         if: runner.os != 'Windows' && steps.native-cache.outputs.cache-hit != 'true'
@@ -438,6 +442,17 @@ jobs:
             chmod +x "$EXE"
           fi
           "$EXE" help
+
+      - name: Smoke test musl executable
+        if: matrix.os.musl == true
+        run: |
+          EXE="${{ matrix.os.name }}"
+          file "headlessmc-application/build/$EXE"
+          file "headlessmc-application/build/$EXE" | grep -q 'statically linked'
+          for image in alpine:latest nixos/nix:latest ubuntu:20.04; do
+            echo "Running $EXE in $image"
+            docker run --rm -v "$PWD/headlessmc-application/build/$EXE:/headlessmc:ro" "$image" /headlessmc help
+          done
 
       - name: Publish Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -835,6 +850,7 @@ jobs:
             ./headlessmc-application/build/quarkus-build/gen/headlessmc.jar \
             ./headlessmc-lwjgl/build/libs/headlessmc-lwjgl-*-all.jar \
             ./headlessmc-launcher-linux-x64 \
+            ./headlessmc-launcher-linux-x64-musl \
             ./headlessmc-launcher-windows-x64.exe \
             ./headlessmc-launcher-macos-x64 \
             ./headlessmc-launcher-linux-arm64 \

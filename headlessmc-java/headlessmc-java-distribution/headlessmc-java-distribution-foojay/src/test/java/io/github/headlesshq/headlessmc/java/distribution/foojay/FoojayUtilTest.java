@@ -54,6 +54,9 @@ public class FoojayUtilTest {
         assertEquals(OperatingSystem.QNX, FoojayUtil.os2OperatingSystem(os(OS.Type.QNX)));
         assertEquals(OperatingSystem.AIX, FoojayUtil.os2OperatingSystem(os(OS.Type.AIX)));
         assertEquals(OperatingSystem.NONE, FoojayUtil.os2OperatingSystem(os(OS.Type.UNKNOWN)));
+        assertEquals(OperatingSystem.LINUX_MUSL, FoojayUtil.os2OperatingSystem(new OS("Linux", OS.Type.LINUX_MUSL, "6.12")));
+        assertEquals(OperatingSystem.LINUX, FoojayUtil.os2OperatingSystem(new OS("Linux", OS.Type.LINUX, "6.12")));
+        assertEquals(OperatingSystem.WINDOWS, FoojayUtil.os2OperatingSystem(new OS("Windows 11", OS.Type.WINDOWS, "10.0")));
     }
 
 }

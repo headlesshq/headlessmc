@@ -44,6 +44,8 @@ You can also download the executable for your Operating System from the latest
     ``` sh
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
     ```
+    These executables need glibc 2.34 or newer.
+    On other systems use `headlessmc-launcher-linux-x64-musl`, see [musl, NixOS and older glibc](#musl-nixos-and-older-glibc).
 
 === "Windows"
 
@@ -100,6 +102,26 @@ They install HeadlessMc as `headlessmc`, replace $VERSION with the HeadlessMc ve
 
 The packages require glibc 2.34 or newer (e.g. Debian 12, Ubuntu 22.04, RHEL 9).
 To update HeadlessMc, install the package of the new release.
+
+### musl, NixOS and older glibc
+
+`headlessmc-launcher-linux-x64-musl` is a fully static executable, built against musl.
+It does not need any library or dynamic loader of the system, so it runs on every x64 Linux, e.g.
+
+* musl based distributions, like Alpine Linux, Void Linux (musl) or Chimera Linux,
+* NixOS and Guix, which have no `/lib64/ld-linux-x86-64.so.2`,
+* distributions with a glibc older than 2.34, like RHEL 8, Debian 11 or Ubuntu 20.04.
+
+The install script picks it automatically on these systems, set `HEADLESSMC_MUSL=1` to always install it.
+The updater keeps using the musl executable once it is installed.
+There is no musl executable for ARM64 yet, use the `headlessmc.jar` there.
+
+On musl systems HeadlessMc downloads Java runtimes built against musl.
+Minecraft itself ships natives, e.g. of LWJGL, that are only built against glibc.
+The headless client does not load the LWJGL natives, a Minecraft server needs none at all.
+To run the client with a window, install [gcompat](https://git.adelielinux.org/adelie/gcompat),
+a glibc compatibility layer for musl, e.g. with `apk add gcompat` on Alpine Linux.
+This works for many, but not all Minecraft versions.
 
 ### Shell completions
 
