@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -102,6 +103,26 @@ public class JavaSourcesTest {
             new OS("windows", OS.Type.WINDOWS, "10")
         );
         assertTrue(source.getJavas().isEmpty());
+    }
+
+    @Test
+    @DisabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
+    public void linuxSourceResolvesNixProfiles(@TempDir Path dir) throws Exception {
+        Path jdk = FakeJdks.create(dir.resolve("nix/store/abc-openjdk-21/lib/openjdk"), 21);
+        Path systemProfile = dir.resolve("run/current-system/sw");
+        Path userProfile = dir.resolve("home/.nix-profile");
+        for (Path profile : List.of(systemProfile, userProfile)) {
+            Files.createDirectories(profile.resolve("bin"));
+            Files.createSymbolicLink(profile.resolve("bin").resolve("java"), jdk.resolve("bin").resolve("java"));
+        }
+
+        LinuxJavaSource source = new LinuxJavaSource(javaScannerService, new OS("linux", OS.Type.LINUX, "6.0"));
+        List<Java> javas = source.scanProfiles(List.of(systemProfile, userProfile, dir.resolve("missing")));
+
+        assertEquals(1, javas.size());
+        assertEquals(21, javas.getFirst().version());
+        assertEquals(jdk.toRealPath(), javas.getFirst().home().getUnchecked().orElseThrow());
+        assertEquals(JavaSource.SORT_GENERAL, javas.getFirst().source());
     }
 
     @Test

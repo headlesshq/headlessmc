@@ -23,6 +23,7 @@ public final class LibCDetector {
     private static final Path PROC_SELF_MAPS = Path.of("/proc/self/maps");
     private static final Path SHELL = Path.of("/bin/sh");
     private static final Path LIB = Path.of("/lib");
+    private static final Path LIB64 = Path.of("/lib64");
     private static final int PT_INTERP = 3;
     private static final int MAX_INTERPRETER_LENGTH = 4096;
 
@@ -74,6 +75,18 @@ public final class LibCDetector {
         }
 
         return result;
+    }
+
+    /**
+     * Checks whether a glibc dynamic loader is installed at the path that executables built for
+     * common glibc distributions hard-code, e.g. {@code /lib64/ld-linux-x86-64.so.2}.
+     * NixOS and Guix use glibc, but keep their loader in the store,
+     * so the Java runtimes downloaded by HeadlessMc cannot start there, unless e.g. nix-ld provides the loader.
+     *
+     * @return {@code true} if a glibc loader exists in {@code /lib64} or {@code /lib}.
+     */
+    public static boolean isGlibcLoaderInstalled() {
+        return hasFile(LIB64, "ld-linux*.so.*") || hasFile(LIB, "ld-linux*.so.*");
     }
 
     @VisibleForTesting
@@ -231,8 +244,12 @@ public final class LibCDetector {
     }
 
     private static boolean isMuslLoaderInstalled() {
-        try (DirectoryStream<Path> loaders = Files.newDirectoryStream(LIB, "ld-musl-*.so.1")) {
-            return loaders.iterator().hasNext();
+        return hasFile(LIB, "ld-musl-*.so.1");
+    }
+
+    private static boolean hasFile(Path dir, String glob) {
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(dir, glob)) {
+            return files.iterator().hasNext();
         } catch (IOException | UncheckedIOException | SecurityException e) {
             return false;
         }

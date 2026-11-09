@@ -11,6 +11,7 @@ import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.JavaConfig;
 import io.github.headlesshq.headlessmc.java.JavaService;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -47,6 +48,7 @@ public class JavaFinder {
     }
 
     private Java download(int version) {
+        warnIfDownloadCannotStart(version);
         JavaDistributionProvider provider = distributionService.getDefaultProvider();
         JavaDistribution distribution = provider.getDistributionByName(JavaDistribution.DEFAULT);
         List<JavaRuntime> runtimes = provider.getRuntimes(distribution, version, os, cpu);
@@ -68,6 +70,18 @@ public class JavaFinder {
         throw new JavaProcessException.InstallationException(
             "Failed to find java " + version + " even after installing " + path
         );
+    }
+
+    private void warnIfDownloadCannotStart(int version) {
+        if (OS.Type.LINUX.equals(os.type()) && !LibCDetector.isGlibcLoaderInstalled()) {
+            log.warn(
+                "Downloading Java {}, but this system has no glibc loader in /lib64 or /lib, e.g. on NixOS or Guix,"
+                    + " so the downloaded Java will probably not start."
+                    + " Install a Java of your distribution, e.g. the jdk package of nixpkgs,"
+                    + " set hmc.java.versions to its Java home, or enable programs.nix-ld on NixOS.",
+                version
+            );
+        }
     }
 
 }

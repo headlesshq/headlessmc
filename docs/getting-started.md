@@ -109,12 +109,26 @@ To update HeadlessMc, install the package of the new release.
 It does not need any library or dynamic loader of the system, so it runs on every x64 Linux, e.g.
 
 * musl based distributions, like Alpine Linux, Void Linux (musl) or Chimera Linux,
-* NixOS and Guix, which have no `/lib64/ld-linux-x86-64.so.2`,
+* NixOS and Guix, which have no `/lib64/ld-linux-x86-64.so.2` (Minecraft needs a Java of the system there, see below),
 * distributions with a glibc older than 2.34, like RHEL 8, Debian 11 or Ubuntu 20.04.
 
 The install script picks it automatically on these systems, set `HEADLESSMC_MUSL=1` to always install it.
 The updater keeps using the musl executable once it is installed.
 There is no musl executable for ARM64 yet, use the `headlessmc.jar` there.
+
+On NixOS and Guix the launcher itself runs, but Minecraft needs a Java that runs there, too.
+NixOS and Guix use glibc, so HeadlessMc would download glibc Java runtimes,
+and those expect the loader at `/lib64/ld-linux-x86-64.so.2`, which does not exist there.
+Either install a Java of your system, e.g. the `jdk` package of nixpkgs or `openjdk` of Guix.
+HeadlessMc finds Java installed into the system profile or your user profile
+(`/run/current-system/sw`, `/etc/profiles/per-user/$USER`, `~/.nix-profile`, `~/.guix-profile`, ...).
+Any other Java can be added via its Java home:
+``` sh
+config set hmc.java.versions /path/to/jdk
+```
+Or enable [nix-ld](https://github.com/nix-community/nix-ld) with `programs.nix-ld.enable = true;` on NixOS,
+which provides the loader, so that the downloaded Java runtimes start.
+HeadlessMc warns before it downloads a Java runtime on a system without a glibc loader.
 
 On musl systems HeadlessMc downloads Java runtimes built against musl.
 Minecraft itself ships natives, e.g. of LWJGL, that are only built against glibc.
