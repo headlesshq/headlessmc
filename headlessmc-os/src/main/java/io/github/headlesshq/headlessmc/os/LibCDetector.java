@@ -25,6 +25,13 @@ public final class LibCDetector {
     private static final int PT_INTERP = 3;
     private static final int MAX_INTERPRETER_LENGTH = 4096;
 
+    /*
+     * Computed lazily at run time instead of in a static initializer,
+     * so that a native image never contains the C library of the machine it has been built on.
+     */
+    private static volatile @Nullable LibC system;
+    private static volatile @Nullable LibC process;
+
     private LibCDetector() {
         throw new AssertionError();
     }
@@ -35,22 +42,37 @@ public final class LibCDetector {
      * otherwise the dynamic loader of {@code /bin/sh}, which is the loader of the C library of the system.
      * If {@code /bin/sh} is statically linked, too, the system is considered musl based if a musl loader is installed.
      *
+     * The result is cached, because the C library cannot change while the process runs.
+     *
      * @return the C library of the system, {@link LibC#UNKNOWN} if it cannot be detected, e.g. on other systems.
      */
     public static LibC detectSystem() {
-        return detectSystem(readMaps(), readInterpreterOrNull(SHELL), isMuslLoaderInstalled());
+        LibC result = system;
+        if (result == null) {
+            result = detectSystem(readMaps(), readInterpreterOrNull(SHELL), isMuslLoaderInstalled());
+            system = result;
+        }
+
+        return result;
     }
 
     /**
      * Detects the C library the running process uses.
      * A process that maps no C library is a fully static executable,
      * which GraalVM can only build against musl.
+     * The result is cached, because the C library cannot change while the process runs.
      *
      * @return the C library of the running process, {@link LibC#UNKNOWN} if it cannot be detected,
      * e.g. on other systems than Linux.
      */
     public static LibC detectProcess() {
-        return detectProcess(readMaps());
+        LibC result = process;
+        if (result == null) {
+            result = detectProcess(readMaps());
+            process = result;
+        }
+
+        return result;
     }
 
     @VisibleForTesting

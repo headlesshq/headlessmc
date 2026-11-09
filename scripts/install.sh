@@ -41,7 +41,13 @@ main() {
   trap 'rm -f "$tmp"; exit 130' INT TERM
 
   say "Downloading $url"
-  download "$url" "$tmp"
+  if ! download "$url" "$tmp"; then
+    if [ -n "$variant" ]; then
+      # releases up to 3.0.0-RC8 have no static musl executable
+      unsupported "$static_reason in release ${HEADLESSMC_VERSION:-latest}, the download of $asset failed"
+    fi
+    err "download of $url failed"
+  fi
   chmod +x "$tmp"
   mv -f "$tmp" "$dir/$NAME"
   say "Installed $NAME to $dir/$NAME"
@@ -155,15 +161,18 @@ detect_platform() {
     static_reason=""
     if [ -n "${HEADLESSMC_MUSL:-}" ]; then
       static_reason="HEADLESSMC_MUSL"
-    elif ldd --version 2>&1 | grep -qi musl || ls /lib/ld-musl-* >/dev/null 2>&1; then
+    elif ldd --version 2>&1 | grep -qi musl; then
       static_reason="musl libc (e.g. Alpine Linux)"
-    elif [ ! -e "$(glibc_loader)" ]; then
-      static_reason="a system without $(glibc_loader) (e.g. NixOS)"
-    else
+    elif [ -e "$(glibc_loader)" ]; then
       glibc="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{ print $2 }' || true)"
       if [ -n "$glibc" ] && version_lt "$glibc" "$MIN_GLIBC"; then
         static_reason="glibc $glibc, the glibc executable needs glibc $MIN_GLIBC or newer"
       fi
+    # glibc distributions can install the musl package, which also adds /lib/ld-musl-*, so check this after glibc
+    elif ls /lib/ld-musl-* >/dev/null 2>&1; then
+      static_reason="musl libc (e.g. Alpine Linux)"
+    else
+      static_reason="a system without $(glibc_loader) (e.g. NixOS)"
     fi
     if [ -n "$static_reason" ]; then
       [ "$arch" = x64 ] || unsupported "$static_reason on $arch"
@@ -196,9 +205,9 @@ version_lt() {
 
 download() {
   if command -v curl >/dev/null 2>&1; then
-    curl -fL --proto '=https' --tlsv1.2 --retry 3 --retry-delay 2 --progress-bar -o "$2" "$1" || err "download of $1 failed"
+    curl -fL --proto '=https' --tlsv1.2 --retry 3 --retry-delay 2 --progress-bar -o "$2" "$1"
   elif command -v wget >/dev/null 2>&1; then
-    wget -q -O "$2" "$1" || err "download of $1 failed"
+    wget -q -O "$2" "$1"
   else
     err "curl or wget is required to download HeadlessMc"
   fi
