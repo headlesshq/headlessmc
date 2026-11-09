@@ -1,6 +1,8 @@
 {
   "name": "headlessmc",
-  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "25",
@@ -24,7 +26,7 @@
   "remoteEnv": {
     "PATH": "${containerEnv:PATH}:/opt/graalvm-25/bin"
   },
-  "onCreateCommand": "bash .devcontainer/on-create.sh",
+  "onCreateCommand": "sudo chown \"$(id -u):$(id -g)\" \"$GRADLE_USER_HOME\"",
   "postCreateCommand": "./gradlew --version",
   "customizations": {
     "vscode": {

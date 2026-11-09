@@ -79,6 +79,18 @@
       semanticCommitScope: 'deps',
     },
     {
+      // the devcontainer only affects development, so its updates must not trigger a release
+      matchManagers: [
+        'dockerfile',
+        'devcontainer',
+      ],
+      matchFileNames: [
+        '.devcontainer/**',
+      ],
+      semanticCommitType: 'build',
+      semanticCommitScope: 'deps',
+    },
+    {
       matchManagers: [
         'github-actions',
       ],
