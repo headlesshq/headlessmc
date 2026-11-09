@@ -121,7 +121,8 @@ NixOS and Guix use glibc, so HeadlessMc would download glibc Java runtimes,
 and those expect the loader at `/lib64/ld-linux-x86-64.so.2`, which does not exist there.
 Either install a Java of your system, e.g. the `jdk` package of nixpkgs or `openjdk` of Guix.
 HeadlessMc finds Java installed into the system profile or your user profile
-(`/run/current-system/sw`, `/etc/profiles/per-user/$USER`, `~/.nix-profile`, `~/.guix-profile`, ...).
+(`/run/current-system/sw`, `/etc/profiles/per-user/$USER`, `~/.nix-profile`, `~/.guix-profile`, ...)
+and the Java in `JAVA_HOME` or on the `PATH`, e.g. in `nix shell nixpkgs#jdk`, `nix-shell -p jdk`, a dev shell or with direnv.
 Any other Java can be added via its Java home:
 ``` sh
 config set hmc.java.versions /path/to/jdk

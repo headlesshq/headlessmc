@@ -15,9 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,12 +120,52 @@ public class JavaSourcesTest {
         }
 
         LinuxJavaSource source = new LinuxJavaSource(javaScannerService, new OS("linux", OS.Type.LINUX, "6.0"));
-        List<Java> javas = source.scanProfiles(List.of(systemProfile, userProfile, dir.resolve("missing")));
+        List<Java> javas = source.scanExecutables(
+            Stream.of(systemProfile, userProfile, dir.resolve("missing")).map(p -> p.resolve("bin").resolve("java")).toList(),
+            Set.of()
+        );
 
         assertEquals(1, javas.size());
         assertEquals(21, javas.getFirst().version());
         assertEquals(jdk.toRealPath(), javas.getFirst().home().getUnchecked().orElseThrow());
         assertEquals(JavaSource.SORT_GENERAL, javas.getFirst().source());
+    }
+
+    @Test
+    @DisabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
+    public void linuxSourceResolvesJavaHomeAndPath(@TempDir Path dir) throws Exception {
+        Path shellJdk = FakeJdks.create(dir.resolve("nix/store/abc-openjdk-21/lib/openjdk"), 21);
+        Path systemJdk = FakeJdks.create(dir.resolve("usr/lib/jvm/java-17"), 17);
+        Path shellBin = dir.resolve("nix/store/abc-openjdk-21/bin");
+        Files.createDirectories(shellBin);
+        Files.createSymbolicLink(shellBin.resolve("java"), shellJdk.resolve("bin").resolve("java"));
+        Path usrBin = dir.resolve("usr/bin");
+        Files.createDirectories(usrBin);
+        Files.createSymbolicLink(usrBin.resolve("java"), systemJdk.resolve("bin").resolve("java"));
+
+        List<Path> executables = LinuxJavaSource.environmentExecutables(
+            shellJdk.toString(),
+            String.join(File.pathSeparator, shellBin.toString(), "", dir.resolve("missing").toString(), usrBin.toString())
+        );
+        assertEquals(List.of(
+            shellJdk.resolve("bin").resolve("java"),
+            shellBin.resolve("java"),
+            dir.resolve("missing").resolve("java"),
+            usrBin.resolve("java")
+        ), executables);
+
+        LinuxJavaSource source = new LinuxJavaSource(javaScannerService, new OS("linux", OS.Type.LINUX_MUSL, "6.0"));
+        List<Java> javas = source.scanExecutables(executables, Set.of(systemJdk.toRealPath()));
+
+        assertEquals(1, javas.size());
+        assertEquals(21, javas.getFirst().version());
+        assertEquals(shellJdk.toRealPath(), javas.getFirst().home().getUnchecked().orElseThrow());
+    }
+
+    @Test
+    public void linuxSourceIgnoresMissingEnvironment() {
+        assertTrue(LinuxJavaSource.environmentExecutables(null, null).isEmpty());
+        assertTrue(LinuxJavaSource.environmentExecutables(" ", "").isEmpty());
     }
 
     @Test
