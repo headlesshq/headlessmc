@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.java.distribution.foojay;
 
 import eu.hansolo.jdktools.HashAlgorithm;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.jspecify.annotations.Nullable;
 
 import java.security.MessageDigest;
@@ -27,6 +28,7 @@ import java.security.MessageDigest;
  * @param archive_type
  * @param operating_system
  */
+@RegisterForReflection
 record PkgInfo(
     @Nullable String direct_download_uri,
     @Nullable String checksum,

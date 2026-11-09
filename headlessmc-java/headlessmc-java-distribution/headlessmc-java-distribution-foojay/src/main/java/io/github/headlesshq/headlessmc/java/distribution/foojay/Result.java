@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.java.distribution.foojay;
 
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.ws.rs.core.Response;
 import org.jspecify.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import org.jspecify.annotations.Nullable;
  * @param result the wrapped result.
  * @param <T>    the type of the wrapped result.
  */
+@RegisterForReflection
 record Result<T>(@Nullable T result) {
     /**
      * Checks if the result is non-null and throws an {@link ApiException} otherwise.

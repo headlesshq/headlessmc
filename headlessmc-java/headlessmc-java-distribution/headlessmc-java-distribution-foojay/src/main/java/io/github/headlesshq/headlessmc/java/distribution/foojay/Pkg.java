@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.java.distribution.foojay;
 
 import io.github.headlesshq.headlessmc.distribution.JavaRuntime;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -49,6 +50,7 @@ import org.jspecify.annotations.Nullable;
  * @param java_version the full java version of the package, e.g. 25+36.
  * @param package_type the type of the package, e.g. jre or jdk.
  */
+@RegisterForReflection
 record Pkg(
     String id,
     String filename,

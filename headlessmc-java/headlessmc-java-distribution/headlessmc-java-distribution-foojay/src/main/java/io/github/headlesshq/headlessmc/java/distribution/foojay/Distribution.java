@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.java.distribution.foojay;
 
 import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * A distribution JSON object returned by the foojay disco API.
@@ -31,6 +32,7 @@ import io.github.headlesshq.headlessmc.distribution.JavaDistribution;
  * @param name          human-readable name of the Distribution.
  * @param api_parameter string for discovery in the API.
  */
+@RegisterForReflection
 record Distribution(String name, String api_parameter) {
     public JavaDistribution toJavaDistribution(String provider) {
         return new JavaDistribution(provider, name(), api_parameter());
