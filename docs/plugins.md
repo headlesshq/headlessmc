@@ -14,11 +14,12 @@ where you can also submit your own plugin.
 
 ```
 > plugin search quilt
-id      name    version   authors      description                                   installed
-quilt   Quilt   1.0.0     headlesshq   Adds the Quilt mod loader as a platform.
+id      name    version   authors      description                                                    installed
+quilt   Quilt   1.0.0     HeadlessHQ   Adds the Quilt platform to HeadlessMc: launching Quilt cl...
+Use 'plugin download <id>' to install a plugin.
 > plugin download quilt
 Downloaded Quilt 1.0.0 to /home/user/.local/share/headlessmc/plugins/quilt-1.0.0.jar.
-The plugin will be loaded the next time HeadlessMc starts, ...
+The plugin will be loaded the next time HeadlessMc starts, which rebuilds HeadlessMc with the installed plugins once, this takes a few seconds.
 ```
 
 `plugin search [query...]` lists the plugins whose id, name, description or authors contain all words of the query,
