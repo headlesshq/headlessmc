@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LibCDetectorTest {
+    private final LibCDetector detector = new LibCDetector();
+
     private static final String GLIBC_MAPS = """
         5581c6a00000-5581c6a02000 r--p 00000000 103:02 1234 /usr/bin/java
         7f2b1c000000-7f2b1c028000 r--p 00000000 103:02 5678 /usr/lib/x86_64-linux-gnu/libc.so.6
@@ -34,70 +36,70 @@ public class LibCDetectorTest {
 
     @Test
     public void testFromMaps() {
-        assertEquals(LibC.GLIBC, LibCDetector.fromMaps(GLIBC_MAPS));
-        assertEquals(LibC.MUSL, LibCDetector.fromMaps(MUSL_MAPS));
-        assertEquals(LibC.UNKNOWN, LibCDetector.fromMaps(STATIC_MAPS));
-        assertEquals(LibC.UNKNOWN, LibCDetector.fromMaps(""));
+        assertEquals(LibC.GLIBC, detector.fromMaps(GLIBC_MAPS));
+        assertEquals(LibC.MUSL, detector.fromMaps(MUSL_MAPS));
+        assertEquals(LibC.UNKNOWN, detector.fromMaps(STATIC_MAPS));
+        assertEquals(LibC.UNKNOWN, detector.fromMaps(""));
     }
 
     @Test
     public void testFromLoader() {
-        assertEquals(LibC.MUSL, LibCDetector.fromLoader("/lib/ld-musl-x86_64.so.1"));
-        assertEquals(LibC.MUSL, LibCDetector.fromLoader("/lib/ld-musl-aarch64.so.1"));
-        assertEquals(LibC.GLIBC, LibCDetector.fromLoader("/lib64/ld-linux-x86-64.so.2"));
-        assertEquals(LibC.GLIBC, LibCDetector.fromLoader("/lib/ld-linux-aarch64.so.1"));
-        assertEquals(LibC.GLIBC, LibCDetector.fromLoader("/lib/ld-linux.so.2"));
-        assertEquals(LibC.GLIBC, LibCDetector.fromLoader("/lib64/ld64.so.2"));
-        assertEquals(LibC.GLIBC, LibCDetector.fromLoader("/nix/store/abc-glibc-2.40-66/lib/ld-linux-x86-64.so.2"));
-        assertEquals(LibC.UNKNOWN, LibCDetector.fromLoader("/system/bin/linker64"));
+        assertEquals(LibC.MUSL, detector.fromLoader("/lib/ld-musl-x86_64.so.1"));
+        assertEquals(LibC.MUSL, detector.fromLoader("/lib/ld-musl-aarch64.so.1"));
+        assertEquals(LibC.GLIBC, detector.fromLoader("/lib64/ld-linux-x86-64.so.2"));
+        assertEquals(LibC.GLIBC, detector.fromLoader("/lib/ld-linux-aarch64.so.1"));
+        assertEquals(LibC.GLIBC, detector.fromLoader("/lib/ld-linux.so.2"));
+        assertEquals(LibC.GLIBC, detector.fromLoader("/lib64/ld64.so.2"));
+        assertEquals(LibC.GLIBC, detector.fromLoader("/nix/store/abc-glibc-2.40-66/lib/ld-linux-x86-64.so.2"));
+        assertEquals(LibC.UNKNOWN, detector.fromLoader("/system/bin/linker64"));
     }
 
     @Test
     public void testDetectProcess() {
-        assertEquals(LibC.GLIBC, LibCDetector.detectProcess(GLIBC_MAPS));
-        assertEquals(LibC.MUSL, LibCDetector.detectProcess(MUSL_MAPS));
-        assertEquals(LibC.MUSL, LibCDetector.detectProcess(STATIC_MAPS));
-        assertEquals(LibC.UNKNOWN, LibCDetector.detectProcess(null));
-        assertEquals(LibC.UNKNOWN, LibCDetector.detectProcess(""));
+        assertEquals(LibC.GLIBC, detector.detectProcess(GLIBC_MAPS));
+        assertEquals(LibC.MUSL, detector.detectProcess(MUSL_MAPS));
+        assertEquals(LibC.MUSL, detector.detectProcess(STATIC_MAPS));
+        assertEquals(LibC.UNKNOWN, detector.detectProcess(null));
+        assertEquals(LibC.UNKNOWN, detector.detectProcess(""));
     }
 
     @Test
     public void testDetectSystem() {
-        assertEquals(LibC.GLIBC, LibCDetector.detectSystem(GLIBC_MAPS, "/lib/ld-musl-x86_64.so.1", true));
-        assertEquals(LibC.MUSL, LibCDetector.detectSystem(MUSL_MAPS, null, false));
-        assertEquals(LibC.GLIBC, LibCDetector.detectSystem(STATIC_MAPS, "/nix/store/abc-glibc/lib/ld-linux-x86-64.so.2", false));
-        assertEquals(LibC.MUSL, LibCDetector.detectSystem(STATIC_MAPS, "/lib/ld-musl-x86_64.so.1", false));
-        assertEquals(LibC.MUSL, LibCDetector.detectSystem(STATIC_MAPS, null, true));
-        assertEquals(LibC.UNKNOWN, LibCDetector.detectSystem(STATIC_MAPS, null, false));
-        assertEquals(LibC.UNKNOWN, LibCDetector.detectSystem(null, null, false));
+        assertEquals(LibC.GLIBC, detector.detectSystem(GLIBC_MAPS, "/lib/ld-musl-x86_64.so.1", true));
+        assertEquals(LibC.MUSL, detector.detectSystem(MUSL_MAPS, null, false));
+        assertEquals(LibC.GLIBC, detector.detectSystem(STATIC_MAPS, "/nix/store/abc-glibc/lib/ld-linux-x86-64.so.2", false));
+        assertEquals(LibC.MUSL, detector.detectSystem(STATIC_MAPS, "/lib/ld-musl-x86_64.so.1", false));
+        assertEquals(LibC.MUSL, detector.detectSystem(STATIC_MAPS, null, true));
+        assertEquals(LibC.UNKNOWN, detector.detectSystem(STATIC_MAPS, null, false));
+        assertEquals(LibC.UNKNOWN, detector.detectSystem(null, null, false));
     }
 
     @Test
     public void testReadInterpreter64BitLittleEndian(@TempDir Path dir) throws IOException {
         Path elf = dir.resolve("elf64");
         Files.write(elf, elf(true, ByteOrder.LITTLE_ENDIAN, "/lib/ld-musl-x86_64.so.1"));
-        assertEquals("/lib/ld-musl-x86_64.so.1", LibCDetector.readInterpreter(elf));
+        assertEquals("/lib/ld-musl-x86_64.so.1", detector.readInterpreter(elf));
     }
 
     @Test
     public void testReadInterpreter32BitBigEndian(@TempDir Path dir) throws IOException {
         Path elf = dir.resolve("elf32");
         Files.write(elf, elf(false, ByteOrder.BIG_ENDIAN, "/lib/ld.so.1"));
-        assertEquals("/lib/ld.so.1", LibCDetector.readInterpreter(elf));
+        assertEquals("/lib/ld.so.1", detector.readInterpreter(elf));
     }
 
     @Test
     public void testReadInterpreterStatic(@TempDir Path dir) throws IOException {
         Path elf = dir.resolve("static");
         Files.write(elf, elf(true, ByteOrder.LITTLE_ENDIAN, null));
-        assertNull(LibCDetector.readInterpreter(elf));
+        assertNull(detector.readInterpreter(elf));
     }
 
     @Test
     public void testReadInterpreterNoElf(@TempDir Path dir) throws IOException {
         Path script = dir.resolve("script");
         Files.writeString(script, "#!/bin/sh\necho this is not an ELF file\n");
-        assertThrows(IOException.class, () -> LibCDetector.readInterpreter(script));
+        assertThrows(IOException.class, () -> detector.readInterpreter(script));
     }
 
     /**

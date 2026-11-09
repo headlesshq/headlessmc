@@ -30,6 +30,7 @@ public class MuslClientSupport {
     static final String LWJGL_ALLOCATOR = "org.lwjgl.system.allocator";
 
     private final OS os;
+    private final LibCDetector libCDetector;
 
     /**
      * Logs a warning if the given profile launches the client with a window on a musl system without a glibc loader.
@@ -37,7 +38,7 @@ public class MuslClientSupport {
      * @param profile the profile that is launched.
      */
     public void warnIfGlibcLoaderMissing(Profile profile) {
-        if (isGlibcLoaderMissing(os.type(), profile.patchers(), LibCDetector::isGlibcLoaderInstalled)) {
+        if (isGlibcLoaderMissing(os.type(), profile.patchers(), libCDetector::isGlibcLoaderInstalled)) {
             log.warn(
                 "Launching {} with a window on a musl system without a glibc loader."
                     + " The LWJGL natives of Minecraft are built against glibc and will probably fail to load."

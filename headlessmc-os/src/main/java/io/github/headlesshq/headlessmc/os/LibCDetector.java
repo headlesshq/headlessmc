@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.os;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 
@@ -19,7 +20,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Detects the {@link LibC} of the Linux system and of the running process.
  * Both can differ, e.g. the fully static musl executable of HeadlessMc does not use the C library of the system.
  */
-public final class LibCDetector {
+@ApplicationScoped
+public class LibCDetector {
     private static final Path PROC_SELF_MAPS = Path.of("/proc/self/maps");
     private static final Path SHELL = Path.of("/bin/sh");
     private static final Path LIB = Path.of("/lib");
@@ -30,16 +32,8 @@ public final class LibCDetector {
     private static final int PT_INTERP = 3;
     private static final int MAX_INTERPRETER_LENGTH = 4096;
 
-    /*
-     * Computed lazily at run time instead of in a static initializer,
-     * so that a native image never contains the C library of the machine it has been built on.
-     */
-    private static final AtomicReference<@Nullable LibC> SYSTEM = new AtomicReference<>();
-    private static final AtomicReference<@Nullable LibC> PROCESS = new AtomicReference<>();
-
-    private LibCDetector() {
-        throw new AssertionError();
-    }
+    private final AtomicReference<@Nullable LibC> system = new AtomicReference<>();
+    private final AtomicReference<@Nullable LibC> process = new AtomicReference<>();
 
     /**
      * Detects the C library of the Linux system, which e.g. Java runtimes have to be built against.
@@ -51,11 +45,11 @@ public final class LibCDetector {
      *
      * @return the C library of the system, {@link LibC#UNKNOWN} if it cannot be detected, e.g. on other systems.
      */
-    public static LibC detectSystem() {
-        LibC result = SYSTEM.get();
+    public LibC detectSystem() {
+        LibC result = system.get();
         if (result == null) {
             result = detectSystem(readMaps(), readInterpreterOrNull(SHELL), isMuslLoaderInstalled());
-            SYSTEM.set(result);
+            system.set(result);
         }
 
         return result;
@@ -70,11 +64,11 @@ public final class LibCDetector {
      * @return the C library of the running process, {@link LibC#UNKNOWN} if it cannot be detected,
      * e.g. on other systems than Linux.
      */
-    public static LibC detectProcess() {
-        LibC result = PROCESS.get();
+    public LibC detectProcess() {
+        LibC result = process.get();
         if (result == null) {
             result = detectProcess(readMaps());
-            PROCESS.set(result);
+            process.set(result);
         }
 
         return result;
@@ -88,12 +82,12 @@ public final class LibCDetector {
      *
      * @return {@code true} if a glibc loader exists in {@code /lib64} or {@code /lib}.
      */
-    public static boolean isGlibcLoaderInstalled() {
+    public boolean isGlibcLoaderInstalled() {
         return hasFile(LIB64, "ld-linux*.so.*") || hasFile(LIB, "ld-linux*.so.*");
     }
 
     @VisibleForTesting
-    static LibC detectSystem(@Nullable String maps, @Nullable String shellInterpreter, boolean muslLoaderInstalled) {
+    LibC detectSystem(@Nullable String maps, @Nullable String shellInterpreter, boolean muslLoaderInstalled) {
         LibC mapped = maps == null ? LibC.UNKNOWN : fromMaps(maps);
         if (mapped != LibC.UNKNOWN) {
             return mapped;
@@ -108,7 +102,7 @@ public final class LibCDetector {
     }
 
     @VisibleForTesting
-    static LibC detectProcess(@Nullable String maps) {
+    LibC detectProcess(@Nullable String maps) {
         if (maps == null || maps.isBlank()) {
             return LibC.UNKNOWN;
         }
@@ -125,7 +119,7 @@ public final class LibCDetector {
      * @return the C library mapped by the process, or {@link LibC#UNKNOWN} if it maps none.
      */
     @VisibleForTesting
-    static LibC fromMaps(String maps) {
+    LibC fromMaps(String maps) {
         boolean glibc = false;
         for (String line : maps.split("\n")) {
             int path = line.indexOf('/');
@@ -153,7 +147,7 @@ public final class LibCDetector {
      * @return the C library the loader belongs to, or {@link LibC#UNKNOWN}.
      */
     @VisibleForTesting
-    static LibC fromLoader(String loader) {
+    LibC fromLoader(String loader) {
         String fileName = fileName(loader.strip());
         if (isMuslLoader(fileName)) {
             return LibC.MUSL;
@@ -170,7 +164,7 @@ public final class LibCDetector {
      * @throws IOException if the file cannot be read or is not an ELF file.
      */
     @VisibleForTesting
-    static @Nullable String readInterpreter(Path elf) throws IOException {
+    @Nullable String readInterpreter(Path elf) throws IOException {
         try (FileChannel channel = FileChannel.open(elf, StandardOpenOption.READ)) {
             ByteBuffer ident = read(channel, 0, 16);
             if (ident.getInt(0) != ELF_MAGIC) {
@@ -194,7 +188,7 @@ public final class LibCDetector {
         }
     }
 
-    private static String readInterpreter(Path elf, FileChannel channel, ByteBuffer entry, boolean is64)
+    private String readInterpreter(Path elf, FileChannel channel, ByteBuffer entry, boolean is64)
             throws IOException {
         long offset = is64 ? entry.getLong(0x08) : Integer.toUnsignedLong(entry.getInt(0x04));
         long size = is64 ? entry.getLong(0x20) : Integer.toUnsignedLong(entry.getInt(0x10));
@@ -208,7 +202,7 @@ public final class LibCDetector {
         return terminator < 0 ? result : result.substring(0, terminator);
     }
 
-    private static ByteBuffer read(FileChannel channel, long position, int length) throws IOException {
+    private ByteBuffer read(FileChannel channel, long position, int length) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(length);
         while (buffer.hasRemaining()) {
             if (channel.read(buffer, position + buffer.position()) < 0) {
@@ -219,21 +213,21 @@ public final class LibCDetector {
         return buffer.flip();
     }
 
-    private static boolean isMuslLoader(String fileName) {
+    private boolean isMuslLoader(String fileName) {
         return fileName.startsWith("ld-musl-");
     }
 
-    private static boolean isGlibcLoader(String fileName) {
+    private boolean isGlibcLoader(String fileName) {
         // ld-linux-x86-64.so.2, ld-linux-aarch64.so.1, ld-linux.so.2, and ld64.so.1/2 on ppc64 and s390x
         return fileName.startsWith("ld-linux") || fileName.startsWith("ld64.so.");
     }
 
-    private static String fileName(String path) {
+    private String fileName(String path) {
         int slash = path.lastIndexOf('/');
         return slash < 0 ? path : path.substring(slash + 1);
     }
 
-    private static @Nullable String readMaps() {
+    private @Nullable String readMaps() {
         try {
             return Files.readString(PROC_SELF_MAPS);
         } catch (IOException | UncheckedIOException | SecurityException e) {
@@ -241,7 +235,7 @@ public final class LibCDetector {
         }
     }
 
-    private static @Nullable String readInterpreterOrNull(Path elf) {
+    private @Nullable String readInterpreterOrNull(Path elf) {
         try {
             return readInterpreter(elf);
         } catch (IOException | SecurityException e) {
@@ -249,11 +243,11 @@ public final class LibCDetector {
         }
     }
 
-    private static boolean isMuslLoaderInstalled() {
+    private boolean isMuslLoaderInstalled() {
         return hasFile(LIB, "ld-musl-*.so.1");
     }
 
-    private static boolean hasFile(Path dir, String glob) {
+    private boolean hasFile(Path dir, String glob) {
         try (DirectoryStream<Path> files = Files.newDirectoryStream(dir, glob)) {
             return files.iterator().hasNext();
         } catch (IOException | UncheckedIOException | SecurityException e) {

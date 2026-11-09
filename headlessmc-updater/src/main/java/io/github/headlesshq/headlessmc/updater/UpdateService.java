@@ -51,6 +51,7 @@ public class UpdateService {
     private final GitHubReleaseClient client;
     private final LatestReleaseCache cache;
     private final OSService osService;
+    private final LibCDetector libCDetector;
 
     /**
      * Checks GitHub for a newer release of HeadlessMc and caches the latest release.
@@ -149,7 +150,7 @@ public class UpdateService {
 
         Installation installation = Installation.detect();
         OS.Type osType = osService.getOS().type();
-        LibC process = installation.type() == Installation.Type.NATIVE ? LibCDetector.detectProcess() : LibC.UNKNOWN;
+        LibC process = installation.type() == Installation.Type.NATIVE ? libCDetector.detectProcess() : LibC.UNKNOWN;
         String assetName = getAssetName(installation.type(), osType, osService.getCPU(), process);
         GitHubRelease.Asset asset = assetName == null ? null : release.getAsset(assetName).orElse(null);
         return Optional.of(new Update(HeadlessMc.VERSION, release, installation, asset, OS.Type.WINDOWS.equals(osType)));

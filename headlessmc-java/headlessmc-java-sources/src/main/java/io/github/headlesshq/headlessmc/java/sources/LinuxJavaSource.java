@@ -55,7 +55,7 @@ public class LinuxJavaSource implements JavaSource {
         }
 
         List<Path> executables = new ArrayList<>();
-        for (Path profile : profiles()) {
+        for (Path profile : nixAndGuixProfiles()) {
             executables.add(profile.resolve("bin").resolve("java"));
         }
 
@@ -156,7 +156,12 @@ public class LinuxJavaSource implements JavaSource {
         return homes;
     }
 
-    private static List<Path> profiles() {
+    /**
+     * Returns the system, per-user and user profiles of Nix and Guix, e.g. on NixOS or Guix System.
+     *
+     * @return the possible profile directories, they do not necessarily exist.
+     */
+    private static List<Path> nixAndGuixProfiles() {
         List<Path> profiles = new ArrayList<>();
         profiles.add(Path.of("/run/current-system/sw"));
         profiles.add(Path.of("/run/current-system/profile"));

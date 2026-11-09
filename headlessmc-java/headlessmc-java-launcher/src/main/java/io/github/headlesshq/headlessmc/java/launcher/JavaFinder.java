@@ -33,6 +33,7 @@ public class JavaFinder {
     private final AppFiles appFiles;
     private final CPU cpu;
     private final OS os;
+    private final LibCDetector libCDetector;
 
     public Java findJava(int version) {
         Optional<Java> result = javaService.getJava(version);
@@ -73,7 +74,7 @@ public class JavaFinder {
     }
 
     private void warnIfDownloadCannotStart(int version) {
-        if (OS.Type.LINUX.equals(os.type()) && !LibCDetector.isGlibcLoaderInstalled()) {
+        if (OS.Type.LINUX.equals(os.type()) && !libCDetector.isGlibcLoaderInstalled()) {
             log.warn(
                 "Downloading Java {}, but this system has no glibc loader in /lib64 or /lib, e.g. on NixOS or Guix,"
                     + " so the downloaded Java will probably not start."
