@@ -13,6 +13,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Detects the {@link LibC} of the Linux system and of the running process.
@@ -29,8 +30,8 @@ public final class LibCDetector {
      * Computed lazily at run time instead of in a static initializer,
      * so that a native image never contains the C library of the machine it has been built on.
      */
-    private static volatile @Nullable LibC system;
-    private static volatile @Nullable LibC process;
+    private static final AtomicReference<@Nullable LibC> SYSTEM = new AtomicReference<>();
+    private static final AtomicReference<@Nullable LibC> PROCESS = new AtomicReference<>();
 
     private LibCDetector() {
         throw new AssertionError();
@@ -47,10 +48,10 @@ public final class LibCDetector {
      * @return the C library of the system, {@link LibC#UNKNOWN} if it cannot be detected, e.g. on other systems.
      */
     public static LibC detectSystem() {
-        LibC result = system;
+        LibC result = SYSTEM.get();
         if (result == null) {
             result = detectSystem(readMaps(), readInterpreterOrNull(SHELL), isMuslLoaderInstalled());
-            system = result;
+            SYSTEM.set(result);
         }
 
         return result;
@@ -66,10 +67,10 @@ public final class LibCDetector {
      * e.g. on other systems than Linux.
      */
     public static LibC detectProcess() {
-        LibC result = process;
+        LibC result = PROCESS.get();
         if (result == null) {
             result = detectProcess(readMaps());
-            process = result;
+            PROCESS.set(result);
         }
 
         return result;
@@ -77,9 +78,9 @@ public final class LibCDetector {
 
     @VisibleForTesting
     static LibC detectSystem(@Nullable String maps, @Nullable String shellInterpreter, boolean muslLoaderInstalled) {
-        LibC process = maps == null ? LibC.UNKNOWN : fromMaps(maps);
-        if (process != LibC.UNKNOWN) {
-            return process;
+        LibC mapped = maps == null ? LibC.UNKNOWN : fromMaps(maps);
+        if (mapped != LibC.UNKNOWN) {
+            return mapped;
         }
 
         LibC shell = shellInterpreter == null ? LibC.UNKNOWN : fromLoader(shellInterpreter);

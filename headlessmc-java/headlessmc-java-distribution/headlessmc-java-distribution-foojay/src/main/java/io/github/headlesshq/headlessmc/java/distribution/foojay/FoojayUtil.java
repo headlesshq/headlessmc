@@ -65,7 +65,11 @@ final class FoojayUtil {
             return byType;
         }
 
-        return byName == null ? (byApiString == null ? OperatingSystem.NONE : byApiString) : byName;
+        if (byName != null) {
+            return byName;
+        }
+
+        return byApiString == null ? OperatingSystem.NONE : byApiString;
     }
 
 }
