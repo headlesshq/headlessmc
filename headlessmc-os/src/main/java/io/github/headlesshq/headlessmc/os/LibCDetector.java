@@ -24,6 +24,9 @@ public final class LibCDetector {
     private static final Path SHELL = Path.of("/bin/sh");
     private static final Path LIB = Path.of("/lib");
     private static final Path LIB64 = Path.of("/lib64");
+    private static final int ELF_MAGIC = 0x7F454C46;
+    private static final byte ELF_CLASS_64 = 2;
+    private static final byte ELF_DATA_BIG_ENDIAN = 2;
     private static final int PT_INTERP = 3;
     private static final int MAX_INTERPRETER_LENGTH = 4096;
 
@@ -170,36 +173,39 @@ public final class LibCDetector {
     static @Nullable String readInterpreter(Path elf) throws IOException {
         try (FileChannel channel = FileChannel.open(elf, StandardOpenOption.READ)) {
             ByteBuffer ident = read(channel, 0, 16);
-            if (ident.getInt(0) != 0x7F454C46) {
+            if (ident.getInt(0) != ELF_MAGIC) {
                 throw new IOException(elf + " is not an ELF file");
             }
 
-            boolean is64 = ident.get(4) == 2;
-            ByteOrder order = ident.get(5) == 2 ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+            boolean is64 = ident.get(4) == ELF_CLASS_64;
+            ByteOrder order = ident.get(5) == ELF_DATA_BIG_ENDIAN ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
             ByteBuffer header = read(channel, 0, is64 ? 64 : 52).order(order);
             long programHeaders = is64 ? header.getLong(0x20) : Integer.toUnsignedLong(header.getInt(0x1C));
             int entrySize = Short.toUnsignedInt(header.getShort(is64 ? 0x36 : 0x2A));
             int entries = Short.toUnsignedInt(header.getShort(is64 ? 0x38 : 0x2C));
             for (int i = 0; i < entries; i++) {
                 ByteBuffer entry = read(channel, programHeaders + (long) i * entrySize, entrySize).order(order);
-                if (entry.getInt(0) != PT_INTERP) {
-                    continue;
+                if (entry.getInt(0) == PT_INTERP) {
+                    return readInterpreter(elf, channel, entry, is64);
                 }
-
-                long offset = is64 ? entry.getLong(0x08) : Integer.toUnsignedLong(entry.getInt(0x04));
-                long size = is64 ? entry.getLong(0x20) : Integer.toUnsignedLong(entry.getInt(0x10));
-                if (size <= 0 || size > MAX_INTERPRETER_LENGTH) {
-                    throw new IOException("Invalid interpreter size " + size + " in " + elf);
-                }
-
-                ByteBuffer interpreter = read(channel, offset, (int) size);
-                String result = new String(interpreter.array(), StandardCharsets.UTF_8);
-                int terminator = result.indexOf('\0');
-                return terminator < 0 ? result : result.substring(0, terminator);
             }
 
             return null;
         }
+    }
+
+    private static String readInterpreter(Path elf, FileChannel channel, ByteBuffer entry, boolean is64)
+            throws IOException {
+        long offset = is64 ? entry.getLong(0x08) : Integer.toUnsignedLong(entry.getInt(0x04));
+        long size = is64 ? entry.getLong(0x20) : Integer.toUnsignedLong(entry.getInt(0x10));
+        if (size <= 0 || size > MAX_INTERPRETER_LENGTH) {
+            throw new IOException("Invalid interpreter size " + size + " in " + elf);
+        }
+
+        ByteBuffer interpreter = read(channel, offset, (int) size);
+        String result = new String(interpreter.array(), StandardCharsets.UTF_8);
+        int terminator = result.indexOf('\0');
+        return terminator < 0 ? result : result.substring(0, terminator);
     }
 
     private static ByteBuffer read(FileChannel channel, long position, int length) throws IOException {
