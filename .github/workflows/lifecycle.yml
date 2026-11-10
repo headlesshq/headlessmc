@@ -771,10 +771,24 @@ jobs:
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:latest       
 
+  integration-test:
+    name: Integration test
+    needs: [ build, build-natives ]
+    # run even if a native build on one platform failed, so it does not hide the jar results
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    permissions:
+      contents: read
+      actions: read
+    uses: headlesshq/headlessmc-integration-test/.github/workflows/test.yml@6d7f09af08a559d2fb4717e7d442c9e7b3f7c546 # main
+    with:
+      run-id: ${{ github.run_id }}
+      repository: ${{ github.repository }}
+
   merge:
     runs-on: ubuntu-latest
     if: needs.release-please.outputs.release_created == 'true'
-    needs: [release-please, build, build-natives, packages, docker-release]
+    # merge deletes the run artifacts, so it must wait for the integration tests that download them
+    needs: [release-please, build, build-natives, packages, docker-release, integration-test]
     steps:
       - name: Cleanup Docker
         uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
@@ -876,6 +890,7 @@ jobs:
       - server-test
       - docker-build
       - docker-release
+      - integration-test
       - merge
       - release
     if: >-
