@@ -120,7 +120,7 @@ public class JavaSourcesTest {
         }
 
         LinuxJavaSource source = new LinuxJavaSource(javaScannerService, new OS("linux", OS.Type.LINUX, "6.0"));
-        List<Java> javas = source.scanExecutables(
+        List<Java> javas = source.scanNixAndPathExecutables(
             Stream.of(systemProfile, userProfile, dir.resolve("missing")).map(p -> p.resolve("bin").resolve("java")).toList(),
             Set.of()
         );
@@ -155,7 +155,7 @@ public class JavaSourcesTest {
         ), executables);
 
         LinuxJavaSource source = new LinuxJavaSource(javaScannerService, new OS("linux", OS.Type.LINUX_MUSL, "6.0"));
-        List<Java> javas = source.scanExecutables(executables, Set.of(systemJdk.toRealPath()));
+        List<Java> javas = source.scanNixAndPathExecutables(executables, Set.of(systemJdk.toRealPath()));
 
         assertEquals(1, javas.size());
         assertEquals(21, javas.getFirst().version());

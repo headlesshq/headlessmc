@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.client;
 
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
 import org.junit.jupiter.api.Test;
@@ -12,39 +13,49 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MuslClientSupportTest {
+    private static MuslClientSupport support(OS.Type type, boolean glibcLoaderInstalled) {
+        return new MuslClientSupport(new OS("Linux", type, "6.12"), new LibCDetector() {
+            @Override
+            public boolean isGlibcLoaderInstalled() {
+                return glibcLoaderInstalled;
+            }
+        });
+    }
+
     @Test
     void testGlibcLoaderMissingOnMuslWithWindow() {
-        assertTrue(MuslClientSupport.isGlibcLoaderMissing(OS.Type.LINUX_MUSL, List.of(Patcher.LOG4J), () -> false));
+        assertTrue(support(OS.Type.LINUX_MUSL, false).isGlibcLoaderMissing(List.of(Patcher.LOG4J)));
     }
 
     @Test
     void testGlibcLoaderNotMissingWithLoader() {
-        assertFalse(MuslClientSupport.isGlibcLoaderMissing(OS.Type.LINUX_MUSL, List.of(), () -> true));
+        assertFalse(support(OS.Type.LINUX_MUSL, true).isGlibcLoaderMissing(List.of()));
     }
 
     @Test
     void testGlibcLoaderNotNeededWhenHeadless() {
-        assertFalse(MuslClientSupport.isGlibcLoaderMissing(OS.Type.LINUX_MUSL, List.of(Patcher.LWJGL), () -> false));
-        assertFalse(MuslClientSupport.isGlibcLoaderMissing(OS.Type.LINUX_MUSL, List.of(Patcher.LWJGL_PRE), () -> false));
+        MuslClientSupport support = support(OS.Type.LINUX_MUSL, false);
+        assertFalse(support.isGlibcLoaderMissing(List.of(Patcher.LWJGL)));
+        assertFalse(support.isGlibcLoaderMissing(List.of(Patcher.LWJGL_PRE)));
     }
 
     @Test
     void testGlibcLoaderNotNeededOnGlibc() {
-        assertFalse(MuslClientSupport.isGlibcLoaderMissing(OS.Type.LINUX, List.of(), () -> false));
+        assertFalse(support(OS.Type.LINUX, false).isGlibcLoaderMissing(List.of()));
     }
 
     @Test
     void testSystemAllocatorOnMuslWithWindow() {
         assertEquals(
             Map.of(MuslClientSupport.LWJGL_ALLOCATOR, "system"),
-            MuslClientSupport.getSystemProperties(OS.Type.LINUX_MUSL, List.of(Patcher.LOG4J))
+            support(OS.Type.LINUX_MUSL, true).getSystemProperties(List.of(Patcher.LOG4J))
         );
     }
 
     @Test
     void testNoSystemPropertiesWhenHeadlessOrOnGlibc() {
-        assertEquals(Map.of(), MuslClientSupport.getSystemProperties(OS.Type.LINUX_MUSL, List.of(Patcher.LWJGL)));
-        assertEquals(Map.of(), MuslClientSupport.getSystemProperties(OS.Type.LINUX, List.of()));
+        assertEquals(Map.of(), support(OS.Type.LINUX_MUSL, true).getSystemProperties(List.of(Patcher.LWJGL)));
+        assertEquals(Map.of(), support(OS.Type.LINUX, true).getSystemProperties(List.of()));
     }
 
 }

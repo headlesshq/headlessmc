@@ -60,7 +60,7 @@ public class LinuxJavaSource implements JavaSource {
         }
 
         executables.addAll(environmentExecutables(System.getenv("JAVA_HOME"), System.getenv("PATH")));
-        result.addAll(scanExecutables(executables, realHomes(result)));
+        result.addAll(scanNixAndPathExecutables(executables, realHomes(result)));
         return result;
     }
 
@@ -79,7 +79,7 @@ public class LinuxJavaSource implements JavaSource {
      * @param knownHomes  the real paths of Java homes that have already been found, these are skipped.
      * @return the Java installations found for the given executables.
      */
-    List<Java> scanExecutables(List<Path> executables, Set<Path> knownHomes) {
+    List<Java> scanNixAndPathExecutables(List<Path> executables, Set<Path> knownHomes) {
         Set<Path> homes = new LinkedHashSet<>();
         for (Path executable : executables) {
             if (!Files.isRegularFile(executable)) {

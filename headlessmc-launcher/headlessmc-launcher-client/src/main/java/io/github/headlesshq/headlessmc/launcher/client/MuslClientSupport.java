@@ -12,7 +12,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.BooleanSupplier;
 
 /**
  * Support for launching the Minecraft client with a window on musl systems, e.g. Alpine Linux.
@@ -38,7 +37,7 @@ public class MuslClientSupport {
      * @param profile the profile that is launched.
      */
     public void warnIfGlibcLoaderMissing(Profile profile) {
-        if (isGlibcLoaderMissing(os.type(), profile.patchers(), libCDetector::isGlibcLoaderInstalled)) {
+        if (isGlibcLoaderMissing(profile.patchers())) {
             log.warn(
                 "Launching {} with a window on a musl system without a glibc loader."
                     + " The LWJGL natives of Minecraft are built against glibc and will probably fail to load."
@@ -56,12 +55,12 @@ public class MuslClientSupport {
      * otherwise nothing.
      */
     public Map<String, String> getSystemProperties(Profile profile) {
-        return getSystemProperties(os.type(), profile.patchers());
+        return getSystemProperties(profile.patchers());
     }
 
     @VisibleForTesting
-    static Map<String, String> getSystemProperties(OS.Type type, Collection<String> patchers) {
-        if (isWindowedOnMusl(type, patchers)) {
+    Map<String, String> getSystemProperties(Collection<String> patchers) {
+        if (isWindowedOnMusl(patchers)) {
             return Map.of(LWJGL_ALLOCATOR, "system");
         }
 
@@ -69,12 +68,12 @@ public class MuslClientSupport {
     }
 
     @VisibleForTesting
-    static boolean isGlibcLoaderMissing(OS.Type type, Collection<String> patchers, BooleanSupplier glibcLoaderInstalled) {
-        return isWindowedOnMusl(type, patchers) && !glibcLoaderInstalled.getAsBoolean();
+    boolean isGlibcLoaderMissing(Collection<String> patchers) {
+        return isWindowedOnMusl(patchers) && !libCDetector.isGlibcLoaderInstalled();
     }
 
-    private static boolean isWindowedOnMusl(OS.Type type, Collection<String> patchers) {
-        return OS.Type.LINUX_MUSL.equals(type)
+    private boolean isWindowedOnMusl(Collection<String> patchers) {
+        return OS.Type.LINUX_MUSL.equals(os.type())
             && !patchers.contains(Patcher.LWJGL)
             && !patchers.contains(Patcher.LWJGL_PRE);
     }
