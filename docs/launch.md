@@ -96,7 +96,9 @@ launch with `--dry-run`:
 launch --dry-run fabric 1.21.5
 ```
 This does everything a launch does right up to starting the process.
-The command fails with a non-zero exit code if any download fails.
+It also resolves the Java runtime the game would be started with,
+and downloads it if none is installed and `hmc.java.download` is enabled.
+The command fails with a non-zero exit code if any download fails or no matching Java runtime is found.
 A dry run does not need an account, and it does not create a backup.
 `profile launch` and `server launch` accept `--dry-run` too.
 

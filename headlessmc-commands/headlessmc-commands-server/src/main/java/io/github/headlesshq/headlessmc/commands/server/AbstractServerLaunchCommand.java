@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.FinalCommand;
 import io.github.headlesshq.headlessmc.console.LongRunningCommand;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
@@ -73,7 +74,7 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
 
     @CommandLine.Option(
         names = {"--dry-run"},
-        description = "Installs and downloads everything needed to launch, e.g. the jar, libraries and assets, "
+        description = "Installs and downloads everything needed to launch, e.g. the jar, libraries, assets and the Java runtime, "
             + "but stops right before the game would be started."
     )
     private boolean dryRun;
@@ -142,14 +143,16 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     }
 
     /**
-     * Launches the process of the given launcher. For a {@link #isDryRun() dry run} it returns right away,
-     * since creating the launcher has already installed and downloaded everything the process needs.
+     * Launches the process of the given launcher. Creating the launcher has already installed and downloaded
+     * everything the process needs, so a {@link #isDryRun() dry run} only resolves the Java runtime,
+     * downloading it if necessary, and returns without starting the process.
      *
      * @param launcher the launcher to launch.
      * @return the exit code of the command.
      */
     protected Integer handle(ProcessLauncher launcher) {
         if (dryRun) {
+            launcher.getJavaProcessBuilder().ifPresent(JavaProcessBuilder::resolveJava);
             log.info("Dry run: everything needed to launch {} has been downloaded, not launching.", launcher.getId());
             return 0;
         }

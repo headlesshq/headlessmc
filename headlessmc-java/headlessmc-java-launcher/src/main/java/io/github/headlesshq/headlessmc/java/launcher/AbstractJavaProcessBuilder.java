@@ -80,6 +80,19 @@ public abstract class AbstractJavaProcessBuilder implements JavaProcessBuilder {
         return this;
     }
 
+    /**
+     * Returns the {@link #java(Java) explicitly set} Java runtime.
+     * Implementations that can find a Java runtime for a {@link #version(int) version} override this.
+     */
+    @Override
+    public Java resolveJava() {
+        if (java == null) {
+            throw new JavaProcessException("No java specified");
+        }
+
+        return java;
+    }
+
     @Override
     public JavaProcessBuilder version(int javaVersion) {
         this.version = javaVersion;
