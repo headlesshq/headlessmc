@@ -783,11 +783,20 @@ jobs:
     with:
       run-id: ${{ github.run_id }}
       repository: ${{ github.repository }}
+      # run the tests from the same commit as the pinned workflow
+      ref: 6d7f09af08a559d2fb4717e7d442c9e7b3f7c546
 
   merge:
     runs-on: ubuntu-latest
-    if: needs.release-please.outputs.release_created == 'true'
-    # merge deletes the run artifacts, so it must wait for the integration tests that download them
+    # merge deletes the run artifacts, so it must wait for the integration tests that download them,
+    # but a failing integration test must not skip the release itself (only maven-central is gated on it)
+    if: >-
+      ${{ !cancelled()
+      && needs.release-please.outputs.release_created == 'true'
+      && needs.build.result == 'success'
+      && needs.build-natives.result == 'success'
+      && needs.packages.result == 'success'
+      && needs.docker-release.result == 'success' }}
     needs: [release-please, build, build-natives, packages, docker-release, integration-test]
     steps:
       - name: Cleanup Docker
