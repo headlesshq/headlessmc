@@ -150,6 +150,18 @@ class AbstractClientInstallerTest {
     }
 
     @Test
+    void forceInstallMatchesVersionRewrittenInPlace() {
+        versions.add(installedVersion);
+
+        TypedMap args = new TypedMapImpl();
+        args.put(ClientInstaller.FORCE_INSTALL, true);
+        Version result = installer.installClient(id("fabric", "1.21.1"), Path.of("mc"), args);
+
+        assertEquals(1, clientInstalls.size());
+        assertEquals(installedVersion.getId(), result.getId());
+    }
+
+    @Test
     void installerThatInstallsNothingThrows() {
         installedVersion = new FakeVersion("some-unrelated-version");
 
