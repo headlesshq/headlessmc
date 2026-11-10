@@ -246,6 +246,19 @@ class ServerLaunchCommandsTest {
         Mockito.verify(lifecycle, Mockito.times(2)).call();
     }
 
+    @Test
+    void launchNotifiesTheLifecycleBeforeLaunching() {
+        server("srv");
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        assertThrows(Launched.class, command::call);
+        Mockito.verify(lifecycleService).beforeLaunch(Mockito.argThat(profile -> profile.name().equals("srv")), Mockito.eq(true));
+
+        command.setNoBackup(true);
+        assertThrows(Launched.class, command::call);
+        Mockito.verify(lifecycleService).beforeLaunch(Mockito.argThat(profile -> profile.name().equals("srv")), Mockito.eq(false));
+    }
+
     // --------------------------------------------------------- EulaCommand
 
     private EulaCommand eulaCommand() {

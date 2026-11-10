@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.commands.mod;
 
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
@@ -92,16 +93,16 @@ class ModsTest {
     @Test
     void targetDirOfNonDatapacksIsTheGameDir() {
         Profile profile = profile("fabric");
-        assertEquals(profile.path(), Mods.targetDir(profile, Set.of(ModType.MOD), null));
-        assertEquals(profile.path(), Mods.targetDir(profile, Set.of(ModType.MOD_PACK), null));
+        assertEquals(profile.path(), Mods.targetDir(new WorldService(), profile, Set.of(ModType.MOD), null));
+        assertEquals(profile.path(), Mods.targetDir(new WorldService(), profile, Set.of(ModType.MOD_PACK), null));
     }
 
     @Test
     void targetDirOfDatapackIsInWorld() throws IOException {
         Profile profile = profile("fabric");
-        Path world = Files.createDirectories(profile.path().resolve(Worlds.SAVES).resolve("New World"));
+        Path world = Files.createDirectories(profile.path().resolve(WorldService.SAVES).resolve("New World"));
 
-        assertEquals(world.resolve(Worlds.DATAPACKS), Mods.targetDir(profile, Set.of(ModType.DATA_PACK), "New World"));
+        assertEquals(world.resolve(WorldService.DATAPACKS), Mods.targetDir(new WorldService(), profile, Set.of(ModType.DATA_PACK), "New World"));
     }
 
     @Test

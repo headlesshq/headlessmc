@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.commands.mod;
 
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.platform.Platform;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
@@ -82,18 +83,19 @@ final class Mods {
      * <p>For most mod types this is derived from the game directory, datapacks however
      * are installed into the {@code datapacks} folder of a world.
      *
-     * @param profile the profile to resolve the target directory for.
-     * @param types   the mod types to resolve the directory of.
-     * @param world   the name of the world (only used for datapacks), or {@code null}.
+     * @param worldService the service to resolve the world with.
+     * @param profile      the profile to resolve the target directory for.
+     * @param types        the mod types to resolve the directory of.
+     * @param world        the name of the world (only used for datapacks), or {@code null}.
      * @return the directory the mod type is installed to.
      */
-    static Path targetDir(Profile profile, Set<ModType> types, @Nullable String world) {
+    static Path targetDir(WorldService worldService, Profile profile, Set<ModType> types, @Nullable String world) {
         if (types.stream().anyMatch(Mods::isDatapack)) {
             if (types.size() > 1) {
                 throw new IllegalArgumentException("Cannot use multiple mod types with datapac");
             }
 
-            return types.stream().findFirst().orElseThrow().directory().getDir(Worlds.resolveWorld(profile, world));
+            return types.stream().findFirst().orElseThrow().directory().getDir(worldService.resolveWorld(profile, world));
         }
 
         return profile.path();

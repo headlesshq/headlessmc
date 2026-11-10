@@ -2,6 +2,7 @@ package io.github.headlesshq.headlessmc.launcher;
 
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.java.launcher.FakeJavaProcessManager;
 import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
 import io.github.headlesshq.headlessmc.launcher.process.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.process.McProcess;
@@ -149,7 +150,8 @@ class ProcessLifecycleTest {
             config,
             tests,
             console,
-            launcher.getGameDir()
+            launcher.getGameDir(),
+            new FakeJavaProcessManager()
         );
 
         lifecycle.setRetries(retries);

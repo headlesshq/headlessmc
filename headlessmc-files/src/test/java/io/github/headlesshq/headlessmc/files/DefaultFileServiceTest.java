@@ -238,6 +238,40 @@ public class DefaultFileServiceTest {
     }
 
     @Test
+    public void deleteEmptyParentDirsStopsAtRoot(@TempDir Path dir) throws IOException {
+        Path root = Files.createDirectories(dir.resolve("outer").resolve("root"));
+        Path nested = Files.createDirectories(root.resolve("a").resolve("b"));
+
+        service.deleteEmptyParentDirs(nested, root);
+
+        assertTrue(Files.notExists(root.resolve("a")));
+        assertTrue(Files.isDirectory(root));
+        assertTrue(Files.isDirectory(dir.resolve("outer")));
+    }
+
+    @Test
+    public void deleteEmptyParentDirsStopsAtNonEmptyParent(@TempDir Path dir) throws IOException {
+        Path keep = Files.createDirectories(dir.resolve("a"));
+        Files.writeString(keep.resolve("sibling.txt"), "content");
+        Path nested = Files.createDirectories(keep.resolve("b").resolve("c"));
+
+        service.deleteEmptyParentDirs(nested, dir);
+
+        assertTrue(Files.notExists(keep.resolve("b")));
+        assertTrue(Files.exists(keep.resolve("sibling.txt")));
+    }
+
+    @Test
+    public void deleteEmptyParentDirsIgnoresDirectoriesOutsideOfRoot(@TempDir Path dir) throws IOException {
+        Path outside = Files.createDirectories(dir.resolve("outside"));
+
+        service.deleteEmptyParentDirs(outside, dir.resolve("root"));
+        service.deleteEmptyParentDirs(null, dir);
+
+        assertTrue(Files.isDirectory(outside));
+    }
+
+    @Test
     public void reportsDefaultFileSystem() {
         assertFalse(service.fs().isVirtual());
         assertEquals(Path.of("").getFileSystem(), service.fs().getFileSystem());
