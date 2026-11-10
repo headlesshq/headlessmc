@@ -1,6 +1,6 @@
-FROM ghcr.io/graalvm/native-image-community:25.0.2 AS graal
+FROM ghcr.io/graalvm/native-image-community:25.0.2@sha256:0d936f32bb8acb5bc60c41b33e05f064d7a6aaf36b726538296c54949bd4a3c0 AS graal
 
-FROM mcr.microsoft.com/devcontainers/base:bookworm
+FROM mcr.microsoft.com/devcontainers/base:bookworm@sha256:99f5250dd2d5f8b11046d5662dd94c1e3c1dae56b560c7caad5ceb7edf349046
 
 # native-image needs a C toolchain and the zlib headers to link executables
 RUN apt-get update \
