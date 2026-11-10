@@ -108,7 +108,7 @@ public class HeadlessMcCommand implements Callable<Integer> {
                     }
 
                     int result = commandLine.execute(args);
-                    if (command instanceof FinalCommand) {
+                    if (command instanceof FinalCommand finalCommand && finalCommand.isFinal()) {
                         return result;
                     }
                 } catch (ConsoleException.Interrupted e) {

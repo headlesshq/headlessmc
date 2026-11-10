@@ -324,6 +324,15 @@ class ServerLaunchCommandsTest {
         Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
     }
 
+    @Test
+    void onlyALaunchThatIsNotADryRunIsFinal() {
+        ServerLaunchCommand command = launch();
+        assertTrue(command.isFinal());
+
+        command.setDryRun(true);
+        assertFalse(command.isFinal());
+    }
+
     // --------------------------------------------------------- EulaCommand
 
     private EulaCommand eulaCommand() {

@@ -161,4 +161,14 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
         return lifecycle.call();
     }
 
+    /**
+     * A {@link #isDryRun() dry run} does not start the game, so it does not exit the interactive HeadlessMc shell.
+     *
+     * @return {@code false} if this is a dry run.
+     */
+    @Override
+    public boolean isFinal() {
+        return !dryRun;
+    }
+
 }

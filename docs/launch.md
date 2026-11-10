@@ -100,6 +100,7 @@ It also resolves the Java runtime the game would be started with,
 and downloads it if none is installed and `hmc.java.download` is enabled.
 The command fails with a non-zero exit code if any download fails or no matching Java runtime is found.
 A dry run does not need an account, and it does not create a backup.
+A dry run does not quit the interactive HeadlessMc shell, so you can launch the game afterwards.
 `profile launch` and `server launch` accept `--dry-run` too.
 
 #### Quitting HeadlessMc
