@@ -17,12 +17,14 @@ import io.github.headlesshq.headlessmc.platform.PlatformService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.util.*;
 import java.util.concurrent.Callable;
 
+@Slf4j
 @Getter
 @Setter
 @RequiredArgsConstructor
@@ -69,6 +71,13 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     )
     private boolean noBackup;
 
+    @CommandLine.Option(
+        names = {"--dry-run"},
+        description = "Installs and downloads everything needed to launch, e.g. the jar, libraries and assets, "
+            + "but stops right before the game would be started."
+    )
+    private boolean dryRun;
+
     @Override
     public void run() {
         call();
@@ -91,11 +100,15 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
      * @param profile the profile that is about to be launched.
      */
     protected void beforeLaunch(Profile profile) {
+        if (dryRun) {
+            return;
+        }
+
         lifecycleService.beforeLaunch(profile, !noBackup);
     }
 
     protected void maybeEulaLaunch(Profile profile) {
-        if (acceptEula) {
+        if (acceptEula && !dryRun) {
             serverLauncher.getEulaLauncher().eulaLaunch(profile, serverService).ifPresent(Eula::accept);
         }
     }
@@ -128,7 +141,19 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
             .withSystemProperties(systemProperties);
     }
 
+    /**
+     * Launches the process of the given launcher. For a {@link #isDryRun() dry run} it returns right away,
+     * since creating the launcher has already installed and downloaded everything the process needs.
+     *
+     * @param launcher the launcher to launch.
+     * @return the exit code of the command.
+     */
     protected Integer handle(ProcessLauncher launcher) {
+        if (dryRun) {
+            log.info("Dry run: everything needed to launch {} has been downloaded, not launching.", launcher.getId());
+            return 0;
+        }
+
         ProcessLifecycle lifecycle = lifecycleService.wrap(launcher, retries);
         return lifecycle.call();
     }

@@ -215,8 +215,16 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         );
     }
 
+    /**
+     * The account to launch with. A {@link #isDryRun() dry run} only downloads files,
+     * so it neither needs an account nor refreshes one.
+     */
     private Account getAccount() {
         Optional<Account> account = lastUsedAccountService.getLastUsedAccount();
+        if (isDryRun()) {
+            return account.orElseGet(Account::defaultOfflineAccount);
+        }
+
         if (account.isPresent()) {
             if (offline) {
                 return account.get();

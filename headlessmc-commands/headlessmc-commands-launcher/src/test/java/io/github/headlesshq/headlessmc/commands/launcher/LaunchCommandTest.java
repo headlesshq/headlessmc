@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.commands.profile.XvfbService;
+import io.github.headlesshq.headlessmc.commands.util.ProfileVersionJsonCompletions;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
@@ -17,6 +18,8 @@ import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
 import io.github.headlesshq.headlessmc.mods.packwiz.PackwizService;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.exceptions.VerificationException;
+import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
@@ -31,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
+import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -323,6 +327,88 @@ class LaunchCommandTest {
         command.setResolution("1024x768");
 
         assertThrows(Launched.class, command::call);
+    }
+
+    @Test
+    void dryRunDownloadsButDoesNotLaunch() {
+        client("main");
+        ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
+        Mockito.doReturn(processLauncher).when(clientLauncher).launcher(Mockito.any(), Mockito.any());
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("main"));
+        command.setDryRun(true);
+
+        assertEquals(0, command.call());
+
+        Mockito.verify(clientLauncher).launcher(Mockito.argThat(profile -> profile.name().equals("main")), Mockito.eq(account));
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+        Mockito.verify(lifecycleService, Mockito.never()).beforeLaunch(Mockito.any(), Mockito.anyBoolean());
+        Mockito.verify(authService, Mockito.never()).refresh(Mockito.any());
+    }
+
+    @Test
+    void dryRunDoesNotNeedAnAccount() {
+        client("main");
+        Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.empty());
+        Mockito.doReturn(Mockito.mock(ProcessLauncher.class)).when(clientLauncher).launcher(Mockito.any(), Mockito.any());
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("main"));
+        command.setDryRun(true);
+
+        assertEquals(0, command.call());
+
+        Mockito.verify(clientLauncher).launcher(Mockito.any(), Mockito.eq(Account.defaultOfflineAccount()));
+    }
+
+    @Test
+    void dryRunOfAVersionJsonDownloadsButDoesNotLaunch() {
+        FakeVersion version = new FakeVersion("Aeromania");
+        versionJsonService.add(version);
+        Mockito.doReturn(Mockito.mock(ProcessLauncher.class))
+            .when(clientLauncher).launcher(Mockito.any(), Mockito.any(), Mockito.any());
+        LaunchCommand command = command();
+        command.setVersionArg(List.of("Aeromania"));
+        command.setDryRun(true);
+
+        assertEquals(0, command.call());
+
+        Mockito.verify(clientLauncher).launcher(Mockito.any(), Mockito.any(), Mockito.same(version));
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+    }
+
+    @Test
+    void dryRunExitsWithAnErrorIfADownloadFails() {
+        client("main");
+        Mockito.doThrow(new VerificationException("client jar has the wrong sha1"))
+            .when(clientLauncher).launcher(Mockito.any(), Mockito.any());
+        LaunchCommand command = command();
+
+        int exitCode = commandLine(command).execute("--dry-run", "main");
+
+        assertNotEquals(0, exitCode);
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+    }
+
+    @Test
+    void dryRunExitsWithZeroOnTheCommandLine() {
+        client("main");
+        Mockito.doReturn(Mockito.mock(ProcessLauncher.class)).when(clientLauncher).launcher(Mockito.any(), Mockito.any());
+
+        assertEquals(0, commandLine(command()).execute("--dry-run", "main"));
+    }
+
+    private CommandLine commandLine(LaunchCommand command) {
+        return new CommandLine(command, new CommandLine.IFactory() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <K> K create(Class<K> cls) throws Exception {
+                if (cls == ProfileVersionJsonCompletions.class) {
+                    return (K) Mockito.mock(ProfileVersionJsonCompletions.class);
+                }
+
+                return CommandLine.defaultFactory().create(cls);
+            }
+        });
     }
 
     private Path packToml(String versions) throws IOException {

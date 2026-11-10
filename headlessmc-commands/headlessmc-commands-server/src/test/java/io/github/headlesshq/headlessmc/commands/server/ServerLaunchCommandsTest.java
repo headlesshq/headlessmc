@@ -259,6 +259,35 @@ class ServerLaunchCommandsTest {
         Mockito.verify(lifecycleService).beforeLaunch(Mockito.argThat(profile -> profile.name().equals("srv")), Mockito.eq(false));
     }
 
+    @Test
+    void dryRunInstallsButDoesNotLaunch() {
+        server("srv");
+        ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
+        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setDryRun(true);
+
+        assertEquals(0, command.call());
+        Mockito.verify(serverLauncher).launcher(Mockito.argThat(profile -> profile.name().equals("srv")));
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+        Mockito.verify(lifecycleService, Mockito.never()).beforeLaunch(Mockito.any(), Mockito.anyBoolean());
+        assertEquals(List.of(), eulaLaunches);
+    }
+
+    @Test
+    void dryRunFailsIfInstallingFails() {
+        server("srv");
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setDryRun(true);
+
+        assertThrows(Launched.class, command::call);
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+    }
+
     // --------------------------------------------------------- EulaCommand
 
     private EulaCommand eulaCommand() {
