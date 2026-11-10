@@ -62,6 +62,19 @@ public class JavaSourcesTest {
     }
 
     @Test
+    public void currentSourceIsEmptyWithoutJavaHome() {
+        // a GraalVM native executable has no java.home, so it cannot run a JVM
+        String javaHome = System.getProperty("java.home");
+        try {
+            System.clearProperty("java.home");
+            CurrentJavaSource currentJavaSource = new CurrentJavaSource(versionParser, executableFinder);
+            assertEquals(List.of(), currentJavaSource.getJavas());
+        } finally {
+            System.setProperty("java.home", javaHome);
+        }
+    }
+
+    @Test
     @DisabledOnOs(value = org.junit.jupiter.api.condition.OS.WINDOWS, disabledReason = FakeJdks.WINDOWS_REASON)
     public void configSourceScansConfiguredDirs(@TempDir Path dir) throws Exception {
         Path jdk = FakeJdks.create(dir.resolve("jdk-17"), 17);

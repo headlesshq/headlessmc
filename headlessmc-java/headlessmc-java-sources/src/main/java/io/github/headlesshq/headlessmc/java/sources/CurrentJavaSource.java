@@ -28,12 +28,17 @@ public class CurrentJavaSource implements JavaSource {
     @Override
     public List<Java> getJavas() {
         String javaHome = System.getProperty("java.home");
-        Path home = javaHome == null ? null : FileSystems.getDefault().getPath(javaHome);
+        if (javaHome == null) {
+            // e.g. in a GraalVM native executable, which is not a JVM, so there is nothing to launch
+            return List.of();
+        }
+
+        Path home = FileSystems.getDefault().getPath(javaHome);
         SafePath safeHome = new SafePath(home);
         String specificationVersion = System.getProperty("java.specification.version");
         int version = specificationVersionParser.parseSpecificationVersion(specificationVersion);
         SafePath executable = safeHome.map(executableFinder::getExecutable);
-        String name = home == null ? "current" : home.getFileName().toString();
+        String name = home.getFileName() == null ? "current" : home.getFileName().toString();
 
         return List.of(new Java(name, version, safeHome, executable, true, sort()));
     }
