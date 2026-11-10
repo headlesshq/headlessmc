@@ -88,9 +88,24 @@ public class PluginBootstrap {
             return delegateUnchecked(args);
         } catch (RuntimeException e) {
             log.debug("Failed to load plugins", e);
-            log.error("Failed to load plugins: {}", e.getMessage());
+            log.error("Failed to load plugins: {}", describe(e));
             return fail(args);
         }
+    }
+
+    /**
+     * Some exceptions, e.g. the {@link io.github.headlesshq.headlessmc.exceptions.RequestException} of a failed download,
+     * have no message, which would leave the user with "Failed to load plugins: null".
+     */
+    static String describe(Throwable throwable) {
+        String message = throwable.getMessage();
+        if (message != null) {
+            return message;
+        }
+
+        String name = throwable.getClass().getSimpleName();
+        Throwable cause = throwable.getCause();
+        return cause == null || cause == throwable ? name : name + ": " + describe(cause);
     }
 
     private OptionalInt delegateUnchecked(String... args) {
