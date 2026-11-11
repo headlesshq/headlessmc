@@ -44,3 +44,16 @@ page to get started, it's as easy as:
 > headlessmc login
 > headlessmc launch fabric 26.3
 ```
+
+## Development
+
+A [Nix](https://nixos.org/) flake provides the development environment.
+```shell
+# JDK only (sets JAVA_HOME), enough to build and test
+nix develop
+# JDK + GraalVM (also sets GRAALVM_HOME), needed to build the native image
+nix develop .#native
+```
+With [direnv](https://direnv.net/) put `use flake` (or `use flake .#native`) into your `.envrc`.
+The `native` shell downloads considerably more (GraalVM pulls in AWT/X11 libraries),
+so only use it if you build the native image.
