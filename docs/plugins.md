@@ -31,7 +31,9 @@ one, into the `plugins` directory as `<id>-<version>.jar` and verifies its size 
 Other versions of the plugin in the `plugins` directory are removed, so this also updates or downgrades a plugin.
 `--force` installs a version even if it is not compatible with your HeadlessMc.
 The plugin is loaded the next time HeadlessMc starts, which builds HeadlessMc again with the new set of plugins,
-see below. To remove a plugin, delete its jar from the `plugins` directory.
+see below.
+`plugin remove <id>` (or `plugin rm`, `plugin uninstall`) deletes the jar of an installed plugin, given its id or jar name;
+the next start builds HeadlessMc again without it.
 
 ## How plugins are loaded
 

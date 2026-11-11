@@ -17,7 +17,8 @@ import picocli.CommandLine;
     subcommands = {
         ListCommand.class,
         SearchCommand.class,
-        DownloadCommand.class
+        DownloadCommand.class,
+        RemoveCommand.class
     }
 )
 public class PluginCommand implements CachedConsole.Enabled {
