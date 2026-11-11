@@ -85,7 +85,13 @@ public abstract class AbstractClientInstaller implements ClientInstaller {
         Version vanilla = installVanillaVersion(id, mcDir, args);
         List<Version> versions = versionService.observeChanges(() -> installClient(id, mcDir, vanilla, args));
 
-        return versionMatcherService.match(id, versions, versionService)
+        Optional<VersionMatcherService.MatchResult> match = versionMatcherService.match(id, versions, versionService);
+        if (match.isEmpty() && args.get(ClientInstaller.FORCE_INSTALL, false)) {
+            // A forced reinstall may rewrite an existing version file, which observeChanges does not report.
+            match = versionMatcherService.match(id, versionService.getInstalledVersions(), versionService);
+        }
+
+        return match
             .orElseThrow(() -> new VersionMatchException("Failed to find install version " + id + " in " + versions))
             .version();
     }
