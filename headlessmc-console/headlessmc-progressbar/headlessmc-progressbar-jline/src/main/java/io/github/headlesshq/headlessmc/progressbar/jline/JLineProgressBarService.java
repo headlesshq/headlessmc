@@ -1,14 +1,34 @@
 package io.github.headlesshq.headlessmc.progressbar.jline;
 
+import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.console.ConsoleExtensions;
+import io.github.headlesshq.headlessmc.console.TerminalInfo;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.exceptions.UncheckedInterruptedException;
 import io.github.headlesshq.headlessmc.progressbar.ProgressBar;
 import io.github.headlesshq.headlessmc.progressbar.ProgressbarService;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
+import me.tongfei.progressbar.ConsoleProgressBarConsumer;
+import me.tongfei.progressbar.InteractiveConsoleProgressBarConsumer;
 import me.tongfei.progressbar.ProgressBarBuilder;
+
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.Optional;
 
 @ApplicationScoped
 public class JLineProgressBarService implements ProgressbarService {
+    static final int DEFAULT_TERMINAL_WIDTH = 80;
+    static final int MIN_TERMINAL_WIDTH = 10;
+
+    private final Instance<Console> console;
+
+    public JLineProgressBarService(Instance<Console> console) {
+        this.console = console;
+    }
+
     @Override
     public String getName() {
         return "jline";
@@ -27,6 +47,7 @@ public class JLineProgressBarService implements ProgressbarService {
                 builder.setUnit(configuration.unit().name(), configuration.unit().size());
             }
 
+            createConsumer().ifPresent(builder::setConsumer);
             return new JlineProgressBar(builder.build());
         } catch (UncheckedInterruptedException e) {
             throw e;
@@ -38,6 +59,57 @@ public class JLineProgressBarService implements ProgressbarService {
 
             throw new HeadlessMcIOException("Failed to create progressbar with service " + getName(), e);
         }
+    }
+
+    /**
+     * Without a consumer, ctongfei/progressbar opens its own Jline system terminal
+     * to detect the terminal width and cursor movement support.
+     * Jline only allows one system terminal at a time, so while our console has a terminal open,
+     * the progressbar would only get a dumb terminal without a width.
+     * Instead, we ask our console for these properties.
+     * If there is no console or it is not a Jline console, nothing conflicts and the progressbar can detect them itself.
+     */
+    private Optional<ConsoleProgressBarConsumer> createConsumer() {
+        if (!console.isResolvable()) {
+            return Optional.empty();
+        }
+
+        return console.get().extensions().map(JLineProgressBarService::createConsumer);
+    }
+
+    static ConsoleProgressBarConsumer createConsumer(ConsoleExtensions extensions) {
+        // same as ctongfei/progressbar, System.err might be overridden by System.setErr
+        PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.err));
+        return createConsumer(extensions, out);
+    }
+
+    static ConsoleProgressBarConsumer createConsumer(ConsoleExtensions extensions, PrintStream out) {
+        // ConsoleExtensions.terminalInfo() does not block, so it can be called on every render,
+        // to react to the terminal being resized, just like ctongfei/progressbar does
+        if (extensions.terminalInfo().cursorMovement()) {
+            return new InteractiveConsoleProgressBarConsumer(out) {
+                @Override
+                public int getMaxRenderedLength() {
+                    return maxRenderedLength(extensions.terminalInfo());
+                }
+            };
+        }
+
+        return new ConsoleProgressBarConsumer(out) {
+            @Override
+            public int getMaxRenderedLength() {
+                return maxRenderedLength(extensions.terminalInfo());
+            }
+        };
+    }
+
+    /**
+     * Same as ctongfei/progressbar: unknown or tiny widths default to {@value #DEFAULT_TERMINAL_WIDTH}
+     * and the last column is left free.
+     */
+    static int maxRenderedLength(TerminalInfo info) {
+        int width = info.width() >= MIN_TERMINAL_WIDTH ? info.width() : DEFAULT_TERMINAL_WIDTH;
+        return width - 1;
     }
 
 }

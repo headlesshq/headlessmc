@@ -66,6 +66,11 @@ public class CensoringConsole implements Console {
             public int getWidth() {
                 return extensions.getWidth();
             }
+
+            @Override
+            public TerminalInfo terminalInfo() {
+                return extensions.terminalInfo();
+            }
         });
     }
 

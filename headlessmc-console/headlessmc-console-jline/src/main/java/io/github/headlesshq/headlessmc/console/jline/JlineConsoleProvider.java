@@ -5,10 +5,17 @@ import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.ConsoleException;
 import io.github.headlesshq.headlessmc.console.ConsoleProvider;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
+/**
+ * Always provides the same {@link JlineConsole}, which owns the terminal.
+ * Jline only allows one system terminal at a time,
+ * so all users of the console have to share its terminal state.
+ */
 @RequiredArgsConstructor
 public class JlineConsoleProvider implements ConsoleProvider {
     private final Holder<JlineConfig> config;
+    private volatile @Nullable JlineConsole console;
 
     @Override
     public Console get() {
@@ -16,9 +23,19 @@ public class JlineConsoleProvider implements ConsoleProvider {
             throw new ConsoleException("Jline console not enabled");
         }
 
-        JlineConsole console = new JlineConsole(config);
-        console.test();
-        return console;
+        JlineConsole result = console;
+        if (result == null) {
+            synchronized (this) {
+                result = console;
+                if (result == null) {
+                    result = new JlineConsole(config);
+                    result.test();
+                    console = result;
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override

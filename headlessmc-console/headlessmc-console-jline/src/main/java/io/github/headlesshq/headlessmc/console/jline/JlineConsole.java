@@ -11,12 +11,17 @@ import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp;
 import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
@@ -26,18 +31,39 @@ class JlineConsole implements Console, ConsoleExtensions {
     private static final String MODE_2027_ENABLE = "\033[?2027h";
     private static final String MODE_2027_DISABLE = "\033[?2027l";
     /**
-     * The system terminal stays the same, so its grapheme cluster support only has to be detected once.
+     * How long {@link #terminalInfo()} reuses the last result, querying the terminal size can spawn a process.
      */
-    private static volatile @Nullable GraphemeClusterSupport detectedGraphemeClusterSupport;
+    private static final long TERMINAL_INFO_MAX_AGE_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private final Holder<JlineConfig> config;
+    /**
+     * Guards {@link #terminal} and {@link #leases}.
+     * Held while opening, closing and querying a terminal, but never while reading,
+     * so it can only block for a short time.
+     */
+    private final Lock terminalLock = new ReentrantLock();
+    /**
+     * The terminal that is currently open. Jline only allows one system terminal at a time,
+     * so everything that needs a terminal shares this one, see {@link #openTerminal()}.
+     */
+    private @Nullable TerminalState terminal;
+    /**
+     * How many {@link TerminalLease}s for the {@link #terminal} have not been closed yet.
+     */
+    private int leases;
+    /**
+     * The system terminal stays the same, so its grapheme cluster support only has to be detected once.
+     */
+    private volatile @Nullable GraphemeClusterSupport detectedGraphemeClusterSupport;
+    private volatile @Nullable TerminalInfo lastTerminalInfo;
+    private volatile long lastTerminalInfoNanos;
     /**
      * Guards {@link #activeReader}. The read lock is held while printing through the active reader,
      * so that the reader cannot finish reading and its terminal cannot be closed in the meantime.
      * Printing only needs the read lock, so a completer that writes while the reader is reading
      * does not deadlock with another thread waiting in {@link LineReader#printAbove(String)}.
      */
-    final ReadWriteLock readerLock = new ReentrantReadWriteLock();
+    private final ReadWriteLock readerLock = new ReentrantReadWriteLock();
     /**
      * The reader currently waiting for input, while it is reading {@link #wrap(Function)} is locked,
      * so messages from other threads have to be printed above its prompt through this reader directly.
@@ -99,9 +125,7 @@ class JlineConsole implements Console, ConsoleExtensions {
     public String edit(String initialString) {
         return wrap(state -> {
             // maybe we could also check the terminal capabilities for if this is supported?
-            if (Terminal.TYPE_DUMB.equalsIgnoreCase(state.terminal.getType())
-                || Terminal.TYPE_DUMB_COLOR.equalsIgnoreCase(state.terminal.getType())
-            ) {
+            if (isDumb(state.terminal)) {
                 return reading(state.reader(), reader -> reader.readLine("[" + initialString + "]:"));
             }
 
@@ -112,6 +136,78 @@ class JlineConsole implements Console, ConsoleExtensions {
     @Override
     public int getWidth() {
         return wrap(state -> Math.max(55, state.terminal.getColumns()));
+    }
+
+    /**
+     * Unlike the other methods, this does not go through {@link #wrap(Function)},
+     * which is locked while another thread waits for input.
+     * Instead, it queries the terminal that is already open, e.g. by a {@link CachedConsole} or a reader,
+     * and only opens a terminal itself if there is none.
+     * The result is reused for {@link #TERMINAL_INFO_MAX_AGE_NANOS}.
+     */
+    @Override
+    public TerminalInfo terminalInfo() {
+        TerminalInfo info = lastTerminalInfo;
+        if (info != null && System.nanoTime() - lastTerminalInfoNanos < TERMINAL_INFO_MAX_AGE_NANOS) {
+            return info;
+        }
+
+        try {
+            if (!terminalLock.tryLock(100, TimeUnit.MILLISECONDS)) {
+                return info == null ? TerminalInfo.UNKNOWN : info;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return info == null ? TerminalInfo.UNKNOWN : info;
+        }
+
+        try {
+            info = queryTerminalInfo();
+            if (info != null) {
+                lastTerminalInfo = info;
+                lastTerminalInfoNanos = System.nanoTime();
+                return info;
+            }
+
+            info = lastTerminalInfo;
+            return info == null ? TerminalInfo.UNKNOWN : info;
+        } finally {
+            terminalLock.unlock();
+        }
+    }
+
+    private @Nullable TerminalInfo queryTerminalInfo() {
+        TerminalState state = terminal;
+        if (state != null) {
+            try {
+                return terminalInfo(state.terminal());
+            } catch (RuntimeException e) {
+                log.debug("Failed to query terminal {}", state.terminal(), e);
+                return null;
+            }
+        }
+
+        // no terminal is open, and none can be opened while we hold the terminalLock,
+        // the grapheme cluster mode does not matter for the size, so we skip probing it.
+        try (Terminal temporary = TerminalBuilder.builder().dumb(true).graphemeCluster(false).build()) {
+            return terminalInfo(temporary);
+        } catch (IOException | RuntimeException e) {
+            log.debug("Failed to open terminal to query its size", e);
+            return null;
+        }
+    }
+
+    private static TerminalInfo terminalInfo(Terminal terminal) {
+        return new TerminalInfo(
+            terminal.getColumns(),
+            terminal.getStringCapability(InfoCmp.Capability.cursor_up) != null
+                && terminal.getStringCapability(InfoCmp.Capability.cursor_down) != null
+        );
+    }
+
+    private static boolean isDumb(Terminal terminal) {
+        return Terminal.TYPE_DUMB.equalsIgnoreCase(terminal.getType())
+            || Terminal.TYPE_DUMB_COLOR.equalsIgnoreCase(terminal.getType());
     }
 
     @Override
@@ -158,20 +254,64 @@ class JlineConsole implements Console, ConsoleExtensions {
     @Override
     public CachedConsole cache() {
         try {
-            TerminalState state = openTerminal();
-            return new JlineCachedConsole(config, state);
+            return new JlineCachedConsole(openTerminal());
         } catch (IOException e) {
             throw new ConsoleException(e);
         }
     }
 
     /**
-     * Opens a new system terminal, with grapheme clusters configured by {@link JlineConfig#graphemeCluster()}.
+     * Opens the system terminal, or shares it if it is already open, e.g. by a {@link CachedConsole}.
+     * The terminal is closed once every returned lease has been closed,
+     * so that processes we spawn in the meantime can use the terminal themselves.
+     */
+    TerminalLease openTerminal() throws IOException {
+        terminalLock.lock();
+        try {
+            TerminalState state = terminal;
+            if (state == null) {
+                state = buildTerminal();
+                terminal = state;
+            }
+
+            leases++;
+            return new TerminalLease(state);
+        } finally {
+            terminalLock.unlock();
+        }
+    }
+
+    @Nullable TerminalState currentTerminal() {
+        terminalLock.lock();
+        try {
+            return terminal;
+        } finally {
+            terminalLock.unlock();
+        }
+    }
+
+    private void release() throws IOException {
+        terminalLock.lock();
+        try {
+            if (--leases == 0) {
+                TerminalState state = terminal;
+                terminal = null;
+                if (state != null) {
+                    state.close();
+                }
+            }
+        } finally {
+            terminalLock.unlock();
+        }
+    }
+
+    /**
+     * Builds a new system terminal, with grapheme clusters configured by {@link JlineConfig#graphemeCluster()}.
      * Detecting grapheme cluster support makes Jline probe the terminal with escape sequences
      * and print test emojis to measure the cursor movement. That is visible and slow,
      * and we open a new terminal for every {@link #wrap(Function)} call, so the result is detected only once.
      */
-    TerminalState openTerminal() throws IOException {
+    private TerminalState buildTerminal() throws IOException {
         TerminalBuilder builder = TerminalBuilder.builder();
         switch (config.get().graphemeCluster()) {
             case OFF -> builder.graphemeCluster(false);
@@ -179,9 +319,9 @@ class JlineConsole implements Console, ConsoleExtensions {
             case AUTO -> {
                 GraphemeClusterSupport support = detectedGraphemeClusterSupport;
                 if (support == null) {
-                    Terminal terminal = builder.build();
-                    detectedGraphemeClusterSupport = GraphemeClusterSupport.of(terminal);
-                    return new TerminalState(terminal, false);
+                    Terminal built = builder.build();
+                    detectedGraphemeClusterSupport = GraphemeClusterSupport.of(built);
+                    return new TerminalState(built, false);
                 }
 
                 return support.open(builder);
@@ -223,8 +363,8 @@ class JlineConsole implements Console, ConsoleExtensions {
     }
 
     synchronized <T> T wrap(Function<TerminalState, T> action) {
-        try (TerminalState state = openTerminal()) {
-            return action.apply(state);
+        try (TerminalLease lease = openTerminal()) {
+            return action.apply(lease.state());
         } catch (UserInterruptException e) {
             throw new UncheckedInterruptedException(e);
         } catch (EndOfFileException | IOException e) {
@@ -282,6 +422,29 @@ class JlineConsole implements Console, ConsoleExtensions {
     }
 
     /**
+     * A share of the {@link #terminal}, see {@link #openTerminal()}.
+     */
+    final class TerminalLease implements Closeable {
+        private final TerminalState state;
+        private final AtomicBoolean closed = new AtomicBoolean();
+
+        private TerminalLease(TerminalState state) {
+            this.state = state;
+        }
+
+        TerminalState state() {
+            return state;
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (closed.compareAndSet(false, true)) {
+                release();
+            }
+        }
+    }
+
+    /**
      * Grapheme cluster support detected by Jline, so that terminals opened later do not have to probe again.
      */
     private enum GraphemeClusterSupport {
@@ -322,39 +485,27 @@ class JlineConsole implements Console, ConsoleExtensions {
         }
     }
 
-    private static final class JlineCachedConsole extends JlineConsole implements CachedConsole {
-        private final TerminalState state;
+    /**
+     * Keeps the terminal open until closed, {@link #wrap(Function)} shares it in the meantime.
+     * The terminal is only closed once all readers are done with it,
+     * because every {@link #wrap(Function)} call holds its own lease.
+     */
+    private final class JlineCachedConsole implements CachedConsole {
+        private final TerminalLease lease;
 
-        public JlineCachedConsole(Holder<JlineConfig> config, TerminalState state) {
-            super(config);
-            this.state = state;
-        }
-
-        @Override
-        synchronized <T> T wrap(Function<TerminalState, T> action) {
-            try {
-                return action.apply(state);
-            } catch (UserInterruptException e) {
-                throw new UncheckedInterruptedException(e);
-            } catch (EndOfFileException e) {
-                throw new ConsoleException(e);
-            }
+        private JlineCachedConsole(TerminalLease lease) {
+            this.lease = lease;
         }
 
         @Override
         public Console get() {
-            return this;
+            return JlineConsole.this;
         }
 
         @Override
         public void close() throws ConsoleException {
             try {
-                readerLock.writeLock().lock();
-                try {
-                    state.close();
-                } finally {
-                    readerLock.writeLock().unlock();
-                }
+                lease.close();
             } catch (IOException e) {
                 throw new ConsoleException(e);
             }

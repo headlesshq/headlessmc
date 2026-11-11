@@ -11,4 +11,16 @@ public interface ConsoleExtensions {
 
     int getWidth();
 
+    /**
+     * Returns the size and capabilities of the terminal without blocking,
+     * even while another thread is waiting for input.
+     * This is cheap enough to be called repeatedly, e.g. on every render of a progress bar,
+     * so the result might be slightly outdated.
+     *
+     * @return the size and capabilities of the terminal, {@link TerminalInfo#UNKNOWN} if they are not known.
+     */
+    default TerminalInfo terminalInfo() {
+        return TerminalInfo.UNKNOWN;
+    }
+
 }
