@@ -47,6 +47,16 @@ public interface JavaProcessBuilder {
 
     List<String> buildCommand();
 
+    /**
+     * Resolves the Java runtime that {@link #start()} would launch the process with.
+     * This may download a Java runtime if none matching the requested version is installed
+     * and downloading is enabled.
+     *
+     * @return the Java runtime the process would be launched with.
+     * @throws HeadlessMcException if no matching Java runtime could be found or downloaded.
+     */
+    Java resolveJava() throws HeadlessMcException;
+
     JavaProcess start() throws HeadlessMcException;
 
     // Should we ever want to support AoT/AppCDS we need to register mods and hash them

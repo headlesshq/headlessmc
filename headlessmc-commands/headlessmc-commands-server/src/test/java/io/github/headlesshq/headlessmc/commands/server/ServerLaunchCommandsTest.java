@@ -2,6 +2,8 @@ package io.github.headlesshq.headlessmc.commands.server;
 
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
+import io.github.headlesshq.headlessmc.java.launcher.JavaProcessException;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
@@ -257,6 +259,78 @@ class ServerLaunchCommandsTest {
         command.setNoBackup(true);
         assertThrows(Launched.class, command::call);
         Mockito.verify(lifecycleService).beforeLaunch(Mockito.argThat(profile -> profile.name().equals("srv")), Mockito.eq(false));
+    }
+
+    @Test
+    void dryRunInstallsButDoesNotLaunch() {
+        server("srv");
+        ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
+        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setDryRun(true);
+
+        assertEquals(0, command.call());
+        Mockito.verify(serverLauncher).launcher(Mockito.argThat(profile -> profile.name().equals("srv")));
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+        Mockito.verify(lifecycleService, Mockito.never()).beforeLaunch(Mockito.any(), Mockito.anyBoolean());
+        assertEquals(List.of(), eulaLaunches);
+    }
+
+    @Test
+    void dryRunResolvesTheJavaRuntime() {
+        server("srv");
+        JavaProcessBuilder javaProcessBuilder = Mockito.mock(JavaProcessBuilder.class);
+        ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
+        Mockito.when(processLauncher.getJavaProcessBuilder()).thenReturn(Optional.of(javaProcessBuilder));
+        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setDryRun(true);
+
+        assertEquals(0, command.call());
+        Mockito.verify(javaProcessBuilder).resolveJava();
+        Mockito.verify(javaProcessBuilder, Mockito.never()).start();
+    }
+
+    @Test
+    void dryRunFailsIfNoJavaRuntimeIsFound() {
+        server("srv");
+        JavaProcessBuilder javaProcessBuilder = Mockito.mock(JavaProcessBuilder.class);
+        Mockito.when(javaProcessBuilder.resolveJava()).thenThrow(new JavaProcessException("Failed to find Java 21"));
+        ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
+        Mockito.when(processLauncher.getJavaProcessBuilder()).thenReturn(Optional.of(javaProcessBuilder));
+        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setDryRun(true);
+
+        assertThrows(JavaProcessException.class, command::call);
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+    }
+
+    @Test
+    void dryRunFailsIfInstallingFails() {
+        server("srv");
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setDryRun(true);
+
+        assertThrows(Launched.class, command::call);
+        Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
+    }
+
+    @Test
+    void onlyALaunchThatIsNotADryRunIsFinal() {
+        ServerLaunchCommand command = launch();
+        assertTrue(command.isFinal());
+
+        command.setDryRun(true);
+        assertFalse(command.isFinal());
     }
 
     // --------------------------------------------------------- EulaCommand

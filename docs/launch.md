@@ -87,6 +87,22 @@ name                        parent   type
 ...
 ```
 
+#### Downloading without launching
+Installing a version only writes its version.json.
+The client jar, the libraries, the natives and the assets are downloaded when the game is launched.
+To download all of them without starting the game, e.g. to prepare a CI cache or an offline machine,
+launch with `--dry-run`:
+```
+launch --dry-run fabric 1.21.5
+```
+This does everything a launch does right up to starting the process.
+It also resolves the Java runtime the game would be started with,
+and downloads it if none is installed and `hmc.java.download` is enabled.
+The command fails with a non-zero exit code if any download fails or no matching Java runtime is found.
+A dry run does not need an account, and it does not create a backup.
+A dry run does not quit the interactive HeadlessMc shell, so you can launch the game afterwards.
+`profile launch` and `server launch` accept `--dry-run` too.
+
 #### Quitting HeadlessMc
 
 Simply type `exit` to exit HeadlessMc.

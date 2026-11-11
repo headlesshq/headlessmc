@@ -21,7 +21,7 @@ final class ProcessBuilderImpl extends AbstractJavaProcessBuilder {
     @Override
     public JavaProcess start() throws HeadlessMcException {
         List<String> command = buildCommand();
-        Java java = findJava();
+        Java java = resolveJava();
         Path executable = java.executable().get(service.fs.getFileSystem()).orElse(null);
         if (executable == null) {
             throw new JavaProcessException(java + " is not available on filesystem " + service.fs.getFileSystem());
@@ -68,7 +68,8 @@ final class ProcessBuilderImpl extends AbstractJavaProcessBuilder {
         }
     }
 
-    private Java findJava() {
+    @Override
+    public Java resolveJava() {
         Java java = getJava();
         if (java != null) {
             return java;

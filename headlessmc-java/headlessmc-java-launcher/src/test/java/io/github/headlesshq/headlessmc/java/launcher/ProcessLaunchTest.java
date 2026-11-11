@@ -168,6 +168,31 @@ class ProcessLaunchTest {
     }
 
     @Test
+    void resolveJavaReturnsTheExplicitJava() {
+        assertSame(currentJava, service.buildProcess().version(8).java(currentJava).resolveJava());
+        Mockito.verifyNoInteractions(javaFinder);
+    }
+
+    @Test
+    void resolveJavaFindsJavaForTheVersion() {
+        Mockito.when(javaFinder.findJava(21)).thenReturn(currentJava);
+
+        assertSame(currentJava, service.buildProcess().version(21).resolveJava());
+    }
+
+    @Test
+    void resolveJavaFailsIfNoJavaCanBeFound() {
+        Mockito.when(javaFinder.findJava(21)).thenThrow(new JavaProcessException("Failed to find Java 21"));
+
+        assertThrows(JavaProcessException.class, () -> service.buildProcess().version(21).resolveJava());
+    }
+
+    @Test
+    void resolveJavaFailsWithoutVersion() {
+        assertThrows(JavaProcessException.class, () -> service.buildProcess().resolveJava());
+    }
+
+    @Test
     void javaWithoutPathOnFilesystemThrows() {
         Java broken = new Java("broken", 21, new SafePath(null), new SafePath(null), false, 0);
         JavaProcessException e = assertThrows(
