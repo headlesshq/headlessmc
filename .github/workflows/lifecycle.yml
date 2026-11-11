@@ -53,6 +53,8 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -160,6 +162,8 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -200,6 +204,8 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -315,6 +321,8 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         if: runner.os != 'Windows'
         run: chmod +x gradlew
@@ -376,6 +384,9 @@ jobs:
           java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+        if: steps.native-cache.outputs.cache-hit != 'true'
 
       - name: Output Graal Info
         if: steps.native-cache.outputs.cache-hit != 'true'
@@ -692,6 +703,8 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       # TODO: actually we could just include the uber-jar from the build job
@@ -896,6 +909,8 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
