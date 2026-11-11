@@ -1,5 +1,5 @@
 [versions]
-jline = "4.5.0"
+jline = "4.6.0"
 quarkus = "3.40.1.2"
 asm = "9.11.1"
 resilience4j = "2.4.0"
