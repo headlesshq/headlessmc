@@ -49,9 +49,7 @@ page to get started, it's as easy as:
 
 A [Nix](https://nixos.org/) flake provides the development environment.
 ```shell
-# JDK only (sets JAVA_HOME), enough to build and test
 nix develop
-# JDK + GraalVM (also sets GRAALVM_HOME), needed to build the native image
 nix develop .#native
 ```
 With [direnv](https://direnv.net/) put `use flake` (or `use flake .#native`) into your `.envrc`.
