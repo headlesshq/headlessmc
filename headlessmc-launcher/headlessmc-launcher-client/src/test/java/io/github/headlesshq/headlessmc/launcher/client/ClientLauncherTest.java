@@ -21,6 +21,7 @@ import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.patcher.PatchContext;
 import io.github.headlesshq.headlessmc.patcher.PatchException;
@@ -198,6 +199,7 @@ class ClientLauncherTest {
             Mockito.mock(LastUsedAccountService.class),
             Mockito.mock(SpecificsPropertiesService.class),
             Mockito.mock(SpecificsDownloader.class),
+            new MuslClientSupport(new OS("linux", OS.Type.LINUX, "1"), new LibCDetector()),
             versionMatcherService,
             versionJsonService,
             new TemplateStringService(mcFiles, CPU.X64),

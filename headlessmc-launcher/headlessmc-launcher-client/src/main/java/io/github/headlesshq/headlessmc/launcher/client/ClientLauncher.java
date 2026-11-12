@@ -66,6 +66,7 @@ public class ClientLauncher {
     private final LastUsedAccountService lastUsedAccountService;
     private final SpecificsPropertiesService specificsPropertiesService;
     private final SpecificsDownloader specificsDownloader;
+    private final MuslClientSupport muslClientSupport;
     private final VersionMatcherService versionMatcherService;
     private final VersionJsonService versionJsonService;
     private final TemplateStringService templateService;
@@ -126,6 +127,7 @@ public class ClientLauncher {
 
         ProcessedVersion version = versionJsonService.process(resolvedVersion);
         specificsDownloader.download(profile);
+        muslClientSupport.warnIfGlibcLoaderMissing(profile);
 
         // library overrides?
         // configuration???
@@ -164,6 +166,7 @@ public class ClientLauncher {
         // system properties required by the patchers, unless the user specified them otherwise
         patchResult.systemProperties().forEach(arguments.systemProperties()::putIfAbsent);
         specificsPropertiesService.getSystemProperties().forEach(arguments.systemProperties()::putIfAbsent);
+        muslClientSupport.getSystemProperties(profile).forEach(arguments.systemProperties()::putIfAbsent);
 
         arguments = argumentTemplateService.process(arguments, templates);
         handleJoin(id, name, options, templates, arguments);

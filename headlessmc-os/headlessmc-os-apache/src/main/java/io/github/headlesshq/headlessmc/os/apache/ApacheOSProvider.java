@@ -1,5 +1,7 @@
 package io.github.headlesshq.headlessmc.os.apache;
 
+import io.github.headlesshq.headlessmc.os.LibC;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
@@ -10,7 +12,7 @@ public class ApacheOSProvider {
     @Produces
     @Dependent
     @ApacheCommons
-    public OS.Type getType() {
+    public OS.Type getType(LibCDetector libCDetector) {
         if (SystemUtils.IS_OS_FREE_BSD) {
             return OS.Type.FREE_BSD;
         } else if (SystemUtils.IS_OS_SOLARIS) {
@@ -20,7 +22,7 @@ public class ApacheOSProvider {
         } else if (SystemUtils.IS_OS_ANDROID) {
             return OS.Type.ANDROID;
         } else if (SystemUtils.IS_OS_LINUX) {
-            return OS.Type.LINUX;
+            return libCDetector.detectSystem() == LibC.MUSL ? OS.Type.LINUX_MUSL : OS.Type.LINUX;
         } else if (SystemUtils.IS_OS_MAC) {
             return OS.Type.MACOS;
         } else if (SystemUtils.IS_OS_WINDOWS) {

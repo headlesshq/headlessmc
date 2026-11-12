@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.updater;
 import io.github.headlesshq.headlessmc.HeadlessMc;
 import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibC;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.os.OSService;
 import io.quarkus.test.InjectMock;
@@ -142,16 +143,26 @@ public class UpdateServiceTest {
 
     @Test
     public void testGetAssetName() {
-        assertEquals("headlessmc.jar", updateService.getAssetName(Installation.Type.JAR, OS.Type.WINDOWS, CPU.X64));
-        assertEquals("headlessmc-launcher-linux-x64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.X64));
-        assertEquals("headlessmc-launcher-linux-arm64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.AARCH64));
-        assertEquals("headlessmc-launcher-macos-arm64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.MACOS, CPU.AARCH64));
-        assertEquals("headlessmc-launcher-macos-x64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.MACOS, CPU.X64));
-        assertEquals("headlessmc-launcher-windows-x64.exe", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.WINDOWS, CPU.X64));
-        assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.FREE_BSD, CPU.X64));
-        assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.X32));
-        assertNull(updateService.getAssetName(Installation.Type.UNKNOWN, OS.Type.LINUX, CPU.X64));
-        assertNull(updateService.getAssetName(Installation.Type.PACKAGE, OS.Type.LINUX, CPU.X64));
+        assertEquals("headlessmc.jar", updateService.getAssetName(Installation.Type.JAR, OS.Type.WINDOWS, CPU.X64, LibC.GLIBC));
+        assertEquals("headlessmc-launcher-linux-x64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.X64, LibC.GLIBC));
+        assertEquals("headlessmc-launcher-linux-arm64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.AARCH64, LibC.GLIBC));
+        assertEquals("headlessmc-launcher-macos-arm64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.MACOS, CPU.AARCH64, LibC.GLIBC));
+        assertEquals("headlessmc-launcher-macos-x64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.MACOS, CPU.X64, LibC.GLIBC));
+        assertEquals("headlessmc-launcher-windows-x64.exe", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.WINDOWS, CPU.X64, LibC.GLIBC));
+        assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.FREE_BSD, CPU.X64, LibC.GLIBC));
+        assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.X32, LibC.GLIBC));
+        assertNull(updateService.getAssetName(Installation.Type.UNKNOWN, OS.Type.LINUX, CPU.X64, LibC.GLIBC));
+        assertNull(updateService.getAssetName(Installation.Type.PACKAGE, OS.Type.LINUX, CPU.X64, LibC.GLIBC));
+    }
+
+    @Test
+    public void testGetMuslAssetName() {
+        assertEquals("headlessmc-launcher-linux-x64-musl", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX_MUSL, CPU.X64, LibC.MUSL));
+        assertEquals("headlessmc-launcher-linux-x64-musl", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX, CPU.X64, LibC.MUSL));
+        assertEquals("headlessmc-launcher-linux-x64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX_MUSL, CPU.X64, LibC.GLIBC));
+        assertNull(updateService.getAssetName(Installation.Type.NATIVE, OS.Type.LINUX_MUSL, CPU.AARCH64, LibC.MUSL));
+        assertEquals("headlessmc-launcher-macos-x64", updateService.getAssetName(Installation.Type.NATIVE, OS.Type.MACOS, CPU.X64, LibC.UNKNOWN));
+        assertEquals("headlessmc.jar", updateService.getAssetName(Installation.Type.JAR, OS.Type.LINUX_MUSL, CPU.X64, LibC.MUSL));
     }
 
     private static UpdateCheck<LatestRelease> cached(String repository, Duration age, GitHubRelease release) {

@@ -44,6 +44,8 @@ You can also download the executable for your Operating System from the latest
     ``` sh
     curl -L https://github.com/headlesshq/headlessmc/releases/download/$VERSION/headlessmc-launcher-linux-x64 -o headlessmc-launcher
     ```
+    These executables need glibc 2.34 or newer.
+    On other systems use `headlessmc-launcher-linux-x64-musl`, see [musl, NixOS and older glibc](#musl-nixos-and-older-glibc).
 
 === "Windows"
 
@@ -100,6 +102,55 @@ They install HeadlessMc as `headlessmc`, replace $VERSION with the HeadlessMc ve
 
 The packages require glibc 2.34 or newer (e.g. Debian 12, Ubuntu 22.04, RHEL 9).
 To update HeadlessMc, install the package of the new release.
+
+### musl, NixOS and older glibc
+
+`headlessmc-launcher-linux-x64-musl` is a fully static executable, built against musl.
+It does not need any library or dynamic loader of the system, so it runs on every x64 Linux, e.g.
+
+* musl based distributions, like Alpine Linux, Void Linux (musl) or Chimera Linux,
+* NixOS and Guix, which have no `/lib64/ld-linux-x86-64.so.2` (Minecraft needs a Java of the system there, see below),
+* distributions with a glibc older than 2.34, like RHEL 8, Debian 11 or Ubuntu 20.04.
+
+The install script picks it automatically on these systems, set `HEADLESSMC_MUSL=1` to always install it.
+The updater keeps using the musl executable once it is installed.
+There is no musl executable for ARM64 yet, use the `headlessmc.jar` there.
+
+On NixOS and Guix the launcher itself runs, but Minecraft needs a Java that runs there, too.
+NixOS and Guix use glibc, so HeadlessMc would download glibc Java runtimes,
+and those expect the loader at `/lib64/ld-linux-x86-64.so.2`, which does not exist there.
+Either install a Java of your system, e.g. the `jdk` package of nixpkgs or `openjdk` of Guix.
+HeadlessMc finds Java installed into the system profile or your user profile
+(`/run/current-system/sw`, `/etc/profiles/per-user/$USER`, `~/.nix-profile`, `~/.guix-profile`, ...)
+and the Java in `JAVA_HOME` or on the `PATH`, e.g. in `nix shell nixpkgs#jdk`, `nix-shell -p jdk`, a dev shell or with direnv.
+Any other Java can be added via its Java home:
+``` sh
+config set hmc.java.versions /path/to/jdk
+```
+Or enable [nix-ld](https://github.com/nix-community/nix-ld) with `programs.nix-ld.enable = true;` on NixOS,
+which provides the loader, so that the downloaded Java runtimes start.
+HeadlessMc warns before it downloads a Java runtime on a system without a glibc loader.
+
+On musl systems HeadlessMc downloads Java runtimes built against musl, e.g. Temurin for Alpine Linux.
+Tested on Alpine Linux 3.22 with the musl executable and Temurin 17 and 21 downloaded by `java install`:
+
+| What                                       | Result on musl                                                         |
+|--------------------------------------------|------------------------------------------------------------------------|
+| Vanilla server 1.21.1                      | works, needs no natives                                                |
+| Headless client, Fabric 1.21.4 and 1.20.1  | works, joins a world with mc-runtime-test                              |
+| JNA and oshi (hardware info)               | load, oshi only warns that udev is missing                             |
+| text2speech (narrator)                     | fails without `flite`, like on glibc, Minecraft just disables it       |
+| Client with a window, without gcompat      | fails, the LWJGL natives need `ld-linux-x86-64.so.2`                   |
+| Client with a window, with gcompat         | the LWJGL natives load, the jemalloc of LWJGL 3.3.1+ crashes, see below |
+
+Minecraft ships natives, e.g. of LWJGL, that are only built against glibc.
+The headless client does not load the LWJGL natives, a Minecraft server needs none at all.
+To run the client with a window, install [gcompat](https://git.adelielinux.org/adelie/gcompat),
+a glibc compatibility layer for musl, e.g. with `apk add gcompat` on Alpine Linux.
+HeadlessMc warns if it launches the client with a window on musl without a glibc loader.
+The jemalloc bundled with LWJGL 3.3.1 and newer (Minecraft 1.19 and newer) crashes on load with gcompat,
+so HeadlessMc launches the client with `-Dorg.lwjgl.system.allocator=system` on musl.
+Rendering with a window on musl has not been verified yet.
 
 ### Shell completions
 

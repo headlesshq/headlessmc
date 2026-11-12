@@ -14,6 +14,7 @@ import io.github.headlesshq.headlessmc.java.JavaService;
 import io.github.headlesshq.headlessmc.java.JavaSource;
 import io.github.headlesshq.headlessmc.java.SafePath;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,7 +166,7 @@ class JavaFinderTest {
         };
 
         finder = new JavaFinder(providerService, installedRuntimes, javaService, config, appFiles, CPU.X64,
-            new OS("linux", OS.Type.LINUX, "6.0"));
+            new OS("linux", OS.Type.LINUX, "6.0"), new LibCDetector());
     }
 
     private Java java(int version) {

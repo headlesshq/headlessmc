@@ -8,6 +8,8 @@ import io.github.headlesshq.headlessmc.distribution.JavaRuntime;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibC;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +74,8 @@ class FoojayProviderTest {
                                   String packageType, Boolean directlyDownloadable, List<String> libcType,
                                   String latest, List<String> releaseStatus, Boolean javafxBundled) {
             packageQueries.add(new PackageQuery(
-                version, distribution, operatingSystem, architecture, bitness, latest, releaseStatus, javafxBundled
+                version, distribution, operatingSystem, architecture, bitness, libcType, latest, releaseStatus,
+                javafxBundled
             ));
             return packages;
         }
@@ -89,7 +92,8 @@ class FoojayProviderTest {
 
     private record PackageQuery(
         String version, List<String> distribution, List<String> operatingSystem,
-        List<String> architecture, Integer bitness, String latest, List<String> releaseStatus, Boolean javafxBundled
+        List<String> architecture, Integer bitness, List<String> libcType, String latest,
+        List<String> releaseStatus, Boolean javafxBundled
     ) {}
 
     @TempDir
@@ -101,6 +105,8 @@ class FoojayProviderTest {
 
     private PkgInfo pkgInfo;
 
+    private LibC hostLibC = LibC.GLIBC;
+
     private MockDownloadService downloads;
     private FoojayProvider provider;
 
@@ -108,7 +114,12 @@ class FoojayProviderTest {
     void setup() {
         downloads = new MockDownloadService();
         provider = new FoojayProvider(
-            Installers.installer(LINUX), downloads, new TestApi()
+            Installers.installer(LINUX), downloads, new TestApi(), new LibCDetector() {
+                @Override
+                public LibC detectSystem() {
+                    return hostLibC;
+                }
+            }
         );
     }
 
@@ -151,9 +162,36 @@ class FoojayProviderTest {
         assertEquals(List.of("linux"), query.operatingSystem());
         assertEquals(List.of("x64"), query.architecture());
         assertEquals(64, query.bitness());
+        assertEquals(List.of("glibc"), query.libcType());
         assertEquals(FoojayProvider.LATEST_AVAILABLE, query.latest());
         assertEquals(List.of(FoojayProvider.RELEASE_STATUS_GA), query.releaseStatus());
         assertEquals(false, query.javafxBundled());
+    }
+
+    @Test
+    void runtimesMatchTheLibCOfTheHost() {
+        hostLibC = LibC.MUSL;
+        provider.getRuntimes(new JavaDistribution(provider.getName(), "Temurin", "temurin"), 21, LINUX, CPU.X64);
+        assertEquals(List.of("musl"), packageQueries.getFirst().libcType());
+    }
+
+    @Test
+    void runtimesUseTheLibCOfTheOSIfTheHostIsUnknown() {
+        hostLibC = LibC.UNKNOWN;
+        JavaDistribution temurin = new JavaDistribution(provider.getName(), "Temurin", "temurin");
+        provider.getRuntimes(temurin, 21, LINUX, CPU.X64);
+        provider.getRuntimes(temurin, 21, new OS("Linux", OS.Type.LINUX_MUSL, "6.0"), CPU.X64);
+        assertEquals(List.of("glibc"), packageQueries.get(0).libcType());
+        assertEquals(List.of("musl"), packageQueries.get(1).libcType());
+    }
+
+    @Test
+    void explicitMuslOSIsNotOverriddenByTheHost() {
+        provider.getRuntimes(
+            new JavaDistribution(provider.getName(), "Temurin", "temurin"), 21,
+            new OS("Linux", OS.Type.LINUX_MUSL, "6.0"), CPU.X64
+        );
+        assertEquals(List.of("musl"), packageQueries.getFirst().libcType());
     }
 
     @Test

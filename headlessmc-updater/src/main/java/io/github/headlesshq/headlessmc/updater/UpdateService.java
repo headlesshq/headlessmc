@@ -3,6 +3,8 @@ package io.github.headlesshq.headlessmc.updater;
 import io.github.headlesshq.headlessmc.HeadlessMc;
 import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.os.CPU;
+import io.github.headlesshq.headlessmc.os.LibC;
+import io.github.headlesshq.headlessmc.os.LibCDetector;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.os.OSService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Checks GitHub for newer releases of HeadlessMc.
@@ -31,17 +34,24 @@ public class UpdateService {
     private static final Map<String, String> NATIVE_OS = Map.of(
         OS.Type.WINDOWS.name(), "windows",
         OS.Type.LINUX.name(), "linux",
+        OS.Type.LINUX_MUSL.name(), "linux",
         OS.Type.MACOS.name(), "macos"
     );
     private static final Map<String, String> NATIVE_ARCH = Map.of(
         CPU.X64.architecture(), "x64",
         CPU.AARCH64.architecture(), "arm64"
     );
+    /**
+     * The fully static musl executables are only built for these architectures.
+     */
+    private static final Set<String> NATIVE_MUSL_ARCH = Set.of(CPU.X64.architecture());
+    private static final String NATIVE_MUSL_SUFFIX = "-musl";
 
     private final Holder<UpdaterConfig> config;
     private final GitHubReleaseClient client;
     private final LatestReleaseCache cache;
     private final OSService osService;
+    private final LibCDetector libCDetector;
 
     /**
      * Checks GitHub for a newer release of HeadlessMc and caches the latest release.
@@ -101,21 +111,33 @@ public class UpdateService {
     /**
      * Determines the name of the release asset that replaces the given installation.
      *
-     * @param type   the type of the installation.
-     * @param osType the type of the operating system.
-     * @param cpu    the CPU architecture.
+     * A musl executable is replaced by the musl executable again, it is also used on systems that cannot run
+     * the glibc executable, e.g. NixOS or distributions with an older glibc.
+     *
+     * @param type    the type of the installation.
+     * @param osType  the type of the operating system.
+     * @param cpu     the CPU architecture.
+     * @param process the C library of the running process.
      * @return the name of the asset, or {@code null} if no asset is published for this installation.
      */
     @VisibleForTesting
-    @Nullable String getAssetName(Installation.Type type, OS.Type osType, CPU cpu) {
+    @Nullable String getAssetName(Installation.Type type, OS.Type osType, CPU cpu, LibC process) {
         return switch (type) {
             case JAR -> JAR_ASSET;
             case NATIVE -> {
                 String os = NATIVE_OS.get(osType.name());
                 String arch = NATIVE_ARCH.get(cpu.architecture());
-                yield os == null || arch == null
-                    ? null
-                    : NATIVE_ASSET_PREFIX + os + "-" + arch + (OS.Type.WINDOWS.equals(osType) ? ".exe" : "");
+                if (os == null || arch == null) {
+                    yield null;
+                }
+
+                if ("linux".equals(os) && LibC.MUSL.equals(process)) {
+                    yield NATIVE_MUSL_ARCH.contains(cpu.architecture())
+                        ? NATIVE_ASSET_PREFIX + os + "-" + arch + NATIVE_MUSL_SUFFIX
+                        : null;
+                }
+
+                yield NATIVE_ASSET_PREFIX + os + "-" + arch + (OS.Type.WINDOWS.equals(osType) ? ".exe" : "");
             }
             case PACKAGE, UNKNOWN -> null;
         };
@@ -128,7 +150,8 @@ public class UpdateService {
 
         Installation installation = Installation.detect();
         OS.Type osType = osService.getOS().type();
-        String assetName = getAssetName(installation.type(), osType, osService.getCPU());
+        LibC process = installation.type() == Installation.Type.NATIVE ? libCDetector.detectProcess() : LibC.UNKNOWN;
+        String assetName = getAssetName(installation.type(), osType, osService.getCPU(), process);
         GitHubRelease.Asset asset = assetName == null ? null : release.getAsset(assetName).orElse(null);
         return Optional.of(new Update(HeadlessMc.VERSION, release, installation, asset, OS.Type.WINDOWS.equals(osType)));
     }

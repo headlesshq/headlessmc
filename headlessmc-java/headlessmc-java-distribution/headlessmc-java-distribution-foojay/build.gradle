@@ -2,6 +2,7 @@ dependencies {
     implementation project(':headlessmc-java:headlessmc-java-distribution')
     implementation project(':headlessmc-java:headlessmc-java-sources')
     implementation project(':headlessmc-net')
+    implementation project(':headlessmc-os')
     runtimeOnly project(':headlessmc-net:headlessmc-net-java')
     implementation libs.cdi
     implementation(libs.disco.client) {
