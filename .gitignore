@@ -53,3 +53,7 @@ HeadlessMc
 _site
 
 *.exec
+
+# nix build output symlinks
+/result
+/result-*
