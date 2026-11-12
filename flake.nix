@@ -3,8 +3,12 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
+  # nixos-26.05 only ships graalvm-ce 25.0.2, the last 25.0.x release, GraalVM now only ships Innovation releases (#97)
+  # so GraalVM alone comes from nixos-unstable, which has the 25.5.5.0.3 Innovation release
+  inputs.nixpkgs-graalvm.url = "github:NixOS/nixpkgs/nixos-unstable";
+
   outputs =
-    { nixpkgs, ... }:
+    { nixpkgs, nixpkgs-graalvm, ... }:
     let
       inherit (nixpkgs) lib;
 
@@ -26,9 +30,8 @@
           available = jdks pkgs;
           jdk = available.${primary};
           # only the native shell pulls in GraalVM, it drags in AWT/X11 libraries (~2 GB)
-          # the nixos-26.05 channel ships graalvm-ce 25.0.2 (nixpkgs master already has the 25.5.5.0.3 Innovation release);
-          # the devcontainer is pinned to the same version on purpose (#97), see .devcontainer/Dockerfile
-          graalvm = pkgs.graalvmPackages.graalvm-ce;
+          # the devcontainer uses the same GraalVM Innovation release, keep them in sync, see .devcontainer/Dockerfile
+          graalvm = nixpkgs-graalvm.legacyPackages.${pkgs.stdenv.hostPlatform.system}.graalvmPackages.graalvm-ce;
         in
         pkgs.mkShell (
           {
