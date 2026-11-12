@@ -18,6 +18,7 @@
   zlib,
   graalvmPackages,
   makeWrapper,
+  removeReferencesTo,
   native ? false,
 }:
 
@@ -64,7 +65,10 @@ stdenv.mkDerivation (finalAttrs: {
     gradle
     makeWrapper
   ]
-  ++ lib.optional native graalvm;
+  ++ lib.optionals native [
+    graalvm
+    removeReferencesTo
+  ];
 
   buildInputs = lib.optional native zlib;
 
@@ -139,13 +143,41 @@ stdenv.mkDerivation (finalAttrs: {
   # so this is equivalent to the -D of the jar variant (`headlessmc config get hmc.java.download`
   # prints false for both variants). The updater is disabled as well: it would suggest overwriting
   # the binary in the read-only store, updates come through Nix instead.
+  # The image heap of the native runner contains a snapshot of the build environment (sandbox PATH,
+  # NIX_CFLAGS_COMPILE, NIX_LDFLAGS, JAVA_HOME, ...; config property names and values from
+  # System.getenv() during the build), so it references graalvm, gradle, the C toolchain, gtk+3 and
+  # more (a ~3 GiB closure instead of ~1 GiB). None of these strings are used at run time: HeadlessMc
+  # reads PATH/JAVA_HOME with System.getenv() when looking for Javas. The runner only needs the
+  # dynamic loader and its RUNPATH (glibc), so every other store reference is overwritten
+  # (remove-references-to only replaces the hash, the image keeps its layout). This runs after the
+  # fixup phase shrank the RUNPATH and before wrapProgram renames the runner.
   postFixup = lib.optionalString native ''
+    runner=$out/bin/headlessmc
+    keep=$({ patchelf --print-interpreter "$runner"; patchelf --print-rpath "$runner" | tr : '\n'; } \
+      | grep -oE "^$NIX_STORE/[a-z0-9]{32}-" | sort -u)
+    refs=()
+    for ref in $(grep -aoE "$NIX_STORE/[a-z0-9]{32}-" "$runner" | sort -u); do
+      if [[ "$ref" != "$NIX_STORE/$(basename "$out" | cut -c1-33)" ]] && ! grep -qxF "$ref" <<< "$keep"; then
+        refs+=(-t "$ref")
+      fi
+    done
+    if (( ''${#refs[@]} )); then
+      remove-references-to "''${refs[@]}" "$runner"
+    fi
+
     wrapProgram $out/bin/headlessmc \
       --add-flags "-Dhmc.java.download=false" \
       --add-flags "-Dhmc.updater.enabled=false" \
       --add-flags "-Dhmc.plugins.mutable-jar=$out/lib/headlessmc-mutable" \
       --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
   '';
+
+  # guards against the build environment coming back into the native image (see postFixup)
+  disallowedReferences = lib.optionals native [
+    graalvm
+    gradle
+    stdenv.cc
+  ];
 
   meta = {
     description = "Headless Minecraft launcher and command line client";

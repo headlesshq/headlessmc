@@ -47,6 +47,8 @@ jobs:
       - run: nix build .#headlessmc-native --print-build-logs --out-link result-native
       - run: ./result-native/bin/headlessmc --help
       - run: test -d result-native/lib/headlessmc-mutable/lib/deployment
+      # build tools in the closure fail the build through disallowedReferences, this shows the rest
+      - run: nix path-info --closure-size --human-readable ./result ./result-native
 
   # Renovate PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs
   # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json would go stale and break the build on main.
