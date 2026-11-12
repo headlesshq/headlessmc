@@ -34,3 +34,42 @@ jobs:
         run: nix build .#headlessmc-native --print-build-logs --out-link result-native
       - if: github.event_name == 'push'
         run: ./result-native/bin/headlessmc --help
+
+  # Renovate PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs
+  # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json goes stale and the build fails.
+  # Like update-fabric-lock in lifecycle.yml: regenerate deps.json and push it to the PR branch.
+  # Pushes made with GITHUB_TOKEN do not trigger new workflow runs, so FABRIC_LOCK_TOKEN is preferred.
+  update-deps-json:
+    needs: build
+    if: >
+      failure()
+      && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && startsWith(github.head_ref, 'renovate/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.FABRIC_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      # USE_BWRAP=0: the update script's bubblewrap sandbox needs unprivileged user namespaces,
+      # which Ubuntu's AppArmor restricts on the runners
+      - name: Update deps.json
+        run: |
+          nix build .#headlessmc.mitmCache.updateScript --print-build-logs
+          USE_BWRAP=0 ./result
+      - name: Push updated deps.json
+        run: |
+          deps=packaging/nix/deps.json
+          if git diff --quiet -- "$deps"; then
+            echo "deps.json is up to date, the build failed for another reason."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$deps"
+          git commit -m "build(deps): update nix deps.json"
+          git push
