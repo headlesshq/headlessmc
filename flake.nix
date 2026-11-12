@@ -19,7 +19,9 @@
       # the package is only supported on Linux (see meta.platforms), dev shells work everywhere
       forLinux =
         f:
-        lib.genAttrs (lib.filter (lib.hasSuffix "-linux") systems) (system: f nixpkgs.legacyPackages.${system});
+        lib.genAttrs (lib.filter (lib.hasSuffix "-linux") systems) (
+          system: f nixpkgs.legacyPackages.${system}
+        );
 
       jdks = pkgs: {
         "25" = pkgs.temurin-bin-25;

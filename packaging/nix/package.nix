@@ -7,8 +7,9 @@
 #
 # The Gradle dependencies are pinned in deps.json. To regenerate it after changing dependencies:
 #   nix build .#headlessmc.mitmCache.updateScript && ./result
-# The native variant needs extra dependencies (Quarkus native extension), so it has its own file:
-#   nix build .#headlessmc-native.mitmCache.updateScript && ./result
+# Both variants share it: the native build resolves no extra Gradle artifacts (checked by
+# generating it from .#headlessmc-native too, which gave an identical file, and by building both).
+# Without a /run directory or a writable store (e.g. in a container) run it with USE_BWRAP=0.
 {
   lib,
   stdenv,
@@ -59,7 +60,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   mitmCache = gradle.fetchDeps {
     pkg = finalAttrs.finalPackage;
-    data = if native then ./deps-native.json else ./deps.json;
+    data = ./deps.json;
   };
 
   # fetchDeps and the setup hook run gradle for us, we only choose the task
@@ -109,8 +110,9 @@ stdenv.mkDerivation (finalAttrs: {
       '';
 
   # the native image launches the game with a JDK from the PATH as well
-  # Leading -D arguments are turned into system properties by HeadlessMcMain.parseSystemProperties
-  # (checked in the source, not by running it), so this is equivalent to the -D of the jar variant.
+  # Leading -D arguments are turned into system properties by HeadlessMcMain.parseSystemProperties,
+  # so this is equivalent to the -D of the jar variant (`headlessmc config get hmc.java.download`
+  # prints false for both variants).
   postFixup = lib.optionalString native ''
     wrapProgram $out/bin/headlessmc \
       --add-flags "-Dhmc.java.download=false" \

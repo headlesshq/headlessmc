@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
-      # fails if deps.json is stale or a placeholder
+      # fails if deps.json is stale
       - run: nix build .#headlessmc --print-build-logs
       - run: ./result/bin/headlessmc --help
       # the native variant is slow, so only build it on main; PRs at least evaluate it
