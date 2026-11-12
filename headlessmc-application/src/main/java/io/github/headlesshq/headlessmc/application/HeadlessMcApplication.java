@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.commands.ShellCompletions;
 import io.github.headlesshq.headlessmc.config.ConfigFileProvider;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
+import io.github.headlesshq.headlessmc.plugins.PluginBootstrap;
 import io.github.headlesshq.headlessmc.updater.UpdateNotifier;
 import io.quarkus.runtime.QuarkusApplication;
 import jakarta.inject.Inject;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.OptionalInt;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
@@ -26,6 +28,7 @@ public class HeadlessMcApplication implements QuarkusApplication {
     private final ConfigFileProvider configFileProvider;
     private final UpdateNotifier updateNotifier;
     private final ShellCompletions shellCompletions;
+    private final PluginBootstrap pluginBootstrap;
 
     @Override
     public int run(String... args) throws Exception {
@@ -34,6 +37,12 @@ public class HeadlessMcApplication implements QuarkusApplication {
         }
 
         initFiles();
+        // if plugins are installed, HeadlessMc runs with them in another JVM
+        OptionalInt pluginExitCode = pluginBootstrap.delegate(args);
+        if (pluginExitCode.isPresent()) {
+            return pluginExitCode.getAsInt();
+        }
+
         commandLine.setUsageHelpAutoWidth(true);
         updateNotifier.checkBefore(getCommand(args));
         return commandLine.execute(args);

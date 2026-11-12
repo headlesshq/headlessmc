@@ -417,6 +417,44 @@ class VersionRemoveServiceTest {
         assertEquals(List.of("vanilla-old"), profileService.getProfiles().stream().map(Profile::name).toList());
     }
 
+    /**
+     * A version installed by a platform that is not available, e.g. added by a plugin that has been uninstalled.
+     */
+    private void installUnmatched(FakeVersion version) throws IOException {
+        versionJsonService.add(version);
+        createFile(mcFiles.getVersionsDir().resolve(version.getId()).resolve(version.getId() + ".json"));
+    }
+
+    @Test
+    void profilesOfUnavailablePlatformsBlockTheRemovalOfTheirVersions() throws IOException {
+        installUnmatched(new FakeVersion("quilt-loader-0.30.2-1.21.1").withInheritsFrom("1.21.1"));
+        installUnmatched(new FakeVersion("quilt-loader-0.30.1-1.21.1").withInheritsFrom("1.21.1"));
+        profileService.save(new Profile("quilt", VersionArg.parse("quilt", "1.21.1"), root));
+        profileService.save(new Profile("quilt-specific", VersionArg.parse("quilt", "1.21.1", "0.30.2"), root));
+        profileService.save(new Profile("quilt-old", VersionArg.parse("quilt", "1.20.4"), root));
+
+        VersionRemoval removal = plan("quilt-loader-0.30.2-1.21.1");
+        assertEquals(List.of("quilt-specific"), removal.blockingProfiles().stream().map(Profile::name).toList());
+
+        profileService.remove(profileService.getProfile("quilt-specific").orElseThrow());
+        remove("quilt-loader-0.30.2-1.21.1");
+        removal = plan("quilt-loader-0.30.1-1.21.1");
+        assertEquals(List.of("quilt"), removal.blockingProfiles().stream().map(Profile::name).toList());
+
+        removal = service().plan(versionJsonService.getVersion("1.21.1"), true);
+        assertEquals(List.of("quilt"), removal.removedProfiles().stream().map(Profile::name).toList());
+        assertTrue(removal.removedVersions().stream().map(Version::getId).toList().contains("quilt-loader-0.30.1-1.21.1"));
+    }
+
+    @Test
+    void profilesOfUnavailablePlatformsDoNotBlockOtherVersions() throws IOException {
+        installUnmatched(new FakeVersion("quilt-loader-0.30.2-1.21.1").withInheritsFrom("1.21.1"));
+        profileService.save(new Profile("quilt", VersionArg.parse("quilt", "1.21.1"), root));
+
+        assertFalse(plan(FABRIC_9).isBlocked());
+        assertFalse(plan("1.20.4").isBlocked());
+    }
+
     @Test
     void profilesThatNeedTheVersionBlockTheRemoval() {
         profileService.save(new Profile("specific", VersionArg.parse("fabric", "1.21.1", "0.16.9"), root));
