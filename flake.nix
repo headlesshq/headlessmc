@@ -26,6 +26,7 @@
           available = jdks pkgs;
           jdk = available.${primary};
           # only the native shell pulls in GraalVM, it drags in AWT/X11 libraries (~2 GB)
+          # nixpkgs ships 25.0.2, the last 25.0.x release; GraalVM "25iN" Innovation releases are intentionally not followed (#97), see .devcontainer/Dockerfile
           graalvm = pkgs.graalvmPackages.graalvm-ce;
         in
         pkgs.mkShell (
