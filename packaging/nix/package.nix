@@ -11,7 +11,6 @@
   lib,
   stdenv,
   gradle_9,
-  jdk25_headless,
   jdk25,
   zlib,
   graalvmPackages,
@@ -21,9 +20,11 @@
 
 let
   gradle = gradle_9;
-  # the headless JDK only builds and runs the launcher
-  jdk = jdk25_headless;
-  # the game needs libawt_xawt/libjawt (AWT, fonts, LWJGL setups), which the headless JDK lacks
+  # One full JDK for building, running the launcher and launching the game. The game needs
+  # libawt_xawt/libjawt, which the headless JDK lacks. The launcher must not run on a headless JDK:
+  # CurrentJavaSource registers the running JVM's java.home as a candidate Java, so it could be
+  # picked for the game instead of the full JDK on the PATH (costs closure size).
+  jdk = jdk25;
   gameJdk = jdk25;
   graalvm = graalvmPackages.graalvm-ce;
   nativeBuildArgs = lib.concatStringsSep "," [
@@ -59,6 +60,11 @@ stdenv.mkDerivation (finalAttrs: {
 
   # fetchDeps and the setup hook run gradle for us, we only choose the task
   gradleBuildTask = ":headlessmc-application:quarkusBuild";
+  # Native flags compared with scripts/build-native.sh: the same -Dquarkus.native.enabled,
+  # -Dquarkus.package.jar.enabled and BUILD_ARGS (nativeBuildArgs). Intentionally omitted:
+  # NATIVE_MUSL (--static, --libc=musl; this is a normal glibc build against the store) and
+  # SEPARATE_NATIVE_BUILD (sources-only plus a second native-image run, only a CI memory workaround).
+  # quarkus.native.container-build is not set by the script either, it defaults to false.
   gradleFlags = [
     "-Dorg.gradle.java.home=${if native then graalvm.home else jdk.home}"
   ]
@@ -74,7 +80,9 @@ stdenv.mkDerivation (finalAttrs: {
     if native then
       ''
         runHook preInstall
-        install -Dm755 headlessmc-application/build/headlessmc-application-*-runner $out/bin/headlessmc
+        runner=$(echo headlessmc-application/build/*-runner)
+        test -f "$runner" || { echo "expected exactly one native runner, got: $runner" >&2; exit 1; }
+        install -Dm755 "$runner" $out/bin/headlessmc
         runHook postInstall
       ''
     else

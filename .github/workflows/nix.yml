@@ -21,7 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: DeterminateSystems/nix-installer-action@v16 # TODO pin by SHA
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
       # fails if deps.json is stale or a placeholder
       - run: nix build .#headlessmc --print-build-logs
       - run: ./result/bin/headlessmc --help
+      # the native variant needs its own deps coverage and is slow, so only build it on main
+      - if: github.event_name == 'push'
+        run: nix build .#headlessmc-native --print-build-logs --out-link result-native
+      - if: github.event_name == 'push'
+        run: ./result-native/bin/headlessmc --help
