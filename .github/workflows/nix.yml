@@ -9,6 +9,8 @@ on:
       - '**/*.gradle*'
       - '**/src/**'
       - gradle/**
+      - gradle.properties
+      - lombok.config
   pull_request:
     paths:
       - flake.nix
@@ -17,6 +19,8 @@ on:
       - '**/*.gradle*'
       - '**/src/**'
       - gradle/**
+      - gradle.properties
+      - lombok.config
 
 jobs:
   build:
