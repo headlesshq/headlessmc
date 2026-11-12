@@ -21,18 +21,21 @@
       };
 
       mkJavaShell =
-        pkgs: primary:
+        pkgs: primary: native:
         let
           available = jdks pkgs;
           jdk = available.${primary};
+          # only the native shell pulls in GraalVM, it drags in AWT/X11 libraries (~2 GB)
           graalvm = pkgs.graalvmPackages.graalvm-ce;
         in
         pkgs.mkShell (
           {
             # nixpkgs wraps native-image with gcc, glibc and zlib, so it needs nothing else from the shell
-            packages = [ jdk ];
+            packages = [ jdk ] ++ lib.optional native graalvm;
 
             JAVA_HOME = jdk.home;
+          }
+          // lib.optionalAttrs native {
             GRAALVM_HOME = graalvm.home;
           }
           // lib.optionalAttrs (lib.length (lib.attrNames available) > 1) {
@@ -46,7 +49,8 @@
     in
     {
       devShells = forAllSystems (pkgs: {
-        default = mkJavaShell pkgs "25";
+        default = mkJavaShell pkgs "25" false;
+        native = mkJavaShell pkgs "25" true;
       });
 
       formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
