@@ -102,8 +102,10 @@ stdenv.mkDerivation (finalAttrs: {
         # so use the Nix JDK, which is also found on the PATH when launching the game.
         # -Dhmc.java.download=false before -jar is a JVM system property, which HeadlessMc reads
         # as a config source (checked in ConfigService / HeadlessMcMain.parseSystemProperties)
+        # Updates come through Nix (the store is read-only), so the self-updater is disabled.
         makeWrapper ${jdk}/bin/java $out/bin/headlessmc \
           --add-flags "-Dhmc.java.download=false" \
+          --add-flags "-Dhmc.updater.enabled=false" \
           --add-flags "-jar $out/lib/headlessmc/quarkus-run.jar" \
           --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
         runHook postInstall
@@ -112,10 +114,12 @@ stdenv.mkDerivation (finalAttrs: {
   # the native image launches the game with a JDK from the PATH as well
   # Leading -D arguments are turned into system properties by HeadlessMcMain.parseSystemProperties,
   # so this is equivalent to the -D of the jar variant (`headlessmc config get hmc.java.download`
-  # prints false for both variants).
+  # prints false for both variants). The updater is disabled as well: it would suggest overwriting
+  # the binary in the read-only store, updates come through Nix instead.
   postFixup = lib.optionalString native ''
     wrapProgram $out/bin/headlessmc \
       --add-flags "-Dhmc.java.download=false" \
+      --add-flags "-Dhmc.updater.enabled=false" \
       --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
   '';
 

@@ -178,6 +178,8 @@ need a Java you install yourself, e.g. `nix profile install nixpkgs#jdk8 nixpkgs
 HeadlessMc finds it in your profile, in `JAVA_HOME` or on the `PATH`, see [above](#musl-nixos-and-older-glibc).
 The `-Dhmc.java.download=false` of the package is a system property, which takes precedence over the config file,
 so setting `hmc.java.download` to `true` in the config has no effect.
+Both also set `hmc.updater.enabled` to `false`: update HeadlessMc through Nix,
+with `nix profile upgrade` or by updating the flake input, since the files in the Nix store are read-only.
 To download Java runtimes anyway, e.g. if you use the package on another distribution than NixOS,
 pass it on the command line, before any other argument:
 ``` sh
