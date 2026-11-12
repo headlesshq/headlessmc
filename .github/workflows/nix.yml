@@ -7,15 +7,32 @@ on:
       - '**/*.md'
       - docs/**
       - mkdocs.yml
-  # Only for update-deps-json: renovate PRs that may change the resolved Gradle artifacts.
+  # For update-deps-json (renovate PRs that may change the resolved Gradle artifacts) and the version check.
   pull_request:
     paths:
       - flake.lock
       - '**/*.gradle*'
       - gradle/**
       - gradle.properties
+      - packaging/nix/**
 
 jobs:
+  # release-please keeps both versions in sync, but only rewrites package.nix on the next release,
+  # so a manual bump of gradle.properties would leave the Nix package with the old version.
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check that package.nix has the version of gradle.properties
+        run: |
+          gradle_version=$(sed -n 's/^version=//p' gradle.properties)
+          nix_version=$(sed -n 's/^ *version = "\(.*\)";$/\1/p' packaging/nix/package.nix)
+          echo "gradle.properties: $gradle_version, package.nix: $nix_version"
+          if [ -z "$gradle_version" ] || [ "$gradle_version" != "$nix_version" ]; then
+            echo "::error file=packaging/nix/package.nix::version must be $gradle_version like in gradle.properties"
+            exit 1
+          fi
+
   build:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -25,8 +42,11 @@ jobs:
       # fails if deps.json is stale
       - run: nix build .#headlessmc --print-build-logs
       - run: ./result/bin/headlessmc --help
+      # plugins re-augment from the mutable jar, which the package builds and points the wrapper at
+      - run: test -d result/lib/headlessmc/lib/deployment
       - run: nix build .#headlessmc-native --print-build-logs --out-link result-native
       - run: ./result-native/bin/headlessmc --help
+      - run: test -d result-native/lib/headlessmc-mutable/lib/deployment
 
   # Renovate PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs
   # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json would go stale and break the build on main.

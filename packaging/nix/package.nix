@@ -38,6 +38,16 @@ let
     "-H:+SharedArenaSupport"
     "-H:-UnlockExperimentalVMOptions"
   ];
+  # Native flags compared with scripts/build-native.sh: the same -Dquarkus.native.enabled,
+  # -Dquarkus.package.jar.enabled and BUILD_ARGS (nativeBuildArgs). Intentionally omitted:
+  # NATIVE_MUSL (--static, --libc=musl; this is a normal glibc build against the store) and
+  # SEPARATE_NATIVE_BUILD (sources-only plus a second native-image run, only a CI memory workaround).
+  # quarkus.native.container-build is not set by the script either, it defaults to false.
+  nativeGradleFlags = [
+    "-Dquarkus.native.enabled=true"
+    "-Dquarkus.package.jar.enabled=false"
+    "-Dquarkus.native.additional-build-args=${nativeBuildArgs}"
+  ];
 in
 # the native build requires GraalVM 25 (only checked for native, so the other variants evaluate regardless)
 assert native -> lib.versionAtLeast graalvm.version "25";
@@ -45,7 +55,7 @@ stdenv.mkDerivation (finalAttrs: {
   pname = if native then "headlessmc-native" else "headlessmc";
 
   # x-release-please-start-version
-  version = "3.0.0-RC8";
+  version = "3.0.0-RC9";
   # x-release-please-end
 
   src = lib.cleanSource ../..;
@@ -63,21 +73,29 @@ stdenv.mkDerivation (finalAttrs: {
     data = ./deps.json;
   };
 
-  # fetchDeps and the setup hook run gradle for us, we only choose the task
-  gradleBuildTask = ":headlessmc-application:quarkusBuild";
-  # Native flags compared with scripts/build-native.sh: the same -Dquarkus.native.enabled,
-  # -Dquarkus.package.jar.enabled and BUILD_ARGS (nativeBuildArgs). Intentionally omitted:
-  # NATIVE_MUSL (--static, --libc=musl; this is a normal glibc build against the store) and
-  # SEPARATE_NATIVE_BUILD (sources-only plus a second native-image run, only a CI memory workaround).
-  # quarkus.native.container-build is not set by the script either, it defaults to false.
-  gradleFlags = [
-    "-Dorg.gradle.java.home=${if native then graalvm else jdk}"
-  ]
-  ++ lib.optionals native [
-    "-Dquarkus.native.enabled=true"
-    "-Dquarkus.package.jar.enabled=false"
-    "-Dquarkus.native.additional-build-args=${nativeBuildArgs}"
-  ];
+  # Plugins re-augment HeadlessMc from the mutable jar (see headlessmc-plugins and docs/plugins.md).
+  # Release builds embed a lock to download it from the GitHub release, which the sandbox cannot do,
+  # so both variants build it here and point hmc.plugins.mutable-jar at it. PluginBuilder only copies
+  # it into its cache before re-augmenting, so it can stay in the read-only store.
+  # -PmutableJar needs no extra entries in deps.json (both variants build offline with it): every
+  # Quarkus build resolves the deployment dependencies, the mutable jar only keeps them in lib/deployment.
+  gradleFlags = [ "-Dorg.gradle.java.home=${if native then graalvm else jdk}" ];
+
+  # `gradle` is the function of the setup hook, which adds gradleFlags and the offline/MITM cache flags.
+  # The Quarkus Gradle plugin assembles build/quarkus-app as a fast-jar without lib/deployment,
+  # the complete mutable jar is in build/quarkus-build/gen/quarkus-app (like mutableJarZip uses it).
+  # The native build runs second, it would replace the generated quarkus-app, so that is moved first.
+  buildPhase = ''
+    runHook preBuild
+    gradle ''${enableParallelBuilding:+--parallel} :headlessmc-application:quarkusBuild -PmutableJar
+    mv headlessmc-application/build/quarkus-build/gen/quarkus-app "$NIX_BUILD_TOP/mutable-jar"
+  ''
+  + lib.optionalString native ''
+    gradle ''${enableParallelBuilding:+--parallel} :headlessmc-application:quarkusBuild ${lib.escapeShellArgs nativeGradleFlags}
+  ''
+  + ''
+    runHook postBuild
+  '';
 
   # Quarkus finds native-image through GRAALVM_HOME (the GraalVM output is a JDK-style home)
   env = lib.optionalAttrs native { GRAALVM_HOME = "${graalvm}"; };
@@ -91,13 +109,16 @@ stdenv.mkDerivation (finalAttrs: {
         runner=$(echo headlessmc-application/build/*-runner)
         test -f "$runner" || { echo "expected exactly one native runner, got: $runner" >&2; exit 1; }
         install -Dm755 "$runner" $out/bin/headlessmc
+        mkdir -p $out/lib
+        cp -r "$NIX_BUILD_TOP/mutable-jar" $out/lib/headlessmc-mutable
         runHook postInstall
       ''
     else
       ''
         runHook preInstall
         mkdir -p $out/lib
-        cp -r headlessmc-application/build/quarkus-app $out/lib/headlessmc
+        # the mutable jar runs like the fast-jar, it only adds lib/deployment for the re-augmentation
+        cp -r "$NIX_BUILD_TOP/mutable-jar" $out/lib/headlessmc
         # JDKs downloaded by HeadlessMc cannot start on NixOS (their loader is not in the store),
         # so use the Nix JDK, which is also found on the PATH when launching the game.
         # -Dhmc.java.download=false before -jar is a JVM system property, which HeadlessMc reads
@@ -106,12 +127,14 @@ stdenv.mkDerivation (finalAttrs: {
         makeWrapper ${jdk}/bin/java $out/bin/headlessmc \
           --add-flags "-Dhmc.java.download=false" \
           --add-flags "-Dhmc.updater.enabled=false" \
+          --add-flags "-Dhmc.plugins.mutable-jar=$out/lib/headlessmc" \
           --add-flags "-jar $out/lib/headlessmc/quarkus-run.jar" \
           --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
         runHook postInstall
       '';
 
-  # the native image launches the game with a JDK from the PATH as well
+  # the native image launches the game with a JDK from the PATH as well, and runs HeadlessMc with
+  # plugins on it (the build re-augmented from lib/headlessmc-mutable).
   # Leading -D arguments are turned into system properties by HeadlessMcMain.parseSystemProperties,
   # so this is equivalent to the -D of the jar variant (`headlessmc config get hmc.java.download`
   # prints false for both variants). The updater is disabled as well: it would suggest overwriting
@@ -120,6 +143,7 @@ stdenv.mkDerivation (finalAttrs: {
     wrapProgram $out/bin/headlessmc \
       --add-flags "-Dhmc.java.download=false" \
       --add-flags "-Dhmc.updater.enabled=false" \
+      --add-flags "-Dhmc.plugins.mutable-jar=$out/lib/headlessmc-mutable" \
       --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
   '';
 

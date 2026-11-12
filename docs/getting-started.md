@@ -171,6 +171,11 @@ There are two packages:
 * `headlessmc-native` (`nix run github:headlesshq/headlessmc#headlessmc-native`) is the executable,
   built with GraalVM. It starts faster, but takes a few minutes to build.
 
+[Plugins](plugins.md) work with both: instead of downloading the `headlessmc-mutable.zip` of a release,
+the package builds the mutable jar itself and sets `hmc.plugins.mutable-jar` to it
+(`lib/headlessmc`, respectively `lib/headlessmc-mutable` in the package).
+HeadlessMc with plugins runs on the JDK 25 of the package, also for `headlessmc-native`.
+
 Both put a JDK 25 of nixpkgs on the `PATH` of HeadlessMc, which it uses to launch Minecraft,
 and set `hmc.java.download` to `false`, because the Java runtimes HeadlessMc downloads cannot start on NixOS.
 Minecraft versions that need another Java, Java 8 for 1.16 and older or Java 17 for 1.17 to 1.20.4,
