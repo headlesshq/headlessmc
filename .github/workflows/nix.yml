@@ -1,29 +1,23 @@
 name: Nix
 on:
+  # The Nix build only runs on main. Docs don't change its outcome, everything else may.
   push:
     branches: [main]
-    paths:
-      - flake.nix
-      - flake.lock
-      - packaging/nix/**
-      - '**/*.gradle*'
-      - '**/src/**'
-      - gradle/**
-      - gradle.properties
-      - lombok.config
+    paths-ignore:
+      - '**/*.md'
+      - docs/**
+      - mkdocs.yml
+  # Only for update-deps-json: renovate PRs that may change the resolved Gradle artifacts.
   pull_request:
     paths:
-      - flake.nix
       - flake.lock
-      - packaging/nix/**
       - '**/*.gradle*'
-      - '**/src/**'
       - gradle/**
       - gradle.properties
-      - lombok.config
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -31,23 +25,16 @@ jobs:
       # fails if deps.json is stale
       - run: nix build .#headlessmc --print-build-logs
       - run: ./result/bin/headlessmc --help
-      # the native variant is slow, so only build it on main; PRs at least evaluate it
-      - if: github.event_name == 'pull_request'
-        run: nix build .#headlessmc-native --dry-run
-      - if: github.event_name == 'push'
-        run: nix build .#headlessmc-native --print-build-logs --out-link result-native
-      - if: github.event_name == 'push'
-        run: ./result-native/bin/headlessmc --help
+      - run: nix build .#headlessmc-native --print-build-logs --out-link result-native
+      - run: ./result-native/bin/headlessmc --help
 
   # Renovate PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs
-  # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json goes stale and the build fails.
-  # Like update-fabric-lock in lifecycle.yml: regenerate deps.json and push it to the PR branch.
+  # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json would go stale and break the build on main.
+  # Like update-fabric-lock in lifecycle.yml: regenerate deps.json and push it to the PR branch if it changed.
   # Pushes made with GITHUB_TOKEN do not trigger new workflow runs, so FABRIC_LOCK_TOKEN is preferred.
   update-deps-json:
-    needs: build
     if: >
-      failure()
-      && github.event_name == 'pull_request'
+      github.event_name == 'pull_request'
       && github.event.pull_request.head.repo.full_name == github.repository
       && startsWith(github.head_ref, 'renovate/')
     runs-on: ubuntu-latest
@@ -69,7 +56,7 @@ jobs:
         run: |
           deps=packaging/nix/deps.json
           if git diff --quiet -- "$deps"; then
-            echo "deps.json is up to date, the build failed for another reason."
+            echo "deps.json is up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
