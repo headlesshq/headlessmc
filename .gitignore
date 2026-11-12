@@ -4,6 +4,7 @@ build/
 
 # Eclipse
 .project
+.classpath
 .libraryClasspath
 .settings/
 bin/

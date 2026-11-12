@@ -205,9 +205,9 @@ version_lt() {
 
 download() {
   if command -v curl >/dev/null 2>&1; then
-    curl -fL --proto '=https' --tlsv1.2 --retry 3 --retry-delay 2 --progress-bar -o "$2" "$1"
+    curl -fL --proto '=https' --tlsv1.2 --retry 5 --retry-delay 2 --progress-bar -o "$2" "$1"
   elif command -v wget >/dev/null 2>&1; then
-    wget -q -O "$2" "$1"
+    wget -q -t 5 -O "$2" "$1"
   else
     err "curl or wget is required to download HeadlessMc"
   fi
