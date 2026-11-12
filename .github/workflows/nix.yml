@@ -7,6 +7,7 @@ on:
       - flake.lock
       - packaging/nix/**
       - '**/*.gradle*'
+      - '**/src/**'
       - gradle/**
   pull_request:
     paths:
@@ -14,6 +15,7 @@ on:
       - flake.lock
       - packaging/nix/**
       - '**/*.gradle*'
+      - '**/src/**'
       - gradle/**
 
 jobs:
@@ -25,7 +27,9 @@ jobs:
       # fails if deps.json is stale or a placeholder
       - run: nix build .#headlessmc --print-build-logs
       - run: ./result/bin/headlessmc --help
-      # the native variant needs its own deps coverage and is slow, so only build it on main
+      # the native variant is slow, so only build it on main; PRs at least evaluate it
+      - if: github.event_name == 'pull_request'
+        run: nix build .#headlessmc-native --dry-run
       - if: github.event_name == 'push'
         run: nix build .#headlessmc-native --print-build-logs --out-link result-native
       - if: github.event_name == 'push'

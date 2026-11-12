@@ -7,6 +7,8 @@
 #
 # The Gradle dependencies are pinned in deps.json. To regenerate it after changing dependencies:
 #   nix build .#headlessmc.mitmCache.updateScript && ./result
+# The native variant needs extra dependencies (Quarkus native extension), so it has its own file:
+#   nix build .#headlessmc-native.mitmCache.updateScript && ./result
 {
   lib,
   stdenv,
@@ -36,6 +38,8 @@ let
     "-H:-UnlockExperimentalVMOptions"
   ];
 in
+# the Gradle build requires JDK 25
+assert lib.versionAtLeast graalvm.version "25";
 stdenv.mkDerivation (finalAttrs: {
   pname = if native then "headlessmc-native" else "headlessmc";
 
@@ -55,7 +59,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   mitmCache = gradle.fetchDeps {
     pkg = finalAttrs.finalPackage;
-    data = ./deps.json;
+    data = if native then ./deps-native.json else ./deps.json;
   };
 
   # fetchDeps and the setup hook run gradle for us, we only choose the task
@@ -66,13 +70,16 @@ stdenv.mkDerivation (finalAttrs: {
   # SEPARATE_NATIVE_BUILD (sources-only plus a second native-image run, only a CI memory workaround).
   # quarkus.native.container-build is not set by the script either, it defaults to false.
   gradleFlags = [
-    "-Dorg.gradle.java.home=${if native then graalvm.home else jdk.home}"
+    "-Dorg.gradle.java.home=${if native then graalvm else jdk}"
   ]
   ++ lib.optionals native [
     "-Dquarkus.native.enabled=true"
     "-Dquarkus.package.jar.enabled=false"
     "-Dquarkus.native.additional-build-args=${nativeBuildArgs}"
   ];
+
+  # Quarkus finds native-image through GRAALVM_HOME (the GraalVM output is a JDK-style home)
+  env = lib.optionalAttrs native { GRAALVM_HOME = "${graalvm}"; };
 
   doCheck = false;
 
