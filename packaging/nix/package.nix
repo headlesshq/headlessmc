@@ -38,8 +38,8 @@ let
     "-H:-UnlockExperimentalVMOptions"
   ];
 in
-# the Gradle build requires JDK 25
-assert lib.versionAtLeast graalvm.version "25";
+# the native build requires GraalVM 25 (only checked for native, so the other variants evaluate regardless)
+assert native -> lib.versionAtLeast graalvm.version "25";
 stdenv.mkDerivation (finalAttrs: {
   pname = if native then "headlessmc-native" else "headlessmc";
 
