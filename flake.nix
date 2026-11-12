@@ -1,10 +1,10 @@
 {
-  description = "Development shell for HeadlessMc";
+  description = "HeadlessMc, a headless Minecraft launcher";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
   outputs =
-    { nixpkgs, ... }:
+    { self, nixpkgs, ... }:
     let
       inherit (nixpkgs) lib;
 
@@ -52,6 +52,25 @@
         default = mkJavaShell pkgs "25" false;
         native = mkJavaShell pkgs "25" true;
       });
+
+      packages = forAllSystems (pkgs: rec {
+        headlessmc = pkgs.callPackage ./packaging/nix/package.nix { };
+        headlessmc-native = pkgs.callPackage ./packaging/nix/package.nix { native = true; };
+        default = headlessmc;
+      });
+
+      apps = forAllSystems (pkgs: {
+        default = {
+          type = "app";
+          program = lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.headlessmc;
+          meta.description = "Run HeadlessMc";
+        };
+      });
+
+      overlays.default = final: _prev: {
+        headlessmc = final.callPackage ./packaging/nix/package.nix { };
+        headlessmc-native = final.callPackage ./packaging/nix/package.nix { native = true; };
+      };
 
       formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
     };
