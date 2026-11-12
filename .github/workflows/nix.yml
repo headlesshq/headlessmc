@@ -1,0 +1,27 @@
+name: Nix
+on:
+  push:
+    branches: [main]
+    paths:
+      - flake.nix
+      - flake.lock
+      - packaging/nix/**
+      - '**/*.gradle*'
+      - gradle/**
+  pull_request:
+    paths:
+      - flake.nix
+      - flake.lock
+      - packaging/nix/**
+      - '**/*.gradle*'
+      - gradle/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@v16 # TODO pin by SHA
+      # fails if deps.json is stale or a placeholder
+      - run: nix build .#headlessmc --print-build-logs
+      - run: ./result/bin/headlessmc --help

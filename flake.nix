@@ -16,6 +16,11 @@
 
       forAllSystems = f: lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
+      # the package is only supported on Linux (see meta.platforms), dev shells work everywhere
+      forLinux =
+        f:
+        lib.genAttrs (lib.filter (lib.hasSuffix "-linux") systems) (system: f nixpkgs.legacyPackages.${system});
+
       jdks = pkgs: {
         "25" = pkgs.temurin-bin-25;
       };
@@ -53,13 +58,13 @@
         native = mkJavaShell pkgs "25" true;
       });
 
-      packages = forAllSystems (pkgs: rec {
+      packages = forLinux (pkgs: rec {
         headlessmc = pkgs.callPackage ./packaging/nix/package.nix { };
         headlessmc-native = pkgs.callPackage ./packaging/nix/package.nix { native = true; };
         default = headlessmc;
       });
 
-      apps = forAllSystems (pkgs: {
+      apps = forLinux (pkgs: {
         default = {
           type = "app";
           program = lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.headlessmc;

@@ -12,6 +12,8 @@
   stdenv,
   gradle_9,
   jdk25_headless,
+  jdk25,
+  zlib,
   graalvmPackages,
   makeWrapper,
   native ? false,
@@ -19,7 +21,10 @@
 
 let
   gradle = gradle_9;
+  # the headless JDK only builds and runs the launcher
   jdk = jdk25_headless;
+  # the game needs libawt_xawt/libjawt (AWT, fonts, LWJGL setups), which the headless JDK lacks
+  gameJdk = jdk25;
   graalvm = graalvmPackages.graalvm-ce;
   nativeBuildArgs = lib.concatStringsSep "," [
     "--initialize-at-run-time=org.jline.nativ"
@@ -44,6 +49,8 @@ stdenv.mkDerivation (finalAttrs: {
     makeWrapper
   ]
   ++ lib.optional native graalvm;
+
+  buildInputs = lib.optional native zlib;
 
   mitmCache = gradle.fetchDeps {
     pkg = finalAttrs.finalPackage;
@@ -76,19 +83,23 @@ stdenv.mkDerivation (finalAttrs: {
         mkdir -p $out/lib
         cp -r headlessmc-application/build/quarkus-app $out/lib/headlessmc
         # JDKs downloaded by HeadlessMc cannot start on NixOS (their loader is not in the store),
-        # so use the Nix JDK, which is also found on the PATH when launching the game
+        # so use the Nix JDK, which is also found on the PATH when launching the game.
+        # -Dhmc.java.download=false before -jar is a JVM system property, which HeadlessMc reads
+        # as a config source (checked in ConfigService / HeadlessMcMain.parseSystemProperties)
         makeWrapper ${jdk}/bin/java $out/bin/headlessmc \
           --add-flags "-Dhmc.java.download=false" \
           --add-flags "-jar $out/lib/headlessmc/quarkus-run.jar" \
-          --prefix PATH : ${lib.makeBinPath [ jdk ]}
+          --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
         runHook postInstall
       '';
 
   # the native image launches the game with a JDK from the PATH as well
+  # Leading -D arguments are turned into system properties by HeadlessMcMain.parseSystemProperties
+  # (checked in the source, not by running it), so this is equivalent to the -D of the jar variant.
   postFixup = lib.optionalString native ''
     wrapProgram $out/bin/headlessmc \
       --add-flags "-Dhmc.java.download=false" \
-      --prefix PATH : ${lib.makeBinPath [ jdk ]}
+      --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
   '';
 
   meta = {
@@ -99,7 +110,6 @@ stdenv.mkDerivation (finalAttrs: {
     platforms = [
       "x86_64-linux"
       "aarch64-linux"
-      "aarch64-darwin"
     ];
     sourceProvenance = with lib.sourceTypes; [
       fromSource
