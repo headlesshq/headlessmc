@@ -38,7 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class VersionMatcherServiceImpl implements VersionMatcherService {
     static final String CACHE_FILE = "version-matches.json";
-    static final int CACHE_VERSION = 1;
+    // 2: exact pattern based matchers, matches of the substring based matcher can be wrong
+    static final int CACHE_VERSION = 2;
 
     private final PlatformService platforms;
     private final Cache<VersionMatches> cache;

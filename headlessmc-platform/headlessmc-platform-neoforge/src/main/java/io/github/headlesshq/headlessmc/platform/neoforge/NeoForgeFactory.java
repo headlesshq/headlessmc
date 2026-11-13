@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.os.OS;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
 import io.github.headlesshq.headlessmc.platform.mods.ModReader;
+import io.github.headlesshq.headlessmc.platform.VanillaVersionService;
 import io.github.headlesshq.headlessmc.platform.VersionService;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcher;
@@ -53,6 +54,16 @@ public class NeoForgeFactory {
     @ApplicationScoped
     public ServerFinder createServerFinder(OS os) {
         return new ForgeServerFinder(NeoForge.PLATFORM_NAME, os);
+    }
+
+    @NeoForge
+    @Produces
+    @ApplicationScoped
+    public VersionMatcher createVersionMatcher(
+        VanillaVersionService vanillaVersionService,
+        @NeoForge VersionService versionService
+    ) {
+        return new NeoForgeVersionMatcher(vanillaVersionService, versionService);
     }
 
     @Produces
