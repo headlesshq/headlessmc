@@ -24,14 +24,17 @@ public class CensoringFormatter extends ExtFormatter {
         return secretService.censorSecrets(formatter.format(record));
     }
 
+    // The head and tail are fixed texts of the formatter, they cannot contain secrets.
+    // They must not use the SecretService: Quarkus closes the console handler, which writes the tail,
+    // after it shut down the CDI container, where the SecretService cannot be resolved anymore.
     @Override
     public String getHead(Handler handler) {
-        return secretService.censorSecrets(formatter.getHead(handler));
+        return formatter.getHead(handler);
     }
 
     @Override
     public String getTail(Handler handler) {
-        return secretService.censorSecrets(formatter.getTail(handler));
+        return formatter.getTail(handler);
     }
 
     @Override
