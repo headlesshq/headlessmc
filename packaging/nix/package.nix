@@ -18,8 +18,12 @@
   zlib,
   graalvmPackages,
   makeWrapper,
+  installShellFiles,
   removeReferencesTo,
   native ? false,
+  # Additional JDKs for Minecraft versions that do not run on Java 25, added to the PATH of HeadlessMc:
+  #   headlessmc.override { extraJdks = [ pkgs.jdk8 pkgs.jdk17 pkgs.jdk21 ]; }
+  extraJdks ? [ ],
 }:
 
 let
@@ -59,11 +63,30 @@ stdenv.mkDerivation (finalAttrs: {
   version = "3.0.0-RC9";
   # x-release-please-end
 
-  src = lib.cleanSource ../..;
+  # Without flakes the source is the working directory, which may contain build outputs and run directories.
+  # These are all untracked, so this filter does not change the source of the flake.
+  src = lib.cleanSourceWith {
+    src = lib.cleanSource ../..;
+    filter =
+      path: type:
+      !(
+        type == "directory"
+        && lib.elem (baseNameOf path) [
+          "build"
+          ".gradle"
+          ".idea"
+          ".vscode"
+          ".claude"
+          "HeadlessMC"
+          "HeadlessMc"
+        ]
+      );
+  };
 
   nativeBuildInputs = [
     gradle
     makeWrapper
+    installShellFiles
   ]
   ++ lib.optionals native [
     graalvm
@@ -133,9 +156,23 @@ stdenv.mkDerivation (finalAttrs: {
           --add-flags "-Dhmc.updater.enabled=false" \
           --add-flags "-Dhmc.plugins.mutable-jar=$out/lib/headlessmc" \
           --add-flags "-jar $out/lib/headlessmc/quarkus-run.jar" \
-          --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
+          --prefix PATH : ${lib.makeBinPath ([ gameJdk ] ++ extraJdks)}
         runHook postInstall
       '';
+
+  # the same completion scripts as in the deb, rpm and archlinux packages (packaging/nfpm.yaml)
+  postInstall = ''
+    installShellCompletion --cmd headlessmc \
+      headlessmc-commands/src/main/resources/io/github/headlesshq/headlessmc/commands/completions/headlessmc.{bash,fish,zsh}
+  '';
+
+  # runs the wrapped launcher once, for both variants (Gradle tests are not run, see doCheck)
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    HOME=$(mktemp -d) $out/bin/headlessmc --version | grep -F "${finalAttrs.version}"
+    runHook postInstallCheck
+  '';
 
   # the native image launches the game with a JDK from the PATH as well, and runs HeadlessMc with
   # plugins on it (the build re-augmented from lib/headlessmc-mutable).
@@ -169,7 +206,7 @@ stdenv.mkDerivation (finalAttrs: {
       --add-flags "-Dhmc.java.download=false" \
       --add-flags "-Dhmc.updater.enabled=false" \
       --add-flags "-Dhmc.plugins.mutable-jar=$out/lib/headlessmc-mutable" \
-      --prefix PATH : ${lib.makeBinPath [ gameJdk ]}
+      --prefix PATH : ${lib.makeBinPath ([ gameJdk ] ++ extraJdks)}
   '';
 
   # guards against the build environment coming back into the native image (see postFixup)
@@ -182,6 +219,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Headless Minecraft launcher and command line client";
     homepage = "https://github.com/headlesshq/headlessmc";
+    changelog = "https://github.com/headlesshq/headlessmc/blob/main/CHANGELOG.md";
     license = lib.licenses.mit;
     mainProgram = "headlessmc";
     platforms = [

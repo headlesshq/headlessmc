@@ -11,6 +11,7 @@ on:
   pull_request:
     paths:
       - flake.lock
+      - '*.nix'
       - '**/*.gradle*'
       - gradle/**
       - gradle.properties
@@ -47,6 +48,10 @@ jobs:
       - run: nix build .#headlessmc-native --print-build-logs --out-link result-native
       - run: ./result-native/bin/headlessmc --help
       - run: test -d result-native/lib/headlessmc-mutable/lib/deployment
+      # the entry points for Nix without flakes evaluate to the same derivations, so these only check default.nix and shell.nix
+      - run: nix-build --no-out-link
+      - run: nix-build -A headlessmc-native --no-out-link
+      - run: nix-shell --run 'java -version'
       # build tools in the closure fail the build through disallowedReferences, this shows the rest
       - run: nix path-info --closure-size --human-readable ./result ./result-native
 

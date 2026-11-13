@@ -55,7 +55,7 @@ If plugins are installed, HeadlessMc instead
 
     With plugins, HeadlessMc always runs on the JVM, even when started from a native executable.
 
-The [Nix package](getting-started.md#nix-flake) builds the mutable jar itself and sets `hmc.plugins.mutable-jar`
+The [Nix package](getting-started.md#nix) builds the mutable jar itself and sets `hmc.plugins.mutable-jar`
 to it, so it skips the download. HeadlessMc built from source otherwise does not know a `headlessmc-mutable.zip`
 to download: build it with `./gradlew :headlessmc-application:mutableJarZip -PmutableJar`
 and set `hmc.plugins.mutable-jar` to `headlessmc-application/build/headlessmc-mutable.zip`.
