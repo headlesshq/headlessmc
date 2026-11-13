@@ -66,7 +66,9 @@
       semanticCommitScope: 'deps',
     },
     {
-      // the flake only provides the dev shell, so its inputs are updated together once a month
+      // The flake inputs are updated together once a month. They also change the Nix package
+      // (gradle_9, JDK, GraalVM of nixpkgs), but not the released artifacts, so they must not trigger
+      // a release. nix.yml regenerates packaging/nix/deps.json on these PRs if the resolved artifacts change.
       matchManagers: [
         'nix',
       ],
