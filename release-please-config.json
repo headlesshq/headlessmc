@@ -11,7 +11,8 @@
       "prerelease": true,
       "prerelease-type": "RC",
       "extra-files": [
-        "gradle.properties"
+        "gradle.properties",
+        "packaging/nix/package.nix"
       ]
     }
   }

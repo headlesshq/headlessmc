@@ -130,6 +130,7 @@ config set hmc.java.versions /path/to/jdk
 Or enable [nix-ld](https://github.com/nix-community/nix-ld) with `programs.nix-ld.enable = true;` on NixOS,
 which provides the loader, so that the downloaded Java runtimes start.
 HeadlessMc warns before it downloads a Java runtime on a system without a glibc loader.
+On NixOS you can also install HeadlessMc from its [Nix package](#nix), which comes with a Java.
 
 On musl systems HeadlessMc downloads Java runtimes built against musl, e.g. Temurin for Alpine Linux.
 Tested on Alpine Linux 3.22 with the musl executable and Temurin 17 and 21 downloaded by `java install`:
@@ -151,6 +152,71 @@ HeadlessMc warns if it launches the client with a window on musl without a glibc
 The jemalloc bundled with LWJGL 3.3.1 and newer (Minecraft 1.19 and newer) crashes on load with gcompat,
 so HeadlessMc launches the client with `-Dorg.lwjgl.system.allocator=system` on musl.
 Rendering with a window on musl has not been verified yet.
+
+### Nix
+
+The repository contains a Nix package, which builds HeadlessMc from source (x64 and ARM64 Linux).
+It works with and without flakes, the first build takes a few minutes.
+
+=== "Flakes"
+
+    Run it without installing, or install it into your profile:
+    ``` sh
+    nix run github:headlesshq/headlessmc
+    nix profile install github:headlesshq/headlessmc
+    ```
+    Append a release, e.g. `github:headlesshq/headlessmc/$VERSION`, to get that version instead of the latest commit.
+    On NixOS, add the flake as an input of your system flake and use its `overlays.default`,
+    which adds `headlessmc` and `headlessmc-native` to `pkgs`.
+
+=== "Without flakes"
+
+    No experimental features of Nix are needed. Install it into your profile, replace `main` with a release to get that version:
+    ``` sh
+    nix-env -if https://github.com/headlesshq/headlessmc/archive/main.tar.gz
+    ```
+    Or build it from a checkout with `nix-build`, which links it at `./result`, and run `./result/bin/headlessmc`.
+    On NixOS, add it to your `configuration.nix`:
+    ``` nix
+    { pkgs, ... }:
+    let
+      headlessmc = import (fetchTarball "https://github.com/headlesshq/headlessmc/archive/$VERSION.tar.gz") { };
+    in
+    {
+      environment.systemPackages = [ headlessmc ];
+    }
+    ```
+    This builds against the nixpkgs revision pinned by HeadlessMc, which the build is tested with.
+    Use `headlessmc.headlessmc-native` (`nix-build -A headlessmc-native`) for the native executable.
+
+There are two packages:
+
+* `headlessmc` (the default) is the `headlessmc.jar` (a Quarkus fast-jar), run by a JDK 25 of nixpkgs.
+* `headlessmc-native` (`nix run github:headlesshq/headlessmc#headlessmc-native`) is the executable,
+  built with GraalVM. It starts faster, but takes a few minutes longer to build.
+
+Both install the [shell completions](#shell-completions) for bash, zsh and fish.
+
+[Plugins](plugins.md) work with both: instead of downloading the `headlessmc-mutable.zip` of a release,
+the package builds the mutable jar itself and sets `hmc.plugins.mutable-jar` to it
+(`lib/headlessmc`, respectively `lib/headlessmc-mutable` in the package).
+HeadlessMc with plugins runs on the JDK 25 of the package, also for `headlessmc-native`.
+
+Both put a JDK 25 of nixpkgs on the `PATH` of HeadlessMc, which it uses to launch Minecraft,
+and set `hmc.java.download` to `false`, because the Java runtimes HeadlessMc downloads cannot start on NixOS.
+Minecraft versions that need another Java, Java 8 for 1.16 and older or Java 17 for 1.17 to 1.20.4,
+need a Java you install yourself, e.g. `nix profile install nixpkgs#jdk8 nixpkgs#jdk17`,
+or that you add to the package: `headlessmc.override { extraJdks = [ pkgs.jdk8 pkgs.jdk17 ]; }`.
+HeadlessMc finds it in your profile, in `JAVA_HOME` or on the `PATH`, see [above](#musl-nixos-and-older-glibc).
+The `-Dhmc.java.download=false` of the package is a system property, which takes precedence over the config file,
+so setting `hmc.java.download` to `true` in the config has no effect.
+Both also set `hmc.updater.enabled` to `false`: update HeadlessMc through Nix,
+with `nix profile upgrade`, `nix-env -if` of a newer release or by updating the flake input, since the files in the Nix store are read-only.
+To download Java runtimes anyway, e.g. if you use the package on another distribution than NixOS,
+pass it on the command line, before any other argument:
+``` sh
+headlessmc -Dhmc.java.download=true launch 1.12.2
+```
 
 ### Shell completions
 

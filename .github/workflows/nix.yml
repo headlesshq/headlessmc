@@ -1,0 +1,95 @@
+name: Nix
+on:
+  # The Nix build only runs on main. Docs don't change its outcome, everything else may.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - docs/**
+      - mkdocs.yml
+  # For update-deps-json (renovate PRs that may change the resolved Gradle artifacts) and the version check.
+  pull_request:
+    paths:
+      - flake.lock
+      - '*.nix'
+      - '**/*.gradle*'
+      - gradle/**
+      - gradle.properties
+      - packaging/nix/**
+
+jobs:
+  # release-please keeps both versions in sync, but only rewrites package.nix on the next release,
+  # so a manual bump of gradle.properties would leave the Nix package with the old version.
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check that package.nix has the version of gradle.properties
+        run: |
+          gradle_version=$(sed -n 's/^version=//p' gradle.properties)
+          nix_version=$(sed -n 's/^ *version = "\(.*\)";$/\1/p' packaging/nix/package.nix)
+          echo "gradle.properties: $gradle_version, package.nix: $nix_version"
+          if [ -z "$gradle_version" ] || [ "$gradle_version" != "$nix_version" ]; then
+            echo "::error file=packaging/nix/package.nix::version must be $gradle_version like in gradle.properties"
+            exit 1
+          fi
+
+  build:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      # fails if deps.json is stale
+      - run: nix build .#headlessmc --print-build-logs
+      - run: ./result/bin/headlessmc --help
+      # plugins re-augment from the mutable jar, which the package builds and points the wrapper at
+      - run: test -d result/lib/headlessmc/lib/deployment
+      - run: nix build .#headlessmc-native --print-build-logs --out-link result-native
+      - run: ./result-native/bin/headlessmc --help
+      - run: test -d result-native/lib/headlessmc-mutable/lib/deployment
+      # the entry points for Nix without flakes evaluate to the same derivations, so these only check default.nix and shell.nix
+      - run: nix-build --no-out-link
+      - run: nix-build -A headlessmc-native --no-out-link
+      - run: nix-shell --run 'java -version'
+      # build tools in the closure fail the build through disallowedReferences, this shows the rest
+      - run: nix path-info --closure-size --human-readable ./result ./result-native
+
+  # Renovate PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs
+  # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json would go stale and break the build on main.
+  # Like update-fabric-lock in lifecycle.yml: regenerate deps.json and push it to the PR branch if it changed.
+  # Pushes made with GITHUB_TOKEN do not trigger new workflow runs, so FABRIC_LOCK_TOKEN is preferred.
+  update-deps-json:
+    if: >
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && startsWith(github.head_ref, 'renovate/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.FABRIC_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      # USE_BWRAP=0: the update script's bubblewrap sandbox needs unprivileged user namespaces,
+      # which Ubuntu's AppArmor restricts on the runners
+      - name: Update deps.json
+        run: |
+          nix build .#headlessmc.mitmCache.updateScript --print-build-logs
+          USE_BWRAP=0 ./result
+      - name: Push updated deps.json
+        run: |
+          deps=packaging/nix/deps.json
+          if git diff --quiet -- "$deps"; then
+            echo "deps.json is up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$deps"
+          git commit -m "build(deps): update nix deps.json"
+          # the other lock jobs may push to the same renovate branch first; they touch other files
+          git pull --rebase origin "$GITHUB_HEAD_REF"
+          git push

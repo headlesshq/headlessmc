@@ -193,6 +193,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$lock"
           git commit -m "build(deps): update fabric-artifacts.json"
+          # the other lock jobs may push to the same renovate branch first; they touch other files
+          git pull --rebase origin "$GITHUB_HEAD_REF"
           git push
 
   # same as update-fabric-lock, for the headlessmc-lwjgl release the lwjgl patcher downloads
@@ -238,6 +240,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$lock"
           git commit -m "build(deps): update headlessmc-lwjgl.json"
+          # the other lock jobs may push to the same renovate branch first; they touch other files
+          git pull --rebase origin "$GITHUB_HEAD_REF"
           git push
 
   deploy-pages:
