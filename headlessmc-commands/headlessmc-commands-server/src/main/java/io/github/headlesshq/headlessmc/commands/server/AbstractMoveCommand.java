@@ -121,14 +121,24 @@ public abstract class AbstractMoveCommand implements Runnable, LongRunningComman
             newPath = getDefaultPath(profile, targetName, mcFiles);
         }
 
-        ProfileMover.Result result = profileMover.move(
-            new ProfileMover.Request(profile, newPath, newName, withShared, force)
-        );
+        Profile moved = profile;
+        boolean renames = newName != null && !newName.equals(profile.name());
+        boolean moves = newPath != null && !isSameDirectory(newPath, profile.path());
+        if (mcFiles == null || renames || moves) {
+            ProfileMover.Result result = profileMover.move(
+                new ProfileMover.Request(profile, newPath, newName, withShared, force)
+            );
 
-        Profile moved = result.after();
-        console.write(describe(result));
-        for (Profile updated : result.updated()) {
-            console.write("Updated profile " + updated.name());
+            moved = result.after();
+            console.write(describe(result));
+            for (Profile updated : result.updated()) {
+                console.write("Updated profile " + updated.name());
+            }
+        } else {
+            // not every game directory depends on the .minecraft directory: it can be configured to be somewhere
+            // else, and servers, jars or profiles inheriting from another profile have their own.
+            // Then there are no files to move, the profile only launches from the other directory from now on.
+            console.write(capitalize(getKind()) + " " + profile.name() + " keeps its game directory " + profile.path());
         }
 
         if (mcFiles != null) {
@@ -139,6 +149,10 @@ public abstract class AbstractMoveCommand implements Runnable, LongRunningComman
                 file -> console.write(capitalize(getKind()) + " " + resolved.name() + " now launches " + file)
             );
         }
+    }
+
+    private static boolean isSameDirectory(Path first, Path second) {
+        return first.toAbsolutePath().normalize().equals(second.toAbsolutePath().normalize());
     }
 
     /**

@@ -339,6 +339,74 @@ class ProfileTargetCommandsTest {
     }
 
     @Test
+    void moveToAnotherMinecraftDirectoryWithAGameDirectoryThatDoesNotDependOnIt() throws IOException {
+        // a profile that plays in a directory of its own, outside of any .minecraft directory
+        Profile main = addMain();
+        Path gameDir = root.resolve("games").resolve("main");
+        MoveCommand toGameDir = move("main");
+        toGameDir.setDirectory(gameDir.toString());
+        toGameDir.run();
+        assertEquals(Optional.of(fabricJson(env.primary, LATEST_BUILD)), info("main").file());
+
+        // asked to move to the other .minecraft directory, to where its game directory already is:
+        // there are no files to move, but what the profile launches still has to move
+        MoveCommand command = move("main");
+        command.setMc(env.secondary.getMcDir().toString());
+        command.setDirectory(gameDir.toString());
+        command.run();
+
+        assertEquals(gameDir, profile("main").path());
+        assertEquals("fov:70", Files.readString(gameDir.resolve("options.txt")));
+        assertEquals(env.secondary, env.installs.getLast().mcFiles());
+        assertEquals(Optional.of(fabricJson(env.secondary, LATEST_BUILD)), info("main").file());
+        assertEquals(launchTargetService.describe(main).current(), info("main").current());
+        assertTrue(console.output().contains("Profile main keeps its game directory " + gameDir), console.output());
+        assertTrue(
+            console.output().contains("Profile main now launches " + fabricJson(env.secondary, LATEST_BUILD)),
+            console.output()
+        );
+    }
+
+    @Test
+    void moveToAnotherMinecraftDirectoryWhereTheGameDirectoryAlreadyIs() throws IOException {
+        // moved to the secondary directory, then made to launch from the primary one again, e.g. by
+        // 'profile update --mc': its game directory is already where a move to the secondary one would put it
+        addMain();
+        MoveCommand first = move("main");
+        first.setMc(env.secondary.getMcDir().toString());
+        first.run();
+        Path gameDir = profile("main").path();
+        UpdateCommand back = update("main");
+        back.setMc(env.primary.getMcDir().toString());
+        back.run();
+        assertEquals(Optional.of(fabricJson(env.primary, LATEST_BUILD)), info("main").file());
+        assertEquals(gameDir, profile("main").path());
+
+        // this used to install the version in the other directory and then fail with "nothing to do",
+        // leaving the profile where it was
+        MoveCommand command = move("main");
+        command.setMc(env.secondary.getMcDir().toString());
+        command.run();
+
+        assertEquals(gameDir, profile("main").path());
+        assertEquals("fov:70", Files.readString(gameDir.resolve("options.txt")));
+        assertEquals(Optional.of(fabricJson(env.secondary, LATEST_BUILD)), info("main").file());
+    }
+
+    @Test
+    void moveWithoutAnythingToMoveIsStillAnError() throws IOException {
+        Profile main = addMain();
+
+        // without another .minecraft directory a move to where the profile already is does nothing
+        MoveCommand command = move("main");
+        command.setDirectory(main.path().toString());
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::run);
+
+        assertTrue(e.getMessage().contains("nothing to do"), e.getMessage());
+        assertEquals(main, profile("main"));
+    }
+
+    @Test
     void moveNeedsAProfileAndADestination() throws IOException {
         addMain();
 
