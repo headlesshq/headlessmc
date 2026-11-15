@@ -62,6 +62,8 @@ launch ./my-pack client
 launch --packwiz ./my-pack server fabric
 ```
 The pack decides the Minecraft version and loader, and the game runs in the directory of the pack.
+The arguments after the pack therefore are not a profile or a version, they only say how to launch the pack:
+`[client|server] [loader]`, the loader is only needed if the pack supports more than one.
 To keep settings for a pack, add a profile for it: `profile add ./my-pack client --name my-pack`.
 
 #### Profiles

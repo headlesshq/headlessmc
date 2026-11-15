@@ -24,13 +24,13 @@ final class Mods {
      * Resolves the {@link Platform} of the given profile.
      *
      * @param platformService the service to look the platform up on.
-     * @param profileResolver used to find out which version the profile launches.
+     * @param profileResolver used to find out which platform the profile launches.
      * @param profile         the profile to resolve the platform of.
      * @return the platform of the profile.
      * @throws IllegalArgumentException if the platform cannot be found, or the profile does not launch a version.
      */
     static Platform getPlatform(PlatformService platformService, ProfileResolver profileResolver, Profile profile) {
-        String platform = profileResolver.requireVersion(profile).platform();
+        String platform = profileResolver.requirePlatform(profile);
         return platformService.getPlatform(platform).orElseThrow(() -> new IllegalArgumentException(
             "Failed to find platform " + platform + " for profile " + profile.name()
         ));

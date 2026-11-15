@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -403,6 +404,43 @@ class LaunchTargetServiceImplTest {
         Profile resolved = service.resolveAndPersist(changed, new TypedMapImpl());
 
         assertEquals(21, resolved.javaVersion());
+        assertEquals(Optional.of(stored), profileService.getProfile("stored"));
+    }
+
+    @Test
+    void aChangeToAStoredProfileIsPersisted() {
+        Profile stored = profileService.save(profile("stored", alpha, "a1"));
+
+        Profile persisted = service.persist(stored, stored.withEulaStatus(EulaStatus.EXISTS));
+
+        assertEquals(EulaStatus.EXISTS, persisted.eulaStatus());
+        assertEquals(Optional.of(persisted), profileService.getProfile("stored"));
+    }
+
+    @Test
+    void persistingWithoutAChangeSavesNothing() {
+        Profile stored = profileService.save(profile("stored", alpha, "a1"));
+        Profile equal = stored.withVmArgs(new ArrayList<>(stored.vmArgs()));
+
+        // a saved profile is returned as it is read back, these are returned as they are
+        assertSame(stored, service.persist(stored, stored));
+        assertSame(equal, service.persist(stored, equal));
+    }
+
+    @Test
+    void aProfileOfASingleLaunchIsNeverPersisted() {
+        // created for a launch, never stored
+        Profile once = profile("once", alpha, "a1");
+        assertEquals(EulaStatus.EXISTS, service.persist(once, once.withEulaStatus(EulaStatus.EXISTS)).eulaStatus());
+        assertEquals(Optional.empty(), profileService.getProfile("once"));
+
+        // a stored profile with the options of a single launch: what is found out with it is not
+        // written back, it would take the options with it
+        Profile stored = profileService.save(profile("stored", alpha, "a1"));
+        Profile launched = stored.withVmArgs(List.of("-Xmx8G"));
+        assertEquals(
+            List.of("-Xmx8G"), service.persist(launched, launched.withEulaStatus(EulaStatus.EXISTS)).vmArgs()
+        );
         assertEquals(Optional.of(stored), profileService.getProfile("stored"));
     }
 

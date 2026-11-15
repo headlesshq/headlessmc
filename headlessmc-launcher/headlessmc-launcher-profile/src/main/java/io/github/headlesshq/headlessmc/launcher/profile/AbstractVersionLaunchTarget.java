@@ -168,6 +168,22 @@ public abstract class AbstractVersionLaunchTarget extends AbstractLaunchTarget<V
         );
     }
 
+    /**
+     * The current version if the profile has been resolved, otherwise what the specified version resolves to,
+     * e.g. {@code fabric/26.3} for {@code fabric/latest}.
+     */
+    @Override
+    public Optional<VersionArg> resolveVersion(Profile profile) throws HeadlessMcException {
+        VersionHandle handle = handle(profile);
+        VersionArg version = handle.effectiveVersion();
+        if (TargetInfo.isKnown(version)) {
+            return Optional.of(version);
+        }
+
+        VersionID id = VersionID.resolve(platformService(), version);
+        return Optional.of(id.asArg().withSide(version.side().orElse(null)));
+    }
+
     @Override
     public boolean isSameTarget(Profile stored, ParsedTarget parsed) {
         return handle(stored).version().equals(handle(parsed.handle()).version());

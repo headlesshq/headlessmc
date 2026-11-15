@@ -21,15 +21,26 @@ import java.util.Optional;
 public class EulaLauncher {
     private final ServerLauncher serverLauncher;
 
-    public Optional<Eula> eulaLaunch(Profile profile, ServerService serverService) {
+    /**
+     * Finds the eula.txt of a server. A server that has none yet is launched once to create it.
+     *
+     * <p>Nothing is saved by this method. The given profile is the profile a server is launched with,
+     * it can carry options of a single launch, like additional jvm arguments, which are used to launch the server
+     * here as well, but must never end up in a stored profile. Storing the {@link Result#status() status} is up
+     * to the caller, who knows the profile as it is stored.</p>
+     *
+     * @param profile the server to find the eula.txt of.
+     * @return the eula.txt, if the server has one, and the status to remember for the server.
+     * @throws ServerException if the server has to be launched and fails without creating a eula.txt.
+     */
+    public Result eulaLaunch(Profile profile) {
         if (EulaStatus.NONE.equals(profile.eulaStatus())) {
-            return Optional.empty();
+            return new Result(EulaStatus.NONE, Optional.empty());
         }
 
         Eula eula = new Eula(profile.path().resolve("eula.txt"));
         if (eula.exists()) {
-            serverService.save(profile.withEulaStatus(EulaStatus.EXISTS));
-            return Optional.of(eula);
+            return new Result(EulaStatus.EXISTS, Optional.of(eula));
         }
 
         ProcessLauncher launcher = serverLauncher.launchProcess(profile, "mc-eula-" + profile.name(), true);
@@ -54,16 +65,26 @@ public class EulaLauncher {
 
         int result = serverProcess.waitFor(ignoringExitCode(ProcessHandler.defaultHandler()));
         if (eula.exists()) {
-            serverService.save(profile.withEulaStatus(EulaStatus.EXISTS));
-            return Optional.of(eula);
+            return new Result(EulaStatus.EXISTS, Optional.of(eula));
         }
 
         if (result != 0) {
             throw new ServerException("EULA launch for " + profile.name() + " failed with exit code " + result);
         }
 
-        serverService.save(profile.withEulaStatus(EulaStatus.NONE));
-        return Optional.empty();
+        return new Result(EulaStatus.NONE, Optional.empty());
+    }
+
+    /**
+     * What {@link #eulaLaunch(Profile)} found out.
+     *
+     * @param status the {@link Profile#eulaStatus()} to remember for the server, so that a server without a
+     *               eula.txt is not launched again to look for one.
+     * @param eula   the eula.txt of the server, if it has one.
+     */
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public record Result(EulaStatus status, Optional<Eula> eula) {
+
     }
 
     private static ProcessHandler ignoringExitCode(ProcessHandler handler) {

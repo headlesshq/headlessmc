@@ -39,7 +39,8 @@ Launches the game.
       --mc=<mc>              The Minecraft directory to launch from and to install missing versions into, if there are multiple (hmc.files.mc-dirs).
       --no-backup            Does not back up the profile before launching, see hmc.backup.auto.
       --offline              Launches with an offline account.
-      --packwiz=<packwiz>    Path to a pack.toml packwiz modpack file, or a directory containing one, to launch. The same as '--target packwiz <path>'.
+      --packwiz=<packwiz>    Path to a pack.toml packwiz modpack file, or a directory containing one, to launch. The same as '--target packwiz <path>': the pack decides which
+                               version is launched, the other arguments are not a profile or a version then, but [client|server] [loader] of the pack.
       --patchers=<patchers>[,<patchers>...]
                              Comma-separated list of patchers to use.
       -res, --resolution=<resolution>

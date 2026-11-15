@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.Eula;
+import io.github.headlesshq.headlessmc.launcher.server.EulaLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
 import io.github.headlesshq.headlessmc.version.arg.Side;
@@ -51,6 +52,15 @@ public class EulaCommand implements CachedConsole.Enabled {
         return profileResolver.resolve(List.of(name), Set.of(Side.SERVER));
     }
 
+    /**
+     * Finds the eula.txt of a stored server and remembers whether it has one.
+     */
+    Optional<Eula> findEula(Profile profile) {
+        EulaLauncher.Result result = serverLauncher.getEulaLauncher().eulaLaunch(profile);
+        serverService.setEulaStatus(profile, result.status());
+        return result.eula();
+    }
+
     // output acceptance status?
 
     @Getter
@@ -78,7 +88,7 @@ public class EulaCommand implements CachedConsole.Enabled {
         @Override
         public void run() {
             Profile profile = ctx.getProfile(name);
-            Optional<Eula> eula = ctx.serverLauncher.getEulaLauncher().eulaLaunch(profile, ctx.serverService);
+            Optional<Eula> eula = ctx.findEula(profile);
             if (eula.isPresent()) {
                 ctx.console.write(eula.get().read());
             } else {
@@ -112,7 +122,7 @@ public class EulaCommand implements CachedConsole.Enabled {
         @Override
         public void run() {
             Profile profile = ctx.getProfile(name);
-            Optional<Eula> eula = ctx.serverLauncher.getEulaLauncher().eulaLaunch(profile, ctx.serverService);
+            Optional<Eula> eula = ctx.findEula(profile);
             if (eula.isPresent()) {
                 eula.get().accept();
                 ctx.console.write("Accepted the EULA of " + profile.name());

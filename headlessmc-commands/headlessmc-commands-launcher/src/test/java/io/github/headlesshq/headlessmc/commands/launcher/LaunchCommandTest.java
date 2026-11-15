@@ -18,6 +18,8 @@ import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.client.DefaultJvmArgsService;
 import io.github.headlesshq.headlessmc.launcher.client.PackwizLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
+import io.github.headlesshq.headlessmc.launcher.server.EulaLauncher;
 import io.github.headlesshq.headlessmc.launcher.client.VersionFileLaunchTarget;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeLaunchTarget;
@@ -84,6 +86,7 @@ class LaunchCommandTest {
      */
     private final class RecordingVersionTarget extends FakeVersionLaunchTarget {
         private final List<@Nullable Account> accounts = new ArrayList<>();
+        private final List<Profile> resolves = new ArrayList<>();
         private @Nullable ProcessLauncher processLauncher;
         private @Nullable RuntimeException failure;
 
@@ -93,6 +96,7 @@ class LaunchCommandTest {
 
         @Override
         public Profile resolve(Profile profile, TypedMap options) {
+            resolves.add(profile);
             VersionHandle handle = validate(profile);
             Profile result = profile;
             if (handle.currentTarget() == null) {
@@ -652,6 +656,73 @@ class LaunchCommandTest {
         assertTrue(e.getMessage().contains("not a server"), e.getMessage());
     }
 
+    @Test
+    void optionsThatDoNotFitAreRejectedBeforeAnythingIsInstalled() {
+        // not a stored profile: resolving would install the version first
+        LaunchCommand eula = command("fabric", "1.21.1");
+        eula.setAcceptEula(true);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, eula::call);
+        assertTrue(e.getMessage().contains("not a server"), e.getMessage());
+
+        Profile stored = tool("tool");
+        LaunchCommand headless = command("tool");
+        headless.setHeadless(true);
+        assertThrows(IllegalArgumentException.class, headless::call);
+
+        assertEquals(List.of(), clientTarget.resolves);
+        assertEquals(List.of(), serverTarget.resolves);
+        assertEquals(List.of(stored), profileService.getProfiles());
+        Mockito.verifyNoInteractions(lifecycleService, authService);
+    }
+
+    /** Makes the eula launcher report the given status, and returns the profiles it is asked about. */
+    private List<Profile> eulaLaunches(EulaStatus status) {
+        List<Profile> launches = new ArrayList<>();
+        EulaLauncher eulaLauncher = Mockito.mock(EulaLauncher.class);
+        Mockito.when(serverLauncher.getEulaLauncher()).thenReturn(eulaLauncher);
+        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any())).thenAnswer(invocation -> {
+            launches.add(invocation.getArgument(0));
+            return new EulaLauncher.Result(status, Optional.empty());
+        });
+
+        return launches;
+    }
+
+    @Test
+    void acceptingTheEulaOfAStoredServerSavesItsStatusButNotTheOptionsOfTheLaunch() {
+        Profile server = server("srv");
+        List<Profile> eulaLaunches = eulaLaunches(EulaStatus.EXISTS);
+        LaunchCommand command = command("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G -Dproperty=value");
+        command.setGameArgs("--port 25566");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(List.of("-Xmx8G"), launched.profile.vmArgs());
+        assertEquals(List.of("-Xmx8G"), eulaLaunches.getFirst().vmArgs());
+        Profile saved = profileService.getProfile("srv").orElseThrow();
+        assertEquals(EulaStatus.EXISTS, saved.eulaStatus());
+        assertEquals(server.vmArgs(), saved.vmArgs());
+        assertEquals(server.gameArgs(), saved.gameArgs());
+        assertEquals(server.systemProperties(), saved.systemProperties());
+        // nothing but what resolving and the eula found out has changed
+        assertEquals(saved, server.withTarget(saved.target()).withJavaVersion(21).withEulaStatus(EulaStatus.EXISTS));
+    }
+
+    @Test
+    void acceptingTheEulaOfAServerLaunchedByArgumentsDoesNotStoreAProfile() {
+        List<Profile> eulaLaunches = eulaLaunches(EulaStatus.EXISTS);
+        LaunchCommand command = command("server", "1.21.1");
+        command.setAcceptEula(true);
+
+        assertThrows(Launched.class, command::call);
+
+        assertEquals(1, eulaLaunches.size());
+        // the profile only exists for this launch, there is nothing to remember its eula status in
+        assertEquals(List.of(), profileService.getProfiles());
+    }
+
     // dry runs
 
     @Test
@@ -873,6 +944,33 @@ class LaunchCommandTest {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
         assertTrue(e.getMessage().contains("no loader forge"), e.getMessage());
         assertTrue(e.getMessage().contains("quilt, fabric"), e.getMessage());
+    }
+
+    @Test
+    void argumentsThatWouldBeAProfileOrVersionWithoutThePackwizOptionAreExplained() throws IOException {
+        // without --packwiz these are the profile main and the version fabric 1.21.1
+        client("main");
+        for (String[] args : new String[][]{{"main"}, {"fabric", "1.21.1"}, {"client", "fabric", "1.21.1"}}) {
+            LaunchCommand command = packwizCommand(singleLoaderPack(), args);
+
+            IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+
+            String message = e.getMessage();
+            assertTrue(message.contains("Because of --packwiz"), message);
+            assertTrue(message.contains("'" + String.join(" ", args) + "' is not read as a profile or a version"), message);
+            assertTrue(message.contains("[client|server] [loader]"), message);
+            // and what exactly the pack does not like about them
+            assertTrue(message.contains("Launch target packwiz cannot launch"), message);
+        }
+    }
+
+    @Test
+    void aPackThatCannotBeLaunchedIsNotBlamedOnTheOtherArguments() {
+        // nothing but the pack has been given, there are no arguments to explain
+        LaunchCommand command = packwizCommand(root.resolve("missing").resolve("pack.toml"));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+        assertFalse(e.getMessage().contains("Because of --packwiz"), e.getMessage());
     }
 
     @Test

@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -122,6 +123,12 @@ public class ProfileLaunchTarget extends AbstractLaunchTarget<ProfileLaunchTarge
         } catch (HeadlessMcException e) {
             return TargetInfo.EMPTY;
         }
+    }
+
+    @Override
+    public Optional<VersionArg> resolveVersion(Profile profile) throws HeadlessMcException {
+        Profile root = root(profile);
+        return launchTargetService.require(root).resolveVersion(root);
     }
 
     @Override

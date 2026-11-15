@@ -58,7 +58,8 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
     @CommandLine.Option(
         names = {"--packwiz"},
         description = "Path to a pack.toml packwiz modpack file, or a directory containing one, to launch. "
-            + "The same as '--target packwiz <path>'."
+            + "The same as '--target packwiz <path>': the pack decides which version is launched, "
+            + "the other arguments are not a profile or a version then, but [client|server] [loader] of the pack."
     )
     private @Nullable String packwiz;
 
@@ -114,7 +115,20 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
             List<String> args = new ArrayList<>(versionArg.size() + 1);
             args.add(packwiz);
             args.addAll(versionArg);
-            return getProfileResolver().resolve(PackwizLaunchTarget.NAME, args, Side.BOTH, getTargetOptions());
+            try {
+                return getProfileResolver().resolve(PackwizLaunchTarget.NAME, args, Side.BOTH, getTargetOptions());
+            } catch (IllegalArgumentException e) {
+                if (versionArg.isEmpty()) {
+                    throw e;
+                }
+
+                // without --packwiz these arguments would be a profile or a version, say why they are not now
+                throw new IllegalArgumentException(
+                    "Because of --packwiz, '" + String.join(" ", versionArg) + "' is not read as a profile or a "
+                        + "version: the pack decides what is launched, and the arguments only say how, "
+                        + "--packwiz <pack.toml | directory> [client|server] [loader]. " + e.getMessage(), e
+                );
+            }
         }
 
         if (versionArg.isEmpty()) {

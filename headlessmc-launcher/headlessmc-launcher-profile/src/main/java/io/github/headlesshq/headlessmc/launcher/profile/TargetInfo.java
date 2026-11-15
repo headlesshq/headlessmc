@@ -39,10 +39,17 @@ public record TargetInfo(Optional<VersionArg> specified, Optional<VersionArg> cu
      * and not {@code latest} or {@code stable}.
      */
     public boolean isVersionKnown() {
-        return version()
-            .filter(version -> !VersionArg.LATEST.equalsIgnoreCase(version.version()))
-            .filter(version -> !VersionArg.STABLE.equalsIgnoreCase(version.version()))
-            .isPresent();
+        return version().filter(TargetInfo::isKnown).isPresent();
+    }
+
+    /**
+     * @param version a version.
+     * @return {@code true} if the version names a concrete Minecraft version, and not {@code latest} or {@code stable},
+     * which are something else tomorrow.
+     */
+    public static boolean isKnown(VersionArg version) {
+        return !VersionArg.LATEST.equalsIgnoreCase(version.version())
+            && !VersionArg.STABLE.equalsIgnoreCase(version.version());
     }
 
 }

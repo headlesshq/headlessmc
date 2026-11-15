@@ -44,7 +44,8 @@ public class ServerLaunchCommand extends AbstractServerLaunchCommand {
     @CommandLine.Parameters(
         index = "0",
         arity = "0..1",
-        description = "The name of the server to launch.",
+        description = "The name of the server to launch. With --target it is not a name, "
+            + "but the first argument for the launch target.",
         paramLabel = "server",
         completionCandidates = ServerCompletions.class
     )
@@ -53,7 +54,8 @@ public class ServerLaunchCommand extends AbstractServerLaunchCommand {
     @CommandLine.Parameters(
         index = "1..*",
         arity = "0..*",
-        description = "With --target: what to launch the server with instead of its own launch target, once.",
+        description = "Instead of a name: what the server to launch has been added for, "
+            + "e.g. 'server launch --target server paper 1.21.1'.",
         paramLabel = "target-args"
     )
     private List<String> targetArgs = new ArrayList<>();
@@ -90,15 +92,15 @@ public class ServerLaunchCommand extends AbstractServerLaunchCommand {
             throw new IllegalArgumentException("Please specify the name of the server to launch.");
         }
 
+        return getProfile(name, targetArgs, Set.of(Side.SERVER), this::getServer);
+    }
+
+    private Profile getServer(String name) {
         Profile server = getServerService().getServer(name).orElse(null);
         if (server == null) {
             throw new IllegalArgumentException("Failed to find server/profile with name " + name);
         } else if (!server.isServer()) {
             throw new IllegalStateException("Found launch profile " + name + " but it is not a server.");
-        }
-
-        if (getTarget() != null || !targetArgs.isEmpty()) {
-            return withTarget(server, targetArgs, Set.of(Side.SERVER));
         }
 
         return server;

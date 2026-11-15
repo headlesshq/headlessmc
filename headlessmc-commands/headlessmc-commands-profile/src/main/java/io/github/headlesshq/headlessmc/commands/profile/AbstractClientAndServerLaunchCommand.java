@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Slf4j
 @Getter
@@ -97,15 +96,16 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
     public Integer call() {
         LaunchOptions options = getLaunchOptions();
         Profile baseProfile = getProfile();
+        checkOptions(baseProfile);
         beforeLaunch(baseProfile);
         TypedMap targetOptions = getTargetOptions();
-        // resolved before the options of this launch are applied, what the launch target finds out is saved
-        Profile resolved = resolve(baseProfile, targetOptions);
-        Profile profile = prepareProfile(resolved)
-            .withOptions(options.mergeWithDefaults(resolved.options()));
+        // everything that is saved is done with the profile as it is stored: what the launch target finds out ...
+        Profile stored = resolve(baseProfile, targetOptions);
+        // ... and only what is launched gets the options of this launch
+        Profile profile = prepareProfile(stored)
+            .withOptions(options.mergeWithDefaults(stored.options()));
 
         if (profile.isClient()) {
-            checkServerOptions(profile);
             Account account = getAccount();
             boolean headless = Boolean.TRUE.equals(this.headless);
             if (!headless
@@ -127,20 +127,28 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
                 log.warn("Launch options --resolution and --server are client only!");
             }
 
-            maybeEulaLaunch(profile);
+            maybeEulaLaunch(stored, profile);
             // TODO: patchers for server
-        } else {
-            // neither a client nor a server: nothing of the above applies, and nothing must pretend it does
-            checkServerOptions(profile);
-            if (hasClientOptions(options) || headless != null || offline) {
-                throw new IllegalArgumentException(
-                    "Profile " + profile.name() + " is neither a client nor a server, the options --resolution, "
-                        + "--server, --headless and --offline cannot be used with it."
-                );
-            }
         }
 
         return handle(getLaunchTargetService().launcher(profile, targetOptions));
+    }
+
+    /**
+     * Something that is neither a client nor a server can be launched, but nothing that is specific to
+     * clients or servers applies to it, and nothing must pretend it does.
+     */
+    @Override
+    protected void checkOptions(Profile profile) throws IllegalArgumentException {
+        super.checkOptions(profile);
+        if (!profile.isClient()
+            && !profile.isServer()
+            && (resolution != null || server != null || headless != null || offline)) {
+            throw new IllegalArgumentException(
+                "Profile " + profile.name() + " is neither a client nor a server, the options --resolution, "
+                    + "--server, --headless and --offline cannot be used with it."
+            );
+        }
     }
 
     private static boolean hasClientOptions(LaunchOptions options) {
@@ -175,22 +183,17 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         log.warn("-javaagent:/path/to/authlib-injector.jar=<your yggdrasil api url>");
     }
 
-    // TODO: improve?!
+    /**
+     * The patchers of this launch, added to the ones the profile selects. This only selects patchers:
+     * the profile can inherit patchers this command does not see, so patchers replacing each other, like the
+     * patched LWJGL replacing the {@link Patcher#LWJGL} patcher selected here, are sorted out when the game is
+     * launched, see {@link Patcher#excludes()}.
+     */
     private List<String> resolvePatchers(Profile profile, boolean headless) {
-        List<String> patchers = this.getPatchers();
-        if (patchers == null) {
-            patchers = new ArrayList<>();
-        }
-
+        List<String> patchers = new ArrayList<>(this.getPatchers() == null ? List.of() : this.getPatchers());
         patchers.add(Patcher.LOG4J);
         if (headless) {
-            // the patched LWJGL of headlessmc-lwjgl is opt-in and replaces the transformer based patcher
-            boolean patchedLwjgl = Stream.concat(patchers.stream(), profile.patchers().stream())
-                .anyMatch(Patcher.LWJGL_PRE::equalsIgnoreCase);
-            if (!patchedLwjgl) {
-                patchers.add(Patcher.LWJGL);
-            }
-
+            patchers.add(Patcher.LWJGL);
             patchers.add(Patcher.PAULSCODE);
         }
 

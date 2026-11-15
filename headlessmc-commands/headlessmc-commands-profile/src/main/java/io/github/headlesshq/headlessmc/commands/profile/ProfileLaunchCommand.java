@@ -43,7 +43,8 @@ public class ProfileLaunchCommand extends AbstractClientAndServerLaunchCommand {
     @CommandLine.Parameters(
         index = "0",
         arity = "0..1",
-        description = "The name of the profile to launch.",
+        description = "The name of the profile to launch. With --target it is not a name, "
+            + "but the first argument for the launch target.",
         paramLabel = "profile",
         completionCandidates = ProfileCompletions.class
     )
@@ -52,8 +53,8 @@ public class ProfileLaunchCommand extends AbstractClientAndServerLaunchCommand {
     @CommandLine.Parameters(
         index = "1..*",
         arity = "0..*",
-        description = "With --target: what to launch the profile with instead of its own launch target, once, "
-            + "e.g. 'profile launch main --target version fabric 1.21.1 0.16.10'. Nothing is saved.",
+        description = "Instead of a name: what to launch, like for the launch command, "
+            + "e.g. 'profile launch --target version fabric 1.21.1'.",
         paramLabel = "target-args"
     )
     private List<String> targetArgs = new ArrayList<>();
@@ -101,16 +102,12 @@ public class ProfileLaunchCommand extends AbstractClientAndServerLaunchCommand {
             throw new IllegalArgumentException("Please specify the name of the profile to launch.");
         }
 
-        Profile profile = profileService.getProfile(name).orElse(null);
-        if (profile == null) {
-            throw new IllegalArgumentException("Failed to find profile with name " + name);
-        }
+        return getProfile(name, targetArgs, Side.BOTH, this::getStoredProfile);
+    }
 
-        if (getTarget() != null || !targetArgs.isEmpty()) {
-            return withTarget(profile, targetArgs, Side.BOTH);
-        }
-
-        return profile;
+    private Profile getStoredProfile(String name) {
+        return profileService.getProfile(name)
+            .orElseThrow(() -> new IllegalArgumentException("Failed to find profile with name " + name));
     }
 
 }

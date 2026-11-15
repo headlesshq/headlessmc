@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.util.typemap.Key;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -114,6 +115,27 @@ public interface LaunchTarget {
      * @return what is known about what the profile launches.
      */
     TargetInfo describe(Profile profile);
+
+    /**
+     * Finds the version the profile launches, with a concrete Minecraft version, for everything that depends on
+     * the Minecraft version, like mods.
+     * {@link #describe(Profile)} cannot always tell: a profile knows the version that has been
+     * {@link TargetInfo#specified() specified}, which can be vague, e.g. {@code fabric/latest}, and the version
+     * it has been resolved to, {@link TargetInfo#current()}, e.g. {@code fabric/26.3}. A profile that has not been
+     * resolved yet, like one that has just been created for the arguments of a command, only has the first.
+     * This finds out what the specified version would be resolved to now.
+     *
+     * <p>Unlike {@link #resolve(Profile, TypedMap)} this installs nothing and does not change the profile.
+     * Like {@link #parse(TargetArgs)} it may read files and cached metadata.</p>
+     *
+     * @param profile a profile with this target.
+     * @return the current version of the profile, or else what its specified version resolves to.
+     * Empty if the profile does not launch a Minecraft version.
+     * @throws HeadlessMcException if the specified version cannot be resolved.
+     */
+    default Optional<VersionArg> resolveVersion(Profile profile) throws HeadlessMcException {
+        return describe(profile).version();
+    }
 
     /**
      * @param profile a profile with this target.

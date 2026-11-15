@@ -112,6 +112,15 @@ public class ProfileResolver {
         return launchTargetService.requireVersion(profile);
     }
 
+    /**
+     * @param profile a profile.
+     * @return the platform of the version the profile launches, see {@link LaunchTargetService#requirePlatform(Profile)}.
+     * @throws IllegalArgumentException if the profile does not launch a version.
+     */
+    public String requirePlatform(Profile profile) throws IllegalArgumentException {
+        return launchTargetService.requirePlatform(profile);
+    }
+
     private static String describe(Profile profile) {
         return profile.side()
             .map(side -> side.isServer() ? "server" : "client")

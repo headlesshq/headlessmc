@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.java.launcher.JavaProcessException;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
+import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeLaunchTarget;
@@ -103,9 +104,9 @@ class ServerLaunchCommandsTest {
         ServerLauncher launcher = Mockito.mock(ServerLauncher.class);
 
         EulaLauncher eulaLauncher = Mockito.mock(EulaLauncher.class);
-        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any())).thenAnswer(invocation -> {
             eulaLaunches.add(invocation.getArgument(0));
-            return eula;
+            return new EulaLauncher.Result(eula.isPresent() ? EulaStatus.EXISTS : EulaStatus.NONE, eula);
         });
         Mockito.when(launcher.getEulaLauncher()).thenReturn(eulaLauncher);
 
@@ -214,6 +215,97 @@ class ServerLaunchCommandsTest {
 
         assertEquals(1, eulaLaunches.size());
         assertTrue(eula.orElseThrow().isAccepted());
+    }
+
+    @Test
+    void theEulaStatusIsSavedWithoutTheOptionsOfTheLaunch() {
+        Profile server = profileService.save(server("srv").withVmArgs(List.of("-Xms1G")).withGameArgs(List.of("nogui")));
+        eula = Optional.of(eulaFile(server, "eula=false"));
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G -Dproperty=value");
+        command.setGameArgs("--port 25566");
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // the server is launched with the options of this launch, also to create its eula.txt ...
+        assertEquals(List.of("-Xms1G", "-Xmx8G"), launched.profile.vmArgs());
+        assertEquals(List.of("-Xms1G", "-Xmx8G"), eulaLaunches.getFirst().vmArgs());
+        // ... but what is saved is the stored profile, with what has been found out about it
+        Profile stored = profileService.getProfile("srv").orElseThrow();
+        assertEquals(EulaStatus.EXISTS, stored.eulaStatus());
+        assertEquals(21, stored.javaVersion());
+        assertEquals(List.of("-Xms1G"), stored.vmArgs());
+        assertEquals(List.of("nogui"), stored.gameArgs());
+        assertFalse(stored.systemProperties().containsKey("property"));
+        assertEquals(server.withEulaStatus(EulaStatus.EXISTS).withJavaVersion(21), stored);
+    }
+
+    @Test
+    void theRealEulaLauncherDoesNotSaveTheOptionsOfTheLaunchEither() {
+        Profile server = server("srv");
+        Eula file = eulaFile(server, "eula=false");
+        Mockito.when(serverLauncher.getEulaLauncher()).thenReturn(new EulaLauncher(serverLauncher));
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G");
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertTrue(file.isAccepted());
+        assertEquals(List.of("-Xmx8G"), launched.profile.vmArgs());
+        assertEquals(server.withEulaStatus(EulaStatus.EXISTS).withJavaVersion(21), profileService.getProfile("srv").orElseThrow());
+    }
+
+    @Test
+    void aServerWithoutAEulaIsRememberedAsSuch() {
+        Profile server = server("srv");
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G");
+        assertThrows(Launched.class, command::call);
+
+        assertEquals(server.withEulaStatus(EulaStatus.NONE).withJavaVersion(21), profileService.getProfile("srv").orElseThrow());
+    }
+
+    @Test
+    void withATargetTheParametersAreNotANameButWhatToLaunch() {
+        Path dir = createDir(root.resolve("lobby"));
+        Profile lobby = profileService.save(new Profile("lobby", Optional.of(Side.SERVER), target.handle("paper"), dir));
+
+        ServerLaunchCommand command = launch();
+        command.setTarget(VersionHandle.SERVER);
+        command.setName("paper");
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // the stored server for these arguments
+        assertEquals("lobby", launched.profile.name());
+        assertEquals(lobby.withJavaVersion(21), profileService.getProfile("lobby").orElseThrow());
+    }
+
+    @Test
+    void aNameAndATargetExcludeEachOther() {
+        Path dir = createDir(root.resolve("lobby"));
+        Profile lobby = profileService.save(new Profile("lobby", Optional.of(Side.SERVER), target.handle("paper"), dir));
+
+        // "lobby" is not the name of the server to launch with something else,
+        // it is the first of the arguments for the launch target, and there is no server for them
+        ServerLaunchCommand command = launch();
+        command.setTarget(VersionHandle.SERVER);
+        command.setName("lobby");
+        command.setTargetArgs(List.of("purpur", "1.21.4"));
+        command.setAcceptEula(true);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+
+        assertTrue(e.getMessage().contains("lobby purpur 1.21.4"), e.getMessage());
+        assertEquals(List.of("lobby", "purpur", "1.21.4"), target.parsed().getLast().args());
+        assertEquals(List.of(), target.launched());
+        assertEquals(List.of(), eulaLaunches);
+        assertEquals(lobby, profileService.getProfile("lobby").orElseThrow());
     }
 
     @Test

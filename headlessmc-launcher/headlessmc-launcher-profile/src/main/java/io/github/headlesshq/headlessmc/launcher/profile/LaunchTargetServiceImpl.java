@@ -202,6 +202,36 @@ public class LaunchTargetServiceImpl implements LaunchTargetService {
 
     @Override
     public VersionArg requireVersion(Profile profile) throws IllegalArgumentException {
+        VersionArg version = requireDescribedVersion(profile);
+        if (TargetInfo.isKnown(version)) {
+            return version;
+        }
+
+        // only the specified version is known, and it is vague, e.g. latest: find out what it is right now
+        Optional<VersionArg> resolved;
+        try {
+            resolved = require(profile.target().name()).resolveVersion(profile);
+        } catch (HeadlessMcException | IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                "Failed to find the Minecraft version of profile " + profile.name() + " (" + version + "): "
+                    + e.getMessage(), e
+            );
+        }
+
+        return resolved.filter(TargetInfo::isKnown).orElseThrow(() -> new IllegalArgumentException(
+            "The Minecraft version of profile " + profile.name() + " (" + version + ") is not known."
+        ));
+    }
+
+    @Override
+    public String requirePlatform(Profile profile) throws IllegalArgumentException {
+        return requireDescribedVersion(profile).platform();
+    }
+
+    /**
+     * @return the version the profile says it launches, it can be vague.
+     */
+    private VersionArg requireDescribedVersion(Profile profile) throws IllegalArgumentException {
         if (getTarget(profile.target().name()).isEmpty()) {
             throw new IllegalArgumentException(
                 "The version of profile " + profile.name() + " is not known, its launch target '"
@@ -209,19 +239,9 @@ public class LaunchTargetServiceImpl implements LaunchTargetService {
             );
         }
 
-        TargetInfo info = describe(profile);
-        VersionArg version = info.version().orElseThrow(() -> new IllegalArgumentException(
+        return describe(profile).version().orElseThrow(() -> new IllegalArgumentException(
             "Profile " + profile.name() + " (" + getLabel(profile) + ") does not launch a known Minecraft version."
         ));
-
-        if (!info.isVersionKnown()) {
-            throw new IllegalArgumentException(
-                "The Minecraft version of profile " + profile.name() + " (" + version + ") is not known yet, "
-                    + "launch it once or run 'profile update " + profile.name() + "'."
-            );
-        }
-
-        return version;
     }
 
     @Override
@@ -301,14 +321,18 @@ public class LaunchTargetServiceImpl implements LaunchTargetService {
 
     @Override
     public Profile resolveAndPersist(Profile profile, TypedMap options) throws HeadlessMcException {
-        Profile resolved = resolve(profile, options);
+        return persist(profile, resolve(profile, options));
+    }
+
+    @Override
+    public Profile persist(Profile profile, Profile changed) {
         //noinspection ObjectEquality
-        if (resolved != profile && !resolved.equals(profile) && isStored(profile)) {
-            log.debug("Saving resolved profile {}", resolved.name());
-            return profileService.save(resolved);
+        if (changed != profile && !changed.equals(profile) && isStored(profile)) {
+            log.debug("Saving profile {}", changed.name());
+            return profileService.save(changed);
         }
 
-        return resolved;
+        return changed;
     }
 
     /**

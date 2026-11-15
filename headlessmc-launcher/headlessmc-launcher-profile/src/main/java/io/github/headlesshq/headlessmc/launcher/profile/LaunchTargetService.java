@@ -81,15 +81,32 @@ public interface LaunchTargetService {
     TargetInfo describe(Profile profile);
 
     /**
-     * The Minecraft version a profile launches, for everything that depends on it, like mods.
-     * Not every profile has one: its launch target may not launch a Minecraft version, may not be available,
-     * or the version of the profile may be vague, like {@code latest}, and not resolved yet.
+     * The version a profile launches, with a concrete Minecraft version, for everything that depends on the
+     * Minecraft version, like mods. A profile has two versions, the one that has been
+     * {@link TargetInfo#specified() specified}, which can be vague, e.g. {@code fabric/latest}, and the one it
+     * currently launches, {@link TargetInfo#current()}, e.g. {@code fabric/26.3}.
+     * This returns the current version. For a profile that has not been resolved yet, e.g. a profile that has just
+     * been created for the arguments of a command, it finds out what the specified version resolves to,
+     * see {@link LaunchTarget#resolveVersion(Profile)}. Nothing is installed or saved.
+     *
+     * <p>Not every profile has a version: its launch target may not launch a Minecraft version at all,
+     * or may not be available.</p>
      *
      * @param profile a profile.
-     * @return the {@link TargetInfo#version() version} of the profile, with a known Minecraft version.
+     * @return the version of the profile, with a concrete Minecraft version, never {@code latest} or {@code stable}.
      * @throws IllegalArgumentException if the Minecraft version of the profile is not known, with the reason.
      */
     VersionArg requireVersion(Profile profile) throws IllegalArgumentException;
+
+    /**
+     * The platform of the version a profile launches, e.g. {@code fabric}. Unlike {@link #requireVersion(Profile)}
+     * this does not need to know the Minecraft version, so nothing has to be resolved for it.
+     *
+     * @param profile a profile.
+     * @return the name of the platform of the {@link TargetInfo#version() version} of the profile.
+     * @throws IllegalArgumentException if the profile does not launch a version, with the reason.
+     */
+    String requirePlatform(Profile profile) throws IllegalArgumentException;
 
     /**
      * @param profile a profile.
@@ -147,10 +164,8 @@ public interface LaunchTargetService {
     Profile resolve(Profile profile, TypedMap options) throws HeadlessMcException;
 
     /**
-     * Resolves a profile and saves the result if it changed.
-     * Only a profile that is stored exactly as it is given is saved: resolving a profile that has been created
-     * for a single launch does not create a file, and a stored profile that has been changed for a single
-     * launch is not written back.
+     * Resolves a profile and saves the result if it changed, see {@link #persist(Profile, Profile)}:
+     * resolving a profile that has been created for a single launch does not create a file.
      *
      * <p>Call this with the profile as it is stored. Options of a single launch, like additional
      * jvm arguments, have to be applied to the returned profile, otherwise they would be saved.</p>
@@ -161,6 +176,24 @@ public interface LaunchTargetService {
      * @throws HeadlessMcException if the launch target is not available or the profile cannot be resolved.
      */
     Profile resolveAndPersist(Profile profile, TypedMap options) throws HeadlessMcException;
+
+    /**
+     * Saves a changed profile, if it is a stored profile.
+     * A launch works with two profiles: the profile as it is stored, and the profile that is launched,
+     * which additionally has the options of that launch. Everything that is found out during a launch and
+     * should be remembered, like what the profile has been resolved to, is a change to the first one,
+     * and is saved with this method. The second one is never saved.
+     *
+     * <p>Only a profile that is stored exactly as it is given is saved: a profile that has been created
+     * for a single launch does not get a file, and a stored profile that has been changed for a single
+     * launch is not written back.</p>
+     *
+     * @param profile the profile as it is stored.
+     * @param changed the profile with the changes to remember.
+     * @return the profile to continue with: the saved profile, as {@link ProfileService#save(Profile)} returns it,
+     * or the changed profile if nothing has been saved.
+     */
+    Profile persist(Profile profile, Profile changed);
 
     /**
      * Builds the process for a resolved profile, see {@link LaunchTarget#launcher(Profile, TypedMap)}.

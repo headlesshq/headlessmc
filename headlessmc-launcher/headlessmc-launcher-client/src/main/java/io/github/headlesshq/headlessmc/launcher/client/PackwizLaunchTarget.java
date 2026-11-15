@@ -24,6 +24,7 @@ import io.github.headlesshq.headlessmc.util.json.JsonService;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.arg.Side;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -169,6 +170,17 @@ public class PackwizLaunchTarget extends AbstractLaunchTarget<PackwizLaunchTarge
         }
 
         return launchTargetService.describe(profile.withTarget(handle.resolved()));
+    }
+
+    @Override
+    public Optional<VersionArg> resolveVersion(Profile profile) throws HeadlessMcException {
+        Handle handle = handle(profile);
+        if (handle.resolved() == null) {
+            return Optional.empty();
+        }
+
+        Profile inner = profile.withTarget(handle.resolved());
+        return launchTargetService.require(inner).resolveVersion(inner);
     }
 
     @Override

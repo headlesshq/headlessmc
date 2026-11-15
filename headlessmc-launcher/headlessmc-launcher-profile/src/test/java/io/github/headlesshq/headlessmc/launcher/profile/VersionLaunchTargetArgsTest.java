@@ -44,7 +44,10 @@ class VersionLaunchTargetArgsTest {
             .withServerSupport(new ServerSupport(null, null));
         FakePlatform paper = FakePlatform.create("paper", new String[]{"1.21.1", "130"})
             .withServerSupport(new ServerSupport(null, null));
-        platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1", "1.20.4"), fabric, paper);
+        FakeVanillaPlatform vanilla = new FakeVanillaPlatform("1.21.1", "1.20.4");
+        // 1.21.1 is a snapshot, the latest release is 1.20.4
+        vanilla.getVersionService().withReleases("1.20.4");
+        platformService = new FakePlatformService(vanilla, fabric, paper);
         DefaultJacksonJsonService jsonService = new DefaultJacksonJsonService();
         client = new FakeVersionLaunchTarget(platformService, jsonService, Side.CLIENT, root);
         server = new FakeVersionLaunchTarget(platformService, jsonService, Side.SERVER, root);
@@ -267,6 +270,69 @@ class VersionLaunchTargetArgsTest {
         assertTrue(resolved.isVersionKnown());
         assertFalse(TargetInfo.EMPTY.isVersionKnown());
         assertEquals(Optional.empty(), TargetInfo.EMPTY.version());
+    }
+
+    @Test
+    void aVagueVersionIsResolvedToWhatItCurrentlyIs() {
+        // what has been specified is kept as it is, a profile for latest stays a profile for latest ...
+        Profile latest = client.create("p", client.parse(TargetArgs.of("fabric", "latest")), new TypedMapImpl());
+        assertEquals("latest", client.describe(latest).version().orElseThrow().version());
+        assertEquals(Optional.empty(), client.describe(latest).current());
+
+        // ... but what that is right now can be asked, without resolving the profile
+        VersionArg resolved = client.resolveVersion(latest).orElseThrow();
+        assertEquals("fabric", resolved.platform());
+        assertEquals("1.21.1", resolved.version());
+        assertEquals(Optional.empty(), resolved.side());
+        assertEquals(latest, client.create("p", client.parse(TargetArgs.of("fabric", "latest")), new TypedMapImpl()));
+
+        Profile stable = client.create("p", client.parse(TargetArgs.of("stable")), new TypedMapImpl());
+        assertEquals("stable", client.describe(stable).version().orElseThrow().version());
+        assertEquals("1.20.4", client.resolveVersion(stable).orElseThrow().version());
+        assertEquals("vanilla", client.resolveVersion(stable).orElseThrow().platform());
+    }
+
+    @Test
+    void aVagueServerVersionKeepsItsSide() {
+        Profile latest = server.create("p", server.parse(serverOnly("paper", "latest")), new TypedMapImpl());
+
+        VersionArg resolved = server.resolveVersion(latest).orElseThrow();
+
+        assertEquals(Optional.of(Side.SERVER), resolved.side());
+        assertEquals("paper", resolved.platform());
+        assertEquals("1.21.1", resolved.version());
+    }
+
+    @Test
+    void theCurrentVersionOfAResolvedProfileIsNotResolvedAgain() {
+        // pinned to an older version than latest is today: that is the version of the profile
+        Profile profile = new Profile("p", VersionArg.parse("latest"), root);
+        Profile pinned = profile.withTarget(client.handle(
+            client.handle(profile).withCurrent(VersionArg.parse("vanilla", "1.20.4"))
+        ));
+
+        assertEquals(Optional.of(VersionArg.parse("vanilla", "1.20.4")), client.resolveVersion(pinned));
+    }
+
+    @Test
+    void aConcreteVersionIsNotLookedUp() {
+        Profile profile = new Profile("p", VersionArg.parse("fabric", "1.21.1", "latest"), root);
+        // the platforms are gone, e.g. a plugin has been removed: the version is still known
+        FakeVersionLaunchTarget offline = new FakeVersionLaunchTarget(
+            new FakePlatformService(new FakeVanillaPlatform("1.21.1")), new DefaultJacksonJsonService(), Side.CLIENT, root
+        );
+
+        assertEquals(Optional.of(VersionArg.parse("fabric", "1.21.1", "latest")), offline.resolveVersion(profile));
+    }
+
+    @Test
+    void aVagueVersionThatCannotBeResolvedFails() {
+        Profile profile = new Profile("p", VersionArg.parse("fabric", "latest"), root);
+        FakeVersionLaunchTarget offline = new FakeVersionLaunchTarget(
+            new FakePlatformService(new FakeVanillaPlatform("1.21.1")), new DefaultJacksonJsonService(), Side.CLIENT, root
+        );
+
+        assertThrows(RuntimeException.class, () -> offline.resolveVersion(profile));
     }
 
     @Test

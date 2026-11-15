@@ -56,7 +56,7 @@ public class ModListingService {
         @Nullable String type
     ) {
         // only ask the profile for its platform if none has been specified, not every profile launches a version
-        String name = platformName == null ? profileResolver.requireVersion(profile).platform() : platformName;
+        String name = platformName == null ? profileResolver.requirePlatform(profile) : platformName;
         Platform platform = platformService.getPlatform(name)
             .orElseThrow(() -> new IllegalStateException(
                 "Failed to resolve platform " + name + " for profile " + profile.name()

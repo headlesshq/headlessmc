@@ -10,6 +10,7 @@ import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
+import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
 import io.github.headlesshq.headlessmc.files.McFilesService;
@@ -21,7 +22,6 @@ import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
-import io.github.headlesshq.headlessmc.launcher.server.Eula;
 import io.github.headlesshq.headlessmc.launcher.server.EulaLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
@@ -113,9 +113,9 @@ class ProfileLaunchCommandTest {
         Mockito.when(launches.server(Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
         Mockito.when(serverService.save(Mockito.any())).thenAnswer(invocation -> profileService.save(invocation.getArgument(0)));
         Mockito.when(serverLauncher.getEulaLauncher()).thenReturn(eulaLauncher);
-        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any())).thenAnswer(invocation -> {
             eulaLaunches.add(invocation.getArgument(0));
-            return Optional.<Eula>empty();
+            return new EulaLauncher.Result(EulaStatus.NONE, Optional.empty());
         });
     }
 
@@ -184,7 +184,7 @@ class ProfileLaunchCommandTest {
     }
 
     @Test
-    void thePatchedLwjglReplacesTheLwjglPatcherWhenSelected() {
+    void thePatchedLwjglCanBeSelectedForALaunch() {
         client("main");
         ProfileLaunchCommand command = command("main");
         command.setHeadless(true);
@@ -192,7 +192,8 @@ class ProfileLaunchCommandTest {
 
         Launched launched = assertThrows(Launched.class, command::call);
 
-        assertEquals(List.of("lwjgl-pre", "log4j", "paulscode"), launched.profile.patchers());
+        // both are selected, the patched LWJGL replaces the lwjgl patcher when the game is launched
+        assertEquals(List.of("lwjgl-pre", "log4j", "lwjgl", "paulscode"), launched.profile.patchers());
     }
 
     @Test
@@ -203,7 +204,7 @@ class ProfileLaunchCommandTest {
 
         Launched launched = assertThrows(Launched.class, command::call);
 
-        assertEquals(List.of("log4j", "paulscode", "lwjgl-pre"), launched.profile.patchers());
+        assertEquals(List.of("log4j", "lwjgl", "paulscode", "lwjgl-pre"), launched.profile.patchers());
     }
 
     @Test
@@ -292,6 +293,87 @@ class ProfileLaunchCommandTest {
 
         assertEquals(1, eulaLaunches.size());
         assertEquals("srv", eulaLaunches.getFirst().name());
+    }
+
+    @Test
+    void theEulaStatusIsSavedWithoutTheOptionsOfTheLaunch() {
+        Profile server = server("srv");
+        ProfileLaunchCommand command = command("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G");
+        command.setGameArgs("--port 25566");
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertEquals(List.of("-Xmx8G"), launched.profile.vmArgs());
+        assertEquals(List.of("-Xmx8G"), eulaLaunches.getFirst().vmArgs());
+        assertEquals(
+            server.withJavaVersion(21).withEulaStatus(EulaStatus.NONE),
+            profileService.getProfile("srv").orElseThrow()
+        );
+    }
+
+    @Test
+    void optionsThatDoNotFitTheProfileAreRejectedBeforeAnythingIsResolved() {
+        Profile main = client("main");
+        ProfileLaunchCommand command = command("main");
+        command.setAcceptEula(true);
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+
+        assertTrue(e.getMessage().contains("--eula-accept"), e.getMessage());
+        // rejected before the launch target installs anything, observers are told, or an account is refreshed
+        assertEquals(List.of(), clientTarget.resolved());
+        assertEquals(main, profileService.getProfile("main").orElseThrow());
+        Mockito.verifyNoInteractions(lifecycleService, authService, launches);
+    }
+
+    @Test
+    void clientOptionsAreRejectedForSomethingThatIsNeitherClientNorServerBeforeItIsResolved() {
+        FakeLaunchTarget jar = new FakeLaunchTarget("jar").resolvingWith(profile -> profile.withJavaVersion(21));
+        launchTargetService = new TestLaunchTargets(profileService).with(clientTarget, serverTarget, jar).service();
+        Profile tool = profileService.save(new Profile("tool", Optional.empty(), jar.handle("tool.jar"), root.resolve("tool")));
+        ProfileLaunchCommand command = command("tool");
+        command.setHeadless(true);
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+
+        assertTrue(e.getMessage().contains("neither a client nor a server"), e.getMessage());
+        assertEquals(List.of(), jar.resolved());
+        // the Java version resolving finds out has not been saved for a launch that never happened
+        assertEquals(tool, profileService.getProfile("tool").orElseThrow());
+    }
+
+    @Test
+    void withATargetTheParametersAreNotANameButWhatToLaunch() {
+        client("main");
+        Profile other = profileService.save(
+            new Profile("other", Optional.of(Side.CLIENT), clientTarget.handle("fabric"), root.resolve("other"))
+        );
+
+        ProfileLaunchCommand command = command("fabric");
+        command.setTarget(VersionHandle.VERSION);
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // the stored profile for these arguments, like the launch command finds it
+        assertEquals("other", launched.profile.name());
+        assertEquals(other, profileService.getProfile("other").orElseThrow());
+    }
+
+    @Test
+    void aNameAndATargetExcludeEachOther() {
+        Profile main = client("main");
+        ProfileLaunchCommand command = command("main");
+        command.setTarget(VersionHandle.VERSION);
+        command.setTargetArgs(List.of("fabric", "1.21.1"));
+
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // "main" is not the profile to launch with another target, it is the first argument for the target:
+        // the stored profile main is neither launched nor changed
+        assertEquals(List.of("main", "fabric", "1.21.1"), clientTarget.parsed().getLast().args());
+        assertNotEquals(main.target(), launched.profile.target());
+        assertEquals(main, profileService.getProfile("main").orElseThrow());
     }
 
     @Test

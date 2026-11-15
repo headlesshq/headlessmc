@@ -29,7 +29,9 @@ class ProfileResolverTest {
     @BeforeEach
     void setup() {
         FakePlatform fabric = FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9"});
-        platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1", "1.20.4"), fabric);
+        FakeVanillaPlatform vanilla = new FakeVanillaPlatform("1.21.1", "1.20.4");
+        vanilla.getVersionService().withReleases("1.21.1", "1.20.4");
+        platformService = new FakePlatformService(vanilla, fabric);
         profileService = new FakeProfileService(root);
         launchTargetService = TestLaunchTargets.versions(platformService, profileService, root);
         resolver = new ProfileResolver(profileService, launchTargetService);
@@ -182,6 +184,51 @@ class ProfileResolverTest {
     @Test
     void emptyArgumentsAreRejected() {
         assertThrows(IllegalArgumentException.class, () -> resolver.resolve(List.of(), Side.BOTH));
+    }
+
+    @Test
+    void theVersionOfAProfileForLatestIsWhatLatestCurrentlyIs() {
+        // a profile created for these arguments has not been resolved, it only knows what has been specified
+        for (String vague : List.of("latest", "stable")) {
+            Profile profile = resolver.resolve(List.of("fabric", vague), Side.BOTH);
+            assertEquals(vague, version(profile).version());
+
+            VersionArg version = resolver.requireVersion(profile);
+
+            assertEquals("fabric", version.platform());
+            assertEquals("1.21.1", version.version());
+            assertEquals("fabric", resolver.requirePlatform(profile));
+        }
+
+        // nothing has been stored or installed for asking
+        assertEquals(List.of(), profileService.getProfiles());
+    }
+
+    @Test
+    void theVersionOfAStoredProfileForLatestIsTheVersionItLaunches() {
+        // stored while 1.20.4 was the latest version, and pinned to it
+        Profile profile = profileService.createDefault("main", VersionArg.parse("latest"));
+        VersionHandle handle = ((FakeVersionLaunchTarget) launchTargetService.require(profile)).handle(profile);
+        Profile pinned = profileService.save(
+            profile.withTarget(handle.withCurrent(VersionArg.parse("vanilla", "1.20.4")).asTarget())
+        );
+
+        assertEquals(VersionArg.parse("vanilla", "1.20.4"), resolver.requireVersion(pinned));
+        // not resolved yet: what latest is now
+        assertEquals("1.21.1", resolver.requireVersion(profile).version());
+    }
+
+    @Test
+    void thePlatformOfAProfileDoesNotNeedItsVersion() {
+        Profile profile = profileService.createDefault("main", VersionArg.parse("fabric", "latest"));
+        // nothing can be resolved anymore, e.g. offline without cached metadata
+        ProfileResolver offline = new ProfileResolver(profileService, TestLaunchTargets.versions(
+            new FakePlatformService(new FakeVanillaPlatform("1.21.1")), profileService, root
+        ));
+
+        assertEquals("fabric", offline.requirePlatform(profile));
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> offline.requireVersion(profile));
+        assertTrue(e.getMessage().contains("Failed to find the Minecraft version of profile main"), e.getMessage());
     }
 
     @Test

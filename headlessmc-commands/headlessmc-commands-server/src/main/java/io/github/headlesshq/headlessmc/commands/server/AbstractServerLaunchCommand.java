@@ -12,11 +12,10 @@ import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchTarget;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
-import io.github.headlesshq.headlessmc.launcher.profile.ParsedTarget;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
-import io.github.headlesshq.headlessmc.launcher.profile.TargetArgs;
 import io.github.headlesshq.headlessmc.launcher.server.Eula;
+import io.github.headlesshq.headlessmc.launcher.server.EulaLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
@@ -33,17 +32,30 @@ import picocli.CommandLine;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * Base class of all commands that launch a {@link Profile}.
- * What a profile launches is up to its {@link LaunchTarget}, this class takes care of everything around it:
+ * What a profile launches is up to its {@link LaunchTarget}, this class takes care of everything around it.
+ *
+ * <p>A launch works with two profiles, which must not be mixed up:</p>
+ * <ul>
+ *     <li>the <em>stored</em> profile, {@link #getProfile()}, as it is in its file. Everything a launch finds out
+ *     and wants to remember is a change to this profile: what the launch target resolved it to
+ *     ({@link #resolve(Profile, TypedMap)}) and whether a server has a eula.txt
+ *     ({@link #maybeEulaLaunch(Profile, Profile)}).</li>
+ *     <li>the <em>launch</em> profile, {@link #prepareProfile(Profile)}: the stored profile with the options of
+ *     this command applied, like additional jvm arguments. It is what is launched, and it is never saved.</li>
+ * </ul>
+ *
+ * <p>The steps of a launch:</p>
  * <ol>
  *     <li>{@link #getProfile()} finds the profile to launch.</li>
+ *     <li>{@link #checkOptions(Profile)} rejects options that make no sense for the profile,
+ *     before anything is installed.</li>
  *     <li>{@link #beforeLaunch(Profile)} notifies observers, e.g. to back the profile up.</li>
- *     <li>The profile is resolved by its launch target. What the target finds out is saved in the profile,
- *     if the profile is a stored one.</li>
- *     <li>{@link #prepareProfile(Profile)} applies the options of this launch. This happens after resolving,
- *     so that they are never saved.</li>
+ *     <li>The profile is resolved by its launch target, and saved if it is a stored profile.</li>
+ *     <li>{@link #prepareProfile(Profile)} creates the launch profile.</li>
  *     <li>The launch target builds the process, which is launched by {@link #handle(ProcessLauncher)}.</li>
  * </ol>
  */
@@ -125,11 +137,14 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     @Override
     public Integer call() {
         Profile baseProfile = getProfile();
+        checkOptions(baseProfile);
         beforeLaunch(baseProfile);
         TypedMap options = getTargetOptions();
-        Profile profile = prepareProfile(resolve(baseProfile, options));
-        checkServerOptions(profile);
-        maybeEulaLaunch(profile);
+        // everything that is saved is done with the profile as it is stored ...
+        Profile stored = resolve(baseProfile, options);
+        // ... and only what is launched gets the options of this launch
+        Profile profile = prepareProfile(stored);
+        maybeEulaLaunch(stored, profile);
         // TODO: patchers for server
         return handle(launchTargetService.launcher(profile, options));
     }
@@ -155,7 +170,7 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
      *
      * @param profile the profile to resolve.
      * @param options the options for the launch target, see {@link #getTargetOptions()}.
-     * @return the resolved profile.
+     * @return the resolved profile as it is stored now, still without the options of this launch.
      */
     protected Profile resolve(Profile profile, TypedMap options) {
         return launchTargetService.resolveAndPersist(profile, options);
@@ -175,31 +190,42 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     }
 
     /**
-     * Lets the launch target given with {@code --target} parse arguments, to launch a stored profile
-     * with something else than it usually launches, once. The profile keeps its side.
+     * Finds the profile for the parameters of the commands that launch a profile by its name.
+     * A name and {@code --target} exclude each other: without a launch target a single parameter is the name of
+     * a stored profile. With a launch target, or with more than one parameter, <em>all</em> parameters,
+     * including the first one, are what to launch, like for the {@code launch} command, see {@link ProfileResolver}.
+     * A stored profile is never launched with another launch target than its own.
      *
-     * @param profile the stored profile.
-     * @param args    the arguments for the launch target.
-     * @param sides   the sides this command launches.
-     * @return the profile with the launch target for the arguments, which is not saved.
+     * @param name       the first parameter, the name of a profile if it is the only one.
+     * @param targetArgs the parameters after the first one.
+     * @param sides      the sides this command launches.
+     * @param byName     finds the stored profile with a name.
+     * @return the profile to launch.
+     * @throws IllegalArgumentException if there is no profile for the parameters.
      */
-    protected Profile withTarget(Profile profile, List<String> args, Set<Side> sides) {
-        ParsedTarget parsed = launchTargetService.parse(target, new TargetArgs(args, sides)).parsed();
-        if (!parsed.side().equals(profile.side())) {
-            throw new IllegalArgumentException(
-                "'" + String.join(" ", args) + "' cannot be launched with profile " + profile.name()
-                    + ", it is for another side."
-            );
+    protected Profile getProfile(String name, List<String> targetArgs, Set<Side> sides, Function<String, Profile> byName)
+        throws IllegalArgumentException {
+        if (target == null && targetArgs.isEmpty()) {
+            return byName.apply(name);
         }
 
-        return profile.withTarget(parsed.handle());
+        List<String> args = new ArrayList<>(targetArgs.size() + 1);
+        args.add(name);
+        args.addAll(targetArgs);
+        return profileResolver.resolve(target, args, sides, getTargetOptions());
     }
 
     /**
-     * Options for servers make no sense for anything that is not a server.
-     * They are rejected, instead of silently doing nothing.
+     * Rejects options of this command that make no sense for the profile, instead of silently ignoring them.
+     * This only depends on the {@link Profile#side() side} of the profile, which is known as soon as there is a
+     * profile and never changes, so it is called before the profile is resolved:
+     * a launch that is going to be rejected must not install or save anything first.
+     *
+     * @param profile the profile to launch, not resolved yet.
+     * @throws IllegalArgumentException if an option cannot be used with the profile.
      */
-    protected void checkServerOptions(Profile profile) {
+    protected void checkOptions(Profile profile) throws IllegalArgumentException {
+        // options for servers make no sense for anything that is not a server
         if (acceptEula && !profile.isServer()) {
             throw new IllegalArgumentException(
                 "Profile " + profile.name() + " is not a server, --eula-accept cannot be used with it."
@@ -207,17 +233,31 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
         }
     }
 
-    protected void maybeEulaLaunch(Profile profile) {
-        if (acceptEula && !dryRun && profile.isServer()) {
-            serverLauncher.getEulaLauncher().eulaLaunch(profile, serverService).ifPresent(Eula::accept);
+    /**
+     * Accepts the EULA of a server if that has been asked for. A server without a eula.txt is launched once
+     * to create it, with the launch profile, the options of this launch apply to that launch as well.
+     * Whether the server has a eula.txt is remembered in the stored profile.
+     *
+     * @param stored  the resolved profile as it is stored, without the options of this launch.
+     * @param profile the profile that is launched.
+     * @return the stored profile, with what has been found out about its eula.txt.
+     */
+    protected Profile maybeEulaLaunch(Profile stored, Profile profile) {
+        if (!acceptEula || dryRun || !profile.isServer()) {
+            return stored;
         }
+
+        EulaLauncher.Result result = serverLauncher.getEulaLauncher().eulaLaunch(profile);
+        result.eula().ifPresent(Eula::accept);
+        return launchTargetService.persist(stored, stored.withEulaStatus(result.status()));
     }
 
     /**
      * Applies the arguments of this launch to a profile.
-     * The resulting profile is only for this launch, it must not be saved.
+     * The resulting profile is only for this launch, it must not be saved: nothing that should be remembered
+     * may be derived from it, see {@link LaunchTargetService#persist(Profile, Profile)}.
      *
-     * @param baseProfile the resolved profile.
+     * @param baseProfile the resolved profile, as it is stored.
      * @return the profile to launch.
      */
     public Profile prepareProfile(Profile baseProfile) {

@@ -37,13 +37,11 @@ class EulaLauncherTest {
     private boolean writeEulaOnLaunch;
 
     private FakeProfileService profileService;
-    private ServerServiceImpl serverService;
     private EulaLauncher eulaLauncher;
 
     @BeforeEach
     void setup() {
         profileService = new FakeProfileService(root);
-        serverService = new ServerServiceImpl(profileService);
         eulaLauncher = new EulaLauncher(recordingLauncher(Optional.empty()));
     }
 
@@ -126,7 +124,7 @@ class EulaLauncherTest {
     void serversWithoutAEulaAreSkipped() {
         Profile profile = server("srv").withEulaStatus(EulaStatus.NONE);
 
-        assertEquals(Optional.empty(), eulaLauncher.eulaLaunch(profile, serverService));
+        assertEquals(new EulaLauncher.Result(EulaStatus.NONE, Optional.empty()), eulaLauncher.eulaLaunch(profile));
         assertEquals(java.util.List.of(), launches);
     }
 
@@ -135,11 +133,11 @@ class EulaLauncherTest {
         Profile profile = server("srv");
         write(profile, EULA);
 
-        Optional<Eula> eula = eulaLauncher.eulaLaunch(profile, serverService);
+        EulaLauncher.Result result = eulaLauncher.eulaLaunch(profile);
 
-        assertTrue(eula.isPresent());
+        assertTrue(result.eula().isPresent());
         assertEquals(java.util.List.of(), launches);
-        assertEquals(EulaStatus.EXISTS, profileService.getProfile("srv").orElseThrow().eulaStatus());
+        assertEquals(EulaStatus.EXISTS, result.status());
     }
 
     @Test
@@ -147,19 +145,32 @@ class EulaLauncherTest {
         writeEulaOnLaunch = true;
         Profile profile = server("srv");
 
-        Optional<Eula> eula = eulaLauncher.eulaLaunch(profile, serverService);
+        EulaLauncher.Result result = eulaLauncher.eulaLaunch(profile);
 
-        assertTrue(eula.isPresent());
+        assertTrue(result.eula().isPresent());
         assertEquals(java.util.List.of("mc-eula-srv"), launches);
-        assertEquals(EulaStatus.EXISTS, profileService.getProfile("srv").orElseThrow().eulaStatus());
+        assertEquals(EulaStatus.EXISTS, result.status());
     }
 
     @Test
     void serversThatNeverCreateAEulaAreMarkedAsHavingNone() {
         Profile profile = server("srv");
 
-        assertEquals(Optional.empty(), eulaLauncher.eulaLaunch(profile, serverService));
-        assertEquals(EulaStatus.NONE, profileService.getProfile("srv").orElseThrow().eulaStatus());
+        assertEquals(new EulaLauncher.Result(EulaStatus.NONE, Optional.empty()), eulaLauncher.eulaLaunch(profile));
+        assertEquals(java.util.List.of("mc-eula-srv"), launches);
+    }
+
+    @Test
+    void nothingIsSavedByTheLauncher() {
+        // the profile that is launched can carry options of a single launch, saving is up to the caller
+        writeEulaOnLaunch = true;
+        Profile stored = server("srv");
+        Profile launched = stored.withVmArgs(java.util.List.of("-Xmx8G"));
+
+        assertEquals(EulaStatus.EXISTS, eulaLauncher.eulaLaunch(launched).status());
+        assertEquals(EulaStatus.EXISTS, eulaLauncher.eulaLaunch(launched).status());
+
+        assertEquals(stored, profileService.getProfile("srv").orElseThrow());
     }
 
     @Test
@@ -169,7 +180,7 @@ class EulaLauncherTest {
         EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(new StdInProcess(stdIn))));
 
         Profile profile = server("srv");
-        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
+        assertTrue(launcher.eulaLaunch(profile).eula().isPresent());
         assertEquals("stop" + System.lineSeparator(), stdIn.toString(StandardCharsets.UTF_8));
     }
 
@@ -187,8 +198,9 @@ class EulaLauncherTest {
         EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(javaProcess), Optional.empty()));
 
         Profile profile = server("srv");
-        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
-        assertEquals(EulaStatus.EXISTS, profileService.getProfile("srv").orElseThrow().eulaStatus());
+        EulaLauncher.Result result = launcher.eulaLaunch(profile);
+        assertTrue(result.eula().isPresent());
+        assertEquals(EulaStatus.EXISTS, result.status());
     }
 
     @Test
@@ -198,7 +210,7 @@ class EulaLauncherTest {
         EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(javaProcess), Optional.empty()));
 
         Profile profile = server("srv");
-        ServerException e = assertThrows(ServerException.class, () -> launcher.eulaLaunch(profile, serverService));
+        ServerException e = assertThrows(ServerException.class, () -> launcher.eulaLaunch(profile));
         assertTrue(e.getMessage().contains("failed with exit code 1"));
     }
 
@@ -209,7 +221,7 @@ class EulaLauncherTest {
         EulaLauncher launcher = new EulaLauncher(recordingLauncher(Optional.of(process)));
 
         Profile profile = server("srv");
-        assertTrue(launcher.eulaLaunch(profile, serverService).isPresent());
+        assertTrue(launcher.eulaLaunch(profile).eula().isPresent());
         assertEquals(0, process.stdOut.available());
     }
 
