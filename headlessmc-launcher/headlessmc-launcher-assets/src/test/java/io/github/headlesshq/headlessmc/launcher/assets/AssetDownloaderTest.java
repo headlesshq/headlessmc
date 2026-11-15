@@ -100,7 +100,7 @@ public class AssetDownloaderTest {
         Holder<AssetsConfig> config = fork.getHolder(AssetsConfig.class);
         return new AssetDownloader(
             progressbarService, downloadService, fileService, hashService,
-            new DummyAssets(), config, mcFiles, jsonService
+            new DummyAssets(), config, jsonService
         );
     }
 
@@ -159,7 +159,7 @@ public class AssetDownloaderTest {
         downloadService.register(URI.create(INDEX_URL), indexJson(""));
         registerAsset();
 
-        AssetsLocation location = downloader(mcFiles, false).download(assetIndex("1.21.1", (long) ICON.length));
+        AssetsLocation location = downloader(mcFiles, false).download(mcFiles, assetIndex("1.21.1", (long) ICON.length));
 
         assertEquals("1.21.1", location.id());
         assertEquals(mcFiles.getAssetsDir(), location.location());
@@ -173,7 +173,7 @@ public class AssetDownloaderTest {
         downloadService.register(URI.create(INDEX_URL), indexJson(""));
         registerAsset();
 
-        assertNotNull(downloader(mcFiles, false).download(assetIndex("1.21.1", 999L)));
+        assertNotNull(downloader(mcFiles, false).download(mcFiles, assetIndex("1.21.1", 999L)));
     }
 
     @Test
@@ -188,7 +188,7 @@ public class AssetDownloaderTest {
 
         String hash = sha1(ICON);
         URI assetUri = URI.create(ASSET_URL_BASE + "/" + hash.substring(0, 2) + "/" + hash);
-        downloader(mcFiles, false).download(assetIndex("1.21.1", (long) ICON.length));
+        downloader(mcFiles, false).download(mcFiles, assetIndex("1.21.1", (long) ICON.length));
 
         assertFalse(downloadService.wasRequested(assetUri));
     }
@@ -203,7 +203,7 @@ public class AssetDownloaderTest {
         Files.createDirectories(file.getParent());
         Files.write(file, "corrupted".getBytes(StandardCharsets.UTF_8));
 
-        downloader(mcFiles, false).download(assetIndex("1.21.1", (long) ICON.length));
+        downloader(mcFiles, false).download(mcFiles, assetIndex("1.21.1", (long) ICON.length));
 
         assertArrayEquals(ICON, Files.readAllBytes(file));
     }
@@ -215,7 +215,7 @@ public class AssetDownloaderTest {
         registerAsset();
         Files.createDirectories(mcFiles.getAssetsDir().resolve("virtual").resolve("legacy").resolve("icons"));
 
-        AssetsLocation location = downloader(mcFiles, false).download(assetIndex("legacy", (long) ICON.length));
+        AssetsLocation location = downloader(mcFiles, false).download(mcFiles, assetIndex("legacy", (long) ICON.length));
 
         Path virtual = mcFiles.getAssetsDir().resolve("virtual").resolve("legacy");
         assertEquals(virtual, location.location());
@@ -229,7 +229,7 @@ public class AssetDownloaderTest {
         registerAsset();
         Files.createDirectories(mcFiles.getResourcesDir().resolve("icons"));
 
-        AssetsLocation location = downloader(mcFiles, false).download(assetIndex("pre-1.6", (long) ICON.length));
+        AssetsLocation location = downloader(mcFiles, false).download(mcFiles, assetIndex("pre-1.6", (long) ICON.length));
 
         assertEquals(mcFiles.getResourcesDir(), location.location());
         assertArrayEquals(ICON, Files.readAllBytes(mcFiles.getResourcesDir().resolve("icons").resolve("icon.png")));
@@ -240,7 +240,7 @@ public class AssetDownloaderTest {
         McFiles mcFiles = mcFiles(root);
         downloadService.register(URI.create(INDEX_URL), indexJson(""));
 
-        downloader(mcFiles, true).download(assetIndex("1.21.1", (long) ICON.length));
+        downloader(mcFiles, true).download(mcFiles, assetIndex("1.21.1", (long) ICON.length));
 
         // the placeholder png is used instead of the real asset, so it is not the real content
         assertTrue(Files.exists(objectFile(mcFiles)));
@@ -282,7 +282,7 @@ public class AssetDownloaderTest {
             }
         };
 
-        assertThrows(NullPointerException.class, () -> downloader.download(noId));
+        assertThrows(NullPointerException.class, () -> downloader.download(mcFiles(root), noId));
     }
 
     @Test

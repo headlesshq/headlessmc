@@ -1,9 +1,11 @@
 package io.github.headlesshq.headlessmc.platform.fabric;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.platform.client.AbstractClientInstaller;
 import io.github.headlesshq.headlessmc.platform.client.ClientInstaller;
+import io.github.headlesshq.headlessmc.platform.PlatformVersion;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstaller;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
@@ -40,12 +42,15 @@ class FabricInstaller extends AbstractClientInstaller implements ClientInstaller
             .installServer(id.asVanillaVersion(), dir, args);
 
         install(id, dir, args, true, vanillaInstallation.javaVersion());
-        return new ServerInstallation(vanillaInstallation.javaVersion());
+        // without a build the installer of fabric decides which loader it installs, and does not tell
+        return new ServerInstallation(
+            vanillaInstallation.javaVersion(), List.of(), id.getBuild().map(PlatformVersion::getName).orElse(null)
+        );
     }
 
     @Override
-    protected void installClient(VersionID id, Path mcDir, Version vanilla, TypedMap args) throws HeadlessMcException {
-        install(id, mcDir, args, false, vanilla.requireJavaVersion());
+    protected void installClient(VersionID id, McFiles mcFiles, Version vanilla, TypedMap args) throws HeadlessMcException {
+        install(id, mcFiles.getMcDir(), args, false, vanilla.requireJavaVersion());
     }
 
     private void install(VersionID id, Path dir, TypedMap args, boolean server, int javaVersion)

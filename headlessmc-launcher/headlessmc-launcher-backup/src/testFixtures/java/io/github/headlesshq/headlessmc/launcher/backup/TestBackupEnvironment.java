@@ -11,6 +11,7 @@ import io.github.headlesshq.headlessmc.launcher.backup.profile.ProfileBackupProv
 import io.github.headlesshq.headlessmc.launcher.backup.profile.ProfileUsageService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
 import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
@@ -47,7 +48,9 @@ public class TestBackupEnvironment {
         profileService = new FakeProfileService(root.resolve("profiles"));
         archiveService = new BackupArchiveService(fileService);
         provider = new ProfileBackupProvider(
-            new ProfileResolver(new FakePlatformService(new FakeVanillaPlatform("1.21.1")), profileService),
+            new ProfileResolver(profileService, TestLaunchTargets.versions(
+                new FakePlatformService(new FakeVanillaPlatform("1.21.1")), profileService, root.resolve("profiles")
+            )),
             profileService,
             worldService,
             new ProfileUsageService(processManager, worldService),

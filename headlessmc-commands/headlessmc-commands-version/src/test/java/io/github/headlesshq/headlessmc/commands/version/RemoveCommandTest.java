@@ -4,10 +4,12 @@ import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.launcher.client.VersionRemoveService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
@@ -44,6 +46,7 @@ class RemoveCommandTest {
     @BeforeEach
     void setup() throws IOException {
         mcFiles = TestFiles.mcFiles(root);
+        versionService.withMcFiles(mcFiles);
         platformService = new FakePlatformService(
             new FakeVanillaPlatform("1.21.1"),
             FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9"})
@@ -73,8 +76,8 @@ class RemoveCommandTest {
             profileService,
             new DefaultFileService(new DefaultFileSystemProvider()),
             new DefaultJacksonJsonService(),
-            mcFiles
-        ), console);
+            TestLaunchTargets.versions(platformService, profileService, root)
+        ), McFilesService.of(mcFiles), new DefaultFileService(new DefaultFileSystemProvider()), console);
         command.setVersionArg(List.of(versionArg));
         return command;
     }

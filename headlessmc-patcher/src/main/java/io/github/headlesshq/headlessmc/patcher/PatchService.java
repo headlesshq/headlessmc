@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.patcher;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,7 +9,17 @@ import java.util.Optional;
  * May perform caching with {@link PatchCache}.
  */
 public interface PatchService {
-    PatchResult patch(PatchResult patchResult, int javaVersion, List<Patcher> patchers);
+    /**
+     * Applies the given patchers to a classpath.
+     *
+     * @param mcFiles     the {@code .minecraft} directory the classpath belongs to,
+     *                    used to recognize its libraries in the patch cache.
+     * @param patchResult the unpatched classpath.
+     * @param javaVersion the Java version the classpath is going to be launched with.
+     * @param patchers    the patchers to apply.
+     * @return the patched classpath.
+     */
+    PatchResult patch(McFiles mcFiles, PatchResult patchResult, int javaVersion, List<Patcher> patchers);
 
     List<Patcher> getPatchers();
 

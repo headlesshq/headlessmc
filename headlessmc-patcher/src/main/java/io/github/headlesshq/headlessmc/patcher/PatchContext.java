@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.patcher;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -73,6 +74,11 @@ public interface PatchContext {
     <C extends HelperService> Stream<C> services(Class<C> type);
 
     PatchCache.Key getCacheKey();
+
+    /**
+     * @return the {@code .minecraft} directory the patched classpath belongs to.
+     */
+    McFiles getMcFiles();
 
     @FunctionalInterface
     interface PatchAction {

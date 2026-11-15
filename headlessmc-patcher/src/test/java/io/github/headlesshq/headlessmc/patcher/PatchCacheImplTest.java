@@ -36,8 +36,7 @@ public class PatchCacheImplTest {
             fileService,
             hashService,
             jsonService,
-            TestPatchers.appFiles(root),
-            TestPatchers.mcFiles(root)
+            TestPatchers.appFiles(root)
         );
     }
 
@@ -197,6 +196,59 @@ public class PatchCacheImplTest {
         PatchResult initial = classpath(library);
 
         assertTrue(cache.getCache(context(root, cache, initial, initial)).isEmpty());
+    }
+
+    private PatchContext context(McFiles mcFiles, PatchCacheImpl cache, PatchResult initial, PatchResult current) {
+        PatchCache.Key key = cache.getCacheKey(initial, List.of(TestPatchers.patcher("test", 1L)), 21);
+        return new PatchContextImpl(
+            Stream::empty, initial, fileService, key, List.of(TestPatchers.patcher("test", 1L)),
+            mcFiles, 21, cache.getCacheDir(key), current
+        );
+    }
+
+    @Test
+    public void aCacheIsUsedForTheSameLibrariesInAnotherMinecraftDirectory(@TempDir Path root) throws IOException {
+        // the same libraries installed in two .minecraft directories, e.g. on two disks
+        McFiles mcFiles = TestPatchers.mcFiles(root);
+        McFiles other = McFiles.of(root.resolve("other-mc"));
+        Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("org").resolve("lib.jar"), "a.txt", "aaa");
+        Path otherLibrary = other.getLibraryDir().resolve("org").resolve("lib.jar");
+        Files.createDirectories(otherLibrary.getParent());
+        Files.copy(library, otherLibrary);
+
+        PatchCacheImpl cache = cache(root);
+        PatchResult initial = classpath(library);
+        PatchCache.Key key = cache.getCacheKey(initial, List.of(TestPatchers.patcher("test", 1L)), 21);
+        Path patched = TestPatchers.writeJar(
+            cache.getCacheDir(key).resolve("test").resolve("patched.jar"), "b.txt", "bbb");
+        // the patchers added a jar and left the library on the classpath
+        cache.saveCache(context(mcFiles, cache, initial, classpath(library, patched)));
+
+        Optional<PatchResult> loaded = cache.getCache(context(other, cache, classpath(otherLibrary), classpath(otherLibrary)));
+
+        // patching is not repeated, and the library is the one of the directory that is launched
+        assertTrue(loaded.isPresent());
+        assertEquals(List.of(otherLibrary, patched), List.copyOf(loaded.get().files()));
+        // and the cache still works for the first directory
+        assertEquals(
+            List.of(library, patched),
+            List.copyOf(cache.getCache(context(mcFiles, cache, initial, initial)).orElseThrow().files())
+        );
+    }
+
+    @Test
+    public void aCacheForOtherLibrariesIsNotUsed(@TempDir Path root) throws IOException {
+        McFiles mcFiles = TestPatchers.mcFiles(root);
+        McFiles other = McFiles.of(root.resolve("other-mc"));
+        Path library = TestPatchers.writeJar(mcFiles.getLibraryDir().resolve("lib.jar"), "a.txt", "aaa");
+        Path otherLibrary = TestPatchers.writeJar(other.getLibraryDir().resolve("lib.jar"), "a.txt", "different");
+        PatchCacheImpl cache = cache(root);
+        cache.saveCache(context(mcFiles, cache, classpath(library), classpath(library)));
+
+        assertEquals(
+            Optional.empty(),
+            cache.getCache(context(other, cache, classpath(otherLibrary), classpath(otherLibrary)))
+        );
     }
 
 }

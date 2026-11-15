@@ -3,6 +3,8 @@ package io.github.headlesshq.headlessmc.version.service;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.exceptions.NotFoundException;
+import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.version.ProcessedVersion;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.VersionParser;
@@ -13,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,11 +22,31 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class VersionJsonServiceImpl implements VersionJsonService {
     private final VersionParser versionParser;
-    private final Supplier<Path> versionsDir;
+    private final McFilesService mcFilesService;
+
+    /**
+     * Creates a service for a single {@code .minecraft} directory.
+     *
+     * @param versionParser the parser to parse version.json files with.
+     * @param mcFiles       the only directory of this service.
+     */
+    public VersionJsonServiceImpl(VersionParser versionParser, McFiles mcFiles) {
+        this(versionParser, McFilesService.of(mcFiles));
+    }
 
     @Override
     public Set<String> getInstalledFileNames() throws HeadlessMcException {
-        Path versionsDir = this.versionsDir.get();
+        Set<String> result = new LinkedHashSet<>();
+        for (McFiles mcFiles : mcFilesService.all()) {
+            result.addAll(getInstalledFileNames(mcFiles));
+        }
+
+        return result;
+    }
+
+    @Override
+    public Set<String> getInstalledFileNames(McFiles mcFiles) throws HeadlessMcException {
+        Path versionsDir = mcFiles.getVersionsDir();
         if (!Files.exists(versionsDir)) {
             return Set.of();
         }
@@ -35,9 +56,9 @@ public class VersionJsonServiceImpl implements VersionJsonService {
                 .map(path -> path.resolve(path.getFileName() + ".json"))
                 .filter(Files::exists)
                 .map(jsonFile -> jsonFile.getParent().getFileName().toString())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         } catch (IOException e) {
-            throw new HeadlessMcIOException("Failed to list files in " + versionParser, e);
+            throw new HeadlessMcIOException("Failed to list files in " + versionsDir, e);
         }
     }
 
@@ -49,7 +70,30 @@ public class VersionJsonServiceImpl implements VersionJsonService {
 
     @Override
     public Optional<Version> tryGetVersion(String fileName) throws HeadlessMcException {
-        Path jsonFile = versionsDir.get().resolve(fileName).resolve(fileName + ".json");
+        Optional<Version> result = Optional.empty();
+        for (McFiles mcFiles : mcFilesService.all()) {
+            Optional<Version> version = tryGetVersion(mcFiles, fileName);
+            if (version.isEmpty()) {
+                continue;
+            }
+
+            if (result.isEmpty()) {
+                result = version;
+                if (!log.isDebugEnabled()) {
+                    break;
+                }
+            } else {
+                log.debug("Version {} in {} is shadowed by the one in {}",
+                          fileName, mcFiles.getMcDir(), result.get().asFile().orElse(null));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public Optional<Version> tryGetVersion(McFiles mcFiles, String fileName) throws HeadlessMcException {
+        Path jsonFile = mcFiles.getVersionsDir().resolve(fileName).resolve(fileName + ".json");
         if (!Files.exists(jsonFile)) {
             return Optional.empty();
         }
@@ -64,6 +108,8 @@ public class VersionJsonServiceImpl implements VersionJsonService {
 
     @Override
     public ProcessedVersion resolve(Version version, MissingVersionInstaller installer) throws HeadlessMcException {
+        // parents are only looked up in the directory of the version, nothing is shared between directories
+        McFiles mcFiles = getMcFiles(version);
         List<Version> hierarchy = new LinkedList<>();
         Version currentVersion = version;
         Set<String> checked = new LinkedHashSet<>();
@@ -77,13 +123,14 @@ public class VersionJsonServiceImpl implements VersionJsonService {
                 break;
             }
 
-            Optional<Version> parent = tryGetVersion(currentVersion.getInheritsFrom());
+            Optional<Version> parent = tryGetVersion(mcFiles, currentVersion.getInheritsFrom());
             if (parent.isEmpty()) {
-                // TODO: wrap in versionChangeService
-                installer.install(currentVersion.getInheritsFrom());
-                parent = tryGetVersion(currentVersion.getInheritsFrom());
+                installer.install(mcFiles, currentVersion.getInheritsFrom());
+                parent = tryGetVersion(mcFiles, currentVersion.getInheritsFrom());
                 if (parent.isEmpty()) {
-                    throw new NotFoundException("Failed to find version " + currentVersion.getInheritsFrom());
+                    throw new NotFoundException(
+                        "Failed to find version " + currentVersion.getInheritsFrom() + " in " + mcFiles.getMcDir()
+                    );
                 }
             }
 
@@ -95,17 +142,32 @@ public class VersionJsonServiceImpl implements VersionJsonService {
 
     @Override
     public List<Version> getInstalledVersions() throws HeadlessMcException {
-        Set<String> fileNames = getInstalledFileNames();
+        List<Version> versions = new ArrayList<>();
+        for (McFiles mcFiles : mcFilesService.all()) {
+            versions.addAll(getInstalledVersions(mcFiles));
+        }
+
+        return versions;
+    }
+
+    @Override
+    public List<Version> getInstalledVersions(McFiles mcFiles) throws HeadlessMcException {
+        Set<String> fileNames = getInstalledFileNames(mcFiles);
         List<Version> versions = new ArrayList<>(fileNames.size());
         for (String installedVersion : fileNames) {
             try {
-                versions.add(getVersion(installedVersion));
+                tryGetVersion(mcFiles, installedVersion).ifPresent(versions::add);
             } catch (HeadlessMcException e) {
-                log.error("Failed to read version {}", installedVersion, e);
+                log.error("Failed to read version {} in {}", installedVersion, mcFiles.getMcDir(), e);
             }
         }
 
         return versions;
+    }
+
+    @Override
+    public McFiles getMcFiles(Version version) {
+        return mcFilesService.require(version.asFile().orElse(null));
     }
 
     @Override
@@ -114,15 +176,16 @@ public class VersionJsonServiceImpl implements VersionJsonService {
     }
 
     @Override
-    public List<Version> observeChanges(ChangeAction action) throws HeadlessMcException {
-        Set<String> before = getInstalledFileNames();
+    public List<Version> observeChanges(McFiles mcFiles, ChangeAction action) throws HeadlessMcException {
+        Set<String> before = getInstalledFileNames(mcFiles);
         action.run();
-        Set<String> after = new HashSet<>(getInstalledFileNames());
+        Set<String> after = new LinkedHashSet<>(getInstalledFileNames(mcFiles));
         after.removeAll(before);
 
         List<Version> versions = new ArrayList<>(after.size());
         for (String fileName : after) {
-            versions.add(getVersion(fileName));
+            versions.add(tryGetVersion(mcFiles, fileName)
+                .orElseThrow(() -> new NotFoundException("Failed to find version " + fileName)));
         }
 
         return versions;
@@ -130,8 +193,10 @@ public class VersionJsonServiceImpl implements VersionJsonService {
 
     @Override
     public ProcessedVersion process(Version version) throws HeadlessMcException {
-        return resolve(version, id -> {
-            throw new HeadlessMcException("Failed to resolve version " + id + " to process " + version.getId());
+        return resolve(version, (mcFiles, id) -> {
+            throw new HeadlessMcException(
+                "Failed to resolve version " + id + " in " + mcFiles.getMcDir() + " to process " + version.getId()
+            );
         });
     }
 

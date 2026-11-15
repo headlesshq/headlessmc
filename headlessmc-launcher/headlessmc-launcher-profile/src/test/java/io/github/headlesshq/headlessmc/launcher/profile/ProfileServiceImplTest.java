@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.profile;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
+import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -17,13 +18,10 @@ import java.util.regex.Matcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 class ProfileServiceImplTest {
-    @Inject
-    GameDirService gameDirService;
     @Inject
     JsonService jsonService;
     @Inject
@@ -36,7 +34,7 @@ class ProfileServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ProfileServiceImpl(gameDirService, jsonService, fileService, appFiles);
+        service = new ProfileServiceImpl(jsonService, fileService, appFiles);
         profilesDir = appFiles.getProfilesDir();
         fileService.delete(profilesDir);
     }
@@ -53,10 +51,11 @@ class ProfileServiceImplTest {
     private Profile sampleProfile(String name, VersionArg version) {
         SequencedMap<String, String> systemProperties = new LinkedHashMap<>();
         systemProperties.put("key", "value");
+        // the data of the target is given the way it is read back from a file, as a json tree
         return new Profile(
             name,
-            version,
-            version,
+            Optional.of(Side.CLIENT),
+            new LaunchTargetHandle(VersionHandle.VERSION, tree(VersionHandle.of(version))),
             profilesDir.resolve(name).toAbsolutePath(),
             new LaunchOptions(Optional.empty(), Optional.empty(), Optional.empty(), false),
             List.of(),
@@ -148,8 +147,9 @@ class ProfileServiceImplTest {
     }
 
     @Test
-    void getProfileReadsLegacyStringPath() throws Exception {
-        // version 0 profiles were written with Jackson's default Path serializer, a file: URI string
+    void getProfileReadsPathsWrittenAsStrings() throws Exception {
+        // profiles of format 0 were written with Jackson's default Path serializer, a file: URI string,
+        // see ProfileMigrationTest. A path written like that is read in every format.
         Path gameDir = profilesDir.resolve("legacy").toAbsolutePath();
         service.save(sampleProfile("legacy", version()));
         Path file = profilesDir.resolve("legacy.json");
@@ -157,14 +157,13 @@ class ProfileServiceImplTest {
             .replaceFirst(
                 "\"path\"\\s*:\\s*\\{[^}]*}",
                 Matcher.quoteReplacement("\"path\": \"" + gameDir.toUri() + "\"")
-            ).replaceFirst("\"hmcVersion\"\\s*:\\s*\\d+", "\"hmcVersion\": 0");
+            );
         Files.writeString(file, json);
 
         Optional<Profile> loaded = service.getProfile("legacy");
 
         assertTrue(loaded.isPresent(), json);
         assertEquals(gameDir, loaded.get().path());
-        assertEquals(0, loaded.get().hmcVersion());
     }
 
     @Test
@@ -177,29 +176,55 @@ class ProfileServiceImplTest {
     }
 
     @Test
-    void getProfileByVersionReturnsExistingMatch() {
-        VersionArg arg = version();
-        Profile profile = sampleProfile("existing", arg);
+    void theDataOfATargetIsReadBackAsItHasBeenWritten() {
+        VersionHandle handle = new VersionHandle(version(), version().withBuild("0.18.1"), profilesDir.resolve("pin.json").toAbsolutePath());
+        Profile profile = sampleProfile("typed", version()).withTarget(handle.asTarget());
+
         service.save(profile);
 
-        assertEquals(profile, service.getProfile(arg));
+        Profile loaded = service.getProfile("typed").orElseThrow();
+        assertEquals(VersionHandle.VERSION, loaded.target().name());
+        assertEquals(handle, jsonService.convert(loaded.target().data(), VersionHandle.class));
     }
 
     @Test
-    void getProfileByVersionCreatesUnsavedDefaultWhenMissing() {
-        VersionArg arg = version();
+    void theDataOfAnUnknownTargetSurvivesUnchanged() {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("anything", List.of(1, "two", Map.of("three", true)));
+        data.put("nothing", null);
+        Profile profile = sampleProfile("plugin", version()).withTarget(new LaunchTargetHandle("from-a-plugin", data));
 
-        Profile result = service.getProfile(arg);
+        service.save(profile);
+        Profile loaded = service.getProfile("plugin").orElseThrow();
+        service.save(loaded);
 
-        assertEquals(arg, result.version());
-        assertEquals(arg, result.currentVersion());
-        assertEquals(Profile.PROFILE_VERSION, result.hmcVersion());
-        assertEquals(Map.of(), result.systemProperties());
-        assertEquals(List.of(), result.vmArgs());
-        assertEquals(List.of(), result.gameArgs());
-        assertNull(result.javaVersion());
-        assertFalse(result.hasDefaultClientJvmArgs());
-        assertTrue(service.getProfile(result.name()).isEmpty());
+        assertEquals(profile, loaded);
+        assertEquals(loaded, service.getProfile("plugin").orElseThrow());
+    }
+
+    @Test
+    void profilesAreFoundIgnoringTheCaseOfTheirName() {
+        service.save(sampleProfile("MixedCase", version()));
+
+        assertEquals("MixedCase", service.getProfile("mixedcase").orElseThrow().name());
+        assertTrue(Files.exists(profilesDir.resolve("mixedcase.json")));
+    }
+
+    @Test
+    void removeDeletesTheFile() {
+        Profile profile = service.save(sampleProfile("gone", version()));
+
+        service.remove(profile);
+
+        assertTrue(service.getProfile("gone").isEmpty());
+        assertFalse(Files.exists(profilesDir.resolve("gone.json")));
+    }
+
+    /** Converts a handle into the json tree it is read back as. */
+    private Object tree(VersionHandle handle) {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        jsonService.write(out, new LaunchTargetHandle(VersionHandle.VERSION, handle), false);
+        return jsonService.parse(new java.io.ByteArrayInputStream(out.toByteArray()), LaunchTargetHandle.class).data();
     }
 
 }

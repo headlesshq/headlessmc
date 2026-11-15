@@ -12,6 +12,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class FileConfigTest {
     private record TestFileConfig(boolean local, boolean gameForEachVersion) implements FileConfig {
         @Override
+        public Optional<java.util.List<String>> mcDirs() {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<String> location() {
             return Optional.empty();
         }

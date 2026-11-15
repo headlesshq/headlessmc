@@ -4,11 +4,14 @@ plugins {
 
 dependencies {
     implementation project(':headlessmc-version')
+    api project(':headlessmc-files')
 
     testFixturesApi project(':headlessmc-version')
+    testFixturesApi project(':headlessmc-files')
     testFixturesImplementation libs.jspecify
 }
 
 dependencies {
     testImplementation testFixtures(project(':headlessmc-version'))
+    testImplementation testFixtures(project(':headlessmc-files'))
 }

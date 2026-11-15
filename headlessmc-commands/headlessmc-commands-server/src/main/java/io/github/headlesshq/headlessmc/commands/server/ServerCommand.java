@@ -21,6 +21,7 @@ import picocli.CommandLine;
         AddCommand.class,
         ListCommand.class,
         RemoveCommand.class,
+        MoveCommand.class,
         ServerLaunchCommand.class,
         EulaCommand.class,
     }

@@ -8,6 +8,22 @@ import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
+import io.github.headlesshq.headlessmc.files.McFilesService;
+import io.github.headlesshq.headlessmc.launcher.LauncherConfig;
+import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
+import io.github.headlesshq.headlessmc.launcher.client.DefaultJvmArgsService;
+import io.github.headlesshq.headlessmc.launcher.client.VersionLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.FakeVersionLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirService;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
+import io.github.headlesshq.headlessmc.launcher.profile.ProfileLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.ProfileMover;
+import io.github.headlesshq.headlessmc.launcher.profile.TargetInfo;
+import io.github.headlesshq.headlessmc.launcher.profile.TestEvent;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionHandle;
+import io.github.headlesshq.headlessmc.platform.client.VersionMatcherServiceImpl;
+import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
 import io.github.headlesshq.headlessmc.os.CPU;
@@ -51,7 +67,9 @@ class ProfileCommandsTest {
         Mockito.mock(VersionMatcher.class),
         (id, mcDir, args) -> {
             installedClients.add(id);
-            return versionJsons.getOrDefault(id.getVersion().getName(), Mockito.mock(Version.class));
+            Version version = Mockito.mock(Version.class);
+            Mockito.when(version.getId()).thenReturn(id.getVersion().getName());
+            return versionJsons.getOrDefault(id.getVersion().getName(), version);
         }
     );
 
@@ -64,21 +82,56 @@ class ProfileCommandsTest {
     private final OSService osService = Mockito.mock(OSService.class);
 
     private FakeProfileService profileService;
+    private McFilesService mcFilesService;
+    private LaunchTargetService launchTargetService;
+    private ProfileLaunchTarget profileTarget;
 
     @BeforeEach
     void setup() {
         profileService = new FakeProfileService(root);
+        mcFilesService = McFilesService.of(TestFiles.mcFiles(root));
+        launchTargetService = createLaunchTargets();
         Mockito.when(versionJsonService.process(Mockito.any()))
             .thenAnswer(invocation -> new ProcessedVersion(List.of(invocation.<Version>getArgument(0))));
         Mockito.when(osService.getCPU()).thenReturn(CPU.X64);
         Mockito.when(osService.getOS()).thenReturn(new OS("linux", OS.Type.LINUX, "6.0"));
     }
 
+    /**
+     * The launch targets a profile can be added for: the real target for client versions, which installs
+     * the version of a new profile, and the real target for profiles launching other profiles.
+     */
+    private LaunchTargetService createLaunchTargets() {
+        TestLaunchTargets targets = new TestLaunchTargets(profileService);
+        GameDirService gameDirService = Mockito.mock(GameDirService.class);
+        Mockito.when(gameDirService.getGameDir(Mockito.any(), Mockito.any()))
+            .thenAnswer(invocation -> root.resolve(invocation.<VersionArg>getArgument(0).toString("-")));
+        profileTarget = targets.profileTarget();
+        return targets.with(
+            new VersionLaunchTarget(
+                new VersionMatcherServiceImpl(platformService),
+                versionJsonService,
+                platformService,
+                mcFilesService,
+                gameDirService,
+                Mockito.mock(ClientLauncher.class),
+                new DefaultJvmArgsService(versionJsonService, CPU.X64, new OS("linux", OS.Type.LINUX, "6.0")),
+                Mockito.mock(LauncherConfig.class),
+                targets.jsonService()
+            ),
+            new FakeVersionLaunchTarget(platformService, targets.jsonService(), Side.SERVER, root),
+            profileTarget
+        ).service();
+    }
+
+    private VersionArg version(String profile) {
+        return launchTargetService.describe(profileService.getProfile(profile).orElseThrow()).specified().orElseThrow();
+    }
+
     private AddCommand add() {
         return new AddCommand(
-            platformService, profileService, Mockito.mock(ServerService.class),
-            new DefaultFileService(new DefaultFileSystemProvider()), TestFiles.appFiles(root), TestFiles.mcFiles(root),
-            console, versionJsonService, osService
+            launchTargetService, profileService, mcFilesService,
+            new DefaultFileService(new DefaultFileSystemProvider()), console
         );
     }
 
@@ -90,12 +143,14 @@ class ProfileCommandsTest {
     @Test
     void addCreatesProfileWithDefaultName() {
         AddCommand command = add();
-        command.setVersionArg(List.of("fabric", "1.21.1"));
+        command.setTargetArgs(List.of("fabric", "1.21.1"));
         command.run();
 
         Profile profile = profileService.getProfile("fabric-1.21.1").orElseThrow();
-        assertEquals("fabric", profile.version().platform());
-        assertEquals("1.21.1", profile.version().version());
+        assertEquals("fabric", version("fabric-1.21.1").platform());
+        assertEquals("1.21.1", version("fabric-1.21.1").version());
+        assertEquals(Optional.of(Side.CLIENT), profile.side());
+        assertEquals(VersionHandle.VERSION, profile.target().name());
         assertTrue(profile.hasDefaultClientJvmArgs());
         assertTrue(console.output().contains("Added profile fabric-1.21.1"));
         assertEquals(1, installedClients.size());
@@ -104,13 +159,14 @@ class ProfileCommandsTest {
     @Test
     void addStoresTheDefaultJvmArgsOfTheVersionInTheProfile() {
         Version version = Mockito.mock(Version.class);
+        Mockito.when(version.getId()).thenReturn("1.21.1");
         Mockito.when(version.getArguments()).thenReturn(Map.of(
             Version.DEFAULT_JVM_ARGUMENTS, List.of(jvmArgument("-Xmx2G", "-XX:+UseG1GC"))
         ));
         versionJsons.put("1.21.1", version);
 
         AddCommand command = add();
-        command.setVersionArg(List.of("1.21.1"));
+        command.setTargetArgs(List.of("1.21.1"));
         command.run();
 
         Profile profile = profileService.getProfile("1.21.1").orElseThrow();
@@ -135,7 +191,7 @@ class ProfileCommandsTest {
     @Test
     void addUsesCustomNameAndDir(@TempDir Path custom) {
         AddCommand command = add();
-        command.setVersionArg(List.of("1.21.1"));
+        command.setTargetArgs(List.of("1.21.1"));
         command.setName("main");
         command.setCustomDir(custom.toString());
         command.run();
@@ -149,21 +205,21 @@ class ProfileCommandsTest {
         profileService.createDefault("main", VersionArg.parse("1.21.1"));
 
         AddCommand command = add();
-        command.setVersionArg(List.of("1.20.4"));
+        command.setTargetArgs(List.of("1.20.4"));
         command.setName("main");
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::run);
         assertTrue(e.getMessage().contains("already exists"));
 
         command.setForce(true);
         command.run();
-        assertEquals("1.20.4", profileService.getProfile("main").orElseThrow().version().version());
+        assertEquals("1.20.4", version("main").version());
     }
 
     @Test
     void listShowsProfiles() {
         profileService.createDefault("main", VersionArg.parse("fabric", "1.21.1"));
 
-        new ListCommand(profileService, tables, console).run();
+        new ListCommand(launchTargetService, profileService, tables, console).run();
 
         String output = console.output();
         assertTrue(output.contains("main"));
@@ -174,7 +230,7 @@ class ProfileCommandsTest {
     void removeDeletesProfile() {
         profileService.createDefault("main", VersionArg.parse("1.21.1"));
 
-        RemoveCommand command = new RemoveCommand(profileService, console);
+        RemoveCommand command = new RemoveCommand(profileTarget, profileService, console);
         command.setName("main");
         command.run();
 
@@ -184,7 +240,7 @@ class ProfileCommandsTest {
 
     @Test
     void removeUnknownProfileThrows() {
-        RemoveCommand command = new RemoveCommand(profileService, console);
+        RemoveCommand command = new RemoveCommand(profileTarget, profileService, console);
         assertThrows(IllegalArgumentException.class, command::run);
 
         command.setName("nope");
@@ -192,7 +248,14 @@ class ProfileCommandsTest {
     }
 
     private EditCommand edit(RecordingConsole console) {
-        return new EditCommand(new EditFieldHelper(platformService, splitter), profileService, tables, splitter, console);
+        ProfileMover mover = new ProfileMover(
+            launchTargetService, profileTarget, profileService, mcFilesService,
+            new DefaultFileService(new DefaultFileSystemProvider()), new TestEvent<>(), new TestEvent<>()
+        );
+
+        return new EditCommand(
+            new EditFieldHelper(launchTargetService, splitter), profileService, mover, tables, splitter, console
+        );
     }
 
     @Test
@@ -271,9 +334,11 @@ class ProfileCommandsTest {
         command.setValue("fabric 1.20.4");
         command.run();
 
-        Profile profile = profileService.getProfile("main").orElseThrow();
-        assertEquals("fabric/1.20.4", profile.version().toString());
-        assertEquals(profile.version(), profile.currentVersion());
+        assertEquals("fabric/1.20.4", version("main").toString());
+        // the profile launches something else now, what it had been resolved to is forgotten
+        TargetInfo info = launchTargetService.describe(profileService.getProfile("main").orElseThrow());
+        assertEquals(Optional.empty(), info.current());
+        assertEquals(Optional.empty(), info.file());
     }
 
     @Test
@@ -286,7 +351,7 @@ class ProfileCommandsTest {
         command.setValue("1.19");
 
         assertThrows(RuntimeException.class, command::run);
-        assertEquals("1.21.1", profileService.getProfile("main").orElseThrow().version().version());
+        assertEquals("1.21.1", version("main").version());
     }
 
     @Test

@@ -1,0 +1,29 @@
+{
+  "name": "v2-invalid-missing-path",
+  "side": "CLIENT",
+  "target": {
+    "name": "version",
+    "data": {
+      "version": {
+        "side": null,
+        "platform": "fabric",
+        "version": "1.21.1",
+        "build": null
+      }
+    }
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

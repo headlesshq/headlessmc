@@ -17,9 +17,8 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class McJarDownloader {
     private final DownloadService downloadService;
-    private final McFiles mcFiles;
 
-    public Path downloadMcJar(String key, Version version) {
+    public Path downloadMcJar(McFiles mcFiles, String key, Version version) {
         Path file = mcFiles.getVersionsDir().resolve(version.getId()).resolve(version.getId() + ".jar");
         if (!Files.exists(file)) {
             Version.Download download = Optional.ofNullable(version.getDownloads())

@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.commands.version;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.console.cache.CachedConsole;
 import io.github.headlesshq.headlessmc.console.Console;
@@ -87,12 +88,21 @@ public class ListCommand implements Runnable, VersionArgCommand, CachedConsole.E
             versions = versions.stream().filter(version -> type.equalsIgnoreCase(version.getType())).toList();
         }
 
-        tableProvider.<Version>get()
+        TableBuilder<Version> table = tableProvider.<Version>get()
             .withColumn("name", Version::getId)
             .withColumn("parent", Version::getInheritsFrom)
-            .withColumn("type", Version::getType)
-            .addAll(versions)
-            .log(console::write);
+            .withColumn("type", Version::getType);
+
+        // only of interest if versions are installed in more than one .minecraft directory
+        boolean multipleDirs = versions.stream()
+            .map(version -> McFiles.normalize(versionService.getMcFiles(version).getMcDir()))
+            .distinct()
+            .count() > 1;
+        if (multipleDirs) {
+            table = table.withColumn("mc dir", version -> versionService.getMcFiles(version).getMcDir().toString());
+        }
+
+        table.addAll(versions).log(console::write);
     }
 
     private void listRemoteVersions() {

@@ -1,5 +1,9 @@
 package io.github.headlesshq.headlessmc.commands.version;
 
+import io.github.headlesshq.headlessmc.files.FileService;
+import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
+import org.jspecify.annotations.Nullable;
 import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
 import io.github.headlesshq.headlessmc.commands.util.VersionCompletions;
 import io.github.headlesshq.headlessmc.console.Console;
@@ -36,6 +40,8 @@ import java.util.Locale;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole.Enabled {
     private final VersionRemoveService versionRemoveService;
+    private final McFilesService mcFilesService;
+    private final FileService fileService;
     private final Console console;
 
     @CommandLine.Option(
@@ -59,6 +65,12 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
     )
     private boolean all;
 
+    @CommandLine.Option(
+        names = {"--mc"},
+        description = "The Minecraft directory to delete the version from, if it is installed in multiple directories."
+    )
+    private @Nullable String mc;
+
     @CommandLine.Parameters(
         paramLabel = "VERSION",
         description = "The version to delete, e.g. 'fabric 1.21.1 0.16.9', or the name of its version.json.",
@@ -72,7 +84,8 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
             throw new IllegalArgumentException("--all deletes other versions and profiles, it can only be used together with --force.");
         }
 
-        Version version = versionRemoveService.findVersion(versionArg);
+        McFiles mcFiles = mc == null ? null : mcFilesService.of(fileService.getUserPath(mc));
+        Version version = versionRemoveService.findVersion(versionArg, mcFiles);
         VersionRemoval removal = versionRemoveService.plan(version, all);
         if (removal.isBlocked() && !force) {
             throw new IllegalArgumentException(blockedMessage(removal));

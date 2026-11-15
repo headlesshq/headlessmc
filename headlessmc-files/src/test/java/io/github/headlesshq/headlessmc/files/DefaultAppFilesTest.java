@@ -9,6 +9,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DefaultAppFilesTest {
     private record TestFileConfig(Optional<String> location) implements FileConfig {
+        @Override
+        public Optional<java.util.List<String>> mcDirs() {
+            return Optional.empty();
+        }
+
 
         @Override
         public boolean gameForEachVersion() {

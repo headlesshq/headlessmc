@@ -4,6 +4,7 @@ dependencies {
     implementation rootProject
 
     implementation project(':headlessmc-files')
+    implementation project(':headlessmc-launcher:headlessmc-launcher-profile')
     implementation project(':headlessmc-updater')
     implementation project(':headlessmc-console:headlessmc-console-cdi')
     implementation project(':headlessmc-console:headlessmc-console-completions')
@@ -19,4 +20,6 @@ dependencies {
     implementation project(':headlessmc-commands:headlessmc-commands-plugin')
 
     testImplementation testFixtures(project(':headlessmc-console'))
+    testImplementation testFixtures(project(':headlessmc-files'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
 }

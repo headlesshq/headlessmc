@@ -1,6 +1,9 @@
 package io.github.headlesshq.headlessmc.commands.mod;
 
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
+import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
@@ -30,12 +33,17 @@ class ModsTest {
 
     private FakePlatform fabric;
     private FakePlatformService platformService;
+    private ProfileResolver profileResolver;
 
     @BeforeEach
     void setup() {
         fabric = FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9"});
         fabric.withModSupport(new ModSupport(List.of(ModType.MOD, ModType.RESOURCE_PACK), List.of()));
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric);
+        FakeProfileService profileService = new FakeProfileService(root);
+        profileResolver = new ProfileResolver(
+            profileService, TestLaunchTargets.versions(platformService, profileService, root)
+        );
     }
 
     private Profile profile(String platform) {
@@ -44,49 +52,49 @@ class ModsTest {
 
     @Test
     void getPlatformResolvesByProfileVersion() {
-        assertSame(fabric, Mods.getPlatform(platformService, profile("fabric")));
+        assertSame(fabric, Mods.getPlatform(platformService, profileResolver, profile("fabric")));
     }
 
     @Test
     void getUnknownPlatformThrows() {
         IllegalArgumentException e = assertThrows(
-            IllegalArgumentException.class, () -> Mods.getPlatform(platformService, profile("forge"))
+            IllegalArgumentException.class, () -> Mods.getPlatform(platformService, profileResolver, profile("forge"))
         );
         assertTrue(e.getMessage().contains("Failed to find platform forge"));
     }
 
     @Test
     void resolveTypeByName() {
-        assertEquals(ModType.DATA_PACK, Mods.resolveType(platformService, allTypes, profile("fabric"), "DataPack"));
+        assertEquals(ModType.DATA_PACK, Mods.resolveType(platformService, profileResolver, allTypes, profile("fabric"), "DataPack"));
     }
 
     @Test
     void resolveUnknownTypeThrows() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-            () -> Mods.resolveType(platformService, allTypes, profile("fabric"), "nope"));
+            () -> Mods.resolveType(platformService, profileResolver, allTypes, profile("fabric"), "nope"));
         assertTrue(e.getMessage().contains("Unknown mod type 'nope'"));
     }
 
     @Test
     void resolveDefaultTypeUsesFirstOfPlatform() {
-        assertEquals(ModType.MOD, Mods.resolveType(platformService, allTypes, profile("fabric"), null));
+        assertEquals(ModType.MOD, Mods.resolveType(platformService, profileResolver, allTypes, profile("fabric"), null));
     }
 
     @Test
     void resolveDefaultTypeWithoutProfileIsMod() {
-        assertEquals(ModType.MOD, Mods.resolveType(platformService, allTypes, null, null));
+        assertEquals(ModType.MOD, Mods.resolveType(platformService, profileResolver, allTypes, null, null));
     }
 
     @Test
     void resolveDefaultTypeOfPlatformWithoutModSupportIsResourcePack() {
-        assertEquals(ModType.RESOURCE_PACK, Mods.resolveType(platformService, allTypes, profile("vanilla"), null));
+        assertEquals(ModType.RESOURCE_PACK, Mods.resolveType(platformService, profileResolver, allTypes, profile("vanilla"), null));
     }
 
     @Test
     void resolveDefaultTypeWithoutModTypesThrows() {
         fabric.withModSupport(new ModSupport(List.of(), List.of()));
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-            () -> Mods.resolveType(platformService, allTypes, profile("fabric"), null));
+            () -> Mods.resolveType(platformService, profileResolver, allTypes, profile("fabric"), null));
         assertTrue(e.getMessage().contains("does not declare a default mod type"));
     }
 

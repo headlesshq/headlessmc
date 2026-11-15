@@ -6,6 +6,7 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -18,6 +19,16 @@ public interface FileConfig extends DynamicConfig {
 
     @WithName("mc")
     Optional<String> mcDir();
+
+    /**
+     * Additional {@code .minecraft} directories, e.g. on other disks.
+     * Versions installed in these directories can be listed and launched like versions in {@link #mcDir()},
+     * which stays the default for new installations.
+     *
+     * @return the paths of additional {@code .minecraft} directories.
+     */
+    @WithName("mc-dirs")
+    Optional<List<String>> mcDirs();
 
     @WithName("game")
     Optional<String> gameDir();

@@ -40,6 +40,7 @@ hmc.files.game                                             -                    
 hmc.files.game-for-each-version                            true                                       Whether each version gets its own game directory.
 hmc.files.location                                         -                                          Optional: Specify a custom location to place HeadlessMc files in.
 hmc.files.mc                                               -                                          Optional: Path to the Minecraft directory. Defaults to the OS-specific location.
+hmc.files.mc-dirs                                          -                                          Optional: Comma-separated paths of additional Minecraft directories, e.g. on other disks. Versions installed in them can be listed and launched, new versions are installed into hmc.files.mc by default.
 hmc.github.cache-minutes                                   60                                         How many minutes releases fetched from the GitHub API are cached for, 0 disables the cache.
 hmc.github.token                                           -                                          Optional: GitHub token to authenticate requests to the GitHub API with, which raises the rate limit of 60 requests per hour.
 hmc.java.check-for-updates                                 true                                       Whether the java updater checks the Java installations installed by HeadlessMc for updates, see hmc.updater.enabled.

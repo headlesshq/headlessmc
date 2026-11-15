@@ -85,6 +85,19 @@ public abstract class AbstractJacksonJsonService implements JsonService {
     }
 
     @Override
+    public <V extends ReflectionRegistered> V convert(Object tree, Class<V> type) throws JsonParseException {
+        if (type.isInstance(tree)) {
+            return type.cast(tree);
+        }
+
+        try {
+            return mapper().convertValue(tree, type);
+        } catch (JacksonException | IllegalArgumentException e) {
+            throw new JsonParseException("Failed to convert " + tree + " to " + type.getSimpleName(), e);
+        }
+    }
+
+    @Override
     public void write(
         OutputStream outputStream,
         ReflectionRegistered object,

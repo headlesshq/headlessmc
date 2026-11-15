@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.java.Java;
 import io.github.headlesshq.headlessmc.java.SafePath;
 import io.github.headlesshq.headlessmc.java.launcher.AbstractJavaProcessBuilder;
@@ -10,6 +11,11 @@ import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
 import io.github.headlesshq.headlessmc.java.launcher.JavaProcessImpl;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
+import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.launcher.process.LaunchException;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
+import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
@@ -79,7 +85,7 @@ class ServerLauncherTest {
         }
 
         @Override
-        public Version installClient(VersionID id, Path mcDir, TypedMap args) {
+        public Version installClient(VersionID id, McFiles mcDir, TypedMap args) {
             throw new UnsupportedOperationException();
         }
 
@@ -110,6 +116,7 @@ class ServerLauncherTest {
     private FakePlatformService platformService;
     private FakeProfileService profileService;
     private ServerLauncher launcher;
+    private LaunchTargetService launchTargetService;
 
     @BeforeEach
     void setup() {
@@ -125,9 +132,21 @@ class ServerLauncherTest {
         vanilla.withServerSupport(serverSupport("server.jar"));
         platformService = new FakePlatformService(vanilla);
         profileService = new FakeProfileService(root);
-        launcher = new ServerLauncher(
-            launcherService, vanillaInstaller, platformService, profileService, new FakeServerService(profileService), javaFinder, scriptLauncher
+        launcher = serverLauncher(platformService);
+    }
+
+    /**
+     * A server launcher with the launch target for servers, which finds the server to launch for a profile.
+     */
+    private ServerLauncher serverLauncher(FakePlatformService platformService) {
+        TestLaunchTargets targets = new TestLaunchTargets(profileService);
+        ServerLauncher result = new ServerLauncher(
+            launcherService, targets.service(), vanillaInstaller, platformService, profileService, javaFinder, scriptLauncher
         );
+
+        targets.with(new ServerLaunchTarget(platformService, result, targets.jsonService(), TestFiles.appFiles(root)));
+        launchTargetService = targets.service();
+        return result;
     }
 
     private ServerSupport serverSupport(String jarName) {
@@ -145,23 +164,43 @@ class ServerLauncherTest {
         return new Profile(name, VersionArg.parse("server", "vanilla", "1.21.1"), root.resolve(name));
     }
 
+    private static final VersionArg VERSION = VersionArg.parse("server", "vanilla", "1.21.1");
+
     @Test
     void javaVersionOfAProfileIsKept() {
         Profile profile = server("srv").withJavaVersion(17);
 
-        assertSame(profile, launcher.findJavaVersion(profile));
+        assertEquals(17, launchTargetService.resolve(profile, new TypedMapImpl()).javaVersion());
     }
 
     @Test
     void javaVersionIsTakenFromAnotherProfileOfTheSameVersion() {
         profileService.save(server("other").withJavaVersion(11));
 
-        assertEquals(11, launcher.findJavaVersion(server("srv")).javaVersion());
+        assertEquals(11, launcher.findJavaVersion(VERSION));
+        assertEquals(11, launchTargetService.resolve(server("srv"), new TypedMapImpl()).javaVersion());
     }
 
     @Test
     void javaVersionFallsBackToTheVanillaVersionJson() {
-        assertEquals(21, launcher.findJavaVersion(server("srv")).javaVersion());
+        assertEquals(21, launcher.findJavaVersion(VERSION));
+        assertEquals(21, launchTargetService.resolve(server("srv"), new TypedMapImpl()).javaVersion());
+    }
+
+    @Test
+    void javaVersionDoesNotNeedThePlatformOfTheVersion() {
+        // e.g. the plugin providing the platform has been removed
+        assertEquals(21, launcher.findJavaVersion(VersionArg.parse("server", "quilt", "1.21.1")));
+    }
+
+    @Test
+    void profilesWithoutJavaVersionCannotBeLaunchedDirectly() {
+        LaunchException e = assertThrows(
+            LaunchException.class,
+            () -> launcher.launcher(server("srv"), root.resolve("srv").resolve("server.jar"), new TypedMapImpl())
+        );
+
+        assertTrue(e.getMessage().contains("has no Java version"), e.getMessage());
     }
 
     @Test
@@ -202,10 +241,7 @@ class ServerLauncherTest {
     private ServerLauncher scriptServerLauncher() {
         FakeVanillaPlatform vanilla = new FakeVanillaPlatform("1.21.1");
         vanilla.withServerSupport(serverSupport("run.sh"));
-        return new ServerLauncher(
-            launcherService, vanillaInstaller, new FakePlatformService(vanilla), profileService,
-            new FakeServerService(profileService), javaFinder, scriptLauncher
-        );
+        return serverLauncher(new FakePlatformService(vanilla));
     }
 
     private Path writeForgeLikeServer(String name) throws IOException {
@@ -299,16 +335,12 @@ class ServerLauncherTest {
     @Test
     void platformsWithoutServerSupportThrow() {
         FakePlatform fabric = FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9"});
-        ServerLauncher unsupported = new ServerLauncher(
-            launcherService, vanillaInstaller,
-            new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric),
-            profileService, new FakeServerService(profileService), javaFinder, scriptLauncher
-        );
+        ServerLauncher unsupported = serverLauncher(new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric));
 
         Profile profile = new Profile("srv", VersionArg.parse("server", "fabric", "1.21.1"), root.resolve("srv"))
             .withJavaVersion(17);
 
-        assertThrows(IllegalStateException.class, () -> unsupported.launcher(profile));
+        assertThrows(LaunchException.class, () -> unsupported.launcher(profile));
     }
 
     @Test

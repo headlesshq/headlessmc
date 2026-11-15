@@ -32,7 +32,6 @@ public class PatchCacheImpl implements PatchCache {
     private final HashService hashService;
     private final JsonService jsonService;
     private final AppFiles appFiles;
-    private final McFiles mcFiles;
 
     @Override
     public Optional<PatchResult> getCache(PatchContext context) {
@@ -42,7 +41,7 @@ public class PatchCacheImpl implements PatchCache {
             CacheInfo info = jsonService.parse(cacheInfo, CacheInfo.class);
             try {
                 SequencedSet<Path> classpath = resolve(context, cacheDir, info);
-                SequencedSet<Path> javaAgents = resolveFiles(cacheDir, info.javaAgents());
+                SequencedSet<Path> javaAgents = resolveFiles(context.getMcFiles(), cacheDir, info.javaAgents());
                 return Optional.of(new PatchResult(
                     classpath, javaAgents, Collections.unmodifiableMap(new LinkedHashMap<>(info.systemProperties()))
                 ));
@@ -102,9 +101,10 @@ public class PatchCacheImpl implements PatchCache {
     }
 
     private SequencedSet<Path> resolve(PatchContext context, Path cacheDir, CacheInfo info) {
+        McFiles mcFiles = context.getMcFiles();
         SequencedSet<Path> classpath = new LinkedHashSet<>();
         for (Path library : context.getInitialPatchResult().files()) {
-            CacheInfo.PatchFile relative = relativize(library, cacheDir);
+            CacheInfo.PatchFile relative = relativize(mcFiles, library, cacheDir);
             if (!info.initialClasspath.contains(relative)) {
                 throw new PatchException("Invalid cache for new classpath, could not find " + library);
             }
@@ -119,11 +119,15 @@ public class PatchCacheImpl implements PatchCache {
             }
         }
 
-        classpath.addAll(resolveFiles(cacheDir, info.currentClasspath));
+        classpath.addAll(resolveFiles(mcFiles, cacheDir, info.currentClasspath));
         return classpath;
     }
 
-    private SequencedSet<Path> resolveFiles(Path cacheDir, SequencedSet<CacheInfo.PatchFile> patchFiles) {
+    private SequencedSet<Path> resolveFiles(
+        McFiles mcFiles,
+        Path cacheDir,
+        SequencedSet<CacheInfo.PatchFile> patchFiles
+    ) {
         SequencedSet<Path> result = new LinkedHashSet<>();
         for (CacheInfo.PatchFile patchFile : patchFiles) {
             Path file = patchFile.deRelativize(cacheDir, mcFiles.getMcDir(), mcFiles.getLibraryDir());
@@ -138,19 +142,20 @@ public class PatchCacheImpl implements PatchCache {
     }
 
     private CacheInfo createCacheInfo(Path cacheDir, PatchContext context) {
+        McFiles mcFiles = context.getMcFiles();
         SequencedSet<CacheInfo.PatchFile> initialClasspath = new LinkedHashSet<>();
         SequencedSet<CacheInfo.PatchFile> currentClasspath = new LinkedHashSet<>();
         for (Path initial : context.getInitialPatchResult().files()) {
-            initialClasspath.add(relativize(initial, cacheDir));
+            initialClasspath.add(relativize(mcFiles, initial, cacheDir));
         }
 
         for (Path current : context.getCurrentPatchResult().files()) {
-            currentClasspath.add(relativize(current, cacheDir));
+            currentClasspath.add(relativize(mcFiles, current, cacheDir));
         }
 
         SequencedSet<CacheInfo.PatchFile> javaAgents = new LinkedHashSet<>();
         for (Path javaAgent : context.getCurrentPatchResult().javaAgents()) {
-            javaAgents.add(relativize(javaAgent, cacheDir));
+            javaAgents.add(relativize(mcFiles, javaAgent, cacheDir));
         }
 
         return new CacheInfo(
@@ -161,7 +166,7 @@ public class PatchCacheImpl implements PatchCache {
         );
     }
 
-    private CacheInfo.PatchFile relativize(Path file, Path cacheDir) {
+    private CacheInfo.PatchFile relativize(McFiles mcFiles, Path file, Path cacheDir) {
         if (file.startsWith(cacheDir)) {
             return new CacheInfo.PatchFile(cacheDir.relativize(file).toString(), CacheInfo.RelativeTo.CACHE);
         } else if (file.startsWith(mcFiles.getLibraryDir())) {

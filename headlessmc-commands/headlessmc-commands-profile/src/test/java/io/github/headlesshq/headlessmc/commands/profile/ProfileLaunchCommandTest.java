@@ -12,6 +12,13 @@ import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
+import io.github.headlesshq.headlessmc.files.McFilesService;
+import io.github.headlesshq.headlessmc.launcher.profile.FakeLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionHandle;
+import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
+import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.Eula;
@@ -62,22 +69,48 @@ class ProfileLaunchCommandTest {
     private final EulaLauncher eulaLauncher = Mockito.mock(EulaLauncher.class);
     private final List<Profile> eulaLaunches = new ArrayList<>();
 
+    /** What the launch targets of these tests are asked to launch. */
+    private interface Launches {
+        ProcessLauncher client(Profile profile, Account account);
+
+        ProcessLauncher server(Profile profile);
+    }
+
+    private final Launches launches = Mockito.mock(Launches.class);
+    /** Stands in for the launch target of clients: launches with the account the command chose. */
+    private final FakeLaunchTarget clientTarget = new FakeLaunchTarget(VersionHandle.VERSION) {
+        @Override
+        public ProcessLauncher launcher(Profile profile, TypedMap options) {
+            return launches.client(profile, options.get(ClientLauncher.ACCOUNT));
+        }
+    }.withSide(Side.CLIENT);
+    /** Stands in for the launch target of servers: like the real one it gives a server a Java version. */
+    private final FakeLaunchTarget serverTarget = new FakeLaunchTarget(VersionHandle.SERVER) {
+        @Override
+        public Profile resolve(Profile profile, TypedMap options) {
+            return profile.javaVersion() == null ? profile.withJavaVersion(21) : profile;
+        }
+
+        @Override
+        public ProcessLauncher launcher(Profile profile, TypedMap options) {
+            return launches.server(profile);
+        }
+    }.withSide(Side.SERVER);
+
     private FakePlatformService platformService;
     private FakeProfileService profileService;
+    private LaunchTargetService launchTargetService;
 
     @BeforeEach
     void setup() {
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"));
         profileService = new FakeProfileService(root);
+        launchTargetService = new TestLaunchTargets(profileService).with(clientTarget, serverTarget).service();
 
-        Mockito.when(clientLauncher.launcher(Mockito.any(), Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
+        Mockito.when(launches.client(Mockito.any(), Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
         Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.of(account));
         Mockito.when(authService.refresh(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
-        Mockito.when(serverLauncher.launcher(Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
-        Mockito.when(serverLauncher.findJavaVersion(Mockito.any())).thenAnswer(invocation -> {
-            Profile profile = invocation.getArgument(0);
-            return profile.javaVersion() == null ? profile.withJavaVersion(21) : profile;
-        });
+        Mockito.when(launches.server(Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
         Mockito.when(serverService.save(Mockito.any())).thenAnswer(invocation -> profileService.save(invocation.getArgument(0)));
         Mockito.when(serverLauncher.getEulaLauncher()).thenReturn(eulaLauncher);
         Mockito.when(eulaLauncher.eulaLaunch(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
@@ -88,9 +121,9 @@ class ProfileLaunchCommandTest {
 
     private ProfileLaunchCommand command() {
         return new ProfileLaunchCommand(
-            lifecycleService, new ProfileResolver(platformService, profileService), platformService,
+            lifecycleService, new ProfileResolver(profileService, launchTargetService), platformService,
             serverLauncher, serverService, clientLauncher, line -> line.split(" "), console,
-            TestFiles.mcFiles(root), lastUsedAccountService, xvfbService, authService, profileService
+            launchTargetService, McFilesService.of(TestFiles.mcFiles(root)), lastUsedAccountService, xvfbService, authService, profileService
         );
     }
 
@@ -136,7 +169,7 @@ class ProfileLaunchCommandTest {
 
         assertEquals("main", launched.profile.name());
         assertEquals(List.of("log4j"), launched.profile.patchers());
-        Mockito.verify(serverLauncher, Mockito.never()).launcher(Mockito.any());
+        Mockito.verify(launches, Mockito.never()).server(Mockito.any());
     }
 
     @Test
@@ -210,7 +243,9 @@ class ProfileLaunchCommandTest {
         LaunchOptions options = launched.profile.options();
         assertEquals(Optional.of(new LaunchOptions.Resolution(1024, 768)), options.resolution());
         assertEquals(Optional.of(new LaunchOptions.Join(LaunchOptions.Join.Type.SERVER, "example.com")), options.join());
-        assertTrue(options.quickPlayPath().orElseThrow().contains("quickPlay"));
+        // the quick play log is written to the .minecraft directory the game is launched from,
+        // which the command does not know, it is decided when the process is built
+        assertEquals(Optional.empty(), options.quickPlayPath());
     }
 
     @Test
@@ -234,7 +269,7 @@ class ProfileLaunchCommandTest {
         assertEquals(List.of(), launched.profile.patchers());
         assertEquals(21, launched.profile.javaVersion());
         assertEquals(21, profileService.getProfile("srv").orElseThrow().javaVersion());
-        Mockito.verify(clientLauncher, Mockito.never()).launcher(Mockito.any(), Mockito.any());
+        Mockito.verify(launches, Mockito.never()).client(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -282,7 +317,7 @@ class ProfileLaunchCommandTest {
         client("main");
         ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
         ProcessLifecycle lifecycle = Mockito.mock(ProcessLifecycle.class);
-        Mockito.doReturn(processLauncher).when(clientLauncher).launcher(Mockito.any(), Mockito.any());
+        Mockito.doReturn(processLauncher).when(launches).client(Mockito.any(), Mockito.any());
         Mockito.when(lifecycleService.wrap(processLauncher, 3)).thenReturn(lifecycle);
         Mockito.when(lifecycle.call()).thenReturn(7);
 
@@ -312,7 +347,7 @@ class ProfileLaunchCommandTest {
 
         assertThrows(Launched.class, command("main")::call);
 
-        Mockito.verify(clientLauncher).launcher(Mockito.any(), Mockito.eq(refreshed));
+        Mockito.verify(launches).client(Mockito.any(), Mockito.eq(refreshed));
     }
 
     @Test
@@ -332,7 +367,7 @@ class ProfileLaunchCommandTest {
 
         assertThrows(Launched.class, command::call);
 
-        Mockito.verify(clientLauncher).launcher(Mockito.any(), Mockito.eq(account));
+        Mockito.verify(launches).client(Mockito.any(), Mockito.eq(account));
         Mockito.verify(authService, Mockito.never()).refresh(Mockito.any());
     }
 
@@ -345,7 +380,7 @@ class ProfileLaunchCommandTest {
 
         assertThrows(Launched.class, command::call);
 
-        Mockito.verify(clientLauncher).launcher(Mockito.any(), Mockito.eq(Account.defaultOfflineAccount()));
+        Mockito.verify(launches).client(Mockito.any(), Mockito.eq(Account.defaultOfflineAccount()));
     }
 
     @Test

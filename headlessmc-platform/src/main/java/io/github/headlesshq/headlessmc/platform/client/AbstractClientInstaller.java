@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.platform.client;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.platform.Vanilla;
 import io.github.headlesshq.headlessmc.platform.VanillaInstaller;
 import io.github.headlesshq.headlessmc.platform.VersionID;
@@ -10,7 +11,6 @@ import io.github.headlesshq.headlessmc.version.service.VersionJsonService;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,12 +31,12 @@ public abstract class AbstractClientInstaller implements ClientInstaller {
      * version has been installed.
      *
      * @param id      the version to install the client for.
-     * @param mcDir   the mc directory to install the client in.
-     * @param vanilla the vanilla parent version for the version to install.
+     * @param mcFiles the {@code .minecraft} directory to install the client in.
+     * @param vanilla the vanilla parent version for the version to install, installed in the same directory.
      * @param args    special arguments for the client.
      * @throws HeadlessMcException if something goes wrong.
      */
-    protected abstract void installClient(VersionID id, Path mcDir, Version vanilla, TypedMap args)
+    protected abstract void installClient(VersionID id, McFiles mcFiles, Version vanilla, TypedMap args)
         throws HeadlessMcException;
 
     /**
@@ -60,7 +60,7 @@ public abstract class AbstractClientInstaller implements ClientInstaller {
     @Override
     public Version installClient(
         VersionID id,
-        Path mcDir,
+        McFiles mcFiles,
         TypedMap args
     ) throws HeadlessMcException {
         if (!getPlatformName().equals(id.getPlatform().getName())) {
@@ -72,7 +72,8 @@ public abstract class AbstractClientInstaller implements ClientInstaller {
         VersionJsonService versionService = getServices().getVersionService();
         VersionMatcherService versionMatcherService = getServices().getVersionMatcherService();
 
-        List<Version> installed = versionService.getInstalledVersions();
+        // only the given directory counts, the version may also be installed in another .minecraft directory
+        List<Version> installed = versionService.getInstalledVersions(mcFiles);
         if (!args.get(ClientInstaller.FORCE_INSTALL, false)) {
             Optional<VersionMatcherService.MatchResult> match =
                 versionMatcherService.match(id, installed, versionService);
@@ -82,13 +83,15 @@ public abstract class AbstractClientInstaller implements ClientInstaller {
             }
         }
 
-        Version vanilla = installVanillaVersion(id, mcDir, args);
-        List<Version> versions = versionService.observeChanges(() -> installClient(id, mcDir, vanilla, args));
+        Version vanilla = installVanillaVersion(id, mcFiles, args);
+        List<Version> versions = versionService.observeChanges(
+            mcFiles, () -> installClient(id, mcFiles, vanilla, args)
+        );
 
         Optional<VersionMatcherService.MatchResult> match = versionMatcherService.match(id, versions, versionService);
         if (match.isEmpty() && args.get(ClientInstaller.FORCE_INSTALL, false)) {
             // A forced reinstall may rewrite an existing version file, which observeChanges does not report.
-            match = versionMatcherService.match(id, versionService.getInstalledVersions(), versionService);
+            match = versionMatcherService.match(id, versionService.getInstalledVersions(mcFiles), versionService);
         }
 
         return match
@@ -96,9 +99,9 @@ public abstract class AbstractClientInstaller implements ClientInstaller {
             .version();
     }
 
-    protected Version installVanillaVersion(VersionID id, Path mcDir, TypedMap args)
+    protected Version installVanillaVersion(VersionID id, McFiles mcFiles, TypedMap args)
         throws HeadlessMcException {
-        return getServices().getVanillaInstaller().installClient(id.asVanillaVersion(), mcDir, args);
+        return getServices().getVanillaInstaller().installClient(id.asVanillaVersion(), mcFiles, args);
     }
 
     /**

@@ -1,0 +1,31 @@
+{
+  "name": "v2-profile",
+  "side": "CLIENT",
+  "target": {
+    "name": "profile",
+    "data": {
+      "profile": "v2-version"
+    }
+  },
+  "path": {
+    "source": "minecraft",
+    "sourcePath": "@MC_DIR@",
+    "path": "fabric-1.21.1-latest"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [
+    "-Ddebug=true"
+  ],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

@@ -88,6 +88,17 @@ public interface BackupService {
     void remove(Backup backup);
 
     /**
+     * Moves all backups of a target to another target, e.g. because the profile they belong to has been renamed.
+     * Backups are stored and found by the name of their target, without this they would be orphaned.
+     *
+     * @param provider  the provider of the backups.
+     * @param target    the current target of the backups.
+     * @param newTarget the new target of the backups.
+     * @return the moved backups.
+     */
+    List<Backup> rename(String provider, String target, String newTarget);
+
+    /**
      * Deletes the backups selected by the given request.
      *
      * @param request the backups to delete.

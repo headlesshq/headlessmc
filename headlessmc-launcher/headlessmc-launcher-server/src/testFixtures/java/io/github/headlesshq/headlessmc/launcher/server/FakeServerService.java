@@ -26,7 +26,7 @@ public class FakeServerService implements ServerService {
     @Override
     public Optional<Profile> getServer(String name) {
         return profileService.getProfile(name)
-            .filter(profile -> Side.SERVER.equals(profile.side()));
+            .filter(Profile::isServer);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class FakeServerService implements ServerService {
     @Override
     public List<Profile> listServers() {
         return profileService.getProfiles().stream()
-            .filter(profile -> Side.SERVER.equals(profile.side()))
+            .filter(Profile::isServer)
             .toList();
     }
 

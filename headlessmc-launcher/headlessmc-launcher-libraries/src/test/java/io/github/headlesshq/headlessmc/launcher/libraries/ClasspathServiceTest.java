@@ -50,7 +50,7 @@ class ClasspathServiceTest {
         downloads.register(MC_JAR_URL, MC_JAR);
 
         LibraryResolver resolver = Mockito.mock(LibraryResolver.class);
-        Mockito.when(resolver.resolveLibraries(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(resolver.resolveLibraries(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
             .thenAnswer(invocation -> resolved);
 
         LibraryDownloader downloader = Mockito.mock(LibraryDownloader.class);
@@ -60,7 +60,7 @@ class ClasspathServiceTest {
         NativeLibraryHandler natives = Mockito.mock(NativeLibraryHandler.class);
         Mockito.when(natives.handleNativeLibraries(Mockito.any())).thenReturn(root.resolve("natives"));
 
-        service = new ClasspathService(downloader, resolver, natives, new McJarDownloader(downloads, mcFiles));
+        service = new ClasspathService(downloader, resolver, natives, new McJarDownloader(downloads));
     }
 
     private Version version() {
@@ -76,7 +76,7 @@ class ClasspathServiceTest {
         resolved.add(new LibraryFile(new TestLibraries.FakeLibrary("com.example:a:1.0"), libraryJar, null));
 
         TemplateStrings templates = new TemplateStrings();
-        List<Path> classpath = service.buildClasspath(templates, new Features(), version(), List.of());
+        List<Path> classpath = service.buildClasspath(mcFiles, templates, new Features(), version(), List.of());
 
         Path mcJar = mcFiles.getVersionsDir().resolve("1.21.1").resolve("1.21.1.jar");
         assertEquals(List.of(libraryJar, mcJar), classpath);
@@ -90,7 +90,7 @@ class ClasspathServiceTest {
 
     @Test
     void withoutLibrariesTheClasspathIsJustTheMcJar() {
-        List<Path> classpath = service.buildClasspath(new TemplateStrings(), new Features(), version(), List.of());
+        List<Path> classpath = service.buildClasspath(mcFiles, new TemplateStrings(), new Features(), version(), List.of());
 
         assertEquals(1, classpath.size());
     }

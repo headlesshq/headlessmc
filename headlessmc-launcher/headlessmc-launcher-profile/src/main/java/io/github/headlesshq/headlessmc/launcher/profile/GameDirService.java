@@ -24,9 +24,18 @@ public class GameDirService {
     private final ConfigService configService;
     private final FileService fileService;
     private final AppFiles appFiles;
-    private final McFiles mcFiles;
 
-    public Path getGameDir(VersionArg version) {
+    /**
+     * The default game directory for a version.
+     * For clients this is a directory in a {@code .minecraft} directory, unless a game directory has been configured.
+     * It only depends on the configuration and the arguments, it is decided when a profile is created.
+     *
+     * @param version the version to get the game directory for.
+     * @param mcFiles the {@code .minecraft} directory to place the game directory of a client in,
+     *                the directory the version is, or is going to be, installed in.
+     * @return the default game directory for the version.
+     */
+    public Path getGameDir(VersionArg version, McFiles mcFiles) {
         FileConfig config = this.config.get();
         if (Side.SERVER.equals(version.side().orElse(Side.CLIENT))) {
             // TODO: not super happy with this, should be placed deeper,

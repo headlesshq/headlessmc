@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.launcher.server;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionHandle;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
 import io.github.headlesshq.headlessmc.platform.VersionID;
@@ -43,10 +44,26 @@ class ServerServiceImplTest {
         Profile server = service.add(root.resolve("srv"), id(), null, new ServerInstallation(21));
 
         assertEquals("server-1.21.1", server.name());
-        assertEquals(Optional.of(Side.SERVER), server.version().side());
+        assertEquals(Optional.of(Side.SERVER), server.side());
+        assertEquals(VersionHandle.SERVER, server.target().name());
+        // just installed, this is the version it currently is
+        VersionHandle handle = (VersionHandle) server.target().data();
+        assertEquals(VersionArg.parse("server", "vanilla", "1.21.1"), handle.version());
+        assertEquals(handle.version(), handle.current());
         assertEquals(21, server.javaVersion());
         assertEquals(root.resolve("srv"), server.path());
         assertEquals(List.of(), server.vmArgs());
+    }
+
+    @Test
+    void theBuildOfTheInstallationIsTheCurrentVersion() {
+        Profile server = service.add(root.resolve("srv"), id(), null, new ServerInstallation(21, List.of(), "130"));
+
+        VersionHandle handle = (VersionHandle) server.target().data();
+        // any build has been asked for, build 130 has been installed
+        assertEquals(VersionArg.parse("server", "vanilla", "1.21.1"), handle.version());
+        assertEquals(VersionArg.parse("server", "vanilla", "1.21.1", "130"), handle.current());
+        assertEquals("server-1.21.1", server.name());
     }
 
     @Test

@@ -72,6 +72,15 @@ public class ForgeInstallerDownloader {
         return path;
     }
 
+    /**
+     * @param id a version, possibly for any build.
+     * @return the name of the build {@link #downloadInstaller(VersionID)} downloads the installer of.
+     */
+    public String getBuild(VersionID id) throws HeadlessMcException {
+        PrismIndex index = cache.get().orElseThrow(() -> new RequestException("Failed to get versions"));
+        return getMeta(index, id).version();
+    }
+
     private PrismIndex.Meta getMeta(PrismIndex index, VersionID id) throws HeadlessMcException {
         List<PrismIndex.Meta> candidates = new ArrayList<>(1);
         for (PrismIndex.Meta meta : index.versions()) {

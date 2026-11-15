@@ -1,18 +1,12 @@
 package io.github.headlesshq.headlessmc.commands.server;
 
-import io.github.headlesshq.headlessmc.commands.version.VersionInstallCommand;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
+import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
-import io.github.headlesshq.headlessmc.launcher.server.ServerService;
-import io.github.headlesshq.headlessmc.platform.Platform;
-import io.github.headlesshq.headlessmc.platform.PlatformService;
-import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
-import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
@@ -21,6 +15,12 @@ import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine;
 
+import java.util.Set;
+
+/**
+ * Adds a server. Only launch targets for servers are used, so a version does not have to start with
+ * {@code server} here, and a jar or script is added as a server.
+ */
 @Getter
 @Setter
 @Default
@@ -32,33 +32,44 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     description = "Downloads and installs a new server."
 )
-public class AddCommand extends VersionInstallCommand {
+public class AddCommand extends AbstractTargetAddCommand {
     @Inject
     public AddCommand(
-        PlatformService platformService,
+        LaunchTargetService launchTargetService,
         ProfileService profileService,
-        ServerService serverService,
+        McFilesService mcFilesService,
         FileService fileService,
-        AppFiles appFiles,
-        McFiles mcFiles,
         Console console
     ) {
-        super(platformService, profileService, serverService, fileService, appFiles, mcFiles, console);
+        super(launchTargetService, profileService, mcFilesService, fileService, console);
     }
 
     @Override
-    protected VersionArg arg() {
-        VersionArg arg = super.arg();
-        if (arg.side().isPresent() && arg.side().get().isClient()) {
-            throw new IllegalArgumentException("Cannot install a client version " + arg + " with 'server add'.");
+    public Set<Side> getSides() {
+        return Set.of(Side.SERVER);
+    }
+
+    @Override
+    protected String getKind() {
+        return "server";
+    }
+
+    @Override
+    protected String getVerb() {
+        return "Installed";
+    }
+
+    /**
+     * A server never replaces a profile that is not a server, this also holds for profiles
+     * that are neither client nor server.
+     */
+    @Override
+    protected void checkExisting(Profile existing) throws IllegalArgumentException {
+        if (!existing.isServer()) {
+            throw new IllegalArgumentException(existing.isClient()
+                ? "A client profile with name " + existing.name() + " already exists."
+                : "A profile with name " + existing.name() + " that is not a server already exists.");
         }
-
-        return arg.withSide(Side.SERVER);
-    }
-
-    @Override
-    protected Version installClient(Platform platform, VersionID id) {
-        throw new UnsupportedOperationException("Cannot install client with server AddCommand");
     }
 
 }

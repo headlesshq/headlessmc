@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.version;
 import io.github.headlesshq.headlessmc.util.maven.Artifact;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -153,6 +154,18 @@ public interface Version {
         return Optional.ofNullable(getJavaVersion())
             .map(JavaVersion::getMajorVersion)
             .orElseThrow(() -> new NullPointerException("Failed to get java version of version " + getId()));
+    }
+
+    /**
+     * The version.json file this version has been loaded from.
+     * This connects a version to the {@code .minecraft} directory it is installed in,
+     * and allows pinning a launch to exactly this file.
+     *
+     * @return the absolute, normalized path of the version.json this version has been parsed from,
+     * or none if this version does not come from a file, e.g. if it has been parsed from a stream.
+     */
+    default Optional<Path> asFile() {
+        return Optional.empty();
     }
 
     String OS_LINUX = "linux";

@@ -4,8 +4,10 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.launcher.assets.AssetIndex;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
+import io.github.headlesshq.headlessmc.launcher.profile.TargetInfo;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherService;
@@ -44,10 +46,10 @@ public class VersionRemoveService {
     private final ProfileService profileService;
     private final FileService fileService;
     private final JsonService jsonService;
-    private final McFiles mcFiles;
+    private final LaunchTargetService launchTargetService;
 
     /**
-     * Finds the installed version to remove.
+     * Finds the installed version to remove in all known {@code .minecraft} directories.
      *
      * @param args either the id of an installed version.json, e.g. {@code fabric-loader-0.16.9-1.21.1},
      *             or a {@link VersionArg}, e.g. {@code fabric 1.21.1 0.16.9}.
@@ -55,17 +57,33 @@ public class VersionRemoveService {
      * @throws IllegalArgumentException if no or more than one installed version matches the args.
      */
     public Version findVersion(List<String> args) throws HeadlessMcException {
+        return findVersion(args, null);
+    }
+
+    /**
+     * Finds the installed version to remove.
+     *
+     * @param args    either the id of an installed version.json, e.g. {@code fabric-loader-0.16.9-1.21.1},
+     *                or a {@link VersionArg}, e.g. {@code fabric 1.21.1 0.16.9}.
+     * @param mcFiles the {@code .minecraft} directory to look in, {@code null} to look in all known directories.
+     * @return the single installed version the args refer to.
+     * @throws IllegalArgumentException if no or more than one installed version matches the args,
+     *                                  e.g. because the version is installed in multiple directories.
+     */
+    public Version findVersion(List<String> args, @Nullable McFiles mcFiles) throws HeadlessMcException {
         if (args.isEmpty()) {
             throw new IllegalArgumentException(
                 "Please specify the version to remove, e.g. 'fabric 1.21.1 0.16.9' or the name of a version.json."
             );
         }
 
-        List<Version> installed = versionJsonService.getInstalledVersions();
+        List<Version> installed = mcFiles == null
+            ? versionJsonService.getInstalledVersions()
+            : versionJsonService.getInstalledVersions(mcFiles);
         if (args.size() == 1) {
-            Optional<Version> byId = installed.stream().filter(v -> v.getId().equals(args.getFirst())).findFirst();
-            if (byId.isPresent()) {
-                return byId.get();
+            List<Version> byId = installed.stream().filter(v -> v.getId().equals(args.getFirst())).toList();
+            if (!byId.isEmpty()) {
+                return single(byId, args.getFirst());
             }
         }
 
@@ -76,13 +94,29 @@ public class VersionRemoveService {
             throw new IllegalArgumentException("Failed to find an installed version for " + id);
         }
 
-        if (matches.size() > 1) {
-            throw new IllegalArgumentException("Found multiple installed versions for %s: %s, please specify the build or the name of the version.json.".formatted(
-                id, matches.stream().map(Version::getId).sorted().toList()
-            ));
+        return single(matches, id.toString());
+    }
+
+    /**
+     * The same version installed in multiple {@code .minecraft} directories has to be told apart by the directory,
+     * different versions by their name.
+     */
+    private Version single(List<Version> matches, String name) {
+        if (matches.size() == 1) {
+            return matches.getFirst();
         }
 
-        return matches.getFirst();
+        if (matches.stream().map(Version::getId).distinct().count() == 1) {
+            throw new IllegalArgumentException(
+                "%s is installed in multiple Minecraft directories: %s, please specify the directory with --mc <path>."
+                    .formatted(name, matches.stream().map(v -> versionJsonService.getMcFiles(v).getMcDir()).toList())
+            );
+        }
+
+        throw new IllegalArgumentException(
+            "Found multiple installed versions for %s: %s, please specify the build or the name of the version.json."
+                .formatted(name, matches.stream().map(Version::getId).sorted().distinct().toList())
+        );
     }
 
     /**
@@ -97,6 +131,8 @@ public class VersionRemoveService {
 
     /**
      * Determines what removing the given version would delete and what it would break.
+     * Only the {@code .minecraft} directory the version is installed in is looked at and changed:
+     * nothing in another directory can depend on the files of this one.
      *
      * @param version        the installed version to remove.
      * @param withDependents also removes the versions inheriting from the version
@@ -104,8 +140,9 @@ public class VersionRemoveService {
      * @return the removal, which can be passed to {@link #remove(VersionRemoval)}.
      */
     public VersionRemoval plan(Version version, boolean withDependents) throws HeadlessMcException {
+        McFiles mcFiles = versionJsonService.getMcFiles(version);
         Map<String, Version> installed = new LinkedHashMap<>();
-        versionJsonService.getInstalledVersions().forEach(v -> installed.put(v.getId(), v));
+        versionJsonService.getInstalledVersions(mcFiles).forEach(v -> installed.put(v.getId(), v));
         installed.put(version.getId(), version);
 
         List<Version> dependents = installed.values().stream()
@@ -127,9 +164,9 @@ public class VersionRemoveService {
         Set<Path> files = new LinkedHashSet<>();
         for (Version removedVersion : removedVersions) {
             List<Version> removed = hierarchy(removedVersion, installed);
-            files.addAll(unusedLibraries(removed, needed));
-            files.addAll(unusedAssets(removed, needed));
-            files.addAll(unusedLoggingConfigs(removed, needed));
+            files.addAll(unusedLibraries(mcFiles, removed, needed));
+            files.addAll(unusedAssets(mcFiles, removed, needed));
+            files.addAll(unusedLoggingConfigs(mcFiles, removed, needed));
         }
 
         for (Version removedVersion : removedVersions.reversed()) {
@@ -142,8 +179,9 @@ public class VersionRemoveService {
             .filter(Files::exists)
             .toList();
 
-        List<Profile> blockingProfiles = blockingProfiles(dependents, version, installed);
+        List<Profile> blockingProfiles = blockingProfiles(dependents, version);
         return new VersionRemoval(
+            mcFiles,
             version,
             dependents,
             blockingProfiles,
@@ -165,7 +203,7 @@ public class VersionRemoveService {
 
         for (Path file : removal.files()) {
             fileService.delete(file);
-            deleteEmptyParents(file);
+            deleteEmptyParents(removal.mcFiles(), file);
         }
 
         log.info("Removed versions {} and profiles {}, deleted {} files",
@@ -202,23 +240,57 @@ public class VersionRemoveService {
     }
 
     /**
-     * Profiles launch the first installed version matching their {@link Profile#currentVersion()}.
-     * A profile is blocking if it finds a version now, but would not find one after the removal.
+     * A client profile is blocking if it can be launched now, but could not be after the removal.
+     * A profile that has been resolved is pinned to a version.json, see {@link TargetInfo#file()},
+     * for these the answer is exact: they are blocking if that file is removed.
+     * Other profiles launch the first installed version matching their version, in any {@code .minecraft} directory.
      * Profiles on the {@code latest} or {@code stable} build are treated like profiles for any build.
      */
-    private List<Profile> blockingProfiles(List<Version> dependents, Version version, Map<String, Version> installed) {
-        Set<String> removedIds = new HashSet<>();
-        removedIds.add(version.getId());
-        dependents.forEach(dependent -> removedIds.add(dependent.getId()));
-        Map<String, Set<VersionID>> ids = matchAll(installed.values());
+    private List<Profile> blockingProfiles(List<Version> dependents, Version version) {
+        List<Version> removed = new ArrayList<>(dependents);
+        removed.add(version);
+        Set<Path> removedFiles = removed.stream()
+            .map(Version::asFile)
+            .flatMap(Optional::stream)
+            .map(file -> file.toAbsolutePath().normalize())
+            .collect(Collectors.toSet());
 
+        // a version in another directory can still launch a profile that is not pinned
+        List<Version> allInstalled = new ArrayList<>(versionJsonService.getInstalledVersions());
+        removed.stream().filter(v -> allInstalled.stream().noneMatch(i -> isSame(i, v))).forEach(allInstalled::add);
+        List<Version> remaining = allInstalled.stream()
+            .filter(installed -> removed.stream().noneMatch(r -> isSame(installed, r)))
+            .toList();
+        Map<Version, Set<VersionID>> ids = new IdentityHashMap<>();
+        for (Version installed : allInstalled) {
+            ids.put(installed, matchOrEmpty(installed));
+        }
+
+        Map<Path, Map<String, Version>> installedByDir = new HashMap<>();
         List<Profile> result = new ArrayList<>();
         for (Profile profile : profileService.getProfiles()) {
-            if (!Side.CLIENT.equals(profile.side())) {
+            if (!profile.isClient()) {
                 continue;
             }
 
-            VersionArg arg = profile.currentVersion();
+            TargetInfo info = launchTargetService.describe(profile);
+            if (info.file().isPresent()) {
+                Path file = info.file().get().toAbsolutePath().normalize();
+                // a pin that is already broken is resolved again like an unpinned profile
+                if (removedFiles.contains(file)) {
+                    result.add(profile);
+                    continue;
+                } else if (Files.exists(file)) {
+                    continue;
+                }
+            }
+
+            VersionArg arg = info.version().orElse(null);
+            if (arg == null) {
+                // not a profile for a version, or its launch target is not available
+                continue;
+            }
+
             if (arg.isLatest() || arg.isStable()) {
                 arg = arg.withBuild(null);
             }
@@ -227,20 +299,16 @@ public class VersionRemoveService {
             boolean foundAfter;
             try {
                 VersionID id = VersionID.resolve(platformService, arg);
-                foundBefore = ids.values().stream().anyMatch(matches -> matches(matches, id));
-                foundAfter = ids.entrySet().stream()
-                    .filter(entry -> !removedIds.contains(entry.getKey()))
-                    .anyMatch(entry -> matches(entry.getValue(), id));
+                foundBefore = allInstalled.stream().anyMatch(v -> matches(ids.get(v), id));
+                foundAfter = remaining.stream().anyMatch(v -> matches(ids.get(v), id));
             } catch (HeadlessMcException | IllegalArgumentException e) {
                 // e.g. the platform of the profile came from a plugin that has been uninstalled,
                 // the profile must keep its version for when the plugin is installed again
                 log.info("Failed to resolve version {} of profile {}, checking the version.jsons instead: {}",
                     arg, profile.name(), e.getMessage());
                 VersionArg unresolved = arg;
-                foundBefore = installed.values().stream().anyMatch(v -> mayBeVersionOf(unresolved, v, installed));
-                foundAfter = installed.values().stream()
-                    .filter(v -> !removedIds.contains(v.getId()))
-                    .anyMatch(v -> mayBeVersionOf(unresolved, v, installed));
+                foundBefore = allInstalled.stream().anyMatch(v -> mayBeVersionOf(unresolved, v, installedByDir));
+                foundAfter = remaining.stream().anyMatch(v -> mayBeVersionOf(unresolved, v, installedByDir));
             }
 
             if (foundBefore && !foundAfter) {
@@ -251,13 +319,47 @@ public class VersionRemoveService {
         return result;
     }
 
+    private Set<VersionID> matchOrEmpty(Version version) {
+        try {
+            return versionMatcherService.match(version, versionJsonService);
+        } catch (HeadlessMcException e) {
+            log.debug("Failed to match version {}", version.getId(), e);
+            return Set.of();
+        }
+    }
+
+    /**
+     * Versions are the same installation if they come from the same file.
+     * Versions that do not come from a file are compared by their id.
+     */
+    private static boolean isSame(Version a, Version b) {
+        if (a.asFile().isPresent() && b.asFile().isPresent()) {
+            return a.asFile().get().equals(b.asFile().get());
+        }
+
+        return a.getId().equals(b.getId());
+    }
+
+    /**
+     * @return the versions installed in the {@code .minecraft} directory of the given version, by their id.
+     */
+    private Map<String, Version> installedWith(Version version, Map<Path, Map<String, Version>> installedByDir) {
+        McFiles mcFiles = versionJsonService.getMcFiles(version);
+        return installedByDir.computeIfAbsent(McFiles.normalize(mcFiles.getMcDir()), ignored -> {
+            Map<String, Version> installed = new LinkedHashMap<>();
+            versionJsonService.getInstalledVersions(mcFiles).forEach(v -> installed.put(v.getId(), v));
+            return installed;
+        });
+    }
+
     /**
      * For a profile whose {@link VersionArg} cannot be resolved, e.g. because its platform is not available,
      * we cannot match versions, so we decide by the version.json alone:
      * mod loaders name their versions after themselves, e.g. {@code quilt-loader-0.30.2-1.21.1},
      * and inherit from the Minecraft version. This errs on the side of keeping versions.
      */
-    private boolean mayBeVersionOf(VersionArg arg, Version version, Map<String, Version> installed) {
+    private boolean mayBeVersionOf(VersionArg arg, Version version, Map<Path, Map<String, Version>> installedByDir) {
+        Map<String, Version> installed = installedWith(version, installedByDir);
         String id = version.getId().toLowerCase(Locale.ROOT);
         if (arg.isVanilla()) {
             return id.equals(arg.version().toLowerCase(Locale.ROOT));
@@ -274,14 +376,14 @@ public class VersionRemoveService {
             .anyMatch(arg.version()::equals);
     }
 
-    private List<Path> unusedLibraries(List<Version> removed, List<List<Version>> needed) {
+    private List<Path> unusedLibraries(McFiles mcFiles, List<Version> removed, List<List<Version>> needed) {
         Set<Path> neededLibraries = needed.stream()
             .flatMap(List::stream)
-            .flatMap(version -> libraryPaths(version).stream())
+            .flatMap(version -> libraryPaths(mcFiles, version).stream())
             .collect(Collectors.toSet());
 
         return removed.stream()
-            .flatMap(version -> libraryPaths(version).stream())
+            .flatMap(version -> libraryPaths(mcFiles, version).stream())
             .filter(path -> !neededLibraries.contains(path))
             .toList();
     }
@@ -289,7 +391,7 @@ public class VersionRemoveService {
     /**
      * All paths a library of the version could have been downloaded to, for any OS.
      */
-    private Set<Path> libraryPaths(Version version) {
+    private Set<Path> libraryPaths(McFiles mcFiles, Version version) {
         Set<Path> paths = new LinkedHashSet<>();
         for (Version.Library library : version.getLibraries()) {
             try {
@@ -300,10 +402,10 @@ public class VersionRemoveService {
 
             Version.LibraryDownloads downloads = library.getDownloads();
             if (downloads != null) {
-                addLibraryPath(paths, downloads.getArtifact());
+                addLibraryPath(mcFiles, paths, downloads.getArtifact());
                 Map<String, Version.Download> classifiers = downloads.getClassifiers();
                 if (classifiers != null) {
-                    classifiers.values().forEach(download -> addLibraryPath(paths, download));
+                    classifiers.values().forEach(download -> addLibraryPath(mcFiles, paths, download));
                 }
             }
         }
@@ -311,7 +413,7 @@ public class VersionRemoveService {
         return paths;
     }
 
-    private void addLibraryPath(Set<Path> paths, Version.@Nullable Download download) {
+    private void addLibraryPath(McFiles mcFiles, Set<Path> paths, Version.@Nullable Download download) {
         String path = download == null ? null : download.getPath();
         if (path != null) {
             try {
@@ -327,7 +429,7 @@ public class VersionRemoveService {
      * its virtual directory, the asset objects and the files it mapped to the resources directory are unused,
      * unless they are referenced by the asset index of another version.
      */
-    private List<Path> unusedAssets(List<Version> removed, List<List<Version>> needed) {
+    private List<Path> unusedAssets(McFiles mcFiles, List<Version> removed, List<List<Version>> needed) {
         String id = assetIndexId(removed).orElse(null);
         if (id == null) {
             return List.of();
@@ -343,7 +445,7 @@ public class VersionRemoveService {
 
         List<Path> result = new ArrayList<>();
         result.add(fileService.getPath(mcFiles.getAssetsDir(), "virtual", id));
-        Path indexFile = indexFile(id);
+        Path indexFile = indexFile(mcFiles, id);
         result.add(indexFile);
         Optional<AssetIndex> index = readAssetIndex(indexFile);
         if (index.isEmpty()) {
@@ -353,7 +455,7 @@ public class VersionRemoveService {
         Set<String> neededHashes = new HashSet<>();
         Set<String> neededResources = new HashSet<>();
         for (String neededId : neededIds) {
-            Path neededIndexFile = indexFile(neededId);
+            Path neededIndexFile = indexFile(mcFiles, neededId);
             if (!Files.exists(neededIndexFile)) {
                 continue;
             }
@@ -384,7 +486,7 @@ public class VersionRemoveService {
         return result;
     }
 
-    private Path indexFile(String id) {
+    private Path indexFile(McFiles mcFiles, String id) {
         return fileService.getPath(mcFiles.getAssetsDir(), "indexes", id + ".json");
     }
 
@@ -409,7 +511,7 @@ public class VersionRemoveService {
             .map(Version.AssetIndex::getId);
     }
 
-    private List<Path> unusedLoggingConfigs(List<Version> removed, List<List<Version>> needed) {
+    private List<Path> unusedLoggingConfigs(McFiles mcFiles, List<Version> removed, List<List<Version>> needed) {
         Set<String> neededIds = needed.stream()
             .map(this::loggingConfigId)
             .flatMap(Optional::stream)
@@ -450,7 +552,7 @@ public class VersionRemoveService {
         return hierarchy;
     }
 
-    private void deleteEmptyParents(Path file) {
+    private void deleteEmptyParents(McFiles mcFiles, Path file) {
         List<Path> roots = Stream.of(mcFiles.getLibraryDir(), mcFiles.getAssetsDir(), mcFiles.getResourcesDir())
             .map(root -> root.toAbsolutePath().normalize())
             .toList();

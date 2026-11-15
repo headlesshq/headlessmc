@@ -1,0 +1,32 @@
+{
+  "name": "v0-server",
+  "version": {
+    "side": "SERVER",
+    "platform": "paper",
+    "version": "1.21.1",
+    "build": null
+  },
+  "currentVersion": {
+    "side": "SERVER",
+    "platform": "paper",
+    "version": "1.21.1",
+    "build": null
+  },
+  "path": "@GAME_DIR_URI@",
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [
+    "nogui"
+  ],
+  "javaVersion": 21,
+  "eulaStatus": "EXISTS",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 0
+}

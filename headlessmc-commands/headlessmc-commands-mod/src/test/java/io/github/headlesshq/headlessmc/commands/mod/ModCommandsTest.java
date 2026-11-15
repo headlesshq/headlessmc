@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
 import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
@@ -184,7 +185,9 @@ class ModCommandsTest {
         fabric.withModSupport(new ModSupport(List.of(ModType.MOD, ModType.RESOURCE_PACK), List.of(modReader)));
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric);
         profileService = new FakeProfileService(root);
-        profileResolver = new ProfileResolver(platformService, profileService);
+        profileResolver = new ProfileResolver(
+            profileService, TestLaunchTargets.versions(platformService, profileService, root)
+        );
         modListingService = new ModListingService(platformService, profileResolver, modTypeService, modCache, new WorldService());
     }
 
@@ -385,7 +388,7 @@ class ModCommandsTest {
         command.setVersionArg(List.of("main"));
         command.run();
 
-        assertEquals(List.of(new Download(profile.path(), null, "sodium", profile.version(), ModType.MOD)), downloads);
+        assertEquals(List.of(new Download(profile.path(), null, "sodium", profileResolver.requireVersion(profile), ModType.MOD)), downloads);
         assertTrue(console.output().contains("Downloaded " + profile.path().resolve("sodium.jar") + " successfully."));
     }
 
@@ -791,7 +794,7 @@ class ModCommandsTest {
         command.run();
 
         Search search = searches.getFirst();
-        assertEquals(Optional.of(profile.version()), search.version());
+        assertEquals(Optional.of(profileResolver.requireVersion(profile)), search.version());
         assertEquals(ModType.MOD, search.type());
     }
 

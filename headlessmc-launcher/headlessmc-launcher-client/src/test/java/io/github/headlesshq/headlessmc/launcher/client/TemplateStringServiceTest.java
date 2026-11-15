@@ -21,38 +21,21 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TemplateStringServiceTest {
-    private TemplateStringService service(Path root) {
-        McFiles mcFiles = new McFiles() {
-            @Override
-            public Path getMcDir() {
-                return root.resolve("mc");
-            }
+    private static McFiles mcFiles(Path root) {
+        return McFiles.of(root.resolve("mc"));
+    }
 
-            @Override
-            public Path getVersionsDir() {
-                return getMcDir().resolve("versions");
-            }
-
-            @Override
-            public Path getLibraryDir() {
-                return getMcDir().resolve("libraries");
-            }
-
-            @Override
-            public Path getAssetsDir() {
-                return getMcDir().resolve("assets");
-            }
-
-            @Override
-            public Path getResourcesDir() {
-                return getMcDir().resolve("resources");
-            }
-        };
-        return new TemplateStringService(mcFiles, CPU.X64);
+    private TemplateStringService service() {
+        return new TemplateStringService(CPU.X64);
     }
 
     private TemplateStrings create(Path root, LaunchOptions options) {
-        return service(root).create(
+        return create(mcFiles(root), root, options);
+    }
+
+    private TemplateStrings create(McFiles mcFiles, Path root, LaunchOptions options) {
+        return service().create(
+            mcFiles,
             new AssetsLocation("assets-17", root.resolve("assets")),
             new Account("msa", "Steve", "uuid-steve", "token-123", Account.TYPE_MSA, "xuid"),
             root.resolve("game"),
@@ -191,6 +174,39 @@ public class TemplateStringServiceTest {
         public @Nullable JavaVersion getJavaVersion() {
             return null;
         }
+    }
+
+    @Test
+    public void theLibraryDirectoryIsTheOneOfTheGivenMinecraftDirectory(@TempDir Path root) {
+        McFiles other = McFiles.of(root.resolve("other-mc"));
+
+        TemplateStrings templates = create(other, root, noOptions());
+
+        assertEquals(
+            other.getLibraryDir().toAbsolutePath().toString(),
+            templates.process("${library_directory}")
+        );
+    }
+
+    @Test
+    public void theQuickPlayLogIsWrittenToTheMinecraftDirectoryTheGameIsLaunchedFrom(@TempDir Path root) {
+        McFiles other = McFiles.of(root.resolve("other-mc"));
+
+        // nothing specified where to write it
+        Path quickPlayPath = Path.of(create(other, root, noOptions()).process("${quickPlayPath}"));
+
+        assertEquals(other.getMcDir().resolve("quickPlay").resolve("java").toAbsolutePath(), quickPlayPath.getParent());
+        assertTrue(quickPlayPath.getFileName().toString().endsWith(".json"));
+        assertFalse(quickPlayPath.startsWith(mcFiles(root).getMcDir().toAbsolutePath()));
+    }
+
+    @Test
+    public void aSpecifiedQuickPlayPathIsKept(@TempDir Path root) {
+        LaunchOptions options = new LaunchOptions(
+            Optional.empty(), Optional.of("custom/quick.json"), Optional.empty(), false
+        );
+
+        assertEquals("custom/quick.json", create(root, options).process("${quickPlayPath}"));
     }
 
 }

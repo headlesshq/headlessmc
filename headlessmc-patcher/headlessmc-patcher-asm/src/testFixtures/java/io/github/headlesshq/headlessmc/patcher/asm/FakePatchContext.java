@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.patcher.asm;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.patcher.*;
 import org.jspecify.annotations.Nullable;
 
@@ -105,6 +106,11 @@ public final class FakePatchContext implements PatchContext {
     @Override
     public PatchCache.Key getCacheKey() {
         return new PatchCache.Key("test", 0L, Map.of(), getJavaVersion(), 0L);
+    }
+
+    @Override
+    public McFiles getMcFiles() {
+        return McFiles.of(Path.of("fake-mc").toAbsolutePath());
     }
 
 }

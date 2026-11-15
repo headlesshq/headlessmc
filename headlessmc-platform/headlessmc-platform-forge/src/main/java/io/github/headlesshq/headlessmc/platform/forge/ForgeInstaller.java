@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.platform.forge;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.cache.Cache;
 import io.github.headlesshq.headlessmc.java.launcher.ProcessHandler;
 import io.github.headlesshq.headlessmc.platform.client.AbstractClientInstaller;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
+import java.util.List;
 
 @Slf4j
 @Forge
@@ -43,8 +45,9 @@ public class ForgeInstaller extends AbstractClientInstaller implements ClientIns
     }
 
     @Override
-    protected void installClient(VersionID id, Path mcDir, Version vanilla, TypedMap args)
+    protected void installClient(VersionID id, McFiles mcFiles, Version vanilla, TypedMap args)
         throws HeadlessMcException {
+        Path mcDir = mcFiles.getMcDir();
         log.info("Installing client {} in {} args: {}", id, mcDir, args);
         Path installerJar = installerDownloader.downloadInstaller(id);
         try {
@@ -77,7 +80,7 @@ public class ForgeInstaller extends AbstractClientInstaller implements ClientIns
             services.getFileService().delete(installerJar);
         }
 
-        return new ServerInstallation(javaVersion);
+        return new ServerInstallation(javaVersion, List.of(), installerDownloader.getBuild(id));
     }
 
 }

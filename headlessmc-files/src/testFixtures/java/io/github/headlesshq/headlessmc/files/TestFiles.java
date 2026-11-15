@@ -3,39 +3,35 @@ package io.github.headlesshq.headlessmc.files;
 import java.nio.file.Path;
 
 /**
- * {@link McFiles}/{@link AppFiles} over a test root directory.
+ * {@link McFiles}/{@link McFilesService}/{@link AppFiles} over a test root directory.
  */
 public final class TestFiles {
     private TestFiles() {
     }
 
+    /**
+     * @param root the test root directory.
+     * @return {@link McFiles} for {@code <root>/mc}.
+     */
     public static McFiles mcFiles(Path root) {
-        return new McFiles() {
-            @Override
-            public Path getMcDir() {
-                return root.resolve("mc");
-            }
+        return McFiles.of(root.resolve("mc"));
+    }
 
-            @Override
-            public Path getVersionsDir() {
-                return getMcDir().resolve("versions");
-            }
+    /**
+     * @param root the test root directory.
+     * @return a {@link McFilesService} whose only directory is {@link #mcFiles(Path)}.
+     */
+    public static McFilesService mcFilesService(Path root) {
+        return McFilesService.of(mcFiles(root));
+    }
 
-            @Override
-            public Path getLibraryDir() {
-                return getMcDir().resolve("libraries");
-            }
-
-            @Override
-            public Path getAssetsDir() {
-                return getMcDir().resolve("assets");
-            }
-
-            @Override
-            public Path getResourcesDir() {
-                return getMcDir().resolve("resources");
-            }
-        };
+    /**
+     * @param primary    the primary directory.
+     * @param additional additional directories.
+     * @return a {@link McFilesService} for the given directories.
+     */
+    public static McFilesService mcFilesService(McFiles primary, McFiles... additional) {
+        return McFilesService.of(primary, additional);
     }
 
     public static AppFiles appFiles(Path root) {

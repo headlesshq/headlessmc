@@ -87,6 +87,11 @@ class ClassSourceFactoryTest {
         public PatchCache.Key getCacheKey() {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public io.github.headlesshq.headlessmc.files.McFiles getMcFiles() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @TempDir

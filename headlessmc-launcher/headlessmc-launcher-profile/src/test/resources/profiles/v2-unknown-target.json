@@ -1,0 +1,36 @@
+{
+  "name": "v2-unknown-target",
+  "side": "CLIENT",
+  "target": {
+    "name": "from-a-plugin",
+    "data": {
+      "anything": [
+        1,
+        "two",
+        {
+          "three": true
+        }
+      ],
+      "nothing": null
+    }
+  },
+  "path": {
+    "source": "minecraft",
+    "sourcePath": "@MC_DIR@",
+    "path": "plugin"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

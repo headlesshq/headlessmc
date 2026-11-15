@@ -3,6 +3,7 @@ package io.github.headlesshq.headlessmc.version;
 import io.github.headlesshq.headlessmc.util.maven.Artifact;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -107,6 +108,14 @@ public record ProcessedVersion(List<Version> hierarchy) implements Version {
     @Override
     public JavaVersion getJavaVersion() {
         return Objects.requireNonNull(lastNotNull(Version::getJavaVersion), "Failed to find Java version");
+    }
+
+    /**
+     * @return the file of the target version, the last version in the {@link #hierarchy()}.
+     */
+    @Override
+    public Optional<Path> asFile() {
+        return hierarchy.getLast().asFile();
     }
 
     private <T> @Nullable T lastNotNull(Function<Version, @Nullable T> map) {

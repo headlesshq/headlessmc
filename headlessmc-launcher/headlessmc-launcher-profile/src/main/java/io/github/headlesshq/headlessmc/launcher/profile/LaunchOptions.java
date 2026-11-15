@@ -15,6 +15,13 @@ public record LaunchOptions(
     Optional<Join> join,
     boolean demo
 ) implements ReflectionRegistered {
+    /**
+     * @return options that change nothing.
+     */
+    public static LaunchOptions empty() {
+        return new LaunchOptions(Optional.empty(), Optional.empty(), Optional.empty(), false);
+    }
+
     public boolean isEmpty() {
         return resolution.isEmpty() && join.isEmpty() && !demo;
     }

@@ -28,6 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class GameDirServiceTest {
     private record TestFileConfig(boolean gameForEachVersion, Optional<String> gameDir) implements FileConfig {
         @Override
+        public Optional<java.util.List<String>> mcDirs() {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<String> location() {
             return Optional.empty();
         }
@@ -126,7 +131,7 @@ class GameDirServiceTest {
         Holder<FileConfig> holder = () -> new TestFileConfig(gameForEachVersion, gameDir);
         Map<String, String> properties = legacyGameDir.map(value -> Map.of("hmc.gamedir", value)).orElse(Map.of());
         ConfigService configService = new PassthroughConfigService(config(properties));
-        return new GameDirService(holder, configService, fileService, appFiles, mcFiles);
+        return new GameDirService(holder, configService, fileService, appFiles);
     }
 
     private VersionArg version(Side side) {
@@ -140,7 +145,7 @@ class GameDirServiceTest {
 
         assertEquals(
             appFiles.getServerDir().resolve("server-" + version.toString("-")),
-            service.getGameDir(version)
+            service.getGameDir(version, mcFiles)
         );
     }
 
@@ -149,35 +154,35 @@ class GameDirServiceTest {
         GameDirService service = service(true, Optional.empty(), Optional.empty());
         VersionArg version = version(Side.CLIENT);
 
-        assertEquals(mcFiles.getMcDir().resolve(version.toString("-")), service.getGameDir(version));
+        assertEquals(mcFiles.getMcDir().resolve(version.toString("-")), service.getGameDir(version, mcFiles));
     }
 
     @Test
     void clientVersionsShareTheMcDirWhenPerVersionIsDisabled() {
         GameDirService service = service(false, Optional.empty(), Optional.empty());
 
-        assertEquals(mcFiles.getMcDir(), service.getGameDir(version(Side.CLIENT)));
+        assertEquals(mcFiles.getMcDir(), service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
     @Test
     void usesTheConfiguredGameDir() {
         GameDirService service = service(true, Optional.of("/configured/game"), Optional.empty());
 
-        assertEquals(fileService.getUserPath("/configured/game"), service.getGameDir(version(Side.CLIENT)));
+        assertEquals(fileService.getUserPath("/configured/game"), service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
     @Test
     void fallsBackToTheLegacyGameDirProperty() {
         GameDirService service = service(true, Optional.empty(), Optional.of("/legacy/game"));
 
-        assertEquals(fileService.getUserPath("/legacy/game"), service.getGameDir(version(Side.CLIENT)));
+        assertEquals(fileService.getUserPath("/legacy/game"), service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
     @Test
     void conflictingGameDirAndLegacyGameDirThrow() {
         GameDirService service = service(true, Optional.of("/a"), Optional.of("/b"));
 
-        assertThrows(ConfigException.class, () -> service.getGameDir(version(Side.CLIENT)));
+        assertThrows(ConfigException.class, () -> service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
 }

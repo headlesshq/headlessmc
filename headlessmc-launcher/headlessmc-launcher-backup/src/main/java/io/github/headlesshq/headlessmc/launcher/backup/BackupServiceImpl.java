@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
+import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.util.json.JsonParseException;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -33,6 +34,12 @@ import java.util.stream.Stream;
 @Slf4j
 @ApplicationScoped
 public class BackupServiceImpl implements BackupService {
+    /**
+     * The first {@link Backup#BACKUP_VERSION format} containing a profile with a launch target,
+     * older ones are {@link LegacyBackup}s.
+     */
+    private static final int FIRST_TARGET_VERSION = 1;
+
     private static final DateTimeFormatter ID_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
     private static final String JSON = ".json";
     private static final String ZIP = ".zip";
@@ -227,6 +234,46 @@ public class BackupServiceImpl implements BackupService {
     }
 
     @Override
+    public List<Backup> rename(String provider, String target, String newTarget) {
+        Path newDir = getTargetDir(provider, newTarget);
+        List<Backup> result = new ArrayList<>();
+        for (Backup backup : list(provider, target)) {
+            Path dir = getTargetDir(backup.provider(), backup.target());
+            Profile profile = backup.profile();
+            Backup renamed = new Backup(
+                backup.id(), backup.provider(), newTarget, backup.type(), backup.origin(), backup.created(),
+                profile == null ? null : profile.withName(newTarget),
+                backup.source(), backup.paths(), backup.ignored(), backup.archive(),
+                backup.files(), backup.size(), Backup.BACKUP_VERSION
+            );
+
+            Path json = fileService.getPath(dir, backup.id() + JSON);
+            Path newJson = fileService.getPath(newDir, backup.id() + JSON);
+            Path newArchive = fileService.getPath(newDir, backup.archive());
+            if (!dir.equals(newDir)) {
+                // the archive first: a backup is listed by its json, it must never be listed without its archive
+                fileService.saveMove(getArchive(backup), newArchive);
+            }
+
+            jsonService.write(newJson, renamed, true);
+            if (!json.equals(newJson)) {
+                fileService.delete(json);
+            }
+
+            Backup stored = readBackup(newJson).orElse(renamed);
+            try {
+                fileService.deleteEmptyParentDirs(dir, getBackupDir());
+            } catch (FileException e) {
+                log.warn("Failed to delete empty backup directory {}", dir, e);
+            }
+
+            result.add(stored);
+        }
+
+        return result;
+    }
+
+    @Override
     public List<Backup> prune(PruneRequest request) {
         return prune(request, Set.of());
     }
@@ -300,7 +347,8 @@ public class BackupServiceImpl implements BackupService {
             // backups are listed by their json, a half-written json would hide the backup and leave its archive behind
             jsonService.write(jsonTemp, backup, true);
             fileService.saveMove(jsonTemp, json);
-            return backup;
+            // as it is listed later, the launch target data of its profile is read in another representation
+            return readBackup(json).orElse(backup);
         } catch (IOException e) {
             deleteQuietly(e, temp, archive, jsonTemp);
             throw new HeadlessMcIOException("Failed to create backup " + id + " of " + source, e);
@@ -399,6 +447,10 @@ public class BackupServiceImpl implements BackupService {
                 );
 
                 return Optional.empty();
+            }
+
+            if (version.hmcVersion() < FIRST_TARGET_VERSION) {
+                return Optional.of(jsonService.parse(json, LegacyBackup.class).migrate());
             }
 
             return Optional.of(jsonService.parse(json, Backup.class));

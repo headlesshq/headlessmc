@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.platform;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.mods.ModSupport;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
@@ -26,6 +27,7 @@ public class FakeVanillaPlatform implements VanillaPlatform {
     private final FakeVanillaVersionService versionService;
     private final Map<String, Version> versionJsons = new LinkedHashMap<>();
     private final List<VersionID> installedClients = new ArrayList<>();
+    private final List<McFiles> installedClientDirs = new ArrayList<>();
     private final List<VersionID> installedServers = new ArrayList<>();
     private Optional<ServerSupport> serverSupport = Optional.empty();
     private Optional<ClientSupport> clientSupport = Optional.empty();
@@ -63,6 +65,13 @@ public class FakeVanillaPlatform implements VanillaPlatform {
 
     public List<VersionID> installedClients() {
         return installedClients;
+    }
+
+    /**
+     * @return the {@code .minecraft} directories clients have been installed into, in the order of {@link #installedClients()}.
+     */
+    public List<McFiles> installedClientDirs() {
+        return installedClientDirs;
     }
 
     public List<VersionID> installedServers() {
@@ -113,8 +122,9 @@ public class FakeVanillaPlatform implements VanillaPlatform {
             }
 
             @Override
-            public Version installClient(VersionID id, Path mcDir, TypedMap args) throws HeadlessMcException {
+            public Version installClient(VersionID id, McFiles mcFiles, TypedMap args) throws HeadlessMcException {
                 installedClients.add(id);
+                installedClientDirs.add(mcFiles);
                 return getVersion(id.getVersion());
             }
 

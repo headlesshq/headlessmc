@@ -5,9 +5,11 @@ import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionHandle;
 import io.github.headlesshq.headlessmc.launcher.server.FakeServerService;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
@@ -57,7 +59,7 @@ class InstallCommandTest {
     void setup() {
         vanilla = new FakeVanillaPlatform("1.21.1", "1.20.4");
         ClientInstaller clientInstaller = (id, mcDir, args) -> {
-            clientInstalls.add(new RecordedClientInstall(id, mcDir, args));
+            clientInstalls.add(new RecordedClientInstall(id, mcDir.getMcDir(), args));
             return new FakeVersion(id.getVersion().getName());
         };
         ServerInstaller serverInstaller = (id, dir, args) -> {
@@ -77,7 +79,7 @@ class InstallCommandTest {
     private InstallCommand command() {
         return new InstallCommand(
             platformService, profileService, serverService,
-            new DefaultFileService(new DefaultFileSystemProvider()), appFiles, mcFiles, console
+            new DefaultFileService(new DefaultFileSystemProvider()), appFiles, McFilesService.of(mcFiles), console
         );
     }
 
@@ -98,6 +100,20 @@ class InstallCommandTest {
         assertEquals(mcFiles.getMcDir(), install.dir());
         assertEquals(false, install.args().get(ClientInstaller.FORCE_INSTALL));
         assertTrue(console.output().contains("Installed version"));
+    }
+
+    @Test
+    void installsClientIntoTheRequestedMcDir() {
+        Path ssd = root.resolve("ssd").resolve(".minecraft");
+        InstallCommand command = command();
+        command.setVersionArg(List.of("1.21.1"));
+        // a directory that is not even configured
+        command.setMc(ssd.toString());
+        command.run();
+
+        assertEquals(1, clientInstalls.size());
+        assertEquals(ssd, clientInstalls.getFirst().dir());
+        assertNotEquals(mcFiles.getMcDir(), ssd);
     }
 
     @Test
@@ -149,7 +165,8 @@ class InstallCommandTest {
         Profile server = servers.getFirst();
         assertEquals(21, server.javaVersion());
         assertEquals(List.of("-XX:+UseG1GC"), server.vmArgs());
-        assertEquals(Optional.of(Side.SERVER), server.version().side());
+        assertEquals(Optional.of(Side.SERVER), server.side());
+        assertEquals(VersionHandle.SERVER, server.target().name());
         assertEquals(install.dir(), server.path());
         assertTrue(console.output().contains("Installed server"));
     }

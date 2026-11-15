@@ -2,6 +2,8 @@ package io.github.headlesshq.headlessmc.launcher.server;
 
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionHandle;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.server.ServerInstallation;
@@ -30,7 +32,11 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public Profile add(Path dir, VersionID id, @Nullable String nameIn, ServerInstallation installation) {
         String name = nameIn == null ? getServerName(id.asArg()) : nameIn;
-        Profile profile = new Profile(name, id.asArg().withSide(Side.SERVER), dir)
+        VersionArg version = id.asArg().withSide(Side.SERVER);
+        // this server has just been installed, what has been installed is its current version
+        VersionArg current = installation.installed(id).withSide(Side.SERVER);
+        Profile profile = new Profile(name, version, dir)
+            .withTarget(VersionHandle.of(version).withCurrent(current).asTarget())
             .withJavaVersion(installation.javaVersion())
             .withVmArgs(installation.vmArgs());
         return profileService.save(profile);
@@ -49,7 +55,7 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<Profile> listServers() {
         return profileService.getProfiles().stream()
-            .filter(profile -> Side.SERVER.equals(profile.side()))
+            .filter(Profile::isServer)
             .toList();
     }
 

@@ -94,7 +94,10 @@ class BackupServiceImplTest {
         assertEquals("Main", backup.target());
         assertEquals("full", backup.type());
         assertEquals(BackupOrigin.MANUAL, backup.origin());
-        assertEquals(profile, backup.profile());
+        // the backup contains the profile as it is read back from its json, where the data of the launch
+        // target is not a typed object anymore
+        assertEquals(profile.target().name(), backup.profile().target().name());
+        assertEquals(profile, backup.profile().withTarget(profile.target()));
         assertEquals(profile.path(), backup.source());
         assertEquals(List.of(""), backup.paths());
         assertEquals(List.of("logs", "crash-reports", "assets", "libraries", "versions"), backup.ignored());
@@ -512,7 +515,11 @@ class BackupServiceImplTest {
         assertFalse(Files.exists(profile.path().resolve("world").resolve("new")));
         assertTrue(Files.exists(profile.path().resolve("world")));
         assertTrue(Files.exists(profile.path().resolve("logs").resolve("latest.log")));
-        assertEquals(Optional.of(profile), env.getProfileService().getProfile("srv"));
+        // the profile is restored from the json of the backup, only the representation of its target data differs
+        assertEquals(
+            Optional.of(profile),
+            env.getProfileService().getProfile("srv").map(restored -> restored.withTarget(profile.target()))
+        );
     }
 
     @Test

@@ -47,7 +47,15 @@ public record Backup(
     long size,
     int hmcVersion
 ) implements ReflectionRegistered {
-    public static final int BACKUP_VERSION = 0;
+    /**
+     * The current backup format version, older HeadlessMc versions ignore backups with a newer version.
+     * <ul>
+     *     <li>0: initial format.</li>
+     *     <li>1: the {@link #profile()} is stored in profile format 2, with a launch target instead of a version,
+     *     see {@link Profile#PROFILE_VERSION}. Backups of format 0 are converted when they are read.</li>
+     * </ul>
+     */
+    public static final int BACKUP_VERSION = 1;
 
     /**
      * @return the files this backup was created from.

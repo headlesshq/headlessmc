@@ -92,7 +92,7 @@ public class ProfileBackupProvider implements BackupProvider {
             case WORLD -> List.of(archiveService.relativize(source, worldService.resolveWorld(profile, world)));
         };
 
-        List<String> defaultIgnored = type == ProfileBackupType.FULL && profile.side().isClient()
+        List<String> defaultIgnored = type == ProfileBackupType.FULL && profile.isClient()
             ? DEFAULT_CLIENT_IGNORED
             : List.of();
         return new BackupPlan(profile.name(), type.getName(), profile, source, paths, defaultIgnored);

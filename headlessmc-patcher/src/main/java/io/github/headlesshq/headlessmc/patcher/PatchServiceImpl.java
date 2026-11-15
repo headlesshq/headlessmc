@@ -20,25 +20,22 @@ public class PatchServiceImpl implements PatchService {
     private final Instance<Patcher> patchers;
     private final FileService fileService;
     private final PatchCache cache;
-    private final McFiles mcFiles;
 
     @Inject
     public PatchServiceImpl(
         @Any Instance<HelperService> services,
         @Any Instance<Patcher> patchers,
         FileService fileService,
-        PatchCache cache,
-        McFiles mcFiles
+        PatchCache cache
     ) {
         this.services = services;
         this.patchers = patchers;
         this.fileService = fileService;
-        this.mcFiles = mcFiles;
         this.cache = cache;
     }
 
     @Override
-    public PatchResult patch(PatchResult patchResult, int javaVersion, List<Patcher> patchers) {
+    public PatchResult patch(McFiles mcFiles, PatchResult patchResult, int javaVersion, List<Patcher> patchers) {
         if (patchers.isEmpty()) {
             return patchResult;
         }

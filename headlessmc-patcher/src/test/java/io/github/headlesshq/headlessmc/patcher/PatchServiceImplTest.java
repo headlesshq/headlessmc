@@ -101,10 +101,10 @@ public class PatchServiceImplTest {
 
     private PatchServiceImpl service(Path root) {
         PatchCacheImpl cache = new PatchCacheImpl(
-            fileService, hashService, jsonService, TestPatchers.appFiles(root), TestPatchers.mcFiles(root)
+            fileService, hashService, jsonService, TestPatchers.appFiles(root)
         );
 
-        return new PatchServiceImpl(helperServices, patchers, fileService, cache, TestPatchers.mcFiles(root));
+        return new PatchServiceImpl(helperServices, patchers, fileService, cache);
     }
 
     private PatchResult classpath(Path root) throws IOException {
@@ -117,7 +117,7 @@ public class PatchServiceImplTest {
     public void withoutPatchersTheClasspathIsUnchanged(@TempDir Path root) throws IOException {
         PatchResult patchResult = classpath(root);
 
-        assertSame(patchResult, service(root).patch(patchResult, 21, List.of()));
+        assertSame(patchResult, service(root).patch(TestPatchers.mcFiles(root), patchResult, 21, List.of()));
     }
 
     @Test
@@ -125,7 +125,7 @@ public class PatchServiceImplTest {
         PatchServiceImpl service = service(root);
         PatchResult patchResult = classpath(root);
 
-        PatchResult result = service.patch(patchResult, 21, List.of(a, b));
+        PatchResult result = service.patch(TestPatchers.mcFiles(root), patchResult, 21, List.of(a, b));
 
         assertEquals(patchResult.files(), result.files());
         assertEquals(1, ((RecordingPatcher) a).contexts.size());
@@ -133,7 +133,7 @@ public class PatchServiceImplTest {
         assertEquals(21, ((RecordingPatcher) a).contexts.getFirst().getJavaVersion());
 
         // the second run is served from the cache
-        service.patch(patchResult, 21, List.of(a, b));
+        service.patch(TestPatchers.mcFiles(root), patchResult, 21, List.of(a, b));
         assertEquals(1, ((RecordingPatcher) a).contexts.size());
     }
 
@@ -160,8 +160,8 @@ public class PatchServiceImplTest {
             }
         };
 
-        PatchResult result = service.patch(patchResult, 21, List.of(patcher));
-        PatchResult cached = service.patch(patchResult, 21, List.of(patcher));
+        PatchResult result = service.patch(TestPatchers.mcFiles(root), patchResult, 21, List.of(patcher));
+        PatchResult cached = service.patch(TestPatchers.mcFiles(root), patchResult, 21, List.of(patcher));
 
         assertEquals(1, contexts.size(), "the second run should be served from the cache");
         assertEquals(Map.of("joml.nounsafe", "true"), result.systemProperties());

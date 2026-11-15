@@ -1,5 +1,7 @@
 package io.github.headlesshq.headlessmc.files.relative;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
@@ -50,7 +52,7 @@ class RelativePathSourcesTest {
         assertEquals(appFiles.getDataDir(), new AppFilesDataPathSource(appFiles).getPath());
         assertEquals(appFiles.getCacheDir(), new AppFilesCachePathSource(appFiles).getPath());
         assertEquals(appFiles.getStateDir(), new AppFilesStatePathSource(appFiles).getPath());
-        assertEquals(mcDir, new McFilesPathSource(() -> mcDir).getPath());
+        assertEquals(mcDir, new McFilesPathSource(McFilesService.of(McFiles.of(mcDir))).getPath());
         assertEquals(Path.of(System.getProperty("user.home")),
                      new UserHomePathSource(new DefaultFileService(new DefaultFileSystemProvider())).getPath());
     }
@@ -63,7 +65,7 @@ class RelativePathSourcesTest {
             new AppFilesDataPathSource(appFiles),
             new AppFilesCachePathSource(appFiles),
             new AppFilesStatePathSource(appFiles),
-            new McFilesPathSource(() -> root.resolve(".minecraft"))
+            new McFilesPathSource(McFilesService.of(McFiles.of(root.resolve(".minecraft"))))
         ));
 
         assertEquals(new RelativePath(AppFilesDataPathSource.IDENTIFIER, appFiles.getDataDir().toString(), "java/jdk-21"),

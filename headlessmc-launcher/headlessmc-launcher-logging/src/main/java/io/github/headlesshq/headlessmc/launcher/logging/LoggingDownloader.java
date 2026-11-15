@@ -30,9 +30,16 @@ public class LoggingDownloader {
     final DownloadService downloadService;
     final Holder<LoggingConfig> config;
     final FileService fileService;
-    final McFiles mcFiles;
 
-    public Optional<String> downloadLogging(TemplateStrings templateStrings, Version version) {
+    /**
+     * Downloads the logging configuration of the given version.
+     *
+     * @param mcFiles         the {@code .minecraft} directory of the version, to place the logging configuration in.
+     * @param templateStrings the templates to process the logging argument with.
+     * @param version         the version to download the logging configuration for.
+     * @return the jvm argument configuring logging, if the version has a logging configuration.
+     */
+    public Optional<String> downloadLogging(McFiles mcFiles, TemplateStrings templateStrings, Version version) {
         Map<String, Version.LoggingConfiguration> loggingConfigurations = version.getLogging();
         if (loggingConfigurations == null) {
             return Optional.empty();
@@ -43,10 +50,14 @@ public class LoggingDownloader {
             return Optional.empty();
         }
 
-        return Optional.of(downloadLogging(templateStrings, configuration));
+        return Optional.of(downloadLogging(mcFiles, templateStrings, configuration));
     }
 
-    private String downloadLogging(TemplateStrings templates, Version.LoggingConfiguration configuration) {
+    private String downloadLogging(
+        McFiles mcFiles,
+        TemplateStrings templates,
+        Version.LoggingConfiguration configuration
+    ) {
         Version.Download download = configuration.getFile();
         Path configFile = fileService.getPath(
             mcFiles.getAssetsDir(),

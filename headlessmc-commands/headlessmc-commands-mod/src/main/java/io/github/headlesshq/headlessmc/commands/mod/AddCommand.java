@@ -15,6 +15,7 @@ import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform
 import io.github.headlesshq.headlessmc.platform.Platform;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.version.arg.Side;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Default;
 import jakarta.inject.Inject;
@@ -112,8 +113,9 @@ public class AddCommand implements Runnable, VersionArgCommand, CachedConsole.En
         String world = this.world;
         ModDistributionPlatform distributionPlatform = modDistributionPlatformService.getByArg(platform);
         Profile profile = profileResolver.resolve(versionArg, Side.BOTH);
-        Platform platform = platformService.getPlatform(profile.version().platform())
-            .orElseThrow(() -> new IllegalArgumentException("Failed to find platform " + profile.version().platform() + " for profile " + profile.name()));
+        VersionArg version = profileResolver.requireVersion(profile);
+        Platform platform = platformService.getPlatform(version.platform())
+            .orElseThrow(() -> new IllegalArgumentException("Failed to find platform " + version.platform() + " for profile " + profile.name()));
 
         ModType modType = modTypeService.getByName(type)
             .orElseThrow(() -> new IllegalArgumentException(
@@ -143,7 +145,7 @@ public class AddCommand implements Runnable, VersionArgCommand, CachedConsole.En
             worldDir = worldService.resolveWorld(profile, world);
         }
 
-        Path file = distributionPlatform.download(profile.path(), worldDir, mod, profile.version(), modType);
+        Path file = distributionPlatform.download(profile.path(), worldDir, mod, version, modType);
         console.write("Downloaded " + file + " successfully.");
     }
 
