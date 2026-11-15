@@ -16,4 +16,16 @@ import org.jspecify.annotations.Nullable;
 public interface ForgeArtifactResolver {
     Artifact resolve(String platformName, PrismIndex index, PrismIndex.Meta meta, @Nullable String classifier);
 
+    /**
+     * The name the build of an entry in the prism index has in HeadlessMc, the name of the
+     * {@link io.github.headlesshq.headlessmc.platform.PlatformVersion} the version service of the platform
+     * creates for the entry. It has to be that name, a build with any other name cannot be resolved.
+     *
+     * @param meta an entry in the prism index.
+     * @return the name of the build of the entry.
+     */
+    default String getBuildName(PrismIndex.Meta meta) {
+        return meta.version();
+    }
+
 }

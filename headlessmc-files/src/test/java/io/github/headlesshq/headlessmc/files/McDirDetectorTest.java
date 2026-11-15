@@ -29,6 +29,11 @@ class McDirDetectorTest {
         return mcDir;
     }
 
+    /** The order of paths depends on the file system, e.g. on whether it is case sensitive. */
+    private static List<Path> sorted(Path... paths) {
+        return java.util.Arrays.stream(paths).sorted().toList();
+    }
+
     @Test
     void findsMinecraftDirectoriesDownToTheDepth() throws IOException {
         Path top = mcDir("ssd", ".minecraft");
@@ -37,8 +42,8 @@ class McDirDetectorTest {
         Path drive = root.resolve("ssd");
 
         assertEquals(List.of(top), detector.detect(List.of(drive), 1));
-        assertEquals(List.of(top, nextToALauncher), detector.detect(List.of(drive), 3));
-        assertEquals(List.of(top, nextToALauncher, tooDeep), detector.detect(List.of(drive), 4));
+        assertEquals(sorted(top, nextToALauncher), detector.detect(List.of(drive), 3));
+        assertEquals(sorted(top, nextToALauncher, tooDeep), detector.detect(List.of(drive), 4));
         assertEquals(List.of(), detector.detect(List.of(drive), 0));
     }
 
@@ -52,7 +57,7 @@ class McDirDetectorTest {
             List.of(root.resolve("ssd"), root.resolve("hdd"), root.resolve("empty"), root.resolve("not-mounted")), 3
         );
 
-        assertEquals(List.of(onHdd, onSsd), found);
+        assertEquals(sorted(onHdd, onSsd), found);
     }
 
     @Test

@@ -74,11 +74,16 @@ public class ForgeInstallerDownloader {
 
     /**
      * @param id a version, possibly for any build.
-     * @return the name of the build {@link #downloadInstaller(VersionID)} downloads the installer of.
+     * @return the name of the build {@link #downloadInstaller(VersionID)} downloads the installer of,
+     * as the version service of the platform names it, see {@link ForgeArtifactResolver#getBuildName}.
      */
     public String getBuild(VersionID id) throws HeadlessMcException {
+        if (id.getBuild().isPresent()) {
+            return id.getBuild().get().getName();
+        }
+
         PrismIndex index = cache.get().orElseThrow(() -> new RequestException("Failed to get versions"));
-        return getMeta(index, id).version();
+        return artifactResolver.getBuildName(getMeta(index, id));
     }
 
     private PrismIndex.Meta getMeta(PrismIndex index, VersionID id) throws HeadlessMcException {

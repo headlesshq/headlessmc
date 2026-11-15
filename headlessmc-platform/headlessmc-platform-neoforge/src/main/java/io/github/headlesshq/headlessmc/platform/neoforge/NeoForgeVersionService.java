@@ -15,6 +15,15 @@ public class NeoForgeVersionService extends ForgeVersionService implements Versi
 
     @Override
     protected BoundPlatformVersion toVersion(PrismIndex.Meta meta) {
+        return createVersion(getBuildName(meta), meta.getMcVersion());
+    }
+
+    /**
+     * @param meta an entry in the prism index.
+     * @return the name of the build of the entry: its version without the Minecraft version,
+     * e.g. {@code 62-beta} for {@code 21.10.62-beta}.
+     */
+    public static String getBuildName(PrismIndex.Meta meta) {
         String metaVersion = meta.version();
         // in the prism index NeoForge versions look like this: 21.10.62-beta
         // we would like to only have the 62-beta part
@@ -24,7 +33,7 @@ public class NeoForgeVersionService extends ForgeVersionService implements Versi
             metaVersion = metaVersion.substring(meta.getMcVersion().length() - 1);
         }
 
-        return createVersion(metaVersion, meta.getMcVersion());
+        return metaVersion;
     }
 
     /**

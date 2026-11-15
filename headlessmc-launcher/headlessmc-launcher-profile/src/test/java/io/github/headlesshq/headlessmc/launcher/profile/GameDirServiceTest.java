@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class GameDirServiceTest {
     private final FileService fileService = new DefaultFileService(new DefaultFileSystemProvider());
-    private final Path root = fileService.getUserPath("/root");
+    private final Path root = fileService.getUserPath("/root").toAbsolutePath().normalize();
     private final McFiles mcFiles = McFiles.of(root.resolve("mc"));
     private final McFiles ssd = McFiles.of(root.resolve("ssd").resolve(".minecraft"));
     private final AppFiles appFiles = TestFiles.appFiles(root);
@@ -61,6 +61,7 @@ class GameDirServiceTest {
         service.withGameDir("/configured/game");
 
         assertEquals(fileService.getUserPath("/configured/game"), service.getGameDir(version(Side.CLIENT), mcFiles));
+        assertNotEquals(root, fileService.getUserPath("/configured/game"));
     }
 
     @Test

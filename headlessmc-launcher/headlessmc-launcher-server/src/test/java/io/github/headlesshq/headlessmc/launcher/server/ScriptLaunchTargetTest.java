@@ -103,6 +103,22 @@ class ScriptLaunchTargetTest {
     }
 
     @Test
+    void withoutExecutableBitsOnlyTheExtensionMakesAScript() {
+        // on Windows every file counts as executable, a text file is not a script because of that
+        Path text = ExecutableTargetTestFiles.file(root.resolve("notes.txt"), "notes");
+        Path bat = ExecutableTargetTestFiles.file(root.resolve("run.bat"), "echo");
+        Path jar = ExecutableTargetTestFiles.file(root.resolve("server.jar"), "jar");
+
+        assertFalse(ScriptLaunchTarget.isScript(text, false));
+        assertTrue(ScriptLaunchTarget.isScript(bat, false));
+        assertTrue(ScriptLaunchTarget.isScript(script, false));
+        assertFalse(ScriptLaunchTarget.isScript(jar, false));
+        // with them, an extension still makes a script
+        assertTrue(ScriptLaunchTarget.isScript(bat, true));
+        assertFalse(ScriptLaunchTarget.isScript(jar, true));
+    }
+
+    @Test
     void otherFilesAreRejected() {
         Path text = ExecutableTargetTestFiles.file(root.resolve("notes.txt"), "notes");
 

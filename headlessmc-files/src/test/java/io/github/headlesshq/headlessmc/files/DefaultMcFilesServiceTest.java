@@ -405,7 +405,9 @@ class DefaultMcFilesServiceTest {
 
         List<Path> dirs = service().all().stream().map(McFiles::getMcDir).toList();
 
-        assertEquals(List.of(dir("primary"), dir("configured"), onHdd, onSsd), dirs);
+        assertEquals(List.of(dir("primary"), dir("configured")), dirs.subList(0, 2));
+        // the order of what has been found is the order of the file system
+        assertEquals(java.util.stream.Stream.of(onHdd, onSsd).sorted().toList(), dirs.subList(2, dirs.size()));
         // the primary directory stays the one new versions are installed into
         assertEquals(dir("primary"), service().getPrimary().getMcDir());
     }

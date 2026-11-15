@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.server;
 
+import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
@@ -57,13 +58,35 @@ class ServerServiceImplTest {
 
     @Test
     void theBuildOfTheInstallationIsTheCurrentVersion() {
-        Profile server = service.add(root.resolve("srv"), id(), null, new ServerInstallation(21, List.of(), "130"));
+        FakePlatformService platforms = new FakePlatformService(
+            new FakeVanillaPlatform("1.21.1"), FakePlatform.create("paper", new String[]{"1.21.1", "130", "129"})
+        );
+        VersionID paper = VersionID.resolve(platforms, VersionArg.parse("paper", "1.21.1"));
+
+        Profile server = service.add(root.resolve("srv"), paper, null, new ServerInstallation(21, List.of(), "130"));
 
         VersionHandle handle = (VersionHandle) server.target().data();
         // any build has been asked for, build 130 has been installed
-        assertEquals(VersionArg.parse("server", "vanilla", "1.21.1"), handle.version());
-        assertEquals(VersionArg.parse("server", "vanilla", "1.21.1", "130"), handle.current());
-        assertEquals("server-1.21.1", server.name());
+        assertEquals(VersionArg.parse("server", "paper", "1.21.1"), handle.version());
+        assertEquals(VersionArg.parse("server", "paper", "1.21.1", "130"), handle.current());
+        assertEquals("server-paper-1.21.1", server.name());
+    }
+
+    @Test
+    void aBuildThePlatformDoesNotKnowIsNotStored() {
+        FakePlatformService platforms = new FakePlatformService(
+            new FakeVanillaPlatform("1.21.1"), FakePlatform.create("neoforge", new String[]{"1.21.1", "266", "265"})
+        );
+        VersionID neoforge = VersionID.resolve(platforms, VersionArg.parse("neoforge", "1.21.1"));
+
+        // an installer reporting a name its platform has no build for: the version could never be resolved again
+        Profile server = service.add(root.resolve("srv"), neoforge, null, new ServerInstallation(21, List.of(), "21.1.266"));
+
+        VersionHandle handle = (VersionHandle) server.target().data();
+        assertEquals(VersionArg.parse("server", "neoforge", "1.21.1"), handle.current());
+        // a vanilla version has no builds at all
+        Profile vanilla = service.add(root.resolve("v"), id(), "v", new ServerInstallation(21, List.of(), "130"));
+        assertEquals(VersionArg.parse("server", "vanilla", "1.21.1"), ((VersionHandle) vanilla.target().data()).current());
     }
 
     @Test

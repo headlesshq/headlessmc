@@ -28,4 +28,9 @@ public class NeoForgeArtifactResolver implements ForgeArtifactResolver {
         return new Artifact(index.uid(), platformName, meta.version(), classifier);
     }
 
+    @Override
+    public String getBuildName(PrismIndex.Meta meta) {
+        return NeoForgeVersionService.getBuildName(meta);
+    }
+
 }

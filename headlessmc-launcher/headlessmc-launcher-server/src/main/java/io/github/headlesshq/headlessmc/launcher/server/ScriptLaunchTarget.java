@@ -95,11 +95,22 @@ public class ScriptLaunchTarget extends AbstractExecutableLaunchTarget<ScriptLau
     }
 
     private static boolean isScript(Path file) {
+        return isScript(file, file.getFileSystem().supportedFileAttributeViews().contains("posix"));
+    }
+
+    /**
+     * @param file           a file.
+     * @param executableBits whether the file system has permissions that mark a file as executable.
+     *                       Where it has not, like on Windows, every file counts as executable,
+     *                       which says nothing: there a script is only known by its extension.
+     * @return {@code true} if the file is a script.
+     */
+    static boolean isScript(Path file, boolean executableBits) {
         if (PathCandidates.hasExtension(file, ".jar", ".json", ".toml")) {
             return false;
         }
 
-        return PathCandidates.hasExtension(file, EXTENSIONS) || Files.isExecutable(file);
+        return PathCandidates.hasExtension(file, EXTENSIONS) || executableBits && Files.isExecutable(file);
     }
 
     /**
