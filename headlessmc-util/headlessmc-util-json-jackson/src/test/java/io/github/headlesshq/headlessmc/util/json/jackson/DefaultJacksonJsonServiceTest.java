@@ -124,6 +124,17 @@ class DefaultJacksonJsonServiceTest {
     }
 
     @Test
+    void versionedEnvelopesWithoutAnObjectAreBroken() {
+        TypeLiteral<Example> type = new TypeLiteral<>() {};
+
+        // the version is the expected one, so this is not an outdated file, it is a file without content
+        assertThrows(JsonParseException.class, () -> service.parseVersioned(stream("{\"version\":1}"), type, 1));
+        assertThrows(
+            JsonParseException.class, () -> service.parseVersioned(stream("{\"version\":1,\"object\":null}"), type, 1)
+        );
+    }
+
+    @Test
     void malformedJsonThrows(@TempDir Path root) throws IOException {
         Path file = Files.writeString(root.resolve("broken.json"), "not json");
         TypeLiteral<Example> type = new TypeLiteral<>() {};

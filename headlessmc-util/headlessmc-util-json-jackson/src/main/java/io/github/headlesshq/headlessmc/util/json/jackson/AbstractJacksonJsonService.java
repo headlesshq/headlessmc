@@ -145,8 +145,14 @@ public abstract class AbstractJacksonJsonService implements JsonService {
                 return Optional.empty();
             }
 
+            JsonNode object = node.get("object");
+            if (object == null || object.isNull()) {
+                // the version is right, but there is nothing to read: a broken file, not an outdated one
+                throw new JsonParseException("Failed to parse " + type + ", it has no object");
+            }
+
             JavaType javaType = mapper().constructType(type.getType());
-            return Optional.of(mapper().treeToValue(node.get("object"), javaType));
+            return Optional.of(mapper().treeToValue(object, javaType));
         } catch (JacksonException e) {
             throw new JsonParseException("Failed to parse " + type, e);
         }
