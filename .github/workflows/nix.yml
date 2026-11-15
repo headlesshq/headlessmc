@@ -55,16 +55,20 @@ jobs:
       # build tools in the closure fail the build through disallowedReferences, this shows the rest
       - run: nix path-info --closure-size --human-readable ./result ./result-native
 
-  # Renovate PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs
-  # (gradle_9/JDK of nixpkgs) change the resolved artifacts, so deps.json would go stale and break the build on main.
-  # Like update-fabric-lock in lifecycle.yml: regenerate deps.json and push it to the PR branch if it changed.
+  # PRs that bump Gradle dependencies, plugins, the wrapper or the flake inputs (gradle_9/JDK of nixpkgs)
+  # change the resolved artifacts, so deps.json would go stale and break the build on main.
+  # Like update-fabric-lock in lifecycle.yml: regenerate deps.json, push it to the PR branch if it changed
+  # and check that the package builds with it.
   # Pushes made with GITHUB_TOKEN do not trigger new workflow runs, so FABRIC_LOCK_TOKEN is preferred.
+  # Fork PRs cannot be pushed to, there the maintainers have to regenerate deps.json.
   update-deps-json:
     if: >
       github.event_name == 'pull_request'
       && github.event.pull_request.head.repo.full_name == github.repository
-      && startsWith(github.head_ref, 'renovate/')
     runs-on: ubuntu-latest
+    concurrency:
+      group: update-deps-json-${{ github.head_ref }}
+      cancel-in-progress: true
     permissions:
       contents: write
     steps:
@@ -93,3 +97,4 @@ jobs:
           # the other lock jobs may push to the same renovate branch first; they touch other files
           git pull --rebase origin "$GITHUB_HEAD_REF"
           git push
+      - run: nix build .#headlessmc --print-build-logs
