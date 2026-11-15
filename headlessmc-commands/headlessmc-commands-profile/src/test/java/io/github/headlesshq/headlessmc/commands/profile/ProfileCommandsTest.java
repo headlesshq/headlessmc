@@ -14,6 +14,7 @@ import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.client.DefaultJvmArgsService;
 import io.github.headlesshq.headlessmc.launcher.client.VersionLaunchTarget;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeVersionLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout;
 import io.github.headlesshq.headlessmc.launcher.profile.GameDirService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileLaunchTarget;
@@ -104,6 +105,7 @@ class ProfileCommandsTest {
     private LaunchTargetService createLaunchTargets() {
         TestLaunchTargets targets = new TestLaunchTargets(profileService);
         GameDirService gameDirService = Mockito.mock(GameDirService.class);
+        Mockito.when(gameDirService.getLayout()).thenReturn(GameDirLayout.HEADLESSMC);
         Mockito.when(gameDirService.getGameDir(Mockito.any(), Mockito.any()))
             .thenAnswer(invocation -> root.resolve(invocation.<VersionArg>getArgument(0).toString("-")));
         profileTarget = targets.profileTarget();

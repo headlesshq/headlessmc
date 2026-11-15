@@ -30,6 +30,21 @@ class FileConfigTest {
         public Optional<String> gameDir() {
             return Optional.empty();
         }
+
+        @Override
+        public boolean mcDetect() {
+            return false;
+        }
+
+        @Override
+        public int mcDetectDepth() {
+            return 3;
+        }
+
+        @Override
+        public String gameDirLayout() {
+            return "headlessmc";
+        }
     }
 
     private final FileConfig config = new TestFileConfig(false, true);

@@ -39,6 +39,7 @@ dependencies {
     testFixturesApi project(':headlessmc-launcher')
     testFixturesApi project(':headlessmc-launcher:headlessmc-launcher-profile')
     testFixturesApi testFixtures(project(':headlessmc-platform'))
+    testFixturesImplementation testFixtures(project(':headlessmc-files'))
     testFixturesApi testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
     testFixturesImplementation testFixtures(project(':headlessmc-version'))
     testFixturesImplementation project(':headlessmc-os')

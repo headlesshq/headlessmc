@@ -113,6 +113,11 @@ public abstract class AbstractMoveCommand implements Runnable, LongRunningComman
         @Nullable Path newPath = directory == null ? null : fileService.getUserPath(directory);
         String targetName = newName == null ? profile.name() : newName;
         if (newPath == null && mcFiles != null) {
+            // what the profile launches is installed in the other directory first: if that fails nothing has
+            // been moved, and the default game directory can depend on where the version is installed
+            TypedMap options = new TypedMapImpl();
+            options.put(LaunchTarget.MC_FILES, mcFiles);
+            launchTargetService.resolve(profile, options);
             newPath = getDefaultPath(profile, targetName, mcFiles);
         }
 

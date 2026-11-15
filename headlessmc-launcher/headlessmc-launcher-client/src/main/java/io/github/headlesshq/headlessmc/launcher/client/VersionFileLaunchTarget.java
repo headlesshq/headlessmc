@@ -227,6 +227,11 @@ public class VersionFileLaunchTarget extends AbstractLaunchTarget<VersionFileLau
         Handle handle = handle(target.handle());
         Path path = options.get(GAME_DIR);
         if (path == null) {
+            // with the layout of other launchers the game directory of a version.json is the directory it is in
+            path = gameDirService.getGameDir(handle.file(), isModded(handle.file())).orElse(null);
+        }
+
+        if (path == null) {
             // like a version of that name: a game directory in the .minecraft directory of the file
             String id = handle.file().getFileName().toString();
             id = id.substring(0, id.length() - JSON.length());
@@ -267,6 +272,22 @@ public class VersionFileLaunchTarget extends AbstractLaunchTarget<VersionFileLau
 
         Version version = versionJsonService.getParser().parse(handle.file());
         return clientLauncher.launcher(profile, account, version, clientLauncher.matchVersionId(version).orElse(null));
+    }
+
+    /**
+     * A version.json is only known to be vanilla if it is recognized as a vanilla version.
+     * Anything else, also what cannot be read or recognized, is treated as modded:
+     * it gets a game directory of its own instead of sharing one.
+     */
+    private boolean isModded(Path file) {
+        try {
+            return clientLauncher.matchVersionId(versionJsonService.getParser().parse(file))
+                .map(id -> !id.isVanilla())
+                .orElse(true);
+        } catch (HeadlessMcException e) {
+            log.debug("Failed to read {}", file, e);
+            return true;
+        }
     }
 
     private Handle validate(Profile profile) throws LaunchException {

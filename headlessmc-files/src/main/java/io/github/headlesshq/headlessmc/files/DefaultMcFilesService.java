@@ -25,6 +25,7 @@ public class DefaultMcFilesService extends AbstractMcFilesService {
     private final Holder<FileConfig> configHolder;
     private final ConfigService configService;
     private final FileService fileService;
+    private final McDirDetector detector;
     private final OS os;
 
     @Override
@@ -55,7 +56,29 @@ public class DefaultMcFilesService extends AbstractMcFilesService {
             result.add(mcFiles);
         }
 
+        addDetected(result);
         return List.copyOf(result);
+    }
+
+    /**
+     * Adds the directories found on other drives, after the configured ones.
+     * This is computed with the list of all directories, so a drive is searched once and not for every command.
+     */
+    private void addDetected(List<McFiles> result) {
+        FileConfig config = configHolder.get();
+        if (!config.mcDetect()) {
+            return;
+        }
+
+        for (Path mcDir : detector.detect(Math.max(1, config.mcDetectDepth()))) {
+            McFiles mcFiles = McFiles.of(mcDir);
+            boolean known = result.stream().anyMatch(other ->
+                other.isSame(mcFiles) || McFiles.normalize(mcDir).startsWith(McFiles.normalize(other.getMcDir())));
+            if (!known) {
+                log.info("Found Minecraft directory {}", mcDir);
+                result.add(mcFiles);
+            }
+        }
     }
 
     private void warnIfNested(List<McFiles> others, McFiles mcFiles) {

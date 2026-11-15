@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.TargetInfo;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionDirectories;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherService;
@@ -169,8 +170,17 @@ public class VersionRemoveService {
             files.addAll(unusedLoggingConfigs(mcFiles, removed, needed));
         }
 
+        List<Path> keptDirectories = new ArrayList<>();
         for (Version removedVersion : removedVersions.reversed()) {
-            files.add(fileService.getPath(mcFiles.getVersionsDir(), removedVersion.getId()));
+            Path versionDir = fileService.getPath(mcFiles.getVersionsDir(), removedVersion.getId());
+            List<Path> versionFiles = getVersionFilesIfAGameIsPlayedIn(versionDir);
+            if (versionFiles == null) {
+                files.add(versionDir);
+            } else {
+                // with the game directory layout of other launchers the worlds and mods of a game are in here
+                files.addAll(versionFiles);
+                keptDirectories.add(versionDir);
+            }
         }
 
         Path mcDir = mcFiles.getMcDir().toAbsolutePath().normalize();
@@ -187,8 +197,34 @@ public class VersionRemoveService {
             blockingProfiles,
             List.copyOf(removedVersions),
             withDependents ? blockingProfiles : List.of(),
-            existing
+            existing,
+            List.copyOf(keptDirectories)
         );
+    }
+
+    /**
+     * The directory of a version can also be a game directory, see
+     * {@link io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout}: HMCL and PCL2 keep the worlds,
+     * mods and settings of a version next to its version.json. Removing a version must never delete those.
+     *
+     * @return the files of the version in its directory if the directory holds anything else,
+     * {@code null} if the directory only holds the version and can be deleted as a whole.
+     */
+    private @Nullable List<Path> getVersionFilesIfAGameIsPlayedIn(Path versionDir) {
+        if (!VersionDirectories.isVersionDirectory(versionDir)) {
+            return null;
+        }
+
+        try {
+            return VersionDirectories.getGameFiles(versionDir).isEmpty()
+                ? null
+                : VersionDirectories.getVersionFiles(versionDir);
+        } catch (IOException e) {
+            // cannot look inside, only the files a version is known to have are deleted
+            log.warn("Failed to list {}, only deleting the version.json and jar in it", versionDir, e);
+            String id = String.valueOf(versionDir.getFileName());
+            return List.of(versionDir.resolve(id + ".jar"), versionDir.resolve(id + ".json"));
+        }
     }
 
     /**

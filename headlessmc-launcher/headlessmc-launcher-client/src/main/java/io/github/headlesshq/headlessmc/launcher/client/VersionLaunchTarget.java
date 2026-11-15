@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.client;
 
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout;
 import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.McFiles;
@@ -100,9 +101,40 @@ public class VersionLaunchTarget extends AbstractVersionLaunchTarget {
         return Side.CLIENT;
     }
 
+    /**
+     * The game directory of a new profile. With a layout that places game directories in the directory of
+     * the installed version, see {@link GameDirLayout}, that is the directory of the version the profile is
+     * going to launch if it is installed already. If it is not, the profile gets a placeholder,
+     * which {@link #resolve(Profile, TypedMap)} replaces once the version has been installed.
+     */
     @Override
     protected Path defaultPath(String name, VersionHandle handle, TypedMap options) {
-        return gameDirService.getGameDir(handle.version(), options.get(MC_FILES, mcFilesService.getPrimary()));
+        @Nullable McFiles requested = options.get(MC_FILES);
+        if (gameDirService.getLayout().isInVersionDirectory()) {
+            try {
+                VersionID id = VersionID.resolve(platformService, handle.effectiveVersion());
+                Optional<Path> gameDir = findInstalled(id, requested)
+                    .flatMap(match -> match.version().asFile())
+                    .flatMap(file -> gameDirService.getGameDir(file, !id.isVanilla()));
+                if (gameDir.isPresent()) {
+                    return gameDir.get();
+                }
+            } catch (HeadlessMcException | IllegalArgumentException e) {
+                log.debug("Failed to look for an installed version for {}", handle.effectiveVersion(), e);
+            }
+        }
+
+        return gameDirService.getGameDir(handle.version(), requested == null ? mcFilesService.getPrimary() : requested);
+    }
+
+    /**
+     * Finds the installed version a profile for the id launches, like resolving does, without installing anything.
+     */
+    private Optional<VersionMatcherService.MatchResult> findInstalled(VersionID id, @Nullable McFiles requested) {
+        List<Version> installed = requested == null
+            ? versionJsonService.getInstalledVersions()
+            : versionJsonService.getInstalledVersions(requested);
+        return versionMatcherService.match(id, installed, versionJsonService);
     }
 
     @Override
@@ -120,7 +152,30 @@ public class VersionLaunchTarget extends AbstractVersionLaunchTarget {
             result = defaultJvmArgsService.withDefaultJvmArgs(result, resolved.version());
         }
 
-        return result;
+        return withGameDirOfVersion(result, handle, resolved);
+    }
+
+    /**
+     * The one case in which resolving decides the game directory of a profile: with a layout that places game
+     * directories in the directory of the installed version, a new profile for a version that was not installed
+     * could only get a {@link GameDirService#isPlaceholder(Path, VersionArg) placeholder} for that directory.
+     * Now the version is installed, and the directory is known.
+     * A game directory that has been chosen by the user, or that a profile already uses, is never a placeholder.
+     */
+    private Profile withGameDirOfVersion(Profile profile, VersionHandle before, Resolved resolved) {
+        @Nullable Path file = resolved.handle().currentTarget();
+        if (before.currentTarget() != null || file == null || !gameDirService.isPlaceholder(profile.path(), before.version())) {
+            return profile;
+        }
+
+        boolean modded = resolved.id() == null || !resolved.id().isVanilla();
+        Optional<Path> gameDir = gameDirService.getGameDir(file, modded);
+        if (gameDir.isEmpty() || McFiles.normalize(gameDir.get()).equals(McFiles.normalize(profile.path()))) {
+            return profile;
+        }
+
+        log.info("The game directory of profile {} is the directory of its version, {}", profile.name(), gameDir.get());
+        return profile.withPath(gameDir.get());
     }
 
     @Override
@@ -169,12 +224,9 @@ public class VersionLaunchTarget extends AbstractVersionLaunchTarget {
             );
         }
 
-        List<Version> installed = requested == null
-            ? versionJsonService.getInstalledVersions()
-            : versionJsonService.getInstalledVersions(requested);
         Optional<VersionMatcherService.MatchResult> match = forceInstall
             ? Optional.empty()
-            : versionMatcherService.match(id, installed, versionJsonService);
+            : findInstalled(id, requested);
 
         Version version;
         VersionID resolvedId;

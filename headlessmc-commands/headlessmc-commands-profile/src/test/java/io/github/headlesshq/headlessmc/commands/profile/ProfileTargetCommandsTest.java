@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.commands.profile;
 
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.RecordingConsole;
 import io.github.headlesshq.headlessmc.console.format.SimpleTableProvider;
@@ -808,6 +809,78 @@ class ProfileTargetCommandsTest {
             .filter(line -> !line.startsWith("Added "))
             .findFirst()
             .orElseThrow(() -> new AssertionError("No row for " + name + " in\n" + String.join("\n", lines)));
+    }
+
+    // the game directory layouts of other launchers, hmc.files.game-dir-layout
+
+    @Test
+    void addPlacesTheGameDirectoryInTheDirectoryOfTheVersion() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+
+        add("fabric", "1.21.1").run();
+
+        Profile profile = profile("fabric-1.21.1");
+        Path versionDir = env.primary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1");
+        assertEquals(versionDir, profile.path());
+        assertEquals(Optional.of(fabricJson(env.primary, LATEST_BUILD)), info("fabric-1.21.1").file());
+    }
+
+    @Test
+    void anInstanceOfAnotherLauncherIsPlayedWhereItsFilesAre() throws IOException {
+        // migrating from HMCL or PCL2: mods and worlds are in versions/<name>/
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        Path json = env.installCustom(env.primary, "My Modpack");
+        Path world = Files.createDirectories(json.getParent().resolve("saves").resolve("world"));
+        Files.createDirectories(json.getParent().resolve("mods"));
+
+        add("My Modpack").withName("modpack").run();
+
+        Profile profile = profile("modpack");
+        assertEquals(json.getParent(), profile.path());
+        assertTrue(Files.exists(profile.path().resolve("mods")));
+        assertEquals(world, profile.path().resolve("saves").resolve("world"));
+    }
+
+    @Test
+    void movingAProfileOutOfItsVersionDirectoryKeepsTheVersionLaunchable() throws IOException {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        add("fabric", "1.21.1").withName("main").run();
+        Profile main = profile("main");
+        Files.writeString(main.path().resolve("options.txt"), "fov:70");
+        Path destination = root.resolve("games").resolve("main");
+
+        MoveCommand command = move("main");
+        command.setDirectory(destination.toString());
+        command.run();
+
+        assertEquals(destination, profile("main").path());
+        assertEquals("fov:70", Files.readString(destination.resolve("options.txt")));
+        // the version.json it launches did not move
+        assertTrue(Files.exists(fabricJson(env.primary, LATEST_BUILD)));
+        assertEquals(Optional.of(fabricJson(env.primary, LATEST_BUILD)), info("main").file());
+        assertSame(profile("main"), launchTargetService.resolveAndPersist(profile("main"), new TypedMapImpl()));
+    }
+
+    @Test
+    void movingToAnotherMinecraftDirectoryUsesTheDirectoryOfTheVersionThere() throws IOException {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        add("fabric", "1.21.1").withName("main").run();
+        Profile main = profile("main");
+        Files.writeString(main.path().resolve("options.txt"), "fov:70");
+
+        MoveCommand command = move("main");
+        command.setMc(env.secondary.getMcDir().toString());
+        command.run();
+
+        // the version is installed there first, then the game moves next to it
+        Path versionDir = env.secondary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1");
+        assertEquals(versionDir, profile("main").path());
+        assertEquals("fov:70", Files.readString(versionDir.resolve("options.txt")));
+        assertEquals(Optional.of(fabricJson(env.secondary, LATEST_BUILD)), info("main").file());
+        assertEquals(2, env.installs.size());
+        // the version in the old directory is still installed, only the game left
+        assertTrue(Files.exists(fabricJson(env.primary, LATEST_BUILD)));
+        assertFalse(Files.exists(main.path().resolve("options.txt")));
     }
 
 }

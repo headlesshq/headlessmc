@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.client;
 
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout;
 import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.launcher.process.LaunchException;
 import io.github.headlesshq.headlessmc.launcher.profile.ArgCandidate;
@@ -373,6 +374,60 @@ class VersionFileLaunchTargetTest {
         assertEquals(new VersionFileLaunchTarget.Handle(json), target.handle(stored));
         assertTrue(target.isSameTarget(stored, target.parse(TargetArgs.of(json.toString()))));
         assertEquals(Optional.of(json), target.describe(stored).file());
+    }
+
+    // the game directory layouts of other launchers, see GameDirLayout
+
+    @Test
+    void inTheVersionsLayoutAVersionJsonIsPlayedInItsOwnDirectory() throws IOException {
+        // an instance of HMCL or PCL2: the worlds are next to the version.json
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        Files.createDirectories(json.getParent().resolve("saves").resolve("world"));
+
+        Profile byPath = profile(json);
+        Profile byId = target.create("p", target.parse(TargetArgs.of("my-pack")), new TypedMapImpl());
+
+        assertEquals(json.getParent(), byPath.path());
+        assertEquals(json.getParent(), byId.path());
+        assertTrue(Files.exists(byId.path().resolve("saves").resolve("world")));
+        // resolving does not change it
+        assertSame(byPath, target.resolve(byPath, new TypedMapImpl()));
+    }
+
+    @Test
+    void aLooseVersionJsonHasNoDirectoryToPlayIn() throws IOException {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        Path loose = Files.writeString(root.resolve("loose.json"), "loose");
+
+        // the directory it happens to be in is not a game directory, it gets one like a version of that name
+        assertEquals(env.primary.getVersionsDir().resolve("loose"), profile(loose).path());
+    }
+
+    @Test
+    void inTheVersionsModdedLayoutOnlyVersionsKnownToBeVanillaShareTheMinecraftDirectory() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS_MODDED);
+        Path vanilla = env.install(env.secondary, "1.21.1");
+        Path fabric = env.install(env.secondary, "fabric", "1.21.1", ClientTargetEnvironment.OLD_BUILD);
+        Mockito.when(env.clientLauncher.matchVersionId(Mockito.argThat(v -> v != null && v.getId().equals("1.21.1"))))
+            .thenReturn(Optional.of(env.id("1.21.1")));
+        Mockito.when(env.clientLauncher.matchVersionId(Mockito.argThat(v -> v != null && v.getId().startsWith("fabric"))))
+            .thenReturn(Optional.of(env.id("fabric", "1.21.1", ClientTargetEnvironment.OLD_BUILD)));
+
+        assertEquals(env.secondary.getMcDir(), profile(vanilla).path());
+        assertEquals(fabric.getParent(), profile(fabric).path());
+        // nothing recognizes my-pack: it keeps its files to itself
+        assertEquals(json.getParent(), profile(json).path());
+    }
+
+    @Test
+    void theGameDirectoryCanStillBeChosenInTheVersionsLayout() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+
+        Profile custom = target.create(
+            "p", target.parse(TargetArgs.of(json.toString())), options(LaunchTarget.GAME_DIR, root.resolve("custom"))
+        );
+
+        assertEquals(root.resolve("custom"), custom.path());
     }
 
 }

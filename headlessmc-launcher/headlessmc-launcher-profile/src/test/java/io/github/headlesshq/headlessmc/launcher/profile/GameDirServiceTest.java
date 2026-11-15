@@ -1,146 +1,39 @@
 package io.github.headlesshq.headlessmc.launcher.profile;
 
 import io.github.headlesshq.headlessmc.config.ConfigException;
-import io.github.headlesshq.headlessmc.config.ConfigService;
-import io.github.headlesshq.headlessmc.config.DynamicConfig;
-import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
-import io.github.headlesshq.headlessmc.files.FileConfig;
 import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.arg.VersionArg;
-import io.smallrye.config.Config;
-import io.smallrye.config.PropertiesConfigSource;
-import io.smallrye.config.SmallRyeConfigBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
-import java.util.SortedSet;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GameDirServiceTest {
-    private record TestFileConfig(boolean gameForEachVersion, Optional<String> gameDir) implements FileConfig {
-        @Override
-        public Optional<java.util.List<String>> mcDirs() {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<String> location() {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<String> mcDir() {
-            return Optional.empty();
-        }
-    }
-
-    /** Just delegates {@link #getConfig()}, since that is all {@link GameDirService} uses. */
-    private static final class PassthroughConfigService implements ConfigService {
-        private final Config config;
-
-        private PassthroughConfigService(Config config) {
-            this.config = config;
-        }
-
-        @Override
-        public Config getConfig() {
-            return config;
-        }
-
-        @Override
-        public boolean set(String name, String value, boolean persist) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean remove(String name) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ConfigService fork() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <C extends DynamicConfig> Holder<C> getHolder(Class<C> type) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <C extends DynamicConfig> Holder<C> getHolder(Class<C> type, String prefix) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <V> V bind(Object key, Supplier<V> mapping) {
-            return mapping.get();
-        }
-
-        @Override
-        public SortedSet<String> getPropertyNames() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
     private final FileService fileService = new DefaultFileService(new DefaultFileSystemProvider());
     private final Path root = fileService.getUserPath("/root");
-    private final McFiles mcFiles = () -> root.resolve("mc");
-    private final AppFiles appFiles = new AppFiles() {
-        @Override
-        public Path getConfigDir() {
-            return root.resolve("config");
-        }
-
-        @Override
-        public Path getDataDir() {
-            return root.resolve("data");
-        }
-
-        @Override
-        public Path getCacheDir() {
-            return root.resolve("cache");
-        }
-
-        @Override
-        public Path getStateDir() {
-            return root.resolve("state");
-        }
-    };
-
-    private static Config config(Map<String, String> properties) {
-        return new SmallRyeConfigBuilder()
-            .withSources(new PropertiesConfigSource(properties, "test"))
-            .build();
-    }
-
-    private GameDirService service(
-        boolean gameForEachVersion,
-        Optional<String> gameDir,
-        Optional<String> legacyGameDir
-    ) {
-        Holder<FileConfig> holder = () -> new TestFileConfig(gameForEachVersion, gameDir);
-        Map<String, String> properties = legacyGameDir.map(value -> Map.of("hmc.gamedir", value)).orElse(Map.of());
-        ConfigService configService = new PassthroughConfigService(config(properties));
-        return new GameDirService(holder, configService, fileService, appFiles);
-    }
+    private final McFiles mcFiles = McFiles.of(root.resolve("mc"));
+    private final McFiles ssd = McFiles.of(root.resolve("ssd").resolve(".minecraft"));
+    private final AppFiles appFiles = TestFiles.appFiles(root);
+    private final TestGameDirService service = new TestGameDirService(appFiles);
 
     private VersionArg version(Side side) {
         return new VersionArg(Optional.of(side), "vanilla", "1.21.1", Optional.empty());
     }
 
+    private static Path json(McFiles mcFiles, String id) {
+        return mcFiles.getVersionsDir().resolve(id).resolve(id + ".json");
+    }
+
     @Test
     void serverVersionsGetAPerVersionServerDir() {
-        GameDirService service = service(true, Optional.empty(), Optional.empty());
         VersionArg version = version(Side.SERVER);
 
         assertEquals(
@@ -151,7 +44,6 @@ class GameDirServiceTest {
 
     @Test
     void clientVersionsGetAPerVersionMcDirWhenEnabled() {
-        GameDirService service = service(true, Optional.empty(), Optional.empty());
         VersionArg version = version(Side.CLIENT);
 
         assertEquals(mcFiles.getMcDir().resolve(version.toString("-")), service.getGameDir(version, mcFiles));
@@ -159,30 +51,153 @@ class GameDirServiceTest {
 
     @Test
     void clientVersionsShareTheMcDirWhenPerVersionIsDisabled() {
-        GameDirService service = service(false, Optional.empty(), Optional.empty());
+        service.withGameForEachVersion(false);
 
         assertEquals(mcFiles.getMcDir(), service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
     @Test
     void usesTheConfiguredGameDir() {
-        GameDirService service = service(true, Optional.of("/configured/game"), Optional.empty());
+        service.withGameDir("/configured/game");
 
         assertEquals(fileService.getUserPath("/configured/game"), service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
     @Test
     void fallsBackToTheLegacyGameDirProperty() {
-        GameDirService service = service(true, Optional.empty(), Optional.of("/legacy/game"));
+        service.withLegacyGameDir("/legacy/game");
 
         assertEquals(fileService.getUserPath("/legacy/game"), service.getGameDir(version(Side.CLIENT), mcFiles));
     }
 
     @Test
     void conflictingGameDirAndLegacyGameDirThrow() {
-        GameDirService service = service(true, Optional.of("/a"), Optional.of("/b"));
+        service.withGameDir("/a").withLegacyGameDir("/b");
 
         assertThrows(ConfigException.class, () -> service.getGameDir(version(Side.CLIENT), mcFiles));
+    }
+
+    // the layout of game directories
+
+    @Test
+    void theDefaultLayoutIsTheOneOfHeadlessMc() {
+        assertEquals(GameDirLayout.HEADLESSMC, service.getLayout());
+        assertFalse(service.getLayout().isInVersionDirectory());
+        // nothing depends on where a version is installed
+        assertEquals(Optional.empty(), service.getGameDir(json(mcFiles, "fabric-loader-0.16.9-1.21.1"), true));
+        assertFalse(service.isPlaceholder(mcFiles.getMcDir().resolve("fabric-1.21.1"), VersionArg.parse("fabric", "1.21.1")));
+        assertFalse(service.isPlaceholder(mcFiles.getVersionsDir().resolve("fabric-1.21.1"), VersionArg.parse("fabric", "1.21.1")));
+    }
+
+    @Test
+    void layoutsAreParsedFromTheirConfigNames() {
+        assertEquals(GameDirLayout.VERSIONS, service.withLayout("versions").getLayout());
+        assertEquals(GameDirLayout.VERSIONS_MODDED, service.withLayout("versions-modded").getLayout());
+        assertEquals(GameDirLayout.VERSIONS_MODDED, service.withLayout(" Versions_Modded ").getLayout());
+        assertEquals(GameDirLayout.HEADLESSMC, service.withLayout("headlessmc").getLayout());
+        for (GameDirLayout layout : GameDirLayout.values()) {
+            assertEquals(layout, GameDirLayout.parse(layout.getConfigName()));
+        }
+    }
+
+    @Test
+    void anUnknownLayoutIsAnErrorThatNamesTheLayouts() {
+        service.withLayout("hmcl");
+
+        IllegalArgumentException e = assertThrows(
+            IllegalArgumentException.class, () -> service.getGameDir(version(Side.CLIENT), mcFiles)
+        );
+
+        assertTrue(e.getMessage().contains("hmc.files.game-dir-layout 'hmcl'"), e.getMessage());
+        assertTrue(e.getMessage().contains("headlessmc, versions, versions-modded"), e.getMessage());
+    }
+
+    @Test
+    void inTheVersionsLayoutTheGameDirectoryIsTheDirectoryOfTheInstalledVersion() {
+        service.withLayout(GameDirLayout.VERSIONS);
+        Path fabric = json(mcFiles, "fabric-loader-0.16.9-1.21.1");
+        Path vanilla = json(ssd, "1.21.1");
+
+        assertEquals(Optional.of(fabric.getParent()), service.getGameDir(fabric, true));
+        // also vanilla versions, and in whatever .minecraft directory the version is installed
+        assertEquals(Optional.of(ssd.getVersionsDir().resolve("1.21.1")), service.getGameDir(vanilla, false));
+        // the name of a version.json from another launcher is whatever the user called it
+        assertEquals(Optional.of(mcFiles.getVersionsDir().resolve("My Pack")), service.getGameDir(json(mcFiles, "My Pack"), true));
+    }
+
+    @Test
+    void inTheVersionsLayoutAVersionThatIsNotInstalledGetsAPlaceholder() {
+        service.withLayout(GameDirLayout.VERSIONS);
+        VersionArg fabric = VersionArg.parse("fabric", "1.21.1");
+
+        Path placeholder = service.getGameDir(fabric, ssd);
+
+        // the id it will be installed under is not known, e.g. fabric-loader-0.16.9-1.21.1
+        assertEquals(ssd.getVersionsDir().resolve("fabric-1.21.1"), placeholder);
+        assertTrue(service.isPlaceholder(placeholder, fabric));
+        assertTrue(service.isPlaceholder(placeholder, fabric.withSide(Side.CLIENT)));
+        // for a vanilla version it is the directory it will be installed in
+        assertEquals(mcFiles.getVersionsDir().resolve("1.21.1"), service.getGameDir(VersionArg.parse("1.21.1"), mcFiles));
+        // game directories that are something else
+        assertFalse(service.isPlaceholder(ssd.getVersionsDir().resolve("fabric-loader-0.16.9-1.21.1"), fabric));
+        assertFalse(service.isPlaceholder(ssd.getMcDir().resolve("fabric-1.21.1"), fabric));
+        assertFalse(service.isPlaceholder(ssd.getMcDir(), fabric));
+        assertFalse(service.isPlaceholder(root.resolve("games").resolve("fabric-1.21.1"), fabric));
+        assertFalse(service.isPlaceholder(placeholder, VersionArg.parse("forge", "1.21.1")));
+        assertFalse(service.isPlaceholder(root.getRoot(), fabric));
+    }
+
+    @Test
+    void inTheVersionsModdedLayoutVanillaVersionsShareTheMinecraftDirectory() {
+        service.withLayout(GameDirLayout.VERSIONS_MODDED);
+
+        // like HMCL does by default
+        assertEquals(Optional.of(mcFiles.getMcDir()), service.getGameDir(json(mcFiles, "1.21.1"), false));
+        assertEquals(mcFiles.getMcDir(), service.getGameDir(VersionArg.parse("1.21.1"), mcFiles));
+        assertEquals(
+            Optional.of(mcFiles.getVersionsDir().resolve("fabric-loader-0.16.9-1.21.1")),
+            service.getGameDir(json(mcFiles, "fabric-loader-0.16.9-1.21.1"), true)
+        );
+        assertEquals(
+            mcFiles.getVersionsDir().resolve("fabric-1.21.1"),
+            service.getGameDir(VersionArg.parse("fabric", "1.21.1"), mcFiles)
+        );
+        assertTrue(service.isPlaceholder(mcFiles.getVersionsDir().resolve("fabric-1.21.1"), VersionArg.parse("fabric", "1.21.1")));
+    }
+
+    @Test
+    void aVersionJsonThatIsNotInstalledLikeAVersionHasNoDirectoryOfItsOwn() {
+        service.withLayout(GameDirLayout.VERSIONS);
+
+        // a loose file, e.g. in the downloads directory: its directory is not a game directory
+        assertEquals(Optional.empty(), service.getGameDir(root.resolve("downloads").resolve("pack.json"), true));
+        assertEquals(Optional.empty(), service.getGameDir(root.resolve("pack.json"), true));
+        assertEquals(Optional.empty(), service.getGameDir(mcFiles.getMcDir().resolve("other").resolve("pack").resolve("pack.json"), true));
+    }
+
+    @Test
+    void aConfiguredGameDirectoryWinsOverEveryLayout() {
+        service.withLayout(GameDirLayout.VERSIONS).withGameDir("/configured/game");
+        VersionArg fabric = VersionArg.parse("fabric", "1.21.1");
+
+        assertEquals(fileService.getUserPath("/configured/game"), service.getGameDir(fabric, mcFiles));
+        assertEquals(Optional.empty(), service.getGameDir(json(mcFiles, "fabric-loader-0.16.9-1.21.1"), true));
+        assertFalse(service.isPlaceholder(mcFiles.getVersionsDir().resolve("fabric-1.21.1"), fabric));
+    }
+
+    @Test
+    void serversAreNotAffectedByTheLayout() {
+        service.withLayout(GameDirLayout.VERSIONS);
+        VersionArg version = version(Side.SERVER);
+
+        assertEquals(appFiles.getServerDir().resolve("server-" + version.toString("-")), service.getGameDir(version, mcFiles));
+    }
+
+    @Test
+    void gameForEachVersionIsOnlyUsedByTheHeadlessMcLayout() {
+        service.withLayout(GameDirLayout.VERSIONS).withGameForEachVersion(false);
+
+        assertEquals(mcFiles.getVersionsDir().resolve("1.21.1"), service.getGameDir(VersionArg.parse("1.21.1"), mcFiles));
     }
 
 }

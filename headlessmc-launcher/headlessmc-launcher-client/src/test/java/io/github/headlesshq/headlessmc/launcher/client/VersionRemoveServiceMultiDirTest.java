@@ -228,4 +228,65 @@ class VersionRemoveServiceMultiDirTest {
         assertEquals(List.of(), names(service.plan(version(env.primary, FABRIC_OLD)).blockingProfiles()));
     }
 
+    // version directories that are also game directories, see GameDirLayout
+
+    @Test
+    void theFilesOfAGamePlayedInTheVersionDirectoryAreNeverDeleted() throws IOException {
+        // like HMCL and PCL2 do: worlds and mods next to the version.json
+        Path versionDir = env.secondary.getVersionsDir().resolve(FABRIC_OLD);
+        Files.writeString(versionDir.resolve(FABRIC_OLD + ".jar"), "jar");
+        Files.createDirectories(versionDir.resolve("natives-linux"));
+        Path level = Files.createDirectories(versionDir.resolve("saves").resolve("world")).resolve("level.dat");
+        Files.writeString(level, "level");
+        Files.writeString(versionDir.resolve("options.txt"), "fov:70");
+
+        VersionRemoval removal = service.plan(version(env.secondary, FABRIC_OLD));
+
+        // only the files of the version
+        assertEquals(List.of(versionDir), removal.keptDirectories());
+        assertEquals(
+            List.of(versionDir.resolve(FABRIC_OLD + ".jar"), versionDir.resolve(FABRIC_OLD + ".json"), versionDir.resolve("natives-linux")),
+            removal.files()
+        );
+
+        service.remove(removal);
+
+        assertFalse(Files.exists(env.json(env.secondary, FABRIC_OLD)));
+        assertFalse(Files.exists(versionDir.resolve(FABRIC_OLD + ".jar")));
+        assertFalse(Files.exists(versionDir.resolve("natives-linux")));
+        assertEquals("level", Files.readString(level));
+        assertEquals("fov:70", Files.readString(versionDir.resolve("options.txt")));
+        // the version is gone for HeadlessMc
+        assertTrue(env.versionJsonService.tryGetVersion(env.secondary, FABRIC_OLD).isEmpty());
+    }
+
+    @Test
+    void aVersionDirectoryThatOnlyHoldsTheVersionIsDeletedAsAWhole() throws IOException {
+        Path versionDir = env.secondary.getVersionsDir().resolve(FABRIC_OLD);
+        Files.writeString(versionDir.resolve(FABRIC_OLD + ".jar"), "jar");
+        Files.createDirectories(versionDir.resolve(FABRIC_OLD + "-natives"));
+
+        VersionRemoval removal = service.plan(version(env.secondary, FABRIC_OLD));
+        service.remove(removal);
+
+        assertEquals(List.of(), removal.keptDirectories());
+        assertEquals(List.of(versionDir), removal.files());
+        assertFalse(Files.exists(versionDir));
+    }
+
+    @Test
+    void gamesInTheDirectoriesOfDependentVersionsAreKeptAsWell() throws IOException {
+        Path fabricDir = env.secondary.getVersionsDir().resolve(FABRIC_OLD);
+        Files.writeString(fabricDir.resolve("options.txt"), "fov:70");
+
+        VersionRemoval removal = service.plan(version(env.secondary, "1.21.1"), true);
+        service.remove(removal);
+
+        assertEquals(List.of(fabricDir), removal.keptDirectories());
+        assertEquals("fov:70", Files.readString(fabricDir.resolve("options.txt")));
+        assertFalse(Files.exists(env.json(env.secondary, FABRIC_OLD)));
+        // nothing is played in the directory of the vanilla version
+        assertFalse(Files.exists(env.secondary.getVersionsDir().resolve("1.21.1")));
+    }
+
 }

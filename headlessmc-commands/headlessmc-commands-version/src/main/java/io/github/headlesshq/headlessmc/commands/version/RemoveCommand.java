@@ -94,6 +94,7 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
         if (dryRun) {
             console.write("Would delete " + summary(removal) + ":");
             removal.files().stream().map(Path::toString).forEach(console::write);
+            writeKeptDirectories(removal, "Would keep ");
             return;
         }
 
@@ -104,6 +105,16 @@ public class RemoveCommand implements Runnable, VersionArgCommand, CachedConsole
 
         versionRemoveService.remove(removal);
         console.write("Deleted " + summary(removal));
+        writeKeptDirectories(removal, "Kept ");
+    }
+
+    /**
+     * A version directory can also be a game directory, the files of the game are never deleted with the version.
+     */
+    private void writeKeptDirectories(VersionRemoval removal, String verb) {
+        for (Path dir : removal.keptDirectories()) {
+            console.write(verb + dir + ", it contains other files, e.g. the worlds and mods of a game.");
+        }
     }
 
     private boolean confirm(VersionRemoval removal) {

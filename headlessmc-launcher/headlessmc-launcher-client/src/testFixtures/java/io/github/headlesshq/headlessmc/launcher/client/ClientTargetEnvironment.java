@@ -7,7 +7,8 @@ import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LauncherConfig;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeVersionLaunchTarget;
-import io.github.headlesshq.headlessmc.launcher.profile.GameDirService;
+import io.github.headlesshq.headlessmc.files.TestFiles;
+import io.github.headlesshq.headlessmc.launcher.profile.TestGameDirService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
@@ -121,7 +122,8 @@ public final class ClientTargetEnvironment {
     public final VersionJsonService versionJsonService;
     public final ClientLauncher clientLauncher = Mockito.mock(ClientLauncher.class);
     public final LauncherConfig config = Mockito.mock(LauncherConfig.class);
-    public final GameDirService gameDirService = Mockito.mock(GameDirService.class);
+    /** The real service, by default with the layout of HeadlessMc, see {@link TestGameDirService#withLayout}. */
+    public final TestGameDirService gameDirService;
     public final List<Install> installs = new ArrayList<>();
     public final PlatformService platformService;
     public final TestLaunchTargets targets;
@@ -145,6 +147,7 @@ public final class ClientTargetEnvironment {
         Path root, ProfileService profileService, @Nullable JsonService jsonService, McFiles... mcDirs
     ) {
         this.root = root;
+        this.gameDirService = new TestGameDirService(TestFiles.appFiles(root));
         this.primary = mcDirs.length > 0 ? mcDirs[0] : McFiles.of(root.resolve("mc"));
         this.secondary = mcDirs.length > 1 ? mcDirs[1] : McFiles.of(root.resolve("ssd"));
         this.mcFilesService = McFilesService.of(primary, secondary);
@@ -161,8 +164,6 @@ public final class ClientTargetEnvironment {
         platformService = platforms;
 
         Mockito.when(config.autoInstall()).thenReturn(true);
-        Mockito.when(gameDirService.getGameDir(Mockito.any(), Mockito.any())).thenAnswer(invocation ->
-            invocation.<McFiles>getArgument(1).getMcDir().resolve(invocation.<VersionArg>getArgument(0).toString("-")));
 
         targets = new TestLaunchTargets(profileService);
         launchTargetService = targets.service();

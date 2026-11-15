@@ -93,4 +93,25 @@ class RemoveCommandMultiDirTest {
         assertTrue(Files.exists(env.json(env.secondary, FABRIC)));
     }
 
+    @Test
+    void theGameInAVersionDirectoryIsKeptAndReported() throws java.io.IOException {
+        Path versionDir = env.primary.getVersionsDir().resolve(FABRIC);
+        Files.writeString(Files.createDirectories(versionDir.resolve("saves").resolve("world")).resolve("level.dat"), "level");
+
+        RemoveCommand dryRun = command(FABRIC);
+        dryRun.setMc(env.primary.getMcDir().toString());
+        dryRun.setDryRun(true);
+        dryRun.run();
+        assertTrue(console.output().contains("Would keep " + versionDir), console.output());
+        assertTrue(Files.exists(env.json(env.primary, FABRIC)));
+
+        RemoveCommand command = command(FABRIC);
+        command.setMc(env.primary.getMcDir().toString());
+        command.run();
+
+        assertFalse(Files.exists(env.json(env.primary, FABRIC)));
+        assertTrue(Files.exists(versionDir.resolve("saves").resolve("world").resolve("level.dat")));
+        assertTrue(console.output().contains("Kept " + versionDir + ", it contains other files"), console.output());
+    }
+
 }

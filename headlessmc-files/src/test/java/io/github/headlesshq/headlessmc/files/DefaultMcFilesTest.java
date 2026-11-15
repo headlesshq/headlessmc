@@ -31,6 +31,21 @@ class DefaultMcFilesTest {
         }
 
         @Override
+        public boolean mcDetect() {
+            return false;
+        }
+
+        @Override
+        public int mcDetectDepth() {
+            return 3;
+        }
+
+        @Override
+        public String gameDirLayout() {
+            return "headlessmc";
+        }
+
+        @Override
         public boolean gameForEachVersion() {
             return true;
         }

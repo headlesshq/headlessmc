@@ -84,7 +84,13 @@ public class ProfileMover {
 
         boolean filesMoved = move && Files.exists(oldPath);
         if (filesMoved) {
-            moveDirectory(oldPath, newPath);
+            if (VersionDirectories.isVersionDirectory(oldPath) || VersionDirectories.isVersionDirectory(newPath)) {
+                // a game directory that is also the directory of an installed version, see GameDirLayout:
+                // the game moves, the version stays installed where it is
+                moveGameFiles(oldPath, newPath);
+            } else {
+                moveDirectory(oldPath, newPath);
+            }
         }
 
         Profile moved = move ? relocate(profile, newPath) : profile;
@@ -183,8 +189,12 @@ public class ProfileMover {
             }
 
             if (Files.exists(oldPath)) {
-                try (Stream<Path> files = Files.list(newPath)) {
-                    if (files.findAny().isPresent()) {
+                try {
+                    // the directory of an installed version is a free game directory if nothing is played in it yet
+                    boolean empty = VersionDirectories.isVersionDirectory(newPath)
+                        ? VersionDirectories.getGameFiles(newPath).isEmpty()
+                        : isEmpty(newPath);
+                    if (!empty) {
                         throw new IllegalArgumentException("The directory " + newPath + " is not empty.");
                     }
                 } catch (IOException e) {
@@ -252,6 +262,83 @@ public class ProfileMover {
         } catch (FileException e) {
             // everything is at the destination, the profile can be moved, only the old files are left over
             log.warn("Moved {} to {}, but failed to delete the old directory: {}", source, destination, e.getMessage());
+        }
+    }
+
+    /**
+     * Moves the files of a game out of, or into, the directory of an installed version:
+     * everything but the files of the version, see {@link VersionDirectories}.
+     * If something cannot be moved, what has been moved is moved back.
+     */
+    private void moveGameFiles(Path source, Path destination) throws FileException {
+        List<Path> files;
+        try {
+            files = VersionDirectories.isVersionDirectory(source)
+                ? VersionDirectories.getGameFiles(source)
+                : listAll(source);
+            Files.createDirectories(destination);
+        } catch (IOException e) {
+            throw new FileException("Failed to move " + source + " to " + destination, e);
+        }
+
+        List<Path> moved = new ArrayList<>();
+        try {
+            for (Path file : files) {
+                moveEntry(file, destination.resolve(file.getFileName().toString()));
+                moved.add(file);
+            }
+        } catch (IOException | RuntimeException e) {
+            for (Path file : moved.reversed()) {
+                try {
+                    moveEntry(destination.resolve(file.getFileName().toString()), file);
+                } catch (IOException | RuntimeException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+            }
+
+            throw new FileException(
+                "Failed to move the files in " + source + " to " + destination + ", nothing has been moved", e
+            );
+        }
+
+        try {
+            if (!VersionDirectories.isVersionDirectory(source) && isEmpty(source)) {
+                Files.delete(source);
+            }
+        } catch (IOException e) {
+            log.warn("Moved {} to {}, but failed to delete the old directory: {}", source, destination, e.getMessage());
+        }
+    }
+
+    /**
+     * Moves a file or directory, as a rename if possible, otherwise by copying it.
+     */
+    private void moveEntry(Path source, Path destination) throws IOException {
+        try {
+            Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
+            return;
+        } catch (AtomicMoveNotSupportedException e) {
+            log.debug("Cannot rename {} to {}, copying it", source, destination, e);
+        }
+
+        if (Files.isDirectory(source)) {
+            copyDirectory(source, destination);
+        } else {
+            Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+
+        fileService.delete(source);
+    }
+
+    private static List<Path> listAll(Path dir) throws IOException {
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.sorted().toList();
+        }
+    }
+
+    private static boolean isEmpty(Path dir) throws IOException {
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.findAny().isEmpty();
         }
     }
 

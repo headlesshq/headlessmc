@@ -28,6 +28,9 @@ dependencies {
     testFixturesImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
     testFixturesImplementation project(':headlessmc-util:headlessmc-util-reflection')
     testFixturesImplementation libs.jspecify
+    testFixturesImplementation project(':headlessmc-config')
+    testFixturesImplementation libs.smallrye.config
+    testFixturesApi project(':headlessmc-files')
     testFixturesImplementation platform(libs.quarkus)
     testFixturesImplementation libs.cdi
     testFixturesImplementation libs.inject

@@ -489,4 +489,81 @@ class ProfileMoverTest {
         assertEquals("options of main", read(root.resolve("elsewhere").resolve("options.txt")));
     }
 
+    // game directories that are the directory of an installed version, see GameDirLayout
+
+    /** A profile playing in the directory of the version {@code id}, like HMCL and PCL2 do. */
+    private Profile inVersionDirectory(String name, String id) {
+        Path versionDir = mcFiles.getVersionsDir().resolve(id);
+        write(versionDir.resolve(id + ".json"), "json");
+        write(versionDir.resolve(id + ".jar"), "jar");
+        write(versionDir.resolve("natives-linux").resolve("lwjgl.so"), "natives");
+        return profileService.save(new Profile(name, Optional.of(Side.CLIENT), base.handle("x"), versionDir));
+    }
+
+    @Test
+    void movingAGameOutOfAVersionDirectoryLeavesTheVersionInstalled() {
+        Profile profile = withFiles(inVersionDirectory("main", "fabric-loader-0.16.9-1.21.1"));
+        Path newPath = root.resolve("elsewhere").resolve("main");
+
+        ProfileMover.Result result = move(profile, newPath, null);
+
+        assertTrue(result.filesMoved());
+        assertEquals(newPath, profileService.getProfile("main").orElseThrow().path());
+        // the game is at the new path
+        assertEquals("options of main", read(newPath.resolve("options.txt")));
+        assertEquals("level", read(newPath.resolve("saves").resolve("world").resolve("level.dat")));
+        assertFalse(Files.exists(profile.path().resolve("options.txt")));
+        assertFalse(Files.exists(profile.path().resolve("saves")));
+        // the version is still installed, other profiles and launchers can still launch it
+        assertEquals("json", read(profile.path().resolve("fabric-loader-0.16.9-1.21.1.json")));
+        assertEquals("jar", read(profile.path().resolve("fabric-loader-0.16.9-1.21.1.jar")));
+        assertTrue(Files.exists(profile.path().resolve("natives-linux").resolve("lwjgl.so")));
+        assertFalse(Files.exists(newPath.resolve("fabric-loader-0.16.9-1.21.1.json")));
+        assertFalse(Files.exists(newPath.resolve("natives-linux")));
+    }
+
+    @Test
+    void aGameCanBeMovedIntoTheDirectoryOfAVersionNothingIsPlayedIn() {
+        Profile profile = withFiles(profile("main"));
+        Path versionDir = inVersionDirectory("unused", "fabric-loader-0.16.9-1.21.1").path();
+        profileService.remove(profileService.getProfile("unused").orElseThrow());
+
+        ProfileMover.Result result = move(profile, versionDir, null);
+
+        assertTrue(result.filesMoved());
+        assertEquals("options of main", read(versionDir.resolve("options.txt")));
+        assertEquals("level", read(versionDir.resolve("saves").resolve("world").resolve("level.dat")));
+        // next to the version, which is untouched
+        assertEquals("json", read(versionDir.resolve("fabric-loader-0.16.9-1.21.1.json")));
+        assertEquals("jar", read(versionDir.resolve("fabric-loader-0.16.9-1.21.1.jar")));
+        assertFalse(Files.exists(profile.path()));
+    }
+
+    @Test
+    void aGameIsNotMovedIntoAVersionDirectoryAnotherGameIsPlayedIn() {
+        Profile profile = withFiles(profile("main"));
+        Profile other = withFiles(inVersionDirectory("other", "fabric-loader-0.16.9-1.21.1"));
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> move(profile, other.path(), null));
+
+        assertTrue(e.getMessage().contains("is not empty"), e.getMessage());
+        assertEquals("options of main", read(profile.path().resolve("options.txt")));
+        assertEquals("options of other", read(other.path().resolve("options.txt")));
+    }
+
+    @Test
+    void aDirectoryInVersionsWithoutAVersionIsMovedAsAWhole() {
+        // e.g. the placeholder of a version that never got installed, there is nothing to leave behind
+        Path dir = mcFiles.getVersionsDir().resolve("fabric-1.21.1");
+        Profile profile = withFiles(profileService.save(
+            new Profile("main", Optional.of(Side.CLIENT), base.handle("x"), dir)
+        ));
+        Path newPath = root.resolve("elsewhere").resolve("main");
+
+        move(profile, newPath, null);
+
+        assertFalse(Files.exists(dir));
+        assertEquals("options of main", read(newPath.resolve("options.txt")));
+    }
+
 }

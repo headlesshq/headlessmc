@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.launcher.client;
 
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout;
 import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.launcher.process.LaunchException;
@@ -559,6 +560,152 @@ class VersionLaunchTargetTest {
         assertEquals(root.resolve("custom"), custom.path());
         // it is decided when the profile is created, resolving does not change it
         assertEquals(inPrimary.path(), target.resolve(inPrimary, options(env.secondary)).path());
+    }
+
+    // the game directory layouts of other launchers, see GameDirLayout
+
+    private Profile create(TypedMap options, String... version) {
+        return target.create("p", target.parse(TargetArgs.of(version)), options);
+    }
+
+    @Test
+    void inTheVersionsLayoutANewProfilePlaysInTheDirectoryOfItsVersion() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        Profile profile = create(new TypedMapImpl(), "fabric", "1.21.1");
+        // not installed: under which name it is going to be installed is not known yet
+        assertEquals(env.primary.getVersionsDir().resolve("fabric-1.21.1"), profile.path());
+
+        Profile resolved = target.resolve(profile, options(LaunchTarget.NEW_PROFILE, true));
+
+        // installed, the game directory is the directory of the version.json, like in HMCL and PCL2
+        Path versionDir = env.primary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1");
+        assertEquals(versionDir, resolved.path());
+        assertEquals(versionDir, target.handle(resolved).currentTarget().getParent());
+        // and that is where it stays
+        assertSame(resolved, resolve(resolved));
+        assertFalse(Files.exists(env.primary.getVersionsDir().resolve("fabric-1.21.1")));
+    }
+
+    @Test
+    void inTheVersionsLayoutALaunchWithoutAProfilePlaysInTheDirectoryOfItsVersion() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        // "launch fabric 1.21.1": nothing is stored
+        Profile launched = env.launchTargetService.createTransient(
+            env.launchTargetService.parse(null, TargetArgs.of("fabric", "1.21.1")), new TypedMapImpl()
+        );
+
+        Profile resolved = env.launchTargetService.resolveAndPersist(launched, new TypedMapImpl());
+
+        assertEquals(env.primary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1"), resolved.path());
+        assertEquals(List.of(), profileService.getProfiles());
+    }
+
+    @Test
+    void anInstalledVersionIsFoundWhenTheProfileIsCreated() {
+        // a .minecraft directory of another launcher: the version is installed and has been played
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        Path json = env.install(env.secondary, "fabric", "1.21.1", OLD_BUILD);
+
+        Profile profile = create(new TypedMapImpl(), "fabric", "1.21.1");
+
+        // no placeholder needed, e.g. for commands that do not resolve the profile
+        assertEquals(json.getParent(), profile.path());
+        Profile resolved = resolve(profile);
+        assertEquals(json.getParent(), resolved.path());
+        assertEquals(json, target.handle(resolved).currentTarget());
+        assertEquals(List.of(), env.installs);
+    }
+
+    @Test
+    void theGameDirectoryIsInTheMinecraftDirectoryTheVersionIsInstalledInto() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        TypedMap options = options(env.secondary);
+        options.put(LaunchTarget.NEW_PROFILE, true);
+
+        Profile resolved = target.resolve(create(options, "fabric", "1.21.1"), options);
+
+        assertEquals(env.secondary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1"), resolved.path());
+        assertFalse(Files.exists(env.primary.getMcDir()));
+    }
+
+    @Test
+    void aGameDirectoryTheUserChoseIsNeverReplaced() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        TypedMap options = options(LaunchTarget.GAME_DIR, root.resolve("custom"));
+        options.put(LaunchTarget.NEW_PROFILE, true);
+
+        Profile resolved = target.resolve(create(options, "fabric", "1.21.1"), options);
+
+        assertEquals(root.resolve("custom"), resolved.path());
+    }
+
+    @Test
+    void theGameDirectoryOfAnExistingProfileIsNeverReplaced() throws IOException {
+        // added with the layout of HeadlessMc, and played
+        Profile old = profile("fabric", "1.21.1").withPath(env.primary.getMcDir().resolve("fabric-1.21.1"));
+        Profile resolvedOld = resolve(old);
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+
+        // not when the layout is changed
+        assertSame(resolvedOld, resolve(resolvedOld));
+        assertEquals(old.path(), resolve(old).path());
+        // not when its version is installed again, or updated
+        Files.delete(target.handle(resolvedOld).currentTarget());
+        assertEquals(old.path(), resolve(resolvedOld).path());
+        assertEquals(old.path(), target.resolve(resolvedOld, options(LaunchTarget.UPDATE, true)).path());
+    }
+
+    @Test
+    void aProfileKeepsTheDirectoryOfItsFirstVersionWhenItIsUpdated() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+        env.install(env.primary, "fabric", "1.21.1", OLD_BUILD);
+        Profile resolved = resolve(create(new TypedMapImpl(), "fabric", "1.21.1", "latest"));
+        Path versionDir = env.primary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1");
+        assertEquals(versionDir, resolved.path());
+
+        // pinned somewhere else by hand, then updated: the worlds do not move by themselves
+        Profile pinnedToOld = resolved.withTarget(target.handle(new VersionHandle(
+            VersionArg.parse("fabric", "1.21.1", "latest"), VersionArg.parse("fabric", "1.21.1", OLD_BUILD),
+            fabricJson(env.primary, OLD_BUILD)
+        )));
+        Profile updated = target.resolve(pinnedToOld, options(LaunchTarget.UPDATE, true));
+
+        assertEquals(fabricJson(env.primary, LATEST_BUILD), target.handle(updated).currentTarget());
+        assertEquals(versionDir, updated.path());
+    }
+
+    @Test
+    void inTheVersionsLayoutVanillaVersionsHaveTheirOwnDirectoryToo() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS);
+
+        Profile profile = create(new TypedMapImpl(), "1.21.1");
+        Profile resolved = resolve(profile);
+
+        assertEquals(env.primary.getVersionsDir().resolve("1.21.1"), profile.path());
+        assertEquals(profile.path(), resolved.path());
+    }
+
+    @Test
+    void inTheVersionsModdedLayoutOnlyModdedVersionsHaveTheirOwnDirectory() {
+        // the default of HMCL
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS_MODDED);
+
+        Profile vanilla = resolve(create(new TypedMapImpl(), "1.21.1"));
+        Profile fabric = resolve(create(new TypedMapImpl(), "fabric", "1.21.1"));
+
+        assertEquals(env.primary.getMcDir(), vanilla.path());
+        assertEquals(env.primary.getVersionsDir().resolve("fabric-loader-" + LATEST_BUILD + "-1.21.1"), fabric.path());
+        // a vanilla version in another directory shares that directory
+        assertEquals(env.secondary.getMcDir(), create(options(env.secondary), "1.20.4").path());
+    }
+
+    @Test
+    void aConfiguredGameDirectoryIsUsedWithEveryLayout() {
+        env.gameDirService.withLayout(GameDirLayout.VERSIONS).withGameDir(root.resolve("the-game").toString());
+
+        Profile resolved = resolve(create(new TypedMapImpl(), "fabric", "1.21.1"));
+
+        assertEquals(root.resolve("the-game"), resolved.path());
     }
 
 }

@@ -113,6 +113,11 @@ of your system, or `hmc.files.mc`. If you have more of them, e.g. on another dis
 ```
 hmc.files.mc-dirs=/mnt/ssd/.minecraft,/mnt/hdd/.minecraft
 ```
+HeadlessMc can also look for them itself: with `hmc.files.mc-detect=true` the other drives of your computer
+are searched for `.minecraft` directories, on Windows every drive, elsewhere what is mounted in `/mnt`, `/media`,
+`/run/media` and `/Volumes`. A drive is only searched a few directories deep, see `hmc.files.mc-detect-depth`,
+so that `D:\.minecraft` or `D:\Games\HMCL\.minecraft` are found. `debug` lists the directories that are used.
+
 The versions installed in these directories are listed by `version list` and can be launched.
 A version is always launched with the libraries and assets of the directory it is installed in.
 New versions are installed into the primary directory, unless another one is given with `--mc`:
@@ -120,6 +125,35 @@ New versions are installed into the primary directory, unless another one is giv
 install fabric 1.21.5 --mc /mnt/ssd/.minecraft
 profile move fabric-1.21.5 --mc /mnt/ssd/.minecraft
 ```
+
+#### Using the Minecraft directory of another launcher
+
+Launchers do not agree on where the game directory of a version is, the directory with its worlds, mods and settings.
+By default HeadlessMc uses a directory named after the version in the Minecraft directory, e.g. `.minecraft/fabric-1.21.5`.
+HMCL and PCL2 with version isolation use the directory the version is installed in, `.minecraft/versions/<name>`.
+To play the instances of such a launcher with their worlds and mods, set `hmc.files.game-dir-layout`:
+
+| `hmc.files.game-dir-layout` | Game directory of a version                                                               |
+|-----------------------------|-------------------------------------------------------------------------------------------|
+| `headlessmc` (default)      | `.minecraft/<platform>-<version>`, or `.minecraft` if `hmc.files.game-for-each-version` is `false` |
+| `versions`                  | `.minecraft/versions/<name>`, the directory the version is installed in                  |
+| `versions-modded`           | like `versions` for modded versions, vanilla versions share `.minecraft` (the default of HMCL) |
+
+```
+hmc.files.mc=/path/to/the/.minecraft
+hmc.files.game-dir-layout=versions
+```
+```
+> version list
+> launch "My Modpack"
+> profile add "My Modpack" --name modpack
+```
+An instance is launched by the name it has in the other launcher, which is the id of its version.json.
+
+The layout only decides the game directory of new profiles and of launches without a profile.
+A profile keeps the game directory it has, `profile move` moves it.
+In these layouts a version and a game share a directory, HeadlessMc keeps them apart:
+`profile move` leaves the version installed, and `version remove` never deletes the files of a game.
 
 #### Headless Launch
 One of the main features of HeadlessMc is

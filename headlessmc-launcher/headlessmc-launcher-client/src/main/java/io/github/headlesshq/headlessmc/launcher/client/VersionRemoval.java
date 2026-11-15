@@ -18,6 +18,8 @@ import java.util.List;
  * @param removedVersions   the versions that will be removed, the version and possibly its dependent versions.
  * @param removedProfiles   the profiles that will be removed.
  * @param files             the existing files and directories to delete, the version directories last.
+ * @param keptDirectories   version directories that are not deleted, only the files of the version in them are:
+ *                          they contain other files, e.g. the worlds and mods of a game that is played in them.
  */
 public record VersionRemoval(
     McFiles mcFiles,
@@ -26,7 +28,8 @@ public record VersionRemoval(
     List<Profile> blockingProfiles,
     List<Version> removedVersions,
     List<Profile> removedProfiles,
-    List<Path> files
+    List<Path> files,
+    List<Path> keptDirectories
 ) {
     /**
      * @return {@code true} if the removal would break versions or profiles that it does not remove.

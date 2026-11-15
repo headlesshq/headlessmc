@@ -23,6 +23,7 @@ import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeLaunchTarget;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeVersionLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirLayout;
 import io.github.headlesshq.headlessmc.launcher.profile.GameDirService;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
@@ -178,6 +179,7 @@ class LaunchCommandTest {
         McFilesService mcFilesService = McFilesService.of(mcFiles);
         VersionJsonService versionJsonService = new VersionJsonServiceImpl(PARSER, mcFilesService);
         GameDirService gameDirService = Mockito.mock(GameDirService.class);
+        Mockito.when(gameDirService.getLayout()).thenReturn(GameDirLayout.HEADLESSMC);
         Mockito.when(gameDirService.getGameDir(Mockito.any(), Mockito.any()))
             .thenAnswer(invocation -> root.resolve(invocation.<VersionArg>getArgument(0).toString("-")));
 

@@ -28,10 +28,27 @@ class DefaultMcFilesServiceTest {
     private static final class TestFileConfig implements FileConfig {
         private Optional<String> mcDir = Optional.empty();
         private Optional<List<String>> mcDirs = Optional.empty();
+        private boolean mcDetect;
+        private int mcDetectDepth = 3;
+
+        @Override
+        public boolean mcDetect() {
+            return mcDetect;
+        }
+
+        @Override
+        public int mcDetectDepth() {
+            return mcDetectDepth;
+        }
 
         @Override
         public Optional<String> location() {
             return Optional.empty();
+        }
+
+        @Override
+        public String gameDirLayout() {
+            return "headlessmc";
         }
 
         @Override
@@ -110,6 +127,7 @@ class DefaultMcFilesServiceTest {
     private final FileService fileService = new DefaultFileService(new DefaultFileSystemProvider());
     private final OS linux = new OS("linux", OS.Type.LINUX, "6.0");
     private final TestFileConfig config = new TestFileConfig();
+    private int searches;
 
     private DefaultMcFilesService service() {
         return service(Map.of());
@@ -119,7 +137,31 @@ class DefaultMcFilesServiceTest {
         Config smallRye = new SmallRyeConfigBuilder()
             .withSources(new PropertiesConfigSource(properties, "test"))
             .build();
-        return new DefaultMcFilesService(() -> config, new PassthroughConfigService(smallRye), fileService, linux);
+        // the drives of the test: everything in <root>/drives
+        McDirDetector detector = new McDirDetector() {
+            @Override
+            public List<Path> getDrives() {
+                searches++;
+                try (java.util.stream.Stream<Path> drives = Files.list(Files.createDirectories(dir("drives")))) {
+                    return drives.sorted().toList();
+                } catch (IOException e) {
+                    throw new java.io.UncheckedIOException(e);
+                }
+            }
+        };
+
+        return new DefaultMcFilesService(() -> config, new PassthroughConfigService(smallRye), fileService, detector, linux);
+    }
+
+    /** Creates a {@code .minecraft} directory with a versions directory on a drive of the test. */
+    private Path mcDirOnDrive(String... path) throws IOException {
+        Path mcDir = dir("drives");
+        for (String name : path) {
+            mcDir = mcDir.resolve(name);
+        }
+
+        Files.createDirectories(mcDir.resolve("versions"));
+        return mcDir;
     }
 
     private Path dir(String name) {
@@ -341,6 +383,59 @@ class DefaultMcFilesServiceTest {
         assertEquals(List.of(mc, ssd), service.all());
         assertSame(mc, service.getPrimary());
         assertSame(ssd, service.find(dir("ssd/file")).orElseThrow());
+    }
+
+    // hmc.files.mc-detect
+
+    @Test
+    void otherDrivesAreNotSearchedUnlessEnabled() throws IOException {
+        configure("primary");
+        mcDirOnDrive("ssd", ".minecraft");
+
+        assertEquals(List.of(dir("primary")), service().all().stream().map(McFiles::getMcDir).toList());
+        assertEquals(0, searches);
+    }
+
+    @Test
+    void directoriesFoundOnOtherDrivesFollowTheConfiguredOnes() throws IOException {
+        configure("primary", "configured");
+        Path onSsd = mcDirOnDrive("ssd", ".minecraft");
+        Path onHdd = mcDirOnDrive("hdd", "Games", "HMCL", ".minecraft");
+        config.mcDetect = true;
+
+        List<Path> dirs = service().all().stream().map(McFiles::getMcDir).toList();
+
+        assertEquals(List.of(dir("primary"), dir("configured"), onHdd, onSsd), dirs);
+        // the primary directory stays the one new versions are installed into
+        assertEquals(dir("primary"), service().getPrimary().getMcDir());
+    }
+
+    @Test
+    void directoriesThatAreAlreadyKnownAreNotAddedAgain() throws IOException {
+        Path onSsd = mcDirOnDrive("ssd", ".minecraft");
+        config.mcDir = Optional.of(onSsd.toString());
+        config.mcDirs = Optional.of(List.of(mcDirOnDrive("hdd", ".minecraft").toString()));
+        config.mcDetect = true;
+
+        List<Path> dirs = service().all().stream().map(McFiles::getMcDir).toList();
+
+        assertEquals(List.of(onSsd, dir("drives").resolve("hdd").resolve(".minecraft")), dirs);
+    }
+
+    @Test
+    void theDepthOfTheSearchIsConfigurable() throws IOException {
+        configure("primary");
+        Path top = mcDirOnDrive("ssd", ".minecraft");
+        Path deep = mcDirOnDrive("ssd", "a", "b", ".minecraft");
+        config.mcDetect = true;
+
+        config.mcDetectDepth = 1;
+        assertEquals(List.of(dir("primary"), top), service().all().stream().map(McFiles::getMcDir).toList());
+        config.mcDetectDepth = 3;
+        assertEquals(List.of(dir("primary"), top, deep), service().all().stream().map(McFiles::getMcDir).toList());
+        // nonsense is treated as the smallest depth
+        config.mcDetectDepth = 0;
+        assertEquals(List.of(dir("primary"), top), service().all().stream().map(McFiles::getMcDir).toList());
     }
 
 }
