@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
 import io.github.headlesshq.headlessmc.version.arg.Side;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -160,6 +161,92 @@ class ProfileMoverTest {
         try (Stream<Path> source = Files.walk(profile.path()); Stream<Path> copy = Files.walk(destination)) {
             assertEquals(source.count(), copy.count());
         }
+    }
+
+    /** Creates a symbolic link, skipping the test where that is not possible, e.g. on Windows without privileges. */
+    private static void link(Path link, Path target) {
+        try {
+            Files.createDirectories(link.getParent());
+            Files.createSymbolicLink(link, target);
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            Assumptions.abort("Cannot create symbolic links here: " + e);
+        }
+    }
+
+    @Test
+    void copyingADirectoryKeepsLinksToDirectories() throws IOException {
+        // e.g. a mods directory shared between profiles: mods -> /shared/mods
+        Profile profile = withFiles(profile("main"));
+        Path shared = root.resolve("shared").resolve("mods");
+        write(shared.resolve("sodium.jar"), "sodium");
+        link(profile.path().resolve("mods"), shared);
+        Path destination = root.resolve("copy");
+
+        mover.copyDirectory(profile.path(), destination);
+
+        // the link has been copied, not what it points to, and certainly not an empty directory
+        assertTrue(Files.isSymbolicLink(destination.resolve("mods")));
+        assertEquals(shared, Files.readSymbolicLink(destination.resolve("mods")));
+        assertEquals("sodium", read(destination.resolve("mods").resolve("sodium.jar")));
+        try (Stream<Path> source = Files.walk(profile.path()); Stream<Path> copy = Files.walk(destination)) {
+            assertEquals(source.count(), copy.count());
+        }
+    }
+
+    @Test
+    void deletingTheSourceOfACopyDoesNotTouchWhatItsLinksPointTo() throws IOException {
+        // what moving to another disk does: copy everything, then delete the source
+        Profile profile = withFiles(profile("main"));
+        Path shared = root.resolve("shared");
+        write(shared.resolve("saves").resolve("world").resolve("level.dat"), "shared level");
+        write(shared.resolve("servers.dat"), "servers");
+        link(profile.path().resolve("shared-saves"), shared.resolve("saves"));
+        link(profile.path().resolve("servers.dat"), shared.resolve("servers.dat"));
+        Path destination = root.resolve("copy");
+
+        mover.copyDirectory(profile.path(), destination);
+        fileService.delete(profile.path());
+
+        assertFalse(Files.exists(profile.path()));
+        assertEquals("shared level", read(shared.resolve("saves").resolve("world").resolve("level.dat")));
+        assertEquals("servers", read(shared.resolve("servers.dat")));
+        // and the moved game still reaches it
+        assertEquals("shared level", read(destination.resolve("shared-saves").resolve("world").resolve("level.dat")));
+        assertTrue(Files.isSymbolicLink(destination.resolve("servers.dat")));
+        assertEquals("servers", read(destination.resolve("servers.dat")));
+        assertEquals("level", read(destination.resolve("saves").resolve("world").resolve("level.dat")));
+    }
+
+    @Test
+    void copyingADirectoryKeepsRelativeAndBrokenLinks() throws IOException {
+        Profile profile = withFiles(profile("main"));
+        // relative links inside the directory keep working, like after a rename
+        link(profile.path().resolve("current-world"), Path.of("saves", "world"));
+        link(profile.path().resolve("gone"), root.resolve("does-not-exist"));
+        Path destination = root.resolve("copy");
+
+        mover.copyDirectory(profile.path(), destination);
+
+        assertEquals(Path.of("saves", "world"), Files.readSymbolicLink(destination.resolve("current-world")));
+        assertEquals("level", read(destination.resolve("current-world").resolve("level.dat")));
+        // a link to nothing is still a link to nothing, copying does not fail because of it
+        assertTrue(Files.isSymbolicLink(destination.resolve("gone")));
+        assertFalse(Files.exists(destination.resolve("gone")));
+    }
+
+    @Test
+    void movingAProfileKeepsItsLinks() throws IOException {
+        Profile profile = withFiles(profile("main"));
+        Path shared = root.resolve("shared").resolve("mods");
+        write(shared.resolve("sodium.jar"), "sodium");
+        link(profile.path().resolve("mods"), shared);
+        Path newPath = root.resolve("elsewhere").resolve("main");
+
+        move(profile, newPath, null);
+
+        assertTrue(Files.isSymbolicLink(newPath.resolve("mods")));
+        assertEquals("sodium", read(newPath.resolve("mods").resolve("sodium.jar")));
+        assertEquals("sodium", read(shared.resolve("sodium.jar")));
     }
 
     // renaming

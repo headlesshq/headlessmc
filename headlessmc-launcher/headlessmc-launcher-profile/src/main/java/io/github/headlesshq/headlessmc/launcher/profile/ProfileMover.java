@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
@@ -321,10 +322,11 @@ public class ProfileMover {
             log.debug("Cannot rename {} to {}, copying it", source, destination, e);
         }
 
-        if (Files.isDirectory(source)) {
+        // a link is moved as the link it is, also if it points to a directory
+        if (Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS)) {
             copyDirectory(source, destination);
         } else {
-            Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
+            copyFile(source, destination, Files.readAttributes(source, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
         }
 
         fileService.delete(source);
@@ -343,7 +345,9 @@ public class ProfileMover {
     }
 
     /**
-     * Copies a directory and verifies that every file arrived with its size.
+     * Copies a directory and verifies that everything arrived.
+     * Symbolic links are copied as links, like a rename moves them: the walk does not follow links,
+     * so the directory a link points to is neither copied nor, when the source is deleted afterwards, touched.
      */
     void copyDirectory(Path source, Path destination) throws IOException {
         Files.walkFileTree(source, new SimpleFileVisitor<>() {
@@ -355,15 +359,34 @@ public class ProfileMover {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Path target = destination.resolve(source.relativize(file).toString());
-                Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
-                if (attrs.isRegularFile() && Files.size(target) != attrs.size()) {
-                    throw new IOException("Size of " + target + " differs from " + file);
-                }
-
+                copyFile(file, destination.resolve(source.relativize(file).toString()), attrs);
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    /**
+     * Copies a single file and verifies the copy.
+     *
+     * @param attrs the attributes of the file itself, read without following links.
+     */
+    private static void copyFile(Path file, Path target, BasicFileAttributes attrs) throws IOException {
+        if (attrs.isSymbolicLink()) {
+            // following the link would turn a link to a directory into an empty directory, and what it pointed to
+            // would be gone for the profile once the source has been deleted
+            Files.copy(file, target, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
+            if (!Files.isSymbolicLink(target)
+                || !Files.readSymbolicLink(target).equals(Files.readSymbolicLink(file))) {
+                throw new IOException("Failed to copy the link " + file + " to " + target);
+            }
+
+            return;
+        }
+
+        Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+        if (attrs.isRegularFile() && Files.size(target) != attrs.size()) {
+            throw new IOException("Size of " + target + " differs from " + file);
+        }
     }
 
     private static Path normalize(Path path) {
