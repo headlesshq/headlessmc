@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -175,6 +176,16 @@ public class PatchedLwjglPatcher implements Patcher {
     @Override
     public String name() {
         return LWJGL_PRE;
+    }
+
+    /**
+     * The patched jars and the transformer based patcher both make LWJGL headless, only one of them can be applied.
+     * A headless launch selects "lwjgl" on its own, this lets a profile, or a profile it inherits from, opt into
+     * the patched jars instead.
+     */
+    @Override
+    public Set<String> excludes() {
+        return Set.of(LWJGL);
     }
 
     /**

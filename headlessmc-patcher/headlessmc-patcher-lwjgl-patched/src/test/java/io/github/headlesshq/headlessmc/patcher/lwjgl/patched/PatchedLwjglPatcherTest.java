@@ -1,8 +1,10 @@
 package io.github.headlesshq.headlessmc.patcher.lwjgl.patched;
 
+import io.github.headlesshq.headlessmc.patcher.Patcher;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,6 +45,15 @@ public class PatchedLwjglPatcherTest {
         assertNull(PatchedLwjglPatcher.patchedJar(LIBRARIES.resolve("org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.10.jar")));
         assertNull(PatchedLwjglPatcher.patchedJar(LIBRARIES.resolve("org/joml/joml/1.10.5/joml-1.10.5.jar")));
         assertNull(PatchedLwjglPatcher.patchedJar(Path.of("lwjgl.jar")));
+    }
+
+    @Test
+    public void thePatchedLwjglReplacesTheTransformerBasedPatcher() {
+        // a headless launch selects "lwjgl", selecting this patcher as well must not apply both
+        PatchedLwjglPatcher patcher = new PatchedLwjglPatcher(null, null);
+
+        assertEquals(Patcher.LWJGL_PRE, patcher.name());
+        assertEquals(Set.of(Patcher.LWJGL), patcher.excludes());
     }
 
     @Test

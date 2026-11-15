@@ -276,10 +276,12 @@ public class ClientLauncher {
             || arg.startsWith("--class-path="));
     }
 
+    /**
+     * The patchers to apply. The profile only lists what has been selected, by itself, by the profile it inherits
+     * from and by the options of this launch, patchers replacing each other are sorted out here.
+     */
     private List<Patcher> getPatchers(Profile profile) {
-        return profile.patchers().stream()
-            .map(patchService::requirePatcher)
-            .toList();
+        return patchService.resolve(profile.patchers());
     }
 
     /**

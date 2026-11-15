@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SequencedMap;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -127,7 +128,11 @@ class ClientLauncherTest {
         }
     }
 
-    private record NamedPatcher(String name) implements Patcher {
+    private record NamedPatcher(String name, Set<String> excludes) implements Patcher {
+        private NamedPatcher(String name) {
+            this(name, Set.of());
+        }
+
         @Override
         public void patch(PatchContext context) {
         }
@@ -397,6 +402,23 @@ class ClientLauncherTest {
         launcher().launcher(profile, ACCOUNT);
 
         assertEquals(List.of(List.of(log4j, lwjgl)), patchService.calls);
+    }
+
+    @Test
+    void aPatcherReplacingAnotherSelectedPatcherIsAppliedInsteadOfIt() {
+        // e.g. a profile inherits lwjgl-pre from its parent, and a headless launch selects lwjgl
+        install(version("1.21.1"), "vanilla");
+        Patcher lwjgl = new NamedPatcher("lwjgl");
+        Patcher patched = new NamedPatcher("lwjgl-pre", Set.of("lwjgl"));
+        Patcher log4j = new NamedPatcher("log4j");
+        patchService.patchers.put("lwjgl", lwjgl);
+        patchService.patchers.put("lwjgl-pre", patched);
+        patchService.patchers.put("log4j", log4j);
+        Profile profile = profile("vanilla", "1.21.1").withPatchers(List.of("log4j", "lwjgl", "lwjgl-pre"));
+
+        launcher().launcher(profile, ACCOUNT);
+
+        assertEquals(List.of(List.of(log4j, patched)), patchService.calls);
     }
 
     @Test
