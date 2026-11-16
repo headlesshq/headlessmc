@@ -7,6 +7,7 @@ import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.commands.server.AbstractServerLaunchCommand;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
+import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
@@ -71,6 +72,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         Console console,
         LaunchTargetService launchTargetService,
         McFilesService mcFilesService,
+        FileService fileService,
         LastUsedAccountService lastUsedAccountService,
         XvfbService xvfbService,
         AuthService authService
@@ -84,7 +86,8 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             splitter,
             console,
             launchTargetService,
-            mcFilesService
+            mcFilesService,
+            fileService
         );
         this.lastUsedAccountService = lastUsedAccountService;
         this.clientLauncher = clientLauncher;

@@ -9,6 +9,8 @@ import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
+import io.github.headlesshq.headlessmc.files.DefaultFileService;
+import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
 import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeLaunchTarget;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
@@ -148,7 +150,8 @@ class ServerLaunchCommandsTest {
     private ServerLaunchCommand launch(ServerService serverService) {
         return new ServerLaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService,
-            line -> line.split(" "), console, launchTargetService, McFilesService.of(TestFiles.mcFiles(root))
+            line -> line.split(" "), console, launchTargetService, McFilesService.of(TestFiles.mcFiles(root)),
+            new DefaultFileService(new DefaultFileSystemProvider())
         );
     }
 

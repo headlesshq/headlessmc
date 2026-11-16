@@ -5,6 +5,7 @@ import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
 import io.github.headlesshq.headlessmc.console.FinalCommand;
 import io.github.headlesshq.headlessmc.console.LongRunningCommand;
+import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.java.launcher.JavaProcessBuilder;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
@@ -29,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -73,6 +73,7 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
     private final Console console;
     private final LaunchTargetService launchTargetService;
     private final McFilesService mcFilesService;
+    private final FileService fileService;
 
     public abstract String getGameArgs();
 
@@ -183,7 +184,7 @@ public abstract class AbstractServerLaunchCommand implements Callable<Integer>, 
         TypedMap options = new TypedMapImpl();
         String mc = this.mc;
         if (mc != null) {
-            options.put(LaunchTarget.MC_FILES, mcFilesService.of(Paths.get(mc)));
+            options.put(LaunchTarget.MC_FILES, mcFilesService.of(fileService.getUserPath(mc)));
         }
 
         return options;

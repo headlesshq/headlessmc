@@ -210,7 +210,7 @@ class LaunchCommandTest {
         return new LaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService, clientLauncher,
             line -> line.split(" "), console, launchTargetService, McFilesService.of(mcFiles),
-            lastUsedAccountService, xvfbService, authService
+            fileService, lastUsedAccountService, xvfbService, authService
         );
     }
 
