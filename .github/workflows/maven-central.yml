@@ -1,0 +1,66 @@
+name: Maven Central
+
+# Publishes a release to Maven Central.
+# Called by the Lifecycle workflow as the last job of a release.
+# Can also be run manually for the tag of an existing GitHub release,
+# e.g. if only the Maven Central job of a release failed:
+#   gh workflow run maven-central.yml -f tag_name=<tag>
+# Releases on Maven Central are immutable, a manual run does not check that the other release jobs succeeded!
+"on":
+  workflow_call:
+    inputs:
+      tag_name:
+        description: 'The tag of the GitHub release to publish'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'The tag of the GitHub release to publish, e.g. 3.0.0'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.tag_name }}
+    runs-on: ubuntu-latest
+    # can be protected with required reviewers
+    environment:
+      name: maven-central
+      url: https://central.sonatype.com/namespace/io.github.headlesshq
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: refs/tags/${{ inputs.tag_name }}
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6
+        with:
+          java-version: 25
+          distribution: temurin
+      # caches the Gradle distribution and dependencies, so a slow download does not fail the build
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # publish the exact headlessmc.jar of the GitHub release as io.github.headlesshq:headlessmc-application
+      - name: Download release headlessmc.jar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: gh release download "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --pattern headlessmc.jar --dir "$RUNNER_TEMP/release"
+
+      - name: Sign and upload to Maven Central
+        env:
+          SIGNING_KEY: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SIGNING_PASSWORD }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_CENTRAL_PUBLISHING_TYPE: ${{ vars.MAVEN_CENTRAL_PUBLISHING_TYPE || 'AUTOMATIC' }}
+        run: |
+          if [[ -z "$SIGNING_KEY" ]]; then
+            echo "MAVEN_CENTRAL_SIGNING_KEY is not set" >&2
+            exit 1
+          fi
+          # -PapplicationJar is resolved against headlessmc-application, so it has to be an absolute path
+          ./gradlew publishAggregationToCentralPortal "-PapplicationJar=$RUNNER_TEMP/release/headlessmc.jar" --stacktrace
