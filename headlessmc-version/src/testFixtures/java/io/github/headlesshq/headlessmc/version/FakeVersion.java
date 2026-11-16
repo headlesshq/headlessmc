@@ -2,10 +2,12 @@ package io.github.headlesshq.headlessmc.version;
 
 import org.jspecify.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A configurable {@link Version} for tests.
@@ -22,9 +24,24 @@ public class FakeVersion implements Version {
     private @Nullable Map<String, LoggingConfiguration> logging;
     private @Nullable Map<String, Download> downloads;
     private @Nullable JavaVersion javaVersion;
+    private @Nullable Path file;
 
     public FakeVersion(String id) {
         this.id = id;
+    }
+
+    /**
+     * @param file the version.json this version pretends to have been loaded from, see {@link Version#asFile()}.
+     * @return this version.
+     */
+    public FakeVersion withFile(@Nullable Path file) {
+        this.file = file == null ? null : file.toAbsolutePath().normalize();
+        return this;
+    }
+
+    @Override
+    public Optional<Path> asFile() {
+        return Optional.ofNullable(file);
     }
 
     public FakeVersion withInheritsFrom(@Nullable String inheritsFrom) {

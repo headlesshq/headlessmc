@@ -8,13 +8,24 @@ the server for the latest Minecraft version will be used.
 ``` title="Adding a server"
 > server add paper 1.21.5
 Downloading Paper 100% │█████████████████████│ 51/51mb (0:00:07 / 0:00:00) 7.3mb/s
-Installed server server-paper-1.21.5 for version server/paper/1.21.5
+Installed server server-paper-1.21.5 for version paper/1.21.5
 ```
 
 ``` title="Listing servers"
 > server list
-name                  version               directory
-server-paper-1.21.5   server/paper/1.21.5   /home/me/.local/share/headlessmc/server/server-paper-1.21.5
+name                  target   version        directory
+server-paper-1.21.5   server   paper/1.21.5   /home/me/.local/share/headlessmc/server/server-paper-1.21.5
+```
+
+A server jar or start script you already have can be added as a server too, it needs a name:
+
+``` title="Adding an existing server jar"
+> server add ./paper.jar --name lobby
+```
+
+``` title="Moving or renaming a server"
+> server move lobby /srv/minecraft/lobby
+> server move lobby --name hub
 ```
 
 ``` title="Accepting the EULA of a server"

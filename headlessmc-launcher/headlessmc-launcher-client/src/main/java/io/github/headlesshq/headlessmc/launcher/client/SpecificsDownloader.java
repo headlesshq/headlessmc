@@ -7,9 +7,12 @@ import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.distribution.ModDistributionPlatform;
 import io.github.headlesshq.headlessmc.mods.github.GitHub;
 import io.github.headlesshq.headlessmc.mods.github.HmcSpecificsRepository;
+import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 
@@ -39,26 +42,32 @@ public class SpecificsDownloader {
     }
 
     /**
-     * Makes sure that the mods folder of the profile contains the latest hmc-specifics
-     * for the {@link Profile#currentVersion()}.
+     * Makes sure that the mods folder of the profile contains the latest hmc-specifics for the given version.
      *
      * @param profile the profile that is about to be launched.
+     * @param version the version the profile launches, {@code null} if it is not known,
+     *                e.g. for a version.json no platform recognizes. Nothing is downloaded then.
      */
-    public void download(Profile profile) {
+    public void download(Profile profile, @Nullable VersionArg version) {
         if (!config.autoDownloadSpecifics()) {
             return;
         }
 
-        if (!specifics.supports(profile.currentVersion())) {
-            log.debug("{} is not available for {}", HmcSpecificsRepository.NAME, profile.currentVersion());
+        if (version == null) {
+            log.debug("Version of profile {} is unknown, not downloading {}", profile.name(), HmcSpecificsRepository.NAME);
+            return;
+        }
+
+        if (!specifics.supports(version)) {
+            log.debug("{} is not available for {}", HmcSpecificsRepository.NAME, version);
             return;
         }
 
         try {
-            Path file = gitHub.download(profile.path(), null, HmcSpecificsRepository.NAME, profile.currentVersion(), ModType.MOD);
+            Path file = gitHub.download(profile.path(), null, HmcSpecificsRepository.NAME, version, ModType.MOD);
             log.debug("{} is installed at {}", HmcSpecificsRepository.NAME, file);
         } catch (HeadlessMcException e) {
-            log.warn("Failed to download {} for {}: {}", HmcSpecificsRepository.NAME, profile.currentVersion(), e.getMessage());
+            log.warn("Failed to download {} for {}: {}", HmcSpecificsRepository.NAME, version, e.getMessage());
             log.debug("Failed to download {}", HmcSpecificsRepository.NAME, e);
         }
     }

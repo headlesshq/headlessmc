@@ -74,7 +74,8 @@ public class PaperInstaller implements ServerInstaller {
 
             return new ServerInstallation(
                 vanillaVersion.requireJavaVersion(),
-                jvmArgsService.getRecommendedJvmArgs(id.getVersion().getName())
+                jvmArgsService.getRecommendedJvmArgs(id.getVersion().getName()),
+                String.valueOf(response.id())
             );
         } catch (ApiException e) {
             if (isNotFound(e)) {

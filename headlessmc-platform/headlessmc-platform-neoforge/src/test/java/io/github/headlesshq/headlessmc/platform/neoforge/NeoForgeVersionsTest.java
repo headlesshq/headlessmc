@@ -106,6 +106,20 @@ class NeoForgeVersionsTest {
     }
 
     @Test
+    void theInstallerReportsBuildsUnderTheNamesOfTheVersionService() {
+        // what an installation reports as its build has to be resolvable again, e.g. "266" and not "21.1.266"
+        metas.add(meta("21.10.62-beta", "1.21.10"));
+        metas.add(meta("20.4.195", "1.20.4"));
+        metas.add(meta("47.1.104", "1.20.1"));
+        NeoForgeArtifactResolver resolver = new NeoForgeArtifactResolver();
+
+        List<String> reported = metas.stream().map(resolver::getBuildName).toList();
+
+        assertEquals(List.of("62-beta", "195", "47.1.104"), reported);
+        assertEquals(service().getVersions().stream().map(BoundPlatformVersion::getName).toList(), reported);
+    }
+
+    @Test
     void legacyArtifactsUseTheForgeName() {
         PrismIndex index = new PrismIndex("net.neoforged", List.of(meta("47.1.104", "1.20.1")));
 

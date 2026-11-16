@@ -1,0 +1,26 @@
+{
+  "name": "v2-invalid-missing-target-data",
+  "side": "CLIENT",
+  "target": {
+    "name": "version"
+  },
+  "path": {
+    "source": "minecraft",
+    "sourcePath": "@MC_DIR@",
+    "path": "x"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

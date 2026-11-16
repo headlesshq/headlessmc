@@ -44,6 +44,8 @@ class ForgeInstallerDownloaderTest {
     private AppFiles appFiles;
     private FakePlatformService platformService;
     private ForgeInstallerDownloader downloader;
+    private Cache<PrismIndex> cache;
+    private CommonInstallerServices services;
 
     @BeforeEach
     void setup() {
@@ -51,12 +53,12 @@ class ForgeInstallerDownloaderTest {
         metas.add(meta("48.1.0", "1.20.2"));
         metas.add(meta("11.15.1.2318-1.8.9", "1.8.9"));
 
-        Cache<PrismIndex> cache = CacheBuilder.<PrismIndex>create()
+        cache = CacheBuilder.<PrismIndex>create()
             .withSource(() -> Optional.of(new PrismIndex("net.minecraftforge", metas)))
             .build();
 
         // the downloader only reaches for these three of the eight common services
-        CommonInstallerServices services = Mockito.mock(CommonInstallerServices.class);
+        services = Mockito.mock(CommonInstallerServices.class);
         Mockito.when(services.getDownloadService()).thenReturn(downloads);
         Mockito.when(services.getFileService()).thenReturn(new DefaultFileService(new DefaultFileSystemProvider()));
         Mockito.when(services.getAppFiles()).thenReturn(appFiles);
@@ -109,6 +111,31 @@ class ForgeInstallerDownloaderTest {
 
         assertEquals(path, downloader.downloadInstaller(id("forge", "1.20.2", "48.1.0")));
         assertFalse(downloads.wasRequested(url("1.20.2-48.1.0")));
+    }
+
+    @Test
+    void theBuildOfTheInstallerIsReported() {
+        // the build that has been asked for, or the one that is picked if any build will do
+        assertEquals("48.1.0", downloader.getBuild(id("forge", "1.20.2", "48.1.0")));
+        assertEquals("48.1.0", downloader.getBuild(id("forge", "1.20.2")));
+    }
+
+    @Test
+    void theBuildIsNamedByThePlatform() {
+        // e.g. neoforge calls the build of 21.1.266 just 266
+        ForgeArtifactResolver resolver = new ForgeArtifactResolverImpl() {
+            @Override
+            public String getBuildName(PrismIndex.Meta meta) {
+                return "build-" + meta.version();
+            }
+        };
+        ForgeInstallerDownloader named = new ForgeInstallerDownloader(
+            resolver, services, MavenRepository.of(REPOSITORY), cache, Forge.PLATFORM_NAME
+        );
+
+        assertEquals("build-48.1.0", named.getBuild(id("forge", "1.20.2")));
+        // a build that has been asked for by its name has that name
+        assertEquals("48.1.0", named.getBuild(id("forge", "1.20.2", "48.1.0")));
     }
 
     @Test

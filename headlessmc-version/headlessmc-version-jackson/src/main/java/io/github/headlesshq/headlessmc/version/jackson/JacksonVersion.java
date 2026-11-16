@@ -1,9 +1,13 @@
 package io.github.headlesshq.headlessmc.version.jackson;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.github.headlesshq.headlessmc.version.Version;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
@@ -14,9 +18,11 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.deser.std.StdDeserializer;
 import tools.jackson.databind.type.TypeFactory;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Data
 @RegisterForReflection
@@ -37,6 +43,23 @@ final class JacksonVersion implements Version {
     @JsonDeserialize(contentAs = DownloadImpl.class)
     private final @Nullable Map<String, Download> downloads;
     private final @Nullable JavaVersionImpl javaVersion;
+
+    /**
+     * The version.json this version has been parsed from, see {@link Version#asFile()}.
+     * This is not part of the version.json format, it is set by {@link JacksonVersionParser#parse(Path)}
+     * after the file has been read.
+     * It is part of {@code equals} and {@code hashCode}: the same version installed in two
+     * {@code .minecraft} directories is not the same installation.
+     */
+    @JsonIgnore
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.PACKAGE)
+    private @Nullable Path file;
+
+    @Override
+    public Optional<Path> asFile() {
+        return Optional.ofNullable(file);
+    }
 
     @Override
     public List<Library> getLibraries() {

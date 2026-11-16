@@ -22,10 +22,22 @@ import java.util.UUID;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class TemplateStringService {
-    private final McFiles mcFiles;
     private final CPU cpu;
 
+    /**
+     * Creates the templates for the arguments of a client.
+     *
+     * @param mcFiles the {@code .minecraft} directory the client is launched from, the one its version is installed in.
+     * @param assets  the location of the assets.
+     * @param account the account to launch with.
+     * @param gameDir the game directory.
+     * @param version the version to launch.
+     * @param options the launch options. If they do not specify where to write the quick play log,
+     *                it is written to {@code quickPlay/java} in the given {@code .minecraft} directory.
+     * @return the templates.
+     */
     public TemplateStrings create(
+        McFiles mcFiles,
         AssetsLocation assets,
         Account account,
         Path gameDir,
@@ -61,7 +73,7 @@ public class TemplateStringService {
         result.add(TemplateString.VERSION_NAME, version.getId());
         result.add(TemplateString.VERSION_TYPE, version.getType());
 
-        options.quickPlayPath().ifPresent(path -> result.add(TemplateString.QUICK_PLAY_PATH, path));
+        result.add(TemplateString.QUICK_PLAY_PATH, options.quickPlayPath().orElseGet(() -> getQuickPlayPath(mcFiles)));
         options.join().ifPresent(join -> {
             switch (join.type()) {
                 case SERVER -> result.add(TemplateString.QUICK_PLAY_MULTIPLAYER, join.target());
@@ -79,6 +91,19 @@ public class TemplateStringService {
         // result.add(TemplateString.NATIVES_DIRECTORY, ); done by NativeLibraryHandler
 
         return result;
+    }
+
+    /**
+     * The quick play log belongs to the {@code .minecraft} directory the game is launched from.
+     * Which one that is, is only known once the version to launch has been found.
+     */
+    private static String getQuickPlayPath(McFiles mcFiles) {
+        return mcFiles.getMcDir()
+            .resolve("quickPlay")
+            .resolve("java")
+            .resolve(System.currentTimeMillis() + ".json")
+            .toAbsolutePath()
+            .toString();
     }
 
     /**

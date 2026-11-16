@@ -110,6 +110,46 @@ public class HelloCommand implements Runnable, HeadlessMcSubcommand {
 }
 ```
 
+### Launch targets
+
+A plugin can add something new that profiles can launch by providing a `LaunchTarget` bean.
+A profile only stores the name of its launch target and some data, the launch target gives that data its meaning:
+
+```java
+@ApplicationScoped
+public class MyLaunchTarget extends AbstractLaunchTarget<MyLaunchTarget.Handle> {
+    @Override
+    public String getName() {
+        return "my-target";
+    }
+
+    @Override
+    public ParsedTarget parse(TargetArgs args) throws IllegalArgumentException {
+        // verify that these arguments can be launched by this target, throw otherwise
+        ...
+    }
+
+    ...
+
+    @RegisterForReflection
+    public record Handle(Path file) implements ReflectionRegistered {
+    }
+}
+```
+
+`parse` is also how the launch target for the arguments of a command is found:
+if no target is named with `--target`, the one target that can parse the arguments is used.
+So only accept arguments your target can really launch.
+See the javadoc of `LaunchTarget` for the other methods.
+If your plugin is removed, the profiles of your launch target stay as they are and work again once it is back.
+
+A few things to keep in mind when writing plugins:
+
+* There can be multiple Minecraft directories, so `McFiles` cannot be injected.
+  Inject `McFilesService`, and use the directory of the version you are working with (`McFilesService#require`).
+* A `ClientInstaller` is given the `McFiles` to install into and must only look at that directory.
+* A `Profile` has no version of its own anymore. Ask the `LaunchTargetService` what a profile launches.
+
 ### The manifest
 
 Every plugin jar contains `META-INF/headlessmc-plugin.json`, the template generates it:

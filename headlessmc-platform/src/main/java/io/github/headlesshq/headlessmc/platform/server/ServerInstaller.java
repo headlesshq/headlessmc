@@ -18,7 +18,7 @@ public interface ServerInstaller {
      * @param id   the version to install the server for.
      * @param dir  the directory to install the server in.
      * @param args special arguments for the platform installer (e.g. display UI)
-     * @return an {@link ServerInstallation} with the java version that was used to
+     * @return an {@link ServerInstallation} with the build that has been installed and the java version that was used to
      * install (and should be used to launch) the server and the default jvm args for it.
      * @throws HeadlessMcException if something goes wrong.
      */

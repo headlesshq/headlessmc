@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.platform.purpur;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
@@ -47,7 +48,7 @@ class PurpurInstallerTest {
         }
 
         @Override
-        public Version installClient(VersionID id, Path mcDir, TypedMap args) {
+        public Version installClient(VersionID id, McFiles mcDir, TypedMap args) {
             throw new UnsupportedOperationException();
         }
 
@@ -124,6 +125,8 @@ class PurpurInstallerTest {
         assertEquals(21, installation.javaVersion());
         assertEquals(List.of("-XX:+UseG1GC"), installation.vmArgs());
         assertEquals(List.of("1.21.1"), requestedJvmArgs);
+        // no build has been asked for, the installation tells which one it became
+        assertEquals("2329", installation.build());
         assertEquals("jar-2329", Files.readString(root.resolve(ServerFinder.DEFAULT_JAR)));
         assertTrue(downloads.wasRequested(url("2329")));
     }

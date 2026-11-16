@@ -1,0 +1,51 @@
+{
+  "name": "v1-full",
+  "version": {
+    "side": null,
+    "platform": "fabric",
+    "version": "1.21.1",
+    "build": "0.16.9"
+  },
+  "currentVersion": {
+    "side": null,
+    "platform": "fabric",
+    "version": "1.21.1",
+    "build": "0.16.9"
+  },
+  "path": {
+    "source": "minecraft",
+    "sourcePath": "@MC_DIR@",
+    "path": "full"
+  },
+  "options": {
+    "resolution": {
+      "width": 1280,
+      "height": 720
+    },
+    "quickPlayPath": "quick.json",
+    "join": {
+      "type": "SERVER",
+      "target": "example.org:25566"
+    },
+    "demo": true
+  },
+  "patchers": [
+    "lwjgl",
+    "log4j"
+  ],
+  "systemProperties": {
+    "a": "b",
+    "flag": null
+  },
+  "vmArgs": [
+    "-Xmx2G",
+    "-Xms1G"
+  ],
+  "gameArgs": [
+    "--fullscreen"
+  ],
+  "javaVersion": 17,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": true,
+  "hmcVersion": 1
+}

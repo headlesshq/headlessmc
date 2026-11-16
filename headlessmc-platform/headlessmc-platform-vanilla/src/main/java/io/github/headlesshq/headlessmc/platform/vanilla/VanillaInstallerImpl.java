@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.NotFoundException;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.cache.Cache;
 import io.github.headlesshq.headlessmc.net.DownloadBuilder;
 import io.github.headlesshq.headlessmc.net.DownloadService;
@@ -35,25 +36,25 @@ class VanillaInstallerImpl implements VanillaInstaller {
     private final VersionJsonService versionJsonService;
     private final DownloadService downloadService;
     private final Cache<VanillaManifest> cache;
-    private final McFiles mcFiles;
+    private final McFilesService mcFilesService;
 
     @Inject
     VanillaInstallerImpl(
         VersionJsonService versionJsonService,
         DownloadService downloadService,
         @Vanilla Cache<VanillaManifest> cache,
-        McFiles mcFiles
+        McFilesService mcFilesService
     ) {
         this.versionJsonService = versionJsonService;
         this.downloadService = downloadService;
         this.cache = cache;
-        this.mcFiles = mcFiles;
+        this.mcFilesService = mcFilesService;
     }
 
     @Override
-    public Version installClient(VersionID id, Path mcDir, TypedMap args) throws HeadlessMcException {
-        log.info("Installing client {} in {} args: {}", id, mcDir, args);
-        return downloadVersion(id.getVersion(), mcDir, args, true);
+    public Version installClient(VersionID id, McFiles mcFiles, TypedMap args) throws HeadlessMcException {
+        log.info("Installing client {} in {} args: {}", id, mcFiles.getMcDir(), args);
+        return downloadVersion(id.getVersion(), mcFiles.getMcDir(), args, true);
     }
 
     @Override
@@ -79,7 +80,15 @@ class VanillaInstallerImpl implements VanillaInstaller {
 
     @Override
     public Version getVersion(VanillaVersion version) {
-        return downloadVersion(version, mcFiles.getMcDir(), new TypedMapImpl(), false);
+        // this is only a lookup of metadata, any .minecraft directory that already has the version.json will do
+        for (McFiles mcFiles : mcFilesService.all()) {
+            Path json = mcFiles.getVersionsDir().resolve(version.getName()).resolve(version.getName() + ".json");
+            if (Files.exists(json)) {
+                return versionJsonService.getParser().parse(json);
+            }
+        }
+
+        return downloadVersion(version, mcFilesService.getPrimary().getMcDir(), new TypedMapImpl(), false);
     }
 
     private Version downloadVersion(

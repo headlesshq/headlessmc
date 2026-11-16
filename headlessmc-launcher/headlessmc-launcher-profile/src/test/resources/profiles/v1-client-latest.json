@@ -1,0 +1,34 @@
+{
+  "name": "v1-client-latest",
+  "version": {
+    "side": null,
+    "platform": "fabric",
+    "version": "1.21.1",
+    "build": "latest"
+  },
+  "currentVersion": {
+    "side": null,
+    "platform": "fabric",
+    "version": "1.21.1",
+    "build": "0.16.9"
+  },
+  "path": {
+    "source": "minecraft",
+    "sourcePath": "@MC_DIR@",
+    "path": "fabric-1.21.1-latest"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 1
+}

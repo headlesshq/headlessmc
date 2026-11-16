@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.platform.client;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
@@ -44,7 +45,7 @@ class AbstractClientInstallerTest {
         }
 
         @Override
-        public Version installClient(VersionID id, Path mcDir, TypedMap args) {
+        public Version installClient(VersionID id, McFiles mcDir, TypedMap args) {
             vanillaInstalls.add(id);
             return new FakeVersion(id.getVersion().getName());
         }
@@ -57,7 +58,7 @@ class AbstractClientInstallerTest {
 
     private class TestInstaller extends AbstractClientInstaller {
         @Override
-        protected void installClient(VersionID id, Path mcDir, Version vanilla, TypedMap args) {
+        protected void installClient(VersionID id, McFiles mcDir, Version vanilla, TypedMap args) {
             clientInstalls.add(id);
             versions.add(installedVersion);
         }
@@ -113,13 +114,13 @@ class AbstractClientInstallerTest {
     @Test
     void installingForAnotherPlatformThrows() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-            () -> installer.installClient(id("vanilla", "1.21.1"), Path.of("mc"), new TypedMapImpl()));
+            () -> installer.installClient(id("vanilla", "1.21.1"), McFiles.of(Path.of("mc")), new TypedMapImpl()));
         assertTrue(e.getMessage().contains("installer for platform fabric"));
     }
 
     @Test
     void installsVanillaAndClientAndMatchesTheResult() {
-        Version result = installer.installClient(id("fabric", "1.21.1"), Path.of("mc"), new TypedMapImpl());
+        Version result = installer.installClient(id("fabric", "1.21.1"), McFiles.of(Path.of("mc")), new TypedMapImpl());
 
         assertEquals(installedVersion, result);
         assertEquals(1, vanillaInstalls.size());
@@ -130,7 +131,7 @@ class AbstractClientInstallerTest {
     void alreadyInstalledVersionIsReused() {
         versions.add(installedVersion);
 
-        Version result = installer.installClient(id("fabric", "1.21.1"), Path.of("mc"), new TypedMapImpl());
+        Version result = installer.installClient(id("fabric", "1.21.1"), McFiles.of(Path.of("mc")), new TypedMapImpl());
 
         assertEquals(installedVersion, result);
         assertEquals(List.of(), clientInstalls);
@@ -143,7 +144,7 @@ class AbstractClientInstallerTest {
 
         TypedMap args = new TypedMapImpl();
         args.put(ClientInstaller.FORCE_INSTALL, true);
-        Version result = installer.installClient(id("fabric", "1.21.1"), Path.of("mc"), args);
+        Version result = installer.installClient(id("fabric", "1.21.1"), McFiles.of(Path.of("mc")), args);
 
         assertEquals(1, clientInstalls.size());
         assertEquals("fabric-loader-0.16.9-1.21.1-fresh", result.getId());
@@ -155,7 +156,7 @@ class AbstractClientInstallerTest {
 
         TypedMap args = new TypedMapImpl();
         args.put(ClientInstaller.FORCE_INSTALL, true);
-        Version result = installer.installClient(id("fabric", "1.21.1"), Path.of("mc"), args);
+        Version result = installer.installClient(id("fabric", "1.21.1"), McFiles.of(Path.of("mc")), args);
 
         assertEquals(1, clientInstalls.size());
         assertEquals(installedVersion.getId(), result.getId());
@@ -166,7 +167,7 @@ class AbstractClientInstallerTest {
         installedVersion = new FakeVersion("some-unrelated-version");
 
         assertThrows(VersionMatchException.class,
-            () -> installer.installClient(id("fabric", "1.21.1"), Path.of("mc"), new TypedMapImpl()));
+            () -> installer.installClient(id("fabric", "1.21.1"), McFiles.of(Path.of("mc")), new TypedMapImpl()));
     }
 
 }

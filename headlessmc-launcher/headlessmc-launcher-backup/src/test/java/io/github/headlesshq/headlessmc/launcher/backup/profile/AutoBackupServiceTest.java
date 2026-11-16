@@ -57,7 +57,10 @@ class AutoBackupServiceTest {
         assertEquals(BackupOrigin.LAUNCH, backup.origin());
         assertEquals("worlds", backup.type());
         assertEquals(List.of("saves/A"), backup.paths());
-        assertEquals(profile, backup.profile());
+        // the backup contains the profile as it is read back from its json, where the data of the launch
+        // target is not a typed object anymore
+        assertEquals(profile.target().name(), backup.profile().target().name());
+        assertEquals(profile, backup.profile().withTarget(profile.target()));
         assertTrue(env.getConsole().output().contains("Backed up main before launching"));
     }
 

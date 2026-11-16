@@ -38,6 +38,22 @@ public interface JsonService {
      */
     <V> Optional<V> parseVersioned(InputStream inputStream, TypeLiteral<V> type, int version) throws JsonParseException;
 
+    /**
+     * Converts an untyped json tree into a typed value.
+     * A field declared as {@link Object} is parsed into a tree of maps, lists and primitives.
+     * This allows a class to carry json it does not know the type of, e.g. the data of a
+     * launch target that is provided by a plugin, and lets the owner of that data
+     * convert it into its own type later.
+     * Values that already are of the given type are returned as they are.
+     *
+     * @param tree the tree to convert, as parsed for a field of type {@link Object}, or a value of the given type.
+     * @param type the type to convert the tree to.
+     * @param <V>  the type to convert the tree to.
+     * @return the converted value.
+     * @throws JsonParseException if the tree cannot be converted into the given type.
+     */
+    <V extends io.github.headlesshq.headlessmc.reflection.ReflectionRegistered> V convert(Object tree, Class<V> type) throws JsonParseException;
+
     void write(OutputStream outputStream, io.github.headlesshq.headlessmc.reflection.ReflectionRegistered object, boolean pretty) throws JsonParseException;
 
     void write(Path file, io.github.headlesshq.headlessmc.reflection.ReflectionRegistered object, boolean pretty) throws JsonParseException;

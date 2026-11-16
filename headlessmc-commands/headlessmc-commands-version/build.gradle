@@ -27,6 +27,7 @@ dependencies {
     testImplementation testFixtures(project(':headlessmc-console'))
     testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
     testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-server'))
+    testImplementation testFixtures(project(':headlessmc-launcher:headlessmc-launcher-client'))
     testImplementation testFixtures(project(':headlessmc-console:headlessmc-console-format'))
     testImplementation project(':headlessmc-util:headlessmc-util-json-jackson')
 }

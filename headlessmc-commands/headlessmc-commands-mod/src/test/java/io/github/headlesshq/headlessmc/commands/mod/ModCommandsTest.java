@@ -8,6 +8,7 @@ import io.github.headlesshq.headlessmc.exceptions.HeadlessMcIOException;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
 import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.mods.ModTypeService;
@@ -182,9 +183,13 @@ class ModCommandsTest {
     void setup() {
         fabric = FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9"});
         fabric.withModSupport(new ModSupport(List.of(ModType.MOD, ModType.RESOURCE_PACK), List.of(modReader)));
-        platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"), fabric);
+        FakeVanillaPlatform vanilla = new FakeVanillaPlatform("1.21.1");
+        vanilla.getVersionService().withReleases("1.21.1");
+        platformService = new FakePlatformService(vanilla, fabric);
         profileService = new FakeProfileService(root);
-        profileResolver = new ProfileResolver(platformService, profileService);
+        profileResolver = new ProfileResolver(
+            profileService, TestLaunchTargets.versions(platformService, profileService, root)
+        );
         modListingService = new ModListingService(platformService, profileResolver, modTypeService, modCache, new WorldService());
     }
 
@@ -236,6 +241,19 @@ class ModCommandsTest {
         assertTrue(output.contains("Author"));
         assertTrue(output.contains("bsl.zip"));
         assertFalse(output.contains("notajar"));
+    }
+
+    @Test
+    void listForLatestOnlyNeedsThePlatform() {
+        Profile profile = profileResolver.resolve(List.of("fabric", "latest"), io.github.headlesshq.headlessmc.version.arg.Side.BOTH);
+        createFile(profile.path().resolve("mods").resolve("sodium.jar"));
+        modsByFileName.put("sodium.jar", List.of(mod("sodium", "Sodium")));
+
+        ListCommand command = list();
+        command.setVersionArg(List.of("fabric", "latest"));
+        command.run();
+
+        assertTrue(console.output().contains("Sodium"), console.output());
     }
 
     @Test
@@ -376,6 +394,22 @@ class ModCommandsTest {
     }
 
     @Test
+    void addForLatestDownloadsTheModForWhatLatestCurrentlyIs() {
+        for (String vague : List.of("latest", "stable")) {
+            downloads.clear();
+            AddCommand command = add();
+            command.setType("mod");
+            command.setMod("sodium");
+            command.setVersionArg(List.of("fabric", vague));
+            command.run();
+
+            assertEquals(1, downloads.size());
+            assertEquals("fabric", downloads.getFirst().version().platform());
+            assertEquals("1.21.1", downloads.getFirst().version().version());
+        }
+    }
+
+    @Test
     void addDownloadsModToProfile() {
         Profile profile = profile("main", "fabric");
 
@@ -385,7 +419,7 @@ class ModCommandsTest {
         command.setVersionArg(List.of("main"));
         command.run();
 
-        assertEquals(List.of(new Download(profile.path(), null, "sodium", profile.version(), ModType.MOD)), downloads);
+        assertEquals(List.of(new Download(profile.path(), null, "sodium", profileResolver.requireVersion(profile), ModType.MOD)), downloads);
         assertTrue(console.output().contains("Downloaded " + profile.path().resolve("sodium.jar") + " successfully."));
     }
 
@@ -782,6 +816,20 @@ class ModCommandsTest {
     }
 
     @Test
+    void searchForLatestScopesToWhatLatestCurrentlyIs() {
+        // not a stored profile: "stable" is resolved for this command, it is not a Minecraft version itself
+        SearchCommand command = search();
+        command.setQuery("sodium");
+        command.setVersionArg(List.of("fabric", "stable"));
+        command.run();
+
+        VersionArg version = searches.getFirst().version().orElseThrow();
+        assertEquals("fabric", version.platform());
+        assertEquals("1.21.1", version.version());
+        assertEquals(ModType.MOD, searches.getFirst().type());
+    }
+
+    @Test
     void searchWithProfileScopesToItsVersion() {
         Profile profile = profile("main", "fabric");
 
@@ -791,7 +839,7 @@ class ModCommandsTest {
         command.run();
 
         Search search = searches.getFirst();
-        assertEquals(Optional.of(profile.version()), search.version());
+        assertEquals(Optional.of(profileResolver.requireVersion(profile)), search.version());
         assertEquals(ModType.MOD, search.type());
     }
 

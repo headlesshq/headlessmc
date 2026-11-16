@@ -6,6 +6,7 @@ import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
 import io.github.headlesshq.headlessmc.platform.FakePlatform;
 import io.github.headlesshq.headlessmc.platform.FakePlatformService;
 import io.github.headlesshq.headlessmc.platform.FakeVanillaPlatform;
@@ -199,6 +200,8 @@ class VersionRemoveServiceTest {
             FakePlatform.create("fabric", new String[]{"1.21.1", "0.16.9", "0.16.5"})
         );
         profileService = new FakeProfileService(root.resolve("profiles"));
+        // the fake versions do not come from files, they all belong to this directory
+        versionJsonService.withMcFiles(mcFiles);
 
         install(new FakeVersion("1.21.1")
             .withLibrary(library("com.example:shared:1.0", true))
@@ -237,7 +240,7 @@ class VersionRemoveServiceTest {
             profileService,
             new DefaultFileService(new DefaultFileSystemProvider()),
             new DefaultJacksonJsonService(),
-            mcFiles
+            TestLaunchTargets.versions(platformService, profileService, root)
         );
     }
 

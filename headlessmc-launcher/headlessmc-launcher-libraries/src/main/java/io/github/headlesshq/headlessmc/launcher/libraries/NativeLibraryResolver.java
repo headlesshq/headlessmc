@@ -16,10 +16,10 @@ import java.util.Map;
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class NativeLibraryResolver {
     private final FileService fileService;
-    private final McFiles mcFiles;
     private final OS os;
 
     public LibraryFile handleNatives(
+        McFiles mcFiles,
         Version.Library library,
         TemplateStrings templateStrings,
         Map<String, Version.Download> classifiers,

@@ -34,10 +34,17 @@ public class AssetDownloader {
     final HashService hashService;
     final DummyAssets dummyAssets;
     final Holder<AssetsConfig> config;
-    final McFiles mcFiles;
     final JsonService jsonService;
 
-    public AssetsLocation download(Version.AssetIndex assetIndex) throws HeadlessMcException {
+    /**
+     * Downloads the assets of the given asset index.
+     *
+     * @param mcFiles    the {@code .minecraft} directory to place the assets in.
+     * @param assetIndex the asset index to download.
+     * @return the location of the downloaded assets.
+     * @throws HeadlessMcException if something goes wrong.
+     */
+    public AssetsLocation download(McFiles mcFiles, Version.AssetIndex assetIndex) throws HeadlessMcException {
         Objects.requireNonNull(assetIndex.getId(), "AssetIndex id was null");
         Objects.requireNonNull(assetIndex.getUrl(), "AssetIndex url was null");
         Path index = fileService.getPath(mcFiles.getAssetsDir(), "indexes", assetIndex.getId() + ".json");
@@ -61,7 +68,7 @@ public class AssetDownloader {
                 AssetIndex.Download download = entry.getValue();
                 totalSize += download.size();
                 
-                AssetDownloadTask task = downloadTask(downloadContext, assetIndex, assetIndexJson, fileName, download);
+                AssetDownloadTask task = downloadTask(mcFiles, downloadContext, assetIndex, assetIndexJson, fileName, download);
                 if (task.needsDownload()) {
                     tasks.add(task);
                 } else {  // no download needed, just run local part
@@ -82,7 +89,7 @@ public class AssetDownloader {
             return new AssetsLocation(
                 assetIndex.getId(),
                 assetIndexJson.isVirtual()
-                    ? getVirtualDir(assetIndex)
+                    ? getVirtualDir(mcFiles, assetIndex)
                     : assetIndexJson.mapToResources()
                         ? mcFiles.getResourcesDir()
                         : mcFiles.getAssetsDir()
@@ -90,7 +97,7 @@ public class AssetDownloader {
         }
     }
 
-    Path getVirtualDir(Version.AssetIndex assetIndex) {
+    Path getVirtualDir(McFiles mcFiles, Version.AssetIndex assetIndex) {
         return fileService.getPath(
             mcFiles.getAssetsDir(),
             "virtual",
@@ -121,6 +128,7 @@ public class AssetDownloader {
     }
 
     private AssetDownloadTask downloadTask(
+        McFiles mcFiles,
         DownloadContext context,
         Version.AssetIndex versionAssetIndex,
         AssetIndex assetIndex,
@@ -131,7 +139,7 @@ public class AssetDownloader {
         String firstTwo = hash.substring(0, 2);
         Path file = fileService.getPath(mcFiles.getAssetsDir(), "objects", firstTwo, hash);
         URI url = URI.create(config.get().url() + "/" + firstTwo + "/" + hash);
-        return new AssetDownloadTask(versionAssetIndex, context, download, assetIndex, this, fileName, file, url);
+        return new AssetDownloadTask(versionAssetIndex, context, download, assetIndex, this, mcFiles, fileName, file, url);
     }
 
 }

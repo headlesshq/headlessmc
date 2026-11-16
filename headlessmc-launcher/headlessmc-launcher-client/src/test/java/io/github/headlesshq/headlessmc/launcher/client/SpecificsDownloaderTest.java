@@ -34,7 +34,7 @@ class SpecificsDownloaderTest {
 
     @Test
     void doesNothingIfDisabled() {
-        downloader.download(profile());
+        downloader.download(profile(), VERSION);
 
         Mockito.verifyNoInteractions(gitHub);
     }
@@ -43,7 +43,7 @@ class SpecificsDownloaderTest {
     void downloadsSpecificsForTheLaunchedVersion() throws Exception {
         Mockito.when(config.autoDownloadSpecifics()).thenReturn(true);
 
-        downloader.download(profile());
+        downloader.download(profile(), VERSION);
 
         Mockito.verify(gitHub).download(eq(gameDir), isNull(), eq("hmc-specifics"), eq(VERSION), eq(ModType.MOD));
     }
@@ -52,7 +52,7 @@ class SpecificsDownloaderTest {
     void doesNotDownloadForUnsupportedPlatforms() {
         Mockito.when(config.autoDownloadSpecifics()).thenReturn(true);
 
-        downloader.download(new Profile("test", VersionArg.parse("vanilla", "1.21.1"), gameDir));
+        downloader.download(profile(), VersionArg.parse("vanilla", "1.21.1"));
 
         Mockito.verifyNoInteractions(gitHub);
     }
@@ -63,7 +63,17 @@ class SpecificsDownloaderTest {
         Mockito.when(gitHub.download(any(), any(), any(), any(), any()))
             .thenThrow(new ModDistributionException("Failed to get release 1.0-latest of headlesshq/hmc-specifics"));
 
-        assertDoesNotThrow(() -> downloader.download(profile()));
+        assertDoesNotThrow(() -> downloader.download(profile(), VERSION));
+    }
+
+    @Test
+    void doesNotDownloadIfTheVersionIsNotKnown() {
+        Mockito.when(config.autoDownloadSpecifics()).thenReturn(true);
+
+        // e.g. a version.json no platform recognizes
+        downloader.download(profile(), null);
+
+        Mockito.verifyNoInteractions(gitHub);
     }
 
 }

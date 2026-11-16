@@ -4,6 +4,7 @@ import io.github.headlesshq.headlessmc.exceptions.FileException;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.NotFoundException;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.files.cache.Cache;
 import io.github.headlesshq.headlessmc.files.cache.CacheBuilder;
@@ -119,7 +120,27 @@ class VanillaInstallerImplTest {
         }
 
         @Override
-        public List<Version> observeChanges(ChangeAction action) {
+        public List<Version> observeChanges(McFiles mcFiles, ChangeAction action) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Set<String> getInstalledFileNames(McFiles mcFiles) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Optional<Version> tryGetVersion(McFiles mcFiles, String fileName) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<Version> getInstalledVersions(McFiles mcFiles) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public McFiles getMcFiles(Version version) {
             throw new UnsupportedOperationException();
         }
 
@@ -171,7 +192,7 @@ class VanillaInstallerImplTest {
             ))))
             .build();
 
-        installer = new VanillaInstallerImpl(new TestVersionJsonService(), downloads, cache, mcFiles);
+        installer = new VanillaInstallerImpl(new TestVersionJsonService(), downloads, cache, McFilesService.of(mcFiles));
         downloads.register(MANIFEST_1_21_1, "1.21.1;java=21");
     }
 
@@ -196,7 +217,7 @@ class VanillaInstallerImplTest {
     void installClientWritesTheVersionJson() throws IOException {
         Path mcDir = root.resolve("custom-mc");
 
-        Version version = installer.installClient(id("1.21.1"), mcDir, new TypedMapImpl());
+        Version version = installer.installClient(id("1.21.1"), McFiles.of(mcDir), new TypedMapImpl());
 
         Path json = mcDir.resolve("versions").resolve("1.21.1").resolve("1.21.1.json");
         assertEquals("1.21.1", version.getId());
@@ -210,7 +231,7 @@ class VanillaInstallerImplTest {
         Files.createDirectories(json.getParent());
         Files.writeString(json, "1.21.1;java=17");
 
-        Version version = installer.installClient(id("1.21.1"), mcDir, new TypedMapImpl());
+        Version version = installer.installClient(id("1.21.1"), McFiles.of(mcDir), new TypedMapImpl());
 
         assertEquals(17, version.requireJavaVersion());
         assertFalse(downloads.wasRequested(MANIFEST_1_21_1));
@@ -225,7 +246,7 @@ class VanillaInstallerImplTest {
 
         TypedMap args = new TypedMapImpl();
         args.put(ClientInstaller.FORCE_INSTALL, true);
-        Version version = installer.installClient(id("1.21.1"), mcDir, args);
+        Version version = installer.installClient(id("1.21.1"), McFiles.of(mcDir), args);
 
         assertEquals(21, version.requireJavaVersion());
         assertTrue(downloads.wasRequested(MANIFEST_1_21_1));

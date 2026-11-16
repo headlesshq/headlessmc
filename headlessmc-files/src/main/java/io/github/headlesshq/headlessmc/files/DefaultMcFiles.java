@@ -3,17 +3,21 @@ package io.github.headlesshq.headlessmc.files;
 import io.github.headlesshq.headlessmc.config.ConfigService;
 import io.github.headlesshq.headlessmc.config.Holder;
 import io.github.headlesshq.headlessmc.os.OS;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
+/**
+ * Determines the primary {@code .minecraft} directory:
+ * {@code hmc.files.mc} if it is configured, otherwise the default location of the operating system.
+ * This is not a bean, {@link McFiles} cannot be injected, use the {@link McFilesService}.
+ *
+ * @see DefaultMcFilesService
+ */
 @Slf4j
-@ApplicationScoped
-@RequiredArgsConstructor(onConstructor_ = {@Inject})
+@RequiredArgsConstructor
 public class DefaultMcFiles implements McFiles {
     private final Holder<FileConfig> configHolder;
     private final ConfigService configService;

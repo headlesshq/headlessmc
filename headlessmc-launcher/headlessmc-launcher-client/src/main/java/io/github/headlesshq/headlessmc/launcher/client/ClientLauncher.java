@@ -5,7 +5,6 @@ import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.java.launcher.JavaLauncherService;
-import io.github.headlesshq.headlessmc.launcher.LauncherConfig;
 import io.github.headlesshq.headlessmc.launcher.args.ArgumentTemplateService;
 import io.github.headlesshq.headlessmc.launcher.args.Arguments;
 import io.github.headlesshq.headlessmc.launcher.args.ArgumentsService;
@@ -24,14 +23,12 @@ import io.github.headlesshq.headlessmc.platform.PlatformService;
 import io.github.headlesshq.headlessmc.platform.VanillaVersion;
 import io.github.headlesshq.headlessmc.platform.VanillaVersionService;
 import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.platform.client.ClientSupport;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatchException;
 import io.github.headlesshq.headlessmc.platform.client.VersionMatcherService;
 import io.github.headlesshq.headlessmc.util.maven.MavenRepository;
-import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
+import io.github.headlesshq.headlessmc.util.typemap.Key;
 import io.github.headlesshq.headlessmc.version.ProcessedVersion;
 import io.github.headlesshq.headlessmc.version.Version;
-import io.github.headlesshq.headlessmc.version.arg.Side;
 import io.github.headlesshq.headlessmc.version.service.VersionJsonService;
 import io.github.headlesshq.headlessmc.version.util.Feature;
 import io.github.headlesshq.headlessmc.version.util.Features;
@@ -61,6 +58,11 @@ public class ClientLauncher {
     static final String FIRST_SERVER_ARG_VERSION = "13w16a";
     /** The first version with quick play, which replaced {@code --server} and {@code --port}. */
     static final String FIRST_QUICK_PLAY_VERSION = "23w14a";
+    /**
+     * The account to launch a client with, for the options of the launch targets launching clients,
+     * see {@link io.github.headlesshq.headlessmc.launcher.profile.LaunchTarget#launcher}.
+     */
+    public static final Key<Account> ACCOUNT = new Key<>(Account.class, "hmc.launch.client.account");
 
     private final ArgumentTemplateService argumentTemplateService;
     private final LastUsedAccountService lastUsedAccountService;
@@ -77,77 +79,67 @@ public class ClientLauncher {
     private final AssetDownloader assetDownloader;
     private final PlatformService platformService;
     private final PatchService patchService;
-    private final LauncherConfig config;
-    private final McFiles mcFiles;
 
     /**
-     * Launches the installed version matching {@link Profile#currentVersion()}.
-     *
-     * @param profile the profile to launch.
-     * @param account the account to launch with.
-     * @return a launcher for the client process.
-     * @throws HeadlessMcException if the version cannot be found or something else goes wrong.
-     */
-    public ProcessLauncher launcher(Profile profile, Account account) throws HeadlessMcException {
-        VersionID id = VersionID.resolve(platformService, profile.currentVersion());
-        return launcher(profile, account, resolveVersion(id), id);
-    }
-
-    /**
-     * Launches the given version.json, ignoring {@link Profile#currentVersion()}.
+     * Launches the given version.json.
      * The version does not have to match a {@link VersionID}, e.g. a version installed by another launcher
-     * under a custom name, without a parent. If it matches one, its platform is used like for
-     * {@link #launcher(Profile, Account)}, otherwise libraries are resolved against the vanilla repositories
+     * under a custom name, or the version of a platform that is not available anymore.
+     * Without an id libraries are resolved against the vanilla repositories only,
      * and joining a server on launch only works if the version.json declares quick play.
      *
-     * @param profile the profile to launch.
-     * @param account the account to launch with.
-     * @param version the version.json to launch.
+     * <p>Everything belonging to the version, its parents, libraries, assets and logging configuration,
+     * is taken from and installed into the {@code .minecraft} directory the version.json is in,
+     * see {@link VersionJsonService#getMcFiles(Version)}.</p>
+     *
+     * @param profile         the profile to launch.
+     * @param account         the account to launch with.
+     * @param resolvedVersion the version.json to launch.
+     * @param id              the id of the version, {@code null} if it is not known,
+     *                        see {@link #matchVersionId(Version)}.
      * @return a launcher for the client process.
      * @throws HeadlessMcException if something goes wrong.
      */
-    public ProcessLauncher launcher(Profile profile, Account account, Version version) throws HeadlessMcException {
-        return launcher(profile, account, version, matchVersionId(version).orElse(null));
-    }
-
-    private ProcessLauncher launcher(
+    public ProcessLauncher launcher(
         Profile profile,
         Account account,
         Version resolvedVersion,
         @Nullable VersionID id
     ) throws HeadlessMcException {
-        if (!Side.CLIENT.equals(profile.side())) {
-            log.warn("Launching {} profile {} with client launcher", profile.side(), profile.name());
+        if (!profile.isClient()) {
+            log.warn("Launching profile {}, which is not a client, with the client launcher", profile.name());
         }
 
+        McFiles mcFiles = versionJsonService.getMcFiles(resolvedVersion);
         Path gameDir = profile.path();
         LaunchOptions options = profile.options();
         List<Patcher> patchers = getPatchers(profile);
         String name = id == null ? resolvedVersion.getId() : id.toString();
 
         ProcessedVersion version = versionJsonService.process(resolvedVersion);
-        specificsDownloader.download(profile);
+        specificsDownloader.download(profile, id == null ? null : id.asArg());
         muslClientSupport.warnIfGlibcLoaderMissing(profile);
 
         // library overrides?
         // configuration???
-        AssetsLocation assetsLocation = assetDownloader.download(version.getAssetIndex());
+        AssetsLocation assetsLocation = assetDownloader.download(mcFiles, version.getAssetIndex());
 
-        TemplateStrings templates = templateService.create(assetsLocation, account, gameDir, version, options);
+        TemplateStrings templates = templateService.create(mcFiles, assetsLocation, account, gameDir, version, options);
         Features features = Features.fromTemplates(templates);
         features.add(Feature.DEMO, options.demo());
 
-        Optional<String> loggingArg = loggingDownloader.downloadLogging(templates, version);
+        Optional<String> loggingArg = loggingDownloader.downloadLogging(mcFiles, templates, version);
 
         List<MavenRepository> repositories = new ArrayList<>(platformService.getVanillaPlatform().getRepositories());
         if (id != null) {
             repositories.addAll(id.getPlatform().getRepositories());
         }
-        List<Path> unpatchedClasspath = classpathService.buildClasspath(templates, features, version, repositories);
+        List<Path> unpatchedClasspath = classpathService.buildClasspath(
+            mcFiles, templates, features, version, repositories
+        );
 
         int javaVersion = profile.javaVersion() == null ? version.requireJavaVersion() : profile.javaVersion();
         PatchResult patchResult = new PatchResult(new LinkedHashSet<>(unpatchedClasspath), new LinkedHashSet<>());
-        patchResult = patchService.patch(patchResult, javaVersion, patchers);
+        patchResult = patchService.patch(mcFiles, patchResult, javaVersion, patchers);
 
         templates.add(
             TemplateString.CLASSPATH,
@@ -192,10 +184,13 @@ public class ClientLauncher {
     }
 
     /**
-     * Finds the {@link VersionID} of a version.json launched directly, preferring a mod-loading platform
+     * Finds the {@link VersionID} of a version.json, preferring a mod-loading platform
      * over vanilla, so that its repositories are used.
+     *
+     * @param version the version.json to find the id of.
+     * @return the id of the version, none if no platform recognizes the version.
      */
-    private Optional<VersionID> matchVersionId(Version version) {
+    public Optional<VersionID> matchVersionId(Version version) {
         try {
             Set<VersionID> ids = versionMatcherService.match(version, versionJsonService);
             return ids.stream()
@@ -206,30 +201,6 @@ public class ClientLauncher {
             log.debug("Version {} does not match any platform", version.getId(), e);
             return Optional.empty();
         }
-    }
-
-    private Version resolveVersion(VersionID id) {
-        Optional<VersionMatcherService.MatchResult> result = versionMatcherService.match(
-            id, versionJsonService.getInstalledVersions(), versionJsonService
-        );
-
-        if (result.isEmpty()) {
-            if (config.autoInstall()) {
-                ClientSupport clientSupport = id.getPlatform().getClientSupport()
-                    .orElseThrow(() -> new LaunchException(
-                        id.getPlatform().getCapitalizedName() + " does not support clients."
-                    ));
-
-                return clientSupport.installer().installClient(id, mcFiles.getMcDir(), new TypedMapImpl());
-            }
-
-            throw new LaunchException(
-                "Failed to find installed version " + id + ". Consider installing it via \"headlessmc install "
-                    + id.asArg().toString(" ") + "\"."
-            );
-        }
-
-        return result.orElseThrow(() -> new LaunchException("Failed to get version for " + id)).version();
     }
 
     /**
@@ -305,10 +276,12 @@ public class ClientLauncher {
             || arg.startsWith("--class-path="));
     }
 
+    /**
+     * The patchers to apply. The profile only lists what has been selected, by itself, by the profile it inherits
+     * from and by the options of this launch, patchers replacing each other are sorted out here.
+     */
     private List<Patcher> getPatchers(Profile profile) {
-        return profile.patchers().stream()
-            .map(patchService::requirePatcher)
-            .toList();
+        return patchService.resolve(profile.patchers());
     }
 
     /**

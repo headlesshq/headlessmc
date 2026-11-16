@@ -1,0 +1,45 @@
+{
+  "name": "v2-version",
+  "side": "CLIENT",
+  "target": {
+    "name": "version",
+    "data": {
+      "version": {
+        "side": null,
+        "platform": "fabric",
+        "version": "1.21.1",
+        "build": "latest"
+      },
+      "current": {
+        "side": null,
+        "platform": "fabric",
+        "version": "1.21.1",
+        "build": "0.16.9"
+      },
+      "currentTarget": {
+        "source": "minecraft",
+        "sourcePath": "@MC_DIR@",
+        "path": "versions/fabric-loader-0.16.9-1.21.1/fabric-loader-0.16.9-1.21.1.json"
+      }
+    }
+  },
+  "path": {
+    "source": "minecraft",
+    "sourcePath": "@MC_DIR@",
+    "path": "fabric-1.21.1-latest"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

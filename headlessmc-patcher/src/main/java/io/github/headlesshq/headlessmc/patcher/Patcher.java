@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.patcher;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 /**
  * Represents a Patcher that patches a certain library.
@@ -19,7 +20,7 @@ public interface Patcher extends Comparable<Patcher> {
     String LWJGL = "lwjgl";
     /**
      * The {@link #name()} of the patcher that replaces LWJGL with the patched jars of headlessmc-lwjgl,
-     * opt-in while in preview, replaces {@link #LWJGL}.
+     * opt-in while in preview, {@link #excludes() excludes} {@link #LWJGL}.
      */
     String LWJGL_PRE = "lwjgl-pre";
     /**
@@ -54,6 +55,19 @@ public interface Patcher extends Comparable<Patcher> {
      * @return the version of this patcher.
      */
     long version();
+
+    /**
+     * The {@link #name() names} of the patchers this patcher replaces.
+     * Patchers can be selected in several places, e.g. by a profile, by the profile it inherits from and by the
+     * options of a launch, and none of these places knows about the others. A patcher that does the job of
+     * another one in a different way therefore names it here: if both are selected, only this patcher is applied,
+     * see {@link PatchService#resolve(java.util.Collection)}.
+     *
+     * @return the names of the patchers that are not applied if this patcher is, case is ignored.
+     */
+    default Set<String> excludes() {
+        return Set.of();
+    }
 
     @Override
     default int compareTo(Patcher o) {

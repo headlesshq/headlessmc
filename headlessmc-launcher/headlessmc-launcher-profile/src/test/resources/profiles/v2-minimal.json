@@ -1,0 +1,20 @@
+{
+  "name": "v2-minimal",
+  "target": {
+    "name": "jar",
+    "data": {
+      "jar": {
+        "source": "headlessmc.data",
+        "sourcePath": "@DATA_DIR@",
+        "path": "tools/tool.jar"
+      }
+    }
+  },
+  "path": {
+    "source": "headlessmc.data",
+    "sourcePath": "@DATA_DIR@",
+    "path": "tools"
+  },
+  "hmcVersion": 2,
+  "hasDefaultClientJvmArgs": false
+}

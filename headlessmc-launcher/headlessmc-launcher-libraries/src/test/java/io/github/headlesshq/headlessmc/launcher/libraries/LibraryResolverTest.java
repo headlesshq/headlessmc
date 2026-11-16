@@ -27,9 +27,8 @@ public class LibraryResolverTest {
 
     private LibraryResolver resolver(McFiles mcFiles) {
         return new LibraryResolver(
-            new NativeLibraryResolver(fileService, mcFiles, linux),
+            new NativeLibraryResolver(fileService, linux),
             fileService,
-            mcFiles,
             cpu,
             linux
         );
@@ -45,6 +44,7 @@ public class LibraryResolverTest {
         TestLibraries.FakeLibrary... libraries
     ) {
         return resolver(mcFiles).resolveLibraries(
+            mcFiles,
             templates,
             new Features(),
             new TestLibraries.FakeVersion(List.of(libraries))

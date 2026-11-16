@@ -1,0 +1,47 @@
+{
+  "name": "v2-server",
+  "side": "SERVER",
+  "target": {
+    "name": "server",
+    "data": {
+      "version": {
+        "side": "SERVER",
+        "platform": "paper",
+        "version": "1.21.1",
+        "build": null
+      },
+      "current": {
+        "side": "SERVER",
+        "platform": "paper",
+        "version": "1.21.1",
+        "build": "130"
+      },
+      "currentTarget": {
+        "source": "headlessmc.data",
+        "sourcePath": "@DATA_DIR@",
+        "path": "server/v2-server/server.jar"
+      }
+    }
+  },
+  "path": {
+    "source": "headlessmc.data",
+    "sourcePath": "@DATA_DIR@",
+    "path": "server/v2-server"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [
+    "nogui"
+  ],
+  "javaVersion": 21,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

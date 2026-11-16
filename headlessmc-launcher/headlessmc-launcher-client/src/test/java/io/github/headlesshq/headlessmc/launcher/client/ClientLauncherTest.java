@@ -3,6 +3,11 @@ package io.github.headlesshq.headlessmc.launcher.client;
 import io.github.headlesshq.headlessmc.auth.Account;
 import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.util.typemap.TypedMapImpl;
+import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
+import io.github.headlesshq.headlessmc.util.json.jackson.DefaultJacksonJsonService;
+import io.github.headlesshq.headlessmc.launcher.profile.GameDirService;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.files.TestFiles;
 import io.github.headlesshq.headlessmc.java.launcher.AbstractJavaProcessBuilder;
 import io.github.headlesshq.headlessmc.java.launcher.JavaLauncherService;
@@ -61,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SequencedMap;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,7 +111,7 @@ class ClientLauncherTest {
         private java.util.function.UnaryOperator<PatchResult> transformation = result -> result;
 
         @Override
-        public PatchResult patch(PatchResult patchResult, int javaVersion, List<Patcher> patchers) {
+        public PatchResult patch(McFiles mcFiles, PatchResult patchResult, int javaVersion, List<Patcher> patchers) {
             calls.add(patchers);
             javaVersions.add(javaVersion);
             return transformation.apply(patchResult);
@@ -122,7 +128,11 @@ class ClientLauncherTest {
         }
     }
 
-    private record NamedPatcher(String name) implements Patcher {
+    private record NamedPatcher(String name, Set<String> excludes) implements Patcher {
+        private NamedPatcher(String name) {
+            this(name, Set.of());
+        }
+
         @Override
         public void patch(PatchContext context) {
         }
@@ -188,13 +198,19 @@ class ClientLauncherTest {
             .withRepository(MavenRepository.of("https://maven.fabricmc.net/"));
         platformService = new FakePlatformService(vanilla, fabric);
 
-        Mockito.when(assetDownloader.download(any())).thenReturn(new AssetsLocation("17", assetsDir));
-        Mockito.when(loggingDownloader.downloadLogging(any(), any())).thenReturn(Optional.empty());
-        Mockito.when(classpathService.buildClasspath(any(), any(), any(), anyList())).thenAnswer(_ -> classpath);
+        Mockito.when(assetDownloader.download(any(), any())).thenReturn(new AssetsLocation("17", assetsDir));
+        Mockito.when(loggingDownloader.downloadLogging(any(), any(), any())).thenReturn(Optional.empty());
+        // everything a version needs comes from the .minecraft directory of the version
+        versionJsonService.withMcFiles(mcFiles);
+        Mockito.when(classpathService.buildClasspath(any(), any(), any(), any(), anyList())).thenAnswer(_ -> classpath);
     }
 
-    private ClientLauncher launcher() {
-        return new ClientLauncher(
+    /**
+     * Launches like the launch commands do: the {@link VersionLaunchTarget} resolves the version of the profile,
+     * installing it if needed, and the {@link ClientLauncher} builds the process for it.
+     */
+    private final class TestLauncher {
+        private final ClientLauncher clientLauncher = new ClientLauncher(
             new ArgumentTemplateService(),
             Mockito.mock(LastUsedAccountService.class),
             Mockito.mock(SpecificsPropertiesService.class),
@@ -202,17 +218,43 @@ class ClientLauncherTest {
             new MuslClientSupport(new OS("linux", OS.Type.LINUX, "1"), new LibCDetector()),
             versionMatcherService,
             versionJsonService,
-            new TemplateStringService(mcFiles, CPU.X64),
+            new TemplateStringService(CPU.X64),
             loggingDownloader,
             launcherService,
             classpathService,
             new ArgumentsService(CPU.X64, new OS("linux", OS.Type.LINUX, "1")),
             assetDownloader,
             platformService,
-            patchService,
-            new Config(),
-            mcFiles
+            patchService
         );
+
+        private final VersionLaunchTarget target = new VersionLaunchTarget(
+            versionMatcherService,
+            versionJsonService,
+            platformService,
+            McFilesService.of(mcFiles),
+            Mockito.mock(GameDirService.class),
+            clientLauncher,
+            new DefaultJvmArgsService(versionJsonService, CPU.X64, new OS("linux", OS.Type.LINUX, "1")),
+            new Config(),
+            new DefaultJacksonJsonService()
+        );
+
+        /** Launches the version of the profile. */
+        ProcessLauncher launcher(Profile profile, Account account) {
+            TypedMap options = new TypedMapImpl();
+            options.put(ClientLauncher.ACCOUNT, account);
+            return target.launcher(target.resolve(profile, options), options);
+        }
+
+        /** Launches the given version.json directly. */
+        ProcessLauncher launcher(Profile profile, Account account, Version version) {
+            return clientLauncher.launcher(profile, account, version, clientLauncher.matchVersionId(version).orElse(null));
+        }
+    }
+
+    private TestLauncher launcher() {
+        return new TestLauncher();
     }
 
     private FakeVersion version(String id) {
@@ -363,6 +405,23 @@ class ClientLauncherTest {
     }
 
     @Test
+    void aPatcherReplacingAnotherSelectedPatcherIsAppliedInsteadOfIt() {
+        // e.g. a profile inherits lwjgl-pre from its parent, and a headless launch selects lwjgl
+        install(version("1.21.1"), "vanilla");
+        Patcher lwjgl = new NamedPatcher("lwjgl");
+        Patcher patched = new NamedPatcher("lwjgl-pre", Set.of("lwjgl"));
+        Patcher log4j = new NamedPatcher("log4j");
+        patchService.patchers.put("lwjgl", lwjgl);
+        patchService.patchers.put("lwjgl-pre", patched);
+        patchService.patchers.put("log4j", log4j);
+        Profile profile = profile("vanilla", "1.21.1").withPatchers(List.of("log4j", "lwjgl", "lwjgl-pre"));
+
+        launcher().launcher(profile, ACCOUNT);
+
+        assertEquals(List.of(List.of(log4j, patched)), patchService.calls);
+    }
+
+    @Test
     void unknownPatchersFail() {
         install(version("1.21.1"), "vanilla");
         Profile profile = profile("vanilla", "1.21.1").withPatchers(List.of("missing"));
@@ -426,7 +485,7 @@ class ClientLauncherTest {
     @Test
     void loggingArgumentIsAdded() {
         install(version("1.21.1"), "vanilla");
-        Mockito.when(loggingDownloader.downloadLogging(any(), any()))
+        Mockito.when(loggingDownloader.downloadLogging(any(), any(), any()))
             .thenReturn(Optional.of("-Dlog4j.configurationFile=logging.xml"));
 
         RecordingBuilder builder = builder(launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT));
@@ -440,7 +499,7 @@ class ClientLauncherTest {
 
         launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT);
 
-        Mockito.verify(assetDownloader).download(version.getAssetIndex());
+        Mockito.verify(assetDownloader).download(mcFiles, version.getAssetIndex());
     }
 
     @Test
@@ -451,7 +510,7 @@ class ClientLauncherTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MavenRepository>> repositories = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), repositories.capture());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), any(), repositories.capture());
         assertEquals(fabric.getRepositories(), repositories.getValue());
     }
 
@@ -470,7 +529,7 @@ class ClientLauncherTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MavenRepository>> repositories = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), repositories.capture());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), any(), repositories.capture());
         assertEquals(vanilla.getRepositories(), repositories.getValue());
     }
 
@@ -484,7 +543,7 @@ class ClientLauncherTest {
         assertEquals("mc-client-fabric/1.21.1", process.getId());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MavenRepository>> repositories = ArgumentCaptor.forClass(List.class);
-        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), repositories.capture());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), any(), any(), repositories.capture());
         assertEquals(fabric.getRepositories(), repositories.getValue());
     }
 
@@ -537,7 +596,7 @@ class ClientLauncherTest {
         launcher().launcher(profile, ACCOUNT);
 
         ArgumentCaptor<Features> features = ArgumentCaptor.forClass(Features.class);
-        Mockito.verify(classpathService).buildClasspath(any(), features.capture(), any(), anyList());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), features.capture(), any(), anyList());
         assertTrue(features.getValue().get(Feature.DEMO));
     }
 
@@ -548,17 +607,21 @@ class ClientLauncherTest {
         launcher().launcher(profile("vanilla", "1.21.1"), ACCOUNT);
 
         ArgumentCaptor<Features> features = ArgumentCaptor.forClass(Features.class);
-        Mockito.verify(classpathService).buildClasspath(any(), features.capture(), any(), anyList());
+        Mockito.verify(classpathService).buildClasspath(any(), any(), features.capture(), any(), anyList());
         assertFalse(features.getValue().get(Feature.DEMO));
     }
 
     @Test
-    void serverProfilesCanStillBeLaunched() {
+    void serverProfilesAreNotLaunchedAsClients() {
         install(version("1.21.1"), "vanilla");
 
-        ProcessLauncher process = launcher().launcher(profile("server", "vanilla", "1.21.1"), ACCOUNT);
+        // a server has its own launch target, the launch target for clients does not take its profiles
+        LaunchException e = assertThrows(
+            LaunchException.class,
+            () -> launcher().launcher(profile("server", "vanilla", "1.21.1"), ACCOUNT)
+        );
 
-        assertEquals(MAIN_CLASS, builder(process).getMainClass());
+        assertTrue(e.getMessage().contains("server"), e.getMessage());
     }
 
     @Test
@@ -567,7 +630,7 @@ class ClientLauncherTest {
         fabric.withClientSupport(new ClientSupport(
             Mockito.mock(VersionMatcher.class),
             (id, mcDir, _) -> {
-                assertEquals(mcFiles.getMcDir(), mcDir);
+                assertEquals(mcFiles, mcDir);
                 installed.add(id);
                 return version("fabric-loader-1.21.1");
             }

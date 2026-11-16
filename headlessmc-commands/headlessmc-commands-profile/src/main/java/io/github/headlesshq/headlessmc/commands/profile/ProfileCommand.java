@@ -23,6 +23,8 @@ import picocli.CommandLine;
         ListCommand.class,
         RemoveCommand.class,
         EditCommand.class,
+        MoveCommand.class,
+        UpdateCommand.class,
         ProfileLaunchCommand.class
     }
 )

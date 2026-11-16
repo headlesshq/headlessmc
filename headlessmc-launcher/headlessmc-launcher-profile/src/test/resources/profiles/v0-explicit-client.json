@@ -1,0 +1,30 @@
+{
+  "name": "v0-explicit-client",
+  "version": {
+    "side": "CLIENT",
+    "platform": "vanilla",
+    "version": "1.21.1",
+    "build": null
+  },
+  "currentVersion": {
+    "side": "CLIENT",
+    "platform": "vanilla",
+    "version": "1.21.1",
+    "build": null
+  },
+  "path": "@GAME_DIR_URI@",
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 0
+}

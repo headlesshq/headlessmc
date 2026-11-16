@@ -40,7 +40,7 @@ public class WorldService {
      * @return the world directories of the profile, sorted by name.
      */
     public List<Path> listWorlds(Profile profile) {
-        if (profile.side().isClient()) {
+        if (profile.isClient()) {
             return listDirectories(getSavesDir(profile));
         }
 
@@ -62,7 +62,7 @@ public class WorldService {
      *                                  or if the name is not the name of a directory inside the profile.
      */
     public Path resolveWorld(Profile profile, @Nullable String world) {
-        if (profile.side().isClient()) {
+        if (profile.isClient()) {
             Path saves = getSavesDir(profile);
             if (world != null) {
                 return requireDirectory(resolveNamedWorld(saves, profile, world), profile, world);

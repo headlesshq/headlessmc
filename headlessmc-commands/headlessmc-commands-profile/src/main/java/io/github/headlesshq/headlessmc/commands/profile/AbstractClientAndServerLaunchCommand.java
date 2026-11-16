@@ -7,18 +7,19 @@ import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.commands.server.AbstractServerLaunchCommand;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.FileService;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
 import io.github.headlesshq.headlessmc.launcher.profile.LaunchOptions;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
 import io.github.headlesshq.headlessmc.patcher.Patcher;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
-import io.github.headlesshq.headlessmc.version.Version;
-import io.github.headlesshq.headlessmc.version.arg.Side;
+import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Slf4j
 @Getter
@@ -70,7 +70,9 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         ClientLauncher clientLauncher,
         ArgSplitter splitter,
         Console console,
-        McFiles mcFiles,
+        LaunchTargetService launchTargetService,
+        McFilesService mcFilesService,
+        FileService fileService,
         LastUsedAccountService lastUsedAccountService,
         XvfbService xvfbService,
         AuthService authService
@@ -83,7 +85,9 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
             serverService,
             splitter,
             console,
-            mcFiles
+            launchTargetService,
+            mcFilesService,
+            fileService
         );
         this.lastUsedAccountService = lastUsedAccountService;
         this.clientLauncher = clientLauncher;
@@ -94,13 +98,17 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
     @Override
     public Integer call() {
         LaunchOptions options = getLaunchOptions();
-        Optional<Version> versionJson = getVersionJson();
         Profile baseProfile = getProfile();
+        checkOptions(baseProfile);
         beforeLaunch(baseProfile);
-        Profile profile = prepareProfile(baseProfile)
-            .withOptions(options.mergeWithDefaults(baseProfile.options()));
+        TypedMap targetOptions = getTargetOptions();
+        // everything that is saved is done with the profile as it is stored: what the launch target finds out ...
+        Profile stored = resolve(baseProfile, targetOptions);
+        // ... and only what is launched gets the options of this launch
+        Profile profile = prepareProfile(stored)
+            .withOptions(options.mergeWithDefaults(stored.options()));
 
-        if (Side.CLIENT.equals(profile.side())) {
+        if (profile.isClient()) {
             Account account = getAccount();
             boolean headless = Boolean.TRUE.equals(this.headless);
             if (!headless
@@ -112,34 +120,42 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
                 headless = true;
             }
 
-            warnIfYggdrasilAgentMissing(profile, account);
+            // a profile can inherit jvm arguments, check what is actually launched
+            warnIfYggdrasilAgentMissing(getLaunchTargetService().effective(profile), account);
 
             profile = profile.withPatchers(resolvePatchers(profile, headless));
-            if (versionJson.isPresent()) {
-                return handle(getClientLauncher().launcher(profile, account, versionJson.get()));
-            }
-
-            return handle(getClientLauncher().launcher(profile, account));
-        } else {
-            if (!options.isEmpty()) {
+            targetOptions.put(ClientLauncher.ACCOUNT, account);
+        } else if (profile.isServer()) {
+            if (hasClientOptions(options)) {
                 log.warn("Launch options --resolution and --server are client only!");
             }
 
-            maybeEulaLaunch(profile);
+            maybeEulaLaunch(stored, profile);
             // TODO: patchers for server
-            return handle(getServerLauncher().launcher(profile));
         }
+
+        return handle(getLaunchTargetService().launcher(profile, targetOptions));
     }
 
     /**
-     * A version.json to launch directly instead of the version of the {@link #getProfile() profile},
-     * e.g. a version installed by another launcher whose name is not a valid version.
-     * Called before {@link #getProfile()}, which may create the profile.
-     *
-     * @return the version.json to launch, or none to launch the version of the profile.
+     * Something that is neither a client nor a server can be launched, but nothing that is specific to
+     * clients or servers applies to it, and nothing must pretend it does.
      */
-    protected Optional<Version> getVersionJson() {
-        return Optional.empty();
+    @Override
+    protected void checkOptions(Profile profile) throws IllegalArgumentException {
+        super.checkOptions(profile);
+        if (!profile.isClient()
+            && !profile.isServer()
+            && (resolution != null || server != null || headless != null || offline)) {
+            throw new IllegalArgumentException(
+                "Profile " + profile.name() + " is neither a client nor a server, the options --resolution, "
+                    + "--server, --headless and --offline cannot be used with it."
+            );
+        }
+    }
+
+    private static boolean hasClientOptions(LaunchOptions options) {
+        return !options.isEmpty();
     }
 
     /**
@@ -170,22 +186,17 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
         log.warn("-javaagent:/path/to/authlib-injector.jar=<your yggdrasil api url>");
     }
 
-    // TODO: improve?!
+    /**
+     * The patchers of this launch, added to the ones the profile selects. This only selects patchers:
+     * the profile can inherit patchers this command does not see, so patchers replacing each other, like the
+     * patched LWJGL replacing the {@link Patcher#LWJGL} patcher selected here, are sorted out when the game is
+     * launched, see {@link Patcher#excludes()}.
+     */
     private List<String> resolvePatchers(Profile profile, boolean headless) {
-        List<String> patchers = this.getPatchers();
-        if (patchers == null) {
-            patchers = new ArrayList<>();
-        }
-
+        List<String> patchers = new ArrayList<>(this.getPatchers() == null ? List.of() : this.getPatchers());
         patchers.add(Patcher.LOG4J);
         if (headless) {
-            // the patched LWJGL of headlessmc-lwjgl is opt-in and replaces the transformer based patcher
-            boolean patchedLwjgl = Stream.concat(patchers.stream(), profile.patchers().stream())
-                .anyMatch(Patcher.LWJGL_PRE::equalsIgnoreCase);
-            if (!patchedLwjgl) {
-                patchers.add(Patcher.LWJGL);
-            }
-
+            patchers.add(Patcher.LWJGL);
             patchers.add(Patcher.PAULSCODE);
         }
 
@@ -202,14 +213,9 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
 
         return new LaunchOptions(
             resolution,
-            Optional.of(
-                getMcFiles().getMcDir()
-                    .resolve("quickPlay")
-                    .resolve("java")
-                    .resolve(System.currentTimeMillis() + ".json")
-                    .toAbsolutePath()
-                    .toString()
-            ),
+            // the quick play log is written into the .minecraft directory the game is launched from,
+            // which is only known once the launch target has been resolved, see TemplateStringService
+            Optional.empty(),
             server == null ? Optional.empty() : Optional.of(new LaunchOptions.Join(LaunchOptions.Join.Type.SERVER, server)),
             false
         );

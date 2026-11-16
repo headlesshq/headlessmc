@@ -1,3 +1,5 @@
+plugins.apply('java-test-fixtures')
+
 dependencies {
     api project(':headlessmc-platform')
     api project(':headlessmc-java:headlessmc-java-all')
@@ -16,6 +18,7 @@ dependencies {
     implementation project(':headlessmc-util:headlessmc-util-json')
     implementation project(':headlessmc-files')
     implementation project(':headlessmc-mods:headlessmc-mods-distribution-github')
+    implementation project(':headlessmc-mods:headlessmc-mods-packwiz')
 
     api project(':headlessmc-launcher')
     api project(':headlessmc-launcher:headlessmc-launcher-profile')
@@ -26,6 +29,26 @@ dependencies {
 
     implementation project(':headlessmc-auth')
     implementation project(':headlessmc-auth:headlessmc-auth-cdi')
+
+    testFixturesApi project(':headlessmc-files')
+    testFixturesApi project(':headlessmc-platform')
+    testFixturesApi project(':headlessmc-version')
+    testFixturesApi project(':headlessmc-version:headlessmc-version-arg')
+    testFixturesApi project(':headlessmc-version:headlessmc-version-service')
+    testFixturesApi project(':headlessmc-util:headlessmc-util-json')
+    testFixturesApi project(':headlessmc-launcher')
+    testFixturesApi project(':headlessmc-launcher:headlessmc-launcher-profile')
+    testFixturesApi testFixtures(project(':headlessmc-platform'))
+    testFixturesImplementation testFixtures(project(':headlessmc-files'))
+    testFixturesApi testFixtures(project(':headlessmc-launcher:headlessmc-launcher-profile'))
+    testFixturesImplementation testFixtures(project(':headlessmc-version'))
+    testFixturesImplementation project(':headlessmc-os')
+    testFixturesImplementation project(':headlessmc-util:headlessmc-util-typemap')
+    testFixturesImplementation project(':headlessmc-mods:headlessmc-mods-packwiz')
+    testFixturesImplementation libs.jspecify
+    // for Mockito
+    testFixturesImplementation platform(libs.quarkus)
+    testFixturesImplementation libs.quarkus.junit.component
 
     testImplementation testFixtures(project(':headlessmc-files'))
     testImplementation testFixtures(project(':headlessmc-platform'))

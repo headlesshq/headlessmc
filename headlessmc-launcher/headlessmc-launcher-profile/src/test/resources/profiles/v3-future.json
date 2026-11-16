@@ -1,0 +1,7 @@
+{
+  "name": "v3-future",
+  "hmcVersion": 3,
+  "somethingNew": {
+    "a": 1
+  }
+}

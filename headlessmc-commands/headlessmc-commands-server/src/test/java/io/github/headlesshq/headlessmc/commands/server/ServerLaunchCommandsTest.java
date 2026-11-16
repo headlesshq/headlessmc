@@ -7,7 +7,18 @@ import io.github.headlesshq.headlessmc.java.launcher.JavaProcessException;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.ProcessLifecycle;
 import io.github.headlesshq.headlessmc.launcher.process.ProcessLauncher;
+import io.github.headlesshq.headlessmc.launcher.profile.EulaStatus;
 import io.github.headlesshq.headlessmc.launcher.profile.FakeProfileService;
+import io.github.headlesshq.headlessmc.files.DefaultFileService;
+import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
+import io.github.headlesshq.headlessmc.files.McFilesService;
+import io.github.headlesshq.headlessmc.launcher.profile.FakeLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
+import io.github.headlesshq.headlessmc.launcher.profile.TestLaunchTargets;
+import io.github.headlesshq.headlessmc.launcher.profile.VersionHandle;
+import io.github.headlesshq.headlessmc.util.typemap.TypedMap;
+import io.github.headlesshq.headlessmc.version.arg.Side;
+import org.jspecify.annotations.Nullable;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.server.Eula;
@@ -59,21 +70,45 @@ class ServerLaunchCommandsTest {
     /** Optional eula returned by {@link EulaLauncher#eulaLaunch}. */
     private Optional<Eula> eula = Optional.empty();
 
-    /** A launcher that reports what it was asked to launch instead of starting a server. */
+    /**
+     * The launch target of the servers of these tests. Like the real one it gives a server without
+     * a Java version one, but it reports what it is asked to launch instead of starting a server.
+     */
+    private final class RecordingTarget extends FakeLaunchTarget {
+        private @Nullable ProcessLauncher processLauncher;
+
+        private RecordingTarget() {
+            super(VersionHandle.SERVER);
+            withSide(Side.SERVER);
+        }
+
+        @Override
+        public Profile resolve(Profile profile, TypedMap options) {
+            return profile.javaVersion() == null ? profile.withJavaVersion(21) : profile;
+        }
+
+        @Override
+        public ProcessLauncher launcher(Profile profile, TypedMap options) {
+            launched().add(profile);
+            if (processLauncher != null) {
+                return processLauncher;
+            }
+
+            throw new Launched(profile);
+        }
+    }
+
+    private final RecordingTarget target = new RecordingTarget();
+    private LaunchTargetService launchTargetService;
+
+    /** A launcher whose eula launcher reports what it was asked to launch. */
     private ServerLauncher recordingLauncher() {
         ServerLauncher launcher = Mockito.mock(ServerLauncher.class);
-        Mockito.when(launcher.findJavaVersion(Mockito.any())).thenAnswer(invocation -> {
-            Profile profile = invocation.getArgument(0);
-            return profile.javaVersion() == null ? profile.withJavaVersion(21) : profile;
-        });
-        Mockito.when(launcher.launcher(Mockito.any())).thenAnswer(invocation -> {
-            throw new Launched(invocation.getArgument(0));
-        });
 
         EulaLauncher eulaLauncher = Mockito.mock(EulaLauncher.class);
-        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(eulaLauncher.eulaLaunch(Mockito.any())).thenAnswer(invocation -> {
             eulaLaunches.add(invocation.getArgument(0));
-            return eula;
+            return new EulaLauncher.Result(eula.isPresent() ? EulaStatus.EXISTS : EulaStatus.NONE, eula);
         });
         Mockito.when(launcher.getEulaLauncher()).thenReturn(eulaLauncher);
 
@@ -85,7 +120,8 @@ class ServerLaunchCommandsTest {
         platformService = new FakePlatformService(new FakeVanillaPlatform("1.21.1"));
         profileService = new FakeProfileService(root.resolve("profiles"));
         serverService = new FakeServerService(profileService);
-        profileResolver = new ProfileResolver(platformService, profileService);
+        launchTargetService = new TestLaunchTargets(profileService).with(target).service();
+        profileResolver = new ProfileResolver(profileService, launchTargetService);
         serverLauncher = recordingLauncher();
     }
 
@@ -114,7 +150,8 @@ class ServerLaunchCommandsTest {
     private ServerLaunchCommand launch(ServerService serverService) {
         return new ServerLaunchCommand(
             lifecycleService, profileResolver, platformService, serverLauncher, serverService,
-            line -> line.split(" "), console, TestFiles.mcFiles(root)
+            line -> line.split(" "), console, launchTargetService, McFilesService.of(TestFiles.mcFiles(root)),
+            new DefaultFileService(new DefaultFileSystemProvider())
         );
     }
 
@@ -184,6 +221,97 @@ class ServerLaunchCommandsTest {
     }
 
     @Test
+    void theEulaStatusIsSavedWithoutTheOptionsOfTheLaunch() {
+        Profile server = profileService.save(server("srv").withVmArgs(List.of("-Xms1G")).withGameArgs(List.of("nogui")));
+        eula = Optional.of(eulaFile(server, "eula=false"));
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G -Dproperty=value");
+        command.setGameArgs("--port 25566");
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // the server is launched with the options of this launch, also to create its eula.txt ...
+        assertEquals(List.of("-Xms1G", "-Xmx8G"), launched.profile.vmArgs());
+        assertEquals(List.of("-Xms1G", "-Xmx8G"), eulaLaunches.getFirst().vmArgs());
+        // ... but what is saved is the stored profile, with what has been found out about it
+        Profile stored = profileService.getProfile("srv").orElseThrow();
+        assertEquals(EulaStatus.EXISTS, stored.eulaStatus());
+        assertEquals(21, stored.javaVersion());
+        assertEquals(List.of("-Xms1G"), stored.vmArgs());
+        assertEquals(List.of("nogui"), stored.gameArgs());
+        assertFalse(stored.systemProperties().containsKey("property"));
+        assertEquals(server.withEulaStatus(EulaStatus.EXISTS).withJavaVersion(21), stored);
+    }
+
+    @Test
+    void theRealEulaLauncherDoesNotSaveTheOptionsOfTheLaunchEither() {
+        Profile server = server("srv");
+        Eula file = eulaFile(server, "eula=false");
+        Mockito.when(serverLauncher.getEulaLauncher()).thenReturn(new EulaLauncher(serverLauncher));
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G");
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        assertTrue(file.isAccepted());
+        assertEquals(List.of("-Xmx8G"), launched.profile.vmArgs());
+        assertEquals(server.withEulaStatus(EulaStatus.EXISTS).withJavaVersion(21), profileService.getProfile("srv").orElseThrow());
+    }
+
+    @Test
+    void aServerWithoutAEulaIsRememberedAsSuch() {
+        Profile server = server("srv");
+
+        ServerLaunchCommand command = launch();
+        command.setName("srv");
+        command.setAcceptEula(true);
+        command.setJvmArgs("-Xmx8G");
+        assertThrows(Launched.class, command::call);
+
+        assertEquals(server.withEulaStatus(EulaStatus.NONE).withJavaVersion(21), profileService.getProfile("srv").orElseThrow());
+    }
+
+    @Test
+    void withATargetTheParametersAreNotANameButWhatToLaunch() {
+        Path dir = createDir(root.resolve("lobby"));
+        Profile lobby = profileService.save(new Profile("lobby", Optional.of(Side.SERVER), target.handle("paper"), dir));
+
+        ServerLaunchCommand command = launch();
+        command.setTarget(VersionHandle.SERVER);
+        command.setName("paper");
+        Launched launched = assertThrows(Launched.class, command::call);
+
+        // the stored server for these arguments
+        assertEquals("lobby", launched.profile.name());
+        assertEquals(lobby.withJavaVersion(21), profileService.getProfile("lobby").orElseThrow());
+    }
+
+    @Test
+    void aNameAndATargetExcludeEachOther() {
+        Path dir = createDir(root.resolve("lobby"));
+        Profile lobby = profileService.save(new Profile("lobby", Optional.of(Side.SERVER), target.handle("paper"), dir));
+
+        // "lobby" is not the name of the server to launch with something else,
+        // it is the first of the arguments for the launch target, and there is no server for them
+        ServerLaunchCommand command = launch();
+        command.setTarget(VersionHandle.SERVER);
+        command.setName("lobby");
+        command.setTargetArgs(List.of("purpur", "1.21.4"));
+        command.setAcceptEula(true);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, command::call);
+
+        assertTrue(e.getMessage().contains("lobby purpur 1.21.4"), e.getMessage());
+        assertEquals(List.of("lobby", "purpur", "1.21.4"), target.parsed().getLast().args());
+        assertEquals(List.of(), target.launched());
+        assertEquals(List.of(), eulaLaunches);
+        assertEquals(lobby, profileService.getProfile("lobby").orElseThrow());
+    }
+
+    @Test
     void launchWithoutEulaFlagDoesNotTouchEula() {
         server("srv");
 
@@ -235,7 +363,7 @@ class ServerLaunchCommandsTest {
         server("srv");
         ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
         ProcessLifecycle lifecycle = Mockito.mock(ProcessLifecycle.class);
-        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+        target.processLauncher = processLauncher;
         Mockito.when(lifecycleService.wrap(processLauncher, 2)).thenReturn(lifecycle);
         Mockito.when(lifecycle.call()).thenReturn(5);
 
@@ -265,7 +393,7 @@ class ServerLaunchCommandsTest {
     void dryRunInstallsButDoesNotLaunch() {
         server("srv");
         ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
-        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+        target.processLauncher = processLauncher;
 
         ServerLaunchCommand command = launch();
         command.setName("srv");
@@ -273,7 +401,8 @@ class ServerLaunchCommandsTest {
         command.setDryRun(true);
 
         assertEquals(0, command.call());
-        Mockito.verify(serverLauncher).launcher(Mockito.argThat(profile -> profile.name().equals("srv")));
+        // everything is resolved and the process is built, it is just not started
+        assertEquals(List.of("srv"), target.launched().stream().map(Profile::name).toList());
         Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
         Mockito.verify(lifecycleService, Mockito.never()).beforeLaunch(Mockito.any(), Mockito.anyBoolean());
         assertEquals(List.of(), eulaLaunches);
@@ -285,7 +414,7 @@ class ServerLaunchCommandsTest {
         JavaProcessBuilder javaProcessBuilder = Mockito.mock(JavaProcessBuilder.class);
         ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
         Mockito.when(processLauncher.getJavaProcessBuilder()).thenReturn(Optional.of(javaProcessBuilder));
-        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+        target.processLauncher = processLauncher;
 
         ServerLaunchCommand command = launch();
         command.setName("srv");
@@ -303,7 +432,7 @@ class ServerLaunchCommandsTest {
         Mockito.when(javaProcessBuilder.resolveJava()).thenThrow(new JavaProcessException("Failed to find Java 21"));
         ProcessLauncher processLauncher = Mockito.mock(ProcessLauncher.class);
         Mockito.when(processLauncher.getJavaProcessBuilder()).thenReturn(Optional.of(javaProcessBuilder));
-        Mockito.doReturn(processLauncher).when(serverLauncher).launcher(Mockito.any());
+        target.processLauncher = processLauncher;
 
         ServerLaunchCommand command = launch();
         command.setName("srv");

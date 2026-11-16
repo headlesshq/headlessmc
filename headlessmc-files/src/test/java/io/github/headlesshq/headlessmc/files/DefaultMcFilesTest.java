@@ -21,8 +21,28 @@ import static org.junit.jupiter.api.Assertions.*;
 class DefaultMcFilesTest {
     private record TestFileConfig(Optional<String> mcDir) implements FileConfig {
         @Override
+        public Optional<java.util.List<String>> mcDirs() {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<String> location() {
             return Optional.empty();
+        }
+
+        @Override
+        public boolean mcDetect() {
+            return false;
+        }
+
+        @Override
+        public int mcDetectDepth() {
+            return 3;
+        }
+
+        @Override
+        public String gameDirLayout() {
+            return "headlessmc";
         }
 
         @Override

@@ -5,7 +5,6 @@ import io.github.headlesshq.headlessmc.files.FileService;
 import io.github.headlesshq.headlessmc.reflection.ReflectionRegistered;
 import io.github.headlesshq.headlessmc.util.json.JsonParseException;
 import io.github.headlesshq.headlessmc.util.json.JsonService;
-import io.github.headlesshq.headlessmc.version.arg.VersionArg;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -25,18 +24,14 @@ import java.util.stream.Stream;
 @ApplicationScoped
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ProfileServiceImpl implements ProfileService {
-    private final GameDirService gameDirService;
+    /**
+     * The first {@link Profile#PROFILE_VERSION format} with a launch target, older ones are {@link LegacyProfile}s.
+     */
+    private static final int FIRST_TARGET_VERSION = 2;
+
     private final JsonService jsonService;
     private final FileService fileService;
     private final AppFiles files;
-
-    @Override
-    public Profile getProfile(VersionArg arg) {
-        return getProfiles().stream()
-            .filter(profile -> profile.version().equals(arg))
-            .findFirst()
-            .orElseGet(() -> createDefault(arg.toString("-"), arg));
-    }
 
     @Override
     public Optional<Profile> getProfile(String name) {
@@ -75,18 +70,16 @@ public class ProfileServiceImpl implements ProfileService {
             ? profile
             : profile.withHmcVersion(Profile.PROFILE_VERSION);
         jsonService.write(json, current, true);
-        return current;
+        // Return the profile as it is stored. The data of a launch target is a typed object when it has been
+        // created, and a json tree when it has been read. Returning what has been read makes the profile
+        // that has been saved equal to the profile that is read later.
+        return readProfile(json).orElse(current);
     }
 
     @Override
     public void remove(Profile profile) {
         Path json = getProfilePath(profile.name());
         fileService.delete(json);
-    }
-
-    @Override
-    public Profile createDefault(String name, VersionArg version) {
-        return new Profile(name, version, gameDirService.getGameDir(version));
     }
 
     private Optional<Profile> readProfile(Path json) {
@@ -99,6 +92,11 @@ public class ProfileServiceImpl implements ProfileService {
                 );
 
                 return Optional.empty();
+            }
+
+            if (version.hmcVersion() < FIRST_TARGET_VERSION) {
+                // these profiles are converted in memory, the file is rewritten the next time the profile is saved
+                return Optional.of(jsonService.parse(json, LegacyProfile.class).migrate());
             }
 
             return Optional.of(jsonService.parse(json, Profile.class));

@@ -1,6 +1,7 @@
 package io.github.headlesshq.headlessmc.commands.mod;
 
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
+import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
 import io.github.headlesshq.headlessmc.launcher.profile.WorldService;
 import io.github.headlesshq.headlessmc.mods.ModType;
 import io.github.headlesshq.headlessmc.platform.Platform;
@@ -23,12 +24,13 @@ final class Mods {
      * Resolves the {@link Platform} of the given profile.
      *
      * @param platformService the service to look the platform up on.
+     * @param profileResolver used to find out which platform the profile launches.
      * @param profile         the profile to resolve the platform of.
      * @return the platform of the profile.
-     * @throws IllegalArgumentException if the platform cannot be found.
+     * @throws IllegalArgumentException if the platform cannot be found, or the profile does not launch a version.
      */
-    static Platform getPlatform(PlatformService platformService, Profile profile) {
-        String platform = profile.version().platform();
+    static Platform getPlatform(PlatformService platformService, ProfileResolver profileResolver, Profile profile) {
+        String platform = profileResolver.requirePlatform(profile);
         return platformService.getPlatform(platform).orElseThrow(() -> new IllegalArgumentException(
             "Failed to find platform " + platform + " for profile " + profile.name()
         ));
@@ -49,6 +51,7 @@ final class Mods {
      */
     static ModType resolveType(
         PlatformService platformService,
+        ProfileResolver profileResolver,
         Set<ModType> modTypes,
         @Nullable Profile profile,
         @Nullable String name
@@ -64,7 +67,8 @@ final class Mods {
             return ModType.MOD;
         }
 
-        Optional<ModSupport> modSupport = getPlatform(platformService, profile).getModSupport();
+        Platform platform = getPlatform(platformService, profileResolver, profile);
+        Optional<ModSupport> modSupport = platform.getModSupport();
         if (modSupport.isEmpty()) {
             return ModType.RESOURCE_PACK;
         }
@@ -72,7 +76,7 @@ final class Mods {
         return modSupport.get().modTypes().stream()
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException(
-                "Platform " + profile.version().platform() + " does not declare a default mod type, "
+                "Platform " + platform.getName() + " does not declare a default mod type, "
                     + "please specify one with --type."
             ));
     }

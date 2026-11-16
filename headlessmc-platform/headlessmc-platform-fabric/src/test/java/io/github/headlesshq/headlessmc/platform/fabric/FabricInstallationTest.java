@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.platform.fabric;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
@@ -172,7 +173,7 @@ class FabricInstallationTest {
             }
 
             @Override
-            public Version installClient(VersionID id, Path mcDir, TypedMap args) {
+            public Version installClient(VersionID id, McFiles mcDir, TypedMap args) {
                 return new FakeVersion(id.getVersion().getName()).withJavaVersion(21);
             }
 
@@ -259,7 +260,7 @@ class FabricInstallationTest {
         versions.add(new FakeVersion("fabric-loader-0.16.9-1.21.1"));
 
         Version version = installer().installClient(
-            id("fabric", "1.21.1", "0.16.9"), root.resolve("mc"), new TypedMapImpl()
+            id("fabric", "1.21.1", "0.16.9"), McFiles.of(root.resolve("mc")), new TypedMapImpl()
         );
 
         // the version was already installed, so no installer process was needed
@@ -272,14 +273,14 @@ class FabricInstallationTest {
         downloads.register(artifactService.getInstaller().getURL(), INSTALLER);
         FabricInstaller installer = new FabricInstaller(installerDownloader, services, Fabric.PLATFORM_NAME) {
             @Override
-            protected void installClient(VersionID id, Path mcDir, Version vanilla, TypedMap args) {
+            protected void installClient(VersionID id, McFiles mcDir, Version vanilla, TypedMap args) {
                 super.installClient(id, mcDir, vanilla, args);
                 versions.add(new FakeVersion("fabric-loader-0.16.9-1.21.1"));
             }
         };
 
         Version version = installer.installClient(
-            id("fabric", "1.21.1", "0.16.9"), root.resolve("mc"), new TypedMapImpl()
+            id("fabric", "1.21.1", "0.16.9"), McFiles.of(root.resolve("mc")), new TypedMapImpl()
         );
 
         assertEquals("fabric-loader-0.16.9-1.21.1", version.getId());
@@ -302,6 +303,7 @@ class FabricInstallationTest {
         );
 
         assertEquals(21, installation.javaVersion());
+        assertEquals("0.16.9", installation.build());
         assertEquals("server", builders.getFirst().getArgs().getFirst());
         assertFalse(builders.getFirst().getArgs().contains("-noprofile"));
     }
@@ -309,7 +311,7 @@ class FabricInstallationTest {
     @Test
     void installingForAnotherPlatformIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> installer().installClient(
-            id("vanilla", "1.21.1"), root.resolve("mc"), new TypedMapImpl()
+            id("vanilla", "1.21.1"), McFiles.of(root.resolve("mc")), new TypedMapImpl()
         ));
     }
 

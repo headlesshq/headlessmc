@@ -1,0 +1,32 @@
+{
+  "name": "v0-client",
+  "version": {
+    "side": null,
+    "platform": "fabric",
+    "version": "1.21.1",
+    "build": null
+  },
+  "currentVersion": {
+    "side": null,
+    "platform": "fabric",
+    "version": "1.21.1",
+    "build": null
+  },
+  "path": "@GAME_DIR_URI@",
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [
+    "-Xmx6G"
+  ],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": true,
+  "hmcVersion": 0
+}

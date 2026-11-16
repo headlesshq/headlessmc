@@ -85,6 +85,19 @@ public abstract class AbstractJacksonJsonService implements JsonService {
     }
 
     @Override
+    public <V extends ReflectionRegistered> V convert(Object tree, Class<V> type) throws JsonParseException {
+        if (type.isInstance(tree)) {
+            return type.cast(tree);
+        }
+
+        try {
+            return mapper().convertValue(tree, type);
+        } catch (JacksonException | IllegalArgumentException e) {
+            throw new JsonParseException("Failed to convert " + tree + " to " + type.getSimpleName(), e);
+        }
+    }
+
+    @Override
     public void write(
         OutputStream outputStream,
         ReflectionRegistered object,
@@ -132,8 +145,14 @@ public abstract class AbstractJacksonJsonService implements JsonService {
                 return Optional.empty();
             }
 
+            JsonNode object = node.get("object");
+            if (object == null || object.isNull()) {
+                // the version is right, but there is nothing to read: a broken file, not an outdated one
+                throw new JsonParseException("Failed to parse " + type + ", it has no object");
+            }
+
             JavaType javaType = mapper().constructType(type.getType());
-            return Optional.of(mapper().treeToValue(node.get("object"), javaType));
+            return Optional.of(mapper().treeToValue(object, javaType));
         } catch (JacksonException e) {
             throw new JsonParseException("Failed to parse " + type, e);
         }

@@ -92,11 +92,11 @@ public class SearchCommand implements Runnable, VersionArgCommand, CachedConsole
         VersionArg version = null;
         ModType modType;
         if (versionArg.isEmpty()) {
-            modType = Mods.resolveType(platformService, modTypeService.getAllModTypes(), null, type);
+            modType = Mods.resolveType(platformService, profileResolver, modTypeService.getAllModTypes(), null, type);
         } else {
             Profile resolved = profileResolver.resolve(versionArg, Side.BOTH);
-            modType = Mods.resolveType(platformService, modTypeService.getAllModTypes(), resolved, type);
-            version = resolved.version();
+            modType = Mods.resolveType(platformService, profileResolver, modTypeService.getAllModTypes(), resolved, type);
+            version = profileResolver.requireVersion(resolved);
         }
 
         Map<String, List<RemoteMod>> results;

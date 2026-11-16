@@ -1,0 +1,32 @@
+{
+  "name": "v2-no-side",
+  "target": {
+    "name": "jar",
+    "data": {
+      "jar": {
+        "source": "headlessmc.data",
+        "sourcePath": "@DATA_DIR@",
+        "path": "tools/tool.jar"
+      }
+    }
+  },
+  "path": {
+    "source": "headlessmc.data",
+    "sourcePath": "@DATA_DIR@",
+    "path": "tools"
+  },
+  "options": {
+    "resolution": null,
+    "quickPlayPath": null,
+    "join": null,
+    "demo": false
+  },
+  "patchers": [],
+  "systemProperties": {},
+  "vmArgs": [],
+  "gameArgs": [],
+  "javaVersion": null,
+  "eulaStatus": "UNKNOWN",
+  "hasDefaultClientJvmArgs": false,
+  "hmcVersion": 2
+}

@@ -31,6 +31,132 @@ launch fabric 1.21.5
 ```
 Currently HeadlessMc supports the client mod loaders `fabric`, `forge` and `neoforge`.
 
+#### What can be launched
+
+The arguments of `launch` are handled by a *launch target*.
+HeadlessMc works out which one is meant, the one that can actually launch the arguments is used:
+
+| Launch target  | Arguments                                         | Example                                         |
+|----------------|---------------------------------------------------|-------------------------------------------------|
+| `version`      | `[client] [platform] <mc-version> [build]`        | `launch fabric 1.21.5`                          |
+| `server`       | `server [platform] <mc-version> [build]`          | `launch server paper 1.21.5`                    |
+| `version-file` | the path of a version.json, or the id of an installed version | `launch ~/.minecraft/versions/pack/pack.json`, `launch pack` |
+| `jar`          | `[client\|server]` and the path of a jar           | `launch ./tool.jar`                             |
+| `script`       | `[client\|server]` and the path of a script        | `launch ./run.sh`                               |
+| `packwiz`      | a `pack.toml` or its directory, `client\|server`, and the loader if the pack has several | `launch ./my-pack client` |
+| `profile`      | the name of a profile, see [Profiles](#profiles)  | only with `--target profile`                    |
+
+A single argument that is the name of a profile always launches that profile.
+If arguments could be meant for more than one launch target, name it with `--target`, short `-t`:
+```
+launch --target version 1.21.5
+```
+A version that is installed can also be launched by its id, e.g. a version another launcher installed
+as `my-pack`, or `fabric-loader-0.16.14-1.21.5`. If an id is also a version, like `1.21.5`,
+it is launched as that version; `--target version-file 1.21.5` launches exactly the installed version.json.
+
+A packwiz pack is launched from its directory or `pack.toml`, `--packwiz <path>` is short for
+`--target packwiz <path>`:
+```
+launch ./my-pack client
+launch --packwiz ./my-pack server fabric
+```
+The pack decides the Minecraft version and loader, and the game runs in the directory of the pack.
+The arguments after the pack therefore are not a profile or a version, they only say how to launch the pack:
+`[client|server] [loader]`, the loader is only needed if the pack supports more than one.
+To keep settings for a pack, add a profile for it: `profile add ./my-pack client --name my-pack`.
+
+#### Profiles
+
+A profile stores what to launch together with how to launch it: the game directory, JVM and game arguments,
+the Java version and so on.
+`launch fabric 1.21.5` launches without storing anything.
+To keep the settings, add a profile and launch it by its name:
+```
+> profile add fabric 1.21.5
+Added profile fabric-1.21.5 for version fabric/1.21.5
+> profile edit fabric-1.21.5 vm-args "-Xmx6G"
+> launch fabric-1.21.5
+```
+`profile add` accepts everything `launch` does.
+A profile for a version is named after the version, for everything else a name has to be given with `--name`:
+```
+profile add ./paper.jar --name lobby
+```
+
+A profile remembers what it has been resolved to.
+A profile for `fabric 1.21.5 latest` keeps launching the build that was the latest when it was first launched,
+it does not change when a new build is released. To move it to the build that is the latest now:
+```
+profile update fabric-1.21.5-latest
+```
+
+A profile can launch another profile and add its own settings on top of it.
+JVM and game arguments are appended to those of the other profile, other settings replace them:
+```
+profile add --target profile fabric-1.21.5 --name fabric-debug
+profile edit fabric-debug vm-args "-Ddebug=true"
+```
+
+The game directory of a profile is chosen when the profile is added.
+`profile move` moves it somewhere else, and can also rename the profile:
+```
+profile move fabric-1.21.5 /mnt/ssd/games/fabric
+profile move fabric-1.21.5 --name survival
+```
+`profile edit <profile> path <directory>` only makes the profile use another directory.
+If the profile has a game directory and there is nothing at the new path yet, it asks whether to move
+the game directory there instead; `--move` and `--no-move` answer that in advance.
+
+#### Multiple Minecraft directories
+
+Versions, libraries and assets are installed into the Minecraft directory, by default the `.minecraft` directory
+of your system, or `hmc.files.mc`. If you have more of them, e.g. on another disk, list them in `hmc.files.mc-dirs`:
+```
+hmc.files.mc-dirs=/mnt/ssd/.minecraft,/mnt/hdd/.minecraft
+```
+HeadlessMc can also look for them itself: with `hmc.files.mc-detect=true` the other drives of your computer
+are searched for `.minecraft` directories, on Windows every drive, elsewhere what is mounted in `/mnt`, `/media`,
+`/run/media` and `/Volumes`. A drive is only searched a few directories deep, see `hmc.files.mc-detect-depth`,
+so that `D:\.minecraft` or `D:\Games\HMCL\.minecraft` are found. `debug` lists the directories that are used.
+
+The versions installed in these directories are listed by `version list` and can be launched.
+A version is always launched with the libraries and assets of the directory it is installed in.
+New versions are installed into the primary directory, unless another one is given with `--mc`:
+```
+install fabric 1.21.5 --mc /mnt/ssd/.minecraft
+profile move fabric-1.21.5 --mc /mnt/ssd/.minecraft
+```
+
+#### Using the Minecraft directory of another launcher
+
+Launchers do not agree on where the game directory of a version is, the directory with its worlds, mods and settings.
+By default HeadlessMc uses a directory named after the version in the Minecraft directory, e.g. `.minecraft/fabric-1.21.5`.
+HMCL and PCL2 with version isolation use the directory the version is installed in, `.minecraft/versions/<name>`.
+To play the instances of such a launcher with their worlds and mods, set `hmc.files.game-dir-layout`:
+
+| `hmc.files.game-dir-layout` | Game directory of a version                                                               |
+|-----------------------------|-------------------------------------------------------------------------------------------|
+| `headlessmc` (default)      | `.minecraft/<platform>-<version>`, or `.minecraft` if `hmc.files.game-for-each-version` is `false` |
+| `versions`                  | `.minecraft/versions/<name>`, the directory the version is installed in                  |
+| `versions-modded`           | like `versions` for modded versions, vanilla versions share `.minecraft` (the default of HMCL) |
+
+```
+hmc.files.mc=/path/to/the/.minecraft
+hmc.files.game-dir-layout=versions
+```
+```
+> version list
+> launch "My Modpack"
+> profile add "My Modpack" --name modpack
+```
+An instance is launched by the name it has in the other launcher, which is the id of its version.json.
+
+The layout only decides the game directory of new profiles and of launches without a profile.
+A profile keeps the game directory it has, `profile move` moves it.
+In these layouts a version and a game share a directory, HeadlessMc keeps them apart:
+`profile move` leaves the version installed, and `version remove` never deletes the files of a game.
+
 #### Headless Launch
 One of the main features of HeadlessMc is
 that it can launch the client in headless mode,

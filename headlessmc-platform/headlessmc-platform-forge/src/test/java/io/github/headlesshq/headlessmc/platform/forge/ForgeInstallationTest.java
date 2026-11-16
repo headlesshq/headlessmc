@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.platform.forge;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.files.AppFiles;
 import io.github.headlesshq.headlessmc.files.DefaultFileService;
 import io.github.headlesshq.headlessmc.files.DefaultFileSystemProvider;
@@ -143,7 +144,7 @@ class ForgeInstallationTest {
             }
 
             @Override
-            public Version installClient(VersionID id, Path mcDir, TypedMap args) {
+            public Version installClient(VersionID id, McFiles mcDir, TypedMap args) {
                 return new FakeVersion(id.getVersion().getName()).withJavaVersion(21);
             }
 
@@ -169,6 +170,7 @@ class ForgeInstallationTest {
         var installation = installer().installServer(id("forge", "1.20.2", "48.1.0"), dir, new TypedMapImpl());
 
         assertEquals(21, installation.javaVersion());
+        assertEquals("48.1.0", installation.build());
         RecordingBuilder builder = builders.getFirst();
         assertEquals("forge-installer", builder.getId());
         assertEquals(dir, builder.getDirectory());
@@ -184,13 +186,13 @@ class ForgeInstallationTest {
             installerDownloader, services, cliInstaller, cache, Forge.PLATFORM_NAME
         ) {
             @Override
-            protected void installClient(VersionID id, Path mcDir, Version vanilla, TypedMap args) {
+            protected void installClient(VersionID id, McFiles mcDir, Version vanilla, TypedMap args) {
                 super.installClient(id, mcDir, vanilla, args);
                 versions.add(new FakeVersion("1.20.2-forge-48.1.0"));
             }
         };
 
-        Version version = installer.installClient(id("forge", "1.20.2", "48.1.0"), mcDir, new TypedMapImpl());
+        Version version = installer.installClient(id("forge", "1.20.2", "48.1.0"), McFiles.of(mcDir), new TypedMapImpl());
 
         assertEquals("1.20.2-forge-48.1.0", version.getId());
         RecordingBuilder builder = builders.getFirst();
@@ -217,7 +219,7 @@ class ForgeInstallationTest {
     @Test
     void installingForAnotherPlatformIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> installer().installClient(
-            id("vanilla", "1.20.2"), root.resolve("mc"), new TypedMapImpl()
+            id("vanilla", "1.20.2"), McFiles.of(root.resolve("mc")), new TypedMapImpl()
         ));
     }
 

@@ -36,11 +36,11 @@ public class LibraryResolver {
 
     private final NativeLibraryResolver nativeLibraryResolver;
     private final FileService fileService;
-    private final McFiles mcFiles;
     private final CPU cpu;
     private final OS os;
 
     public List<LibraryFile> resolveLibraries(
+        McFiles mcFiles,
         TemplateStrings templateStrings,
         Features features,
         Version version
@@ -64,7 +64,7 @@ public class LibraryResolver {
 
             Map<String, Version.Download> classifiers = downloads.getClassifiers();
             if (classifiers != null) {
-                files.add(nativeLibraryResolver.handleNatives(library, templateStrings, classifiers, version));
+                files.add(nativeLibraryResolver.handleNatives(mcFiles, library, templateStrings, classifiers, version));
             }
 
             Version.Download artifactDownload = downloads.getArtifact();

@@ -2,6 +2,8 @@ package io.github.headlesshq.headlessmc.version.service;
 
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.exceptions.NotFoundException;
+import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.version.FakeVersion;
 import io.github.headlesshq.headlessmc.version.ProcessedVersion;
 import io.github.headlesshq.headlessmc.version.Version;
@@ -23,16 +25,27 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class VersionJsonServiceImplTest {
-    /** Parses the trivial {@code <id>[:<inheritsFrom>]} format written by {@link #write}. */
-    private static final VersionParser PARSER = reader -> {
-        String content = read(reader);
-        if (content.startsWith("!")) {
-            throw new HeadlessMcException("Unparseable version " + content);
+    /**
+     * Parses the trivial {@code <id>[:<inheritsFrom>]} format written by {@link #write}.
+     * Like a real parser, it connects a version to the file it has been parsed from.
+     */
+    private static final VersionParser PARSER = new VersionParser() {
+        @Override
+        public Version parse(Reader reader) {
+            String content = read(reader);
+            if (content.startsWith("!")) {
+                throw new HeadlessMcException("Unparseable version " + content);
+            }
+
+            String[] parts = content.split(":");
+            FakeVersion version = new FakeVersion(parts[0]);
+            return parts.length > 1 ? version.withInheritsFrom(parts[1]) : version;
         }
 
-        String[] parts = content.split(":");
-        FakeVersion version = new FakeVersion(parts[0]);
-        return parts.length > 1 ? version.withInheritsFrom(parts[1]) : version;
+        @Override
+        public Version parse(Path jsonFile) {
+            return ((FakeVersion) VersionParser.super.parse(jsonFile)).withFile(jsonFile);
+        }
     };
 
     private static String read(Reader reader) {
@@ -47,18 +60,33 @@ class VersionJsonServiceImplTest {
     Path root;
 
     private Path versionsDir;
+    private McFiles mcFiles;
+    private McFiles otherMcFiles;
     private VersionJsonServiceImpl service;
 
     @BeforeEach
     void setup() {
-        versionsDir = root.resolve("versions");
-        service = new VersionJsonServiceImpl(PARSER, () -> versionsDir);
+        mcFiles = McFiles.of(root.resolve("mc"));
+        otherMcFiles = McFiles.of(root.resolve("other-mc"));
+        versionsDir = mcFiles.getVersionsDir();
+        service = new VersionJsonServiceImpl(PARSER, mcFiles);
+    }
+
+    /** A service that knows both directories, {@link #mcFiles} is the primary one. */
+    private VersionJsonServiceImpl multiService() {
+        return new VersionJsonServiceImpl(PARSER, McFilesService.of(mcFiles, otherMcFiles));
     }
 
     private void write(String id, String inheritsFrom) {
+        write(mcFiles, id, inheritsFrom);
+    }
+
+    private static Path write(McFiles mcFiles, String id, String inheritsFrom) {
         try {
-            Path dir = Files.createDirectories(versionsDir.resolve(id));
-            Files.writeString(dir.resolve(id + ".json"), inheritsFrom == null ? id : id + ":" + inheritsFrom);
+            Path dir = Files.createDirectories(mcFiles.getVersionsDir().resolve(id));
+            Path file = dir.resolve(id + ".json");
+            Files.writeString(file, inheritsFrom == null ? id : id + ":" + inheritsFrom);
+            return file.toAbsolutePath().normalize();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -121,7 +149,7 @@ class VersionJsonServiceImplTest {
         write("fabric-1.21.1", "1.21.1");
 
         ProcessedVersion resolved = service.resolve(
-            service.getVersion("fabric-1.21.1"), id -> write(id, null)
+            service.getVersion("fabric-1.21.1"), (dir, id) -> write(id, null)
         );
 
         assertEquals(2, resolved.hierarchy().size());
@@ -133,7 +161,7 @@ class VersionJsonServiceImplTest {
 
         assertThrows(HeadlessMcException.class, () -> service.resolve(service.getVersion("fabric-1.21.1")));
         assertThrows(NotFoundException.class,
-            () -> service.resolve(service.getVersion("fabric-1.21.1"), id -> { }));
+            () -> service.resolve(service.getVersion("fabric-1.21.1"), (dir, id) -> { }));
     }
 
     @Test
@@ -158,7 +186,7 @@ class VersionJsonServiceImplTest {
     void observeChangesReportsNewVersions() {
         write("1.21.1", null);
 
-        List<Version> added = service.observeChanges(() -> write("fabric-1.21.1", "1.21.1"));
+        List<Version> added = service.observeChanges(mcFiles, () -> write("fabric-1.21.1", "1.21.1"));
 
         assertEquals(List.of("fabric-1.21.1"), added.stream().map(Version::getId).toList());
     }
@@ -166,7 +194,157 @@ class VersionJsonServiceImplTest {
     @Test
     void observeChangesWithoutChangesIsEmpty() {
         write("1.21.1", null);
-        assertEquals(List.of(), service.observeChanges(() -> { }));
+        assertEquals(List.of(), service.observeChanges(mcFiles, () -> { }));
+    }
+
+    @Test
+    void versionsKnowTheFileTheyAreInstalledAs() {
+        Path file = write(mcFiles, "1.21.1", null);
+
+        assertEquals(Optional.of(file), service.getVersion("1.21.1").asFile());
+        assertEquals(Optional.of(file), service.getInstalledVersions().getFirst().asFile());
+        assertEquals(mcFiles, service.getMcFiles(service.getVersion("1.21.1")));
+    }
+
+    @Test
+    void versionWithoutFileBelongsToThePrimaryDirectory() {
+        assertEquals(mcFiles, multiService().getMcFiles(new FakeVersion("in-memory")));
+    }
+
+    @Test
+    void listsVersionsOfAllDirectoriesPrimaryFirst() {
+        Path other = write(otherMcFiles, "1.20.4", null);
+        Path primary = write(mcFiles, "1.21.1", null);
+        VersionJsonServiceImpl service = multiService();
+
+        assertEquals(List.of(primary, other),
+                     service.getInstalledVersions().stream().map(v -> v.asFile().orElseThrow()).toList());
+        assertEquals(Set.of("1.21.1", "1.20.4"), service.getInstalledFileNames());
+        assertEquals(List.of("1.20.4"), service.getInstalledVersions(otherMcFiles).stream().map(Version::getId).toList());
+        assertEquals(Set.of("1.21.1"), service.getInstalledFileNames(mcFiles));
+    }
+
+    @Test
+    void sameVersionInTwoDirectoriesIsListedTwice() {
+        Path primary = write(mcFiles, "1.21.1", null);
+        Path other = write(otherMcFiles, "1.21.1", null);
+        VersionJsonServiceImpl service = multiService();
+
+        List<Version> versions = service.getInstalledVersions();
+        assertEquals(List.of("1.21.1", "1.21.1"), versions.stream().map(Version::getId).toList());
+        assertEquals(List.of(primary, other), versions.stream().map(v -> v.asFile().orElseThrow()).toList());
+        // names are a set
+        assertEquals(Set.of("1.21.1"), service.getInstalledFileNames());
+    }
+
+    @Test
+    void theFirstDirectoryWinsForAName() {
+        Path primary = write(mcFiles, "1.21.1", null);
+        Path other = write(otherMcFiles, "1.21.1", null);
+        write(otherMcFiles, "only-other", null);
+        VersionJsonServiceImpl service = multiService();
+
+        assertEquals(Optional.of(primary), service.getVersion("1.21.1").asFile());
+        assertEquals(Optional.of(other), service.tryGetVersion(otherMcFiles, "1.21.1").orElseThrow().asFile());
+        assertEquals("only-other", service.getVersion("only-other").getId());
+        assertEquals(Optional.empty(), service.tryGetVersion(mcFiles, "only-other"));
+    }
+
+    @Test
+    void directoriesThatDoNotExistAreSkipped() {
+        write(mcFiles, "1.21.1", null);
+        VersionJsonServiceImpl service = multiService();
+
+        assertFalse(otherMcFiles.isAvailable());
+        assertEquals(1, service.getInstalledVersions().size());
+        assertEquals(List.of(), service.getInstalledVersions(otherMcFiles));
+        assertEquals(Optional.empty(), service.tryGetVersion(otherMcFiles, "1.21.1"));
+    }
+
+    @Test
+    void parentsAreResolvedInTheDirectoryOfTheChild() {
+        write(mcFiles, "1.21.1", null);
+        Path otherParent = write(otherMcFiles, "1.21.1", null);
+        write(otherMcFiles, "fabric-1.21.1", "1.21.1");
+        VersionJsonServiceImpl service = multiService();
+
+        Version child = service.tryGetVersion(otherMcFiles, "fabric-1.21.1").orElseThrow();
+        ProcessedVersion resolved = service.resolve(child);
+
+        assertEquals(otherMcFiles, service.getMcFiles(child));
+        assertEquals(Optional.of(otherParent), resolved.hierarchy().getFirst().asFile());
+        assertEquals(child.asFile(), resolved.asFile());
+    }
+
+    @Test
+    void parentInAnotherDirectoryIsNotUsed() {
+        // nothing is shared between directories, the parent in the primary directory does not count
+        write(mcFiles, "1.21.1", null);
+        write(otherMcFiles, "fabric-1.21.1", "1.21.1");
+        VersionJsonServiceImpl service = multiService();
+        Version child = service.tryGetVersion(otherMcFiles, "fabric-1.21.1").orElseThrow();
+
+        assertThrows(HeadlessMcException.class, () -> service.resolve(child));
+        assertThrows(HeadlessMcException.class, () -> service.process(child));
+    }
+
+    @Test
+    void missingParentIsInstalledIntoTheDirectoryOfTheChild() {
+        write(otherMcFiles, "fabric-1.21.1", "1.21.1");
+        VersionJsonServiceImpl service = multiService();
+        Version child = service.tryGetVersion(otherMcFiles, "fabric-1.21.1").orElseThrow();
+        List<McFiles> installedInto = new java.util.ArrayList<>();
+
+        ProcessedVersion resolved = service.resolve(child, (dir, id) -> {
+            installedInto.add(dir);
+            write(dir, id, null);
+        });
+
+        assertEquals(List.of(otherMcFiles), installedInto);
+        assertEquals(2, resolved.hierarchy().size());
+        assertTrue(Files.exists(otherMcFiles.getVersionsDir().resolve("1.21.1").resolve("1.21.1.json")));
+        assertFalse(Files.exists(mcFiles.getVersionsDir().resolve("1.21.1")));
+    }
+
+    @Test
+    void versionOutsideOfAllDirectoriesResolvesInItsOwnDirectory() {
+        McFiles unknown = McFiles.of(root.resolve("unknown-mc"));
+        write(unknown, "1.21.1", null);
+        Path file = write(unknown, "fabric-1.21.1", "1.21.1");
+        VersionJsonServiceImpl service = multiService();
+
+        Version child = service.getParser().parse(file);
+
+        assertEquals(unknown, service.getMcFiles(child));
+        assertEquals(2, service.resolve(child).hierarchy().size());
+    }
+
+    @Test
+    void observeChangesSeesAVersionThatExistsInAnotherDirectory() {
+        // by name the version is not new, it is already installed in the primary directory
+        write(mcFiles, "1.21.1", null);
+        VersionJsonServiceImpl service = multiService();
+
+        List<Version> added = service.observeChanges(otherMcFiles, () -> write(otherMcFiles, "1.21.1", null));
+
+        assertEquals(1, added.size());
+        assertEquals(otherMcFiles, service.getMcFiles(added.getFirst()));
+    }
+
+    @Test
+    void observeChangesIgnoresOtherDirectories() {
+        VersionJsonServiceImpl service = multiService();
+
+        assertEquals(List.of(), service.observeChanges(mcFiles, () -> write(otherMcFiles, "1.21.1", null)));
+    }
+
+    @Test
+    void observeChangesWorksForADirectoryThatIsNotKnown() {
+        McFiles unknown = McFiles.of(root.resolve("unknown-mc"));
+
+        List<Version> added = service.observeChanges(unknown, () -> write(unknown, "1.21.1", null));
+
+        assertEquals(List.of("1.21.1"), added.stream().map(Version::getId).toList());
     }
 
 }

@@ -1,5 +1,6 @@
 package io.github.headlesshq.headlessmc.platform.paper;
 
+import io.github.headlesshq.headlessmc.files.McFiles;
 import io.github.headlesshq.headlessmc.exceptions.HeadlessMcException;
 import io.github.headlesshq.headlessmc.net.MockDownloadService;
 import io.github.headlesshq.headlessmc.net.rest.ApiException;
@@ -51,7 +52,7 @@ class PaperInstallerTest {
         }
 
         @Override
-        public Version installClient(VersionID id, Path mcDir, io.github.headlesshq.headlessmc.util.typemap.TypedMap args) {
+        public Version installClient(VersionID id, McFiles mcDir, io.github.headlesshq.headlessmc.util.typemap.TypedMap args) {
             throw new UnsupportedOperationException();
         }
 
@@ -158,6 +159,9 @@ class PaperInstallerTest {
 
         assertEquals(21, installation.javaVersion());
         assertEquals(FLAGS, installation.vmArgs());
+        // no build has been asked for, the installation tells which one it became
+        assertEquals("130", installation.build());
+        assertEquals(VersionArg.parse("paper", "1.21.1", "130"), installation.installed(id));
         assertEquals("jar-130", Files.readString(root.resolve(ServerFinder.DEFAULT_JAR)));
         assertTrue(downloads.wasRequested(URL_130));
     }

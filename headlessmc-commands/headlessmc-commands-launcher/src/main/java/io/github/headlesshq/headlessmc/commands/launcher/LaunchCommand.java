@@ -5,26 +5,22 @@ import io.github.headlesshq.headlessmc.auth.AuthService;
 import io.github.headlesshq.headlessmc.auth.LastUsedAccountService;
 import io.github.headlesshq.headlessmc.commands.profile.AbstractClientAndServerLaunchCommand;
 import io.github.headlesshq.headlessmc.commands.profile.XvfbService;
-import io.github.headlesshq.headlessmc.commands.util.ProfileVersionJsonCompletions;
-import io.github.headlesshq.headlessmc.commands.util.VersionArgCommand;
+import io.github.headlesshq.headlessmc.commands.util.LaunchTargetCommand;
+import io.github.headlesshq.headlessmc.commands.util.LaunchTargetCompletions;
 import io.github.headlesshq.headlessmc.console.ArgSplitter;
 import io.github.headlesshq.headlessmc.console.Console;
-import io.github.headlesshq.headlessmc.files.McFiles;
+import io.github.headlesshq.headlessmc.files.FileService;
+import io.github.headlesshq.headlessmc.files.McFilesService;
 import io.github.headlesshq.headlessmc.launcher.LifecycleService;
 import io.github.headlesshq.headlessmc.launcher.client.ClientLauncher;
+import io.github.headlesshq.headlessmc.launcher.client.PackwizLaunchTarget;
+import io.github.headlesshq.headlessmc.launcher.profile.LaunchTargetService;
 import io.github.headlesshq.headlessmc.launcher.profile.Profile;
 import io.github.headlesshq.headlessmc.launcher.profile.ProfileResolver;
-import io.github.headlesshq.headlessmc.launcher.profile.ProfileService;
 import io.github.headlesshq.headlessmc.launcher.server.ServerLauncher;
 import io.github.headlesshq.headlessmc.launcher.server.ServerService;
-import io.github.headlesshq.headlessmc.mods.packwiz.PackwizService;
-import io.github.headlesshq.headlessmc.platform.Platform;
 import io.github.headlesshq.headlessmc.platform.PlatformService;
-import io.github.headlesshq.headlessmc.platform.VersionID;
-import io.github.headlesshq.headlessmc.version.Version;
 import io.github.headlesshq.headlessmc.version.arg.Side;
-import io.github.headlesshq.headlessmc.version.arg.VersionArg;
-import io.github.headlesshq.headlessmc.version.service.VersionJsonService;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -33,16 +29,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+/**
+ * Launches a stored profile by its name, or anything a launch target can launch:
+ * <pre>
+ * launch main                          the profile named main
+ * launch fabric 1.21.1                 a version
+ * launch server paper 1.21.1           a server
+ * launch ~/versions/pack/pack.json     a version.json file
+ * launch --target jar ./tool.jar       a jar, naming the launch target explicitly
+ * </pre>
+ * A single argument that is the name of a stored profile always launches that profile.
+ * Everything else is given to the launch targets, see {@link ProfileResolver}: if a profile for exactly these
+ * arguments is stored it is used, otherwise a profile is created for this launch only.
+ */
 @Slf4j
 @Getter
 @Setter
@@ -53,24 +55,20 @@ import java.util.stream.Collectors;
     version = HeadlessMc.VERSION,
     mixinStandardHelpOptions = true
 )
-public class LaunchCommand extends AbstractClientAndServerLaunchCommand implements VersionArgCommand {
-    private static final String PACK_TOML = "pack.toml";
-
-    private final PackwizService packwizService;
-    private final ProfileService profileService;
-    private final VersionJsonService versionJsonService;
-
+public class LaunchCommand extends AbstractClientAndServerLaunchCommand implements LaunchTargetCommand {
     @CommandLine.Option(
         names = {"--packwiz"},
-        description = "Path to a pack.toml packwiz modpack file, or a directory containing one, to launch."
+        description = "Path to a pack.toml packwiz modpack file, or a directory containing one, to launch. "
+            + "The same as '--target packwiz <path>': the pack decides which version is launched, "
+            + "the other arguments are not a profile or a version then, but [client|server] [loader] of the pack."
     )
     private @Nullable String packwiz;
 
     @CommandLine.Parameters(
-        description = "The profile/server/version to launch",
+        description = "The profile to launch, or what to launch, e.g. 'fabric 1.21.1'.",
         paramLabel = "profile",
         arity = "0..*",
-        completionCandidates = ProfileVersionJsonCompletions.class
+        completionCandidates = LaunchTargetCompletions.class
     )
     private List<String> versionArg = new ArrayList<>();
 
@@ -84,13 +82,12 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
         ClientLauncher clientLauncher,
         ArgSplitter splitter,
         Console console,
-        McFiles mcFiles,
+        LaunchTargetService launchTargetService,
+        McFilesService mcFilesService,
+        FileService fileService,
         LastUsedAccountService lastUsedAccountService,
         XvfbService xvfbService,
-        AuthService authService,
-        PackwizService packwizService,
-        ProfileService profileService,
-        VersionJsonService versionJsonService
+        AuthService authService
     ) {
         super(
             lifecycleService,
@@ -101,131 +98,52 @@ public class LaunchCommand extends AbstractClientAndServerLaunchCommand implemen
             clientLauncher,
             splitter,
             console,
-            mcFiles,
+            launchTargetService,
+            mcFilesService,
+            fileService,
             lastUsedAccountService,
             xvfbService,
             authService
         );
-        this.packwizService = packwizService;
-        this.profileService = profileService;
-        this.versionJsonService = versionJsonService;
     }
 
     @Override
     public Profile getProfile() {
         String packwiz = this.packwiz;
         if (packwiz != null) {
-            Path packwizFile = Paths.get(packwiz);
-            if (Files.isDirectory(packwizFile)) {
-                packwizFile = packwizFile.resolve(PACK_TOML);
+            if (getTarget() != null && !PackwizLaunchTarget.NAME.equalsIgnoreCase(getTarget())) {
+                throw new IllegalArgumentException("--packwiz cannot be combined with --target " + getTarget());
             }
 
-            return getPackwizProfile(packwizFile, packwiz)
-                .withPath(Objects.requireNonNull(
-                    packwizFile.toAbsolutePath().getParent(),
-                    "Failed to get directory of " + packwizFile
-                ));
+            List<String> args = new ArrayList<>(versionArg.size() + 1);
+            args.add(packwiz);
+            args.addAll(versionArg);
+            try {
+                return getProfileResolver().resolve(PackwizLaunchTarget.NAME, args, Side.BOTH, getTargetOptions());
+            } catch (IllegalArgumentException e) {
+                if (versionArg.isEmpty()) {
+                    throw e;
+                }
+
+                // without --packwiz these arguments would be a profile or a version, say why they are not now
+                throw new IllegalArgumentException(
+                    "Because of --packwiz, '" + String.join(" ", versionArg) + "' is not read as a profile or a "
+                        + "version: the pack decides what is launched, and the arguments only say how, "
+                        + "--packwiz <pack.toml | directory> [client|server] [loader]. " + e.getMessage(), e
+                );
+            }
         }
 
         if (versionArg.isEmpty()) {
             throw new IllegalArgumentException("Specify version to launch.");
         }
 
-        if (getVersionJson().isPresent()) {
-            return profileService.getProfile(VersionArg.builder().version(versionArg.getFirst()).build());
-        }
-
-        return getProfileResolver().resolve(versionArg, Side.BOTH);
+        return getProfileResolver().resolve(getTarget(), versionArg, Side.BOTH, getTargetOptions());
     }
 
-    /**
-     * A single argument that does not name a profile, but an installed version.json,
-     * launches that version.json, even if its name is not a valid version, e.g. a version
-     * installed by another launcher under a custom name.
-     */
     @Override
-    protected Optional<Version> getVersionJson() {
-        if (packwiz != null || versionArg.size() != 1) {
-            return Optional.empty();
-        }
-
-        String name = versionArg.getFirst();
-        if (profileService.getProfile(name).isPresent()) {
-            return Optional.empty();
-        }
-
-        return versionJsonService.tryGetVersion(name);
-    }
-
-    private Profile getPackwizProfile(Path packwizFile, String packwiz) {
-        List<VersionID> ids = packwizService.parsePackwizTomlFile(packwizFile);
-        if (versionArg.isEmpty()) {
-            if (ids.size() > 1) {
-                throw new IllegalArgumentException(
-                    "Please specify which side (server/client) and loader ("
-                        + ids.stream()
-                        .map(VersionID::getPlatform)
-                        .map(Platform::getName)
-                        .collect(Collectors.joining(", "))
-                        + ") to use (launch --packwiz " + packwiz.replace(" ", "\\ ") + " <side> <loader>"
-                );
-            }
-
-            throw new IllegalArgumentException(
-                "Please specify which side (server/client)  to use (launch --packwiz "
-                    + packwiz.replace(" ", "\\ ") + " <side>"
-            );
-        }
-
-        if (versionArg.size() == 1) {
-            Profile profile = profileService.getProfile(versionArg.getFirst()).orElse(null);
-            if (profile != null) {
-                return profile;
-            }
-
-            Side side = Side.valueOf(versionArg.getFirst().toUpperCase(Locale.ENGLISH));
-            if (ids.size() > 1) {
-                throw new IllegalArgumentException(
-                    "Please specify the loader to use ("
-                        + ids.stream()
-                        .map(VersionID::getPlatform)
-                        .map(Platform::getName)
-                        .collect(Collectors.joining(", "))
-                        + ")"
-                );
-            }
-
-            return getProfileService().getProfile(ids.getFirst().asArg().withSide(side));
-        }
-
-        if (versionArg.size() == 2) {
-            if (getPlatformService().getPlatform(versionArg.getFirst()).isPresent()) {
-                // fabric/26.3, side client is implicit
-                return getProfileResolver().resolve(versionArg, Side.BOTH);
-            }
-
-            Side side = Side.valueOf(versionArg.getFirst().toUpperCase(Locale.ENGLISH));
-            List<VersionID> filteredIds = ids.stream()
-                .filter(id -> id.getPlatform().getName().equalsIgnoreCase(versionArg.get(1)))
-                .toList();
-            if (filteredIds.isEmpty()) {
-                throw new IllegalArgumentException(
-                    "Failed to find loader " + versionArg.get(1) + ", available: "
-                        + ids.stream()
-                        .map(VersionID::getPlatform)
-                        .map(Platform::getName)
-                        .collect(Collectors.joining(", "))
-                );
-            } else if (filteredIds.size() > 1) {
-                throw new IllegalStateException(
-                    "Multiple ids with loader " + versionArg.get(1) + ": " + filteredIds
-                );
-            }
-
-            return getProfileService().getProfile(filteredIds.getFirst().asArg().withSide(side));
-        }
-
-        return getProfileResolver().resolve(versionArg, Side.BOTH);
+    public @Nullable List<String> getTargetArgs() {
+        return versionArg;
     }
 
 }
