@@ -5,7 +5,9 @@
     'config:best-practices',
   ],
   timezone: 'UTC',
-  dependencyDashboard: true,
+  dependencyDashboard: {
+    enabled: true,
+  },
   platformCommit: 'enabled',
   prCreation: 'not-pending',
   automergeStrategy: 'squash',
@@ -13,7 +15,6 @@
     'prIgnoreNotification',
   ],
   rebaseWhen: 'conflicted',
-  // the lifecycle workflow pushes updated fabric and headlessmc-lwjgl lock files to renovate branches
   gitIgnoredAuthors: [
     '41898282+github-actions[bot]@users.noreply.github.com',
   ],
@@ -26,13 +27,11 @@
     'devcontainer',
     'custom.regex',
   ],
-  // the nix manager is in beta and disabled by default
   nix: {
     enabled: true,
   },
   customManagers: [
     {
-      // the headlessmc-lwjgl release the lwjgl patcher downloads, CI regenerates its lock file on renovate PRs
       customType: 'regex',
       managerFilePatterns: [
         '/headlessmc-patcher-lwjgl-patched/build\\.gradle$/',
@@ -44,7 +43,6 @@
   ],
   packageRules: [
     {
-      // dependency updates affect the released artifacts, so they should trigger a release
       matchManagers: [
         'gradle',
       ],
@@ -66,9 +64,6 @@
       semanticCommitScope: 'deps',
     },
     {
-      // The flake inputs are updated together once a month. They also change the Nix package
-      // (gradle_9, JDK, GraalVM of nixpkgs), but not the released artifacts, so they must not trigger
-      // a release. nix.yml regenerates packaging/nix/deps.json on these PRs if the resolved artifacts change.
       matchManagers: [
         'nix',
       ],
@@ -81,7 +76,6 @@
       semanticCommitScope: 'deps',
     },
     {
-      // the devcontainer only affects development, so its updates must not trigger a release
       matchManagers: [
         'dockerfile',
         'devcontainer',
