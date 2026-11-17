@@ -628,7 +628,7 @@ jobs:
         run: cp hmc/headlessmc-application/build/quarkus-build/gen/headlessmc.jar headlessmc.jar
 
       - name: Run the MC client
-        uses: headlesshq/mc-runtime-test@3f8fc231df78877f00198c461a52ff23d5d889c8 # main
+        uses: headlesshq/mc-runtime-test@e19a4c03ea63812a88e0aa8c0dade23545031fa3 # main
         with:
           mc: ${{ matrix.version.mc }}
           modloader: ${{ matrix.version.modloader }}
