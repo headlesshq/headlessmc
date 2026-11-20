@@ -1,6 +1,7 @@
 # Launching
 
-Once started, HeadlessMc will start a shell and wait for your command input.
+Once started, e.g. via `> headlessmc` in your terminal,
+HeadlessMc will start a shell and wait for your command input.
 You can try this out by typing `help` and pressing Enter,
 to get a list of all available commands.
 By default, [JLine](https://jline.org/) is enabled,

@@ -16,4 +16,4 @@ It can manage clients, servers and mods.
 It can run the client in headless mode, without a Screen, controlled by the command line.
 This e.g. can allow you to test the game in your CI/CD pipeline with [mc-runtime-test](https://github.com/headlesshq/mc-runtime-test).
 
-If you are ready, read [Getting Started](getting-started.md).
+For installation instructions, continue to [Getting Started](getting-started.md).
