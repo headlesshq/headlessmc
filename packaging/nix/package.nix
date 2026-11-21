@@ -60,7 +60,7 @@ stdenv.mkDerivation (finalAttrs: {
   pname = if native then "headlessmc-native" else "headlessmc";
 
   # x-release-please-start-version
-  version = "3.0.0-RC9";
+  version = "3.0.0-RC10";
   # x-release-please-end
 
   # Without flakes the source is the working directory, which may contain build outputs and run directories.
