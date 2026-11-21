@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.0-RC10](https://github.com/headlesshq/headlessmc/compare/3.0.0-RC9...3.0.0-RC10) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ci:** publish to maven central from a re-runnable workflow ([fd8c6e7](https://github.com/headlesshq/headlessmc/commit/fd8c6e795006dfa2f349da8ea56bc725b4933ed9))
+
 ## [3.0.0-RC9](https://github.com/headlesshq/headlessmc/compare/3.0.0-RC8...3.0.0-RC9) (2026-11-16)
 
 
