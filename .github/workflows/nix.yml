@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32.0.0
       # fails if deps.json is stale
       - run: nix build .#headlessmc --print-build-logs
       - run: ./result/bin/headlessmc --help
@@ -76,7 +76,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.FABRIC_LOCK_TOKEN || secrets.GITHUB_TOKEN }}
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32.0.0
       # USE_BWRAP=0: the update script's bubblewrap sandbox needs unprivileged user namespaces,
       # which Ubuntu's AppArmor restricts on the runners
       - name: Update deps.json
