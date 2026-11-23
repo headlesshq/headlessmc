@@ -236,7 +236,7 @@ public abstract class AbstractClientAndServerLaunchCommand extends AbstractServe
                 return account.get();
             }
 
-            return authService.refresh(account.get());
+            return authService.refreshIfNeeded(account.get());
         } else if (offline) {
             return Account.defaultOfflineAccount();
         }

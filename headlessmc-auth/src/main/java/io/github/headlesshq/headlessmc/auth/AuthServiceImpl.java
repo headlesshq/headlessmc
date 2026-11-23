@@ -25,8 +25,16 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Account refresh(Account account) {
+        return providerOf(account).refresh(account);
+    }
+
+    @Override
+    public Account refreshIfNeeded(Account account) {
+        return providerOf(account).refreshIfNeeded(account);
+    }
+
+    private AuthProvider providerOf(Account account) {
         return getProvider(account.getProvider())
-            .map(provider -> provider.refresh(account))
             .orElseThrow(() -> new AuthException(String.format(
                 "Failed to find provider %s, available: %s",
                 account.getProvider(),

@@ -23,8 +23,20 @@ public class AuthServiceImplTest {
     }
 
     @Test
+    public void refreshIfNeededDelegatesToMatchingProvider() {
+        Account account = account("msa", "Alex");
+        assertEquals(account, service.refreshIfNeeded(account));
+        assertEquals(account, msa.refreshedIfNeeded);
+        assertNull(msa.refreshed);
+        assertNull(offline.refreshedIfNeeded);
+    }
+
+    @Test
     public void refreshThrowsForUnknownProvider() {
         AuthException e = assertThrows(AuthException.class, () -> service.refresh(account("unknown", "Steve")));
+        assertTrue(e.getMessage().contains("offline,msa"));
+
+        e = assertThrows(AuthException.class, () -> service.refreshIfNeeded(account("unknown", "Steve")));
         assertTrue(e.getMessage().contains("offline,msa"));
     }
 

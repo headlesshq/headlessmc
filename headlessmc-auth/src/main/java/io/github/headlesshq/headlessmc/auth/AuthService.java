@@ -4,7 +4,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AuthService {
+    /**
+     * @see AuthProvider#refresh(Account)
+     */
     Account refresh(Account account);
+
+    /**
+     * @see AuthProvider#refreshIfNeeded(Account)
+     */
+    Account refreshIfNeeded(Account account);
 
     List<Account> getAccounts();
 

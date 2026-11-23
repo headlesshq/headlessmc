@@ -11,6 +11,7 @@ final class FakeAuthProvider implements AuthProvider {
     boolean failOnGetAccount;
     boolean enabled = true;
     Account refreshed;
+    Account refreshedIfNeeded;
 
     FakeAuthProvider(String name, Account... accounts) {
         this.name = name;
@@ -24,6 +25,12 @@ final class FakeAuthProvider implements AuthProvider {
     @Override
     public Account refresh(Account account) throws AuthException {
         refreshed = account;
+        return account;
+    }
+
+    @Override
+    public Account refreshIfNeeded(Account account) throws AuthException {
+        refreshedIfNeeded = account;
         return account;
     }
 

@@ -8,7 +8,27 @@ public interface AuthProvider {
     String DEFAULT = "default";
     String YGGDRASIL = "yggdrasil";
 
+    /**
+     * Refreshes the session of the given account, even if it is still valid.
+     *
+     * @param account the account to refresh.
+     * @return the refreshed account.
+     * @throws AuthException if the account could not be refreshed.
+     */
     Account refresh(Account account) throws AuthException;
+
+    /**
+     * Makes sure that the given account can be used, e.g. to launch the game.
+     * In contrast to {@link #refresh(Account)} a provider may skip the refresh
+     * if it knows that the session of the account is going to be valid for long enough.
+     *
+     * @param account the account to refresh.
+     * @return the account, refreshed if that was necessary.
+     * @throws AuthException if the account could not be refreshed.
+     */
+    default Account refreshIfNeeded(Account account) throws AuthException {
+        return refresh(account);
+    }
 
     Optional<Account> getAccount(String name) throws AuthException;
 

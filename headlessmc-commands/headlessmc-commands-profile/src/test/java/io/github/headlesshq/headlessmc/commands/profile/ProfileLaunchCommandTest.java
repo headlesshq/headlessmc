@@ -111,7 +111,7 @@ class ProfileLaunchCommandTest {
 
         Mockito.when(launches.client(Mockito.any(), Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
         Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.of(account));
-        Mockito.when(authService.refresh(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(authService.refreshIfNeeded(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
         Mockito.when(launches.server(Mockito.any())).thenAnswer(ProfileLaunchCommandTest::launched);
         Mockito.when(serverService.save(Mockito.any())).thenAnswer(invocation -> profileService.save(invocation.getArgument(0)));
         Mockito.when(serverLauncher.getEulaLauncher()).thenReturn(eulaLauncher);
@@ -428,7 +428,7 @@ class ProfileLaunchCommandTest {
     void clientsLaunchWithTheRefreshedLastUsedAccount() {
         client("main");
         Account refreshed = new Account("microsoft", "player", "uuid", "refreshed", Account.TYPE_MSA, "xuid");
-        Mockito.when(authService.refresh(account)).thenReturn(refreshed);
+        Mockito.when(authService.refreshIfNeeded(account)).thenReturn(refreshed);
 
         assertThrows(Launched.class, command("main")::call);
 
@@ -453,7 +453,7 @@ class ProfileLaunchCommandTest {
         assertThrows(Launched.class, command::call);
 
         Mockito.verify(launches).client(Mockito.any(), Mockito.eq(account));
-        Mockito.verify(authService, Mockito.never()).refresh(Mockito.any());
+        Mockito.verify(authService, Mockito.never()).refreshIfNeeded(Mockito.any());
     }
 
     @Test
