@@ -196,12 +196,13 @@ Below are in-depth instructions for each type of shell:
 &nbsp;  
 &nbsp;  
 Below are installation instructions for the platforms:
-- Linux 
-- MacOS
-- Windows
-- Java
-- Docker
-- Android
+
+- [Linux](#linux) 
+- [MacOS](#macos)
+- [Windows](#windows)
+- [Java](#java)
+- [Docker](#docker)
+- [Android](#android)
 
 ## Linux
 
