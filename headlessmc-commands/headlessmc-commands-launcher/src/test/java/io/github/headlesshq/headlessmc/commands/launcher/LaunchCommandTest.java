@@ -166,7 +166,7 @@ class LaunchCommandTest {
     @BeforeEach
     void setup() {
         Mockito.when(lastUsedAccountService.getLastUsedAccount()).thenReturn(Optional.of(account));
-        Mockito.when(authService.refresh(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(authService.refreshIfNeeded(Mockito.any())).thenAnswer(invocation -> invocation.getArgument(0));
         // a version.json that is launched directly, the launcher reports it instead of launching it
         Mockito.when(clientLauncher.launcher(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
             .thenAnswer(invocation -> {
@@ -738,7 +738,7 @@ class LaunchCommandTest {
         assertEquals(List.of(account), clientTarget.accounts);
         Mockito.verify(lifecycleService, Mockito.never()).wrap(Mockito.any(), Mockito.anyInt());
         Mockito.verify(lifecycleService, Mockito.never()).beforeLaunch(Mockito.any(), Mockito.anyBoolean());
-        Mockito.verify(authService, Mockito.never()).refresh(Mockito.any());
+        Mockito.verify(authService, Mockito.never()).refreshIfNeeded(Mockito.any());
         // a dry run installs, so what has been resolved is saved
         assertNotNull(((VersionHandle) profileService.getProfile("main").orElseThrow().target().data()).currentTarget());
     }

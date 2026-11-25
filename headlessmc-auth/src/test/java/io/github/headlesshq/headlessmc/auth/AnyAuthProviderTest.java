@@ -56,6 +56,10 @@ public class AnyAuthProviderTest {
     public void refreshAndAuthenticatorDelegate() {
         Account alex = account("msa", "Alex");
         assertEquals(alex, any.refresh(alex));
+        assertEquals(alex, msa.refreshed);
+        assertNull(msa.refreshedIfNeeded);
+        assertEquals(alex, any.refreshIfNeeded(alex));
+        assertEquals(alex, msa.refreshedIfNeeded);
         assertNotNull(any.getAuthenticator());
         assertEquals("any", any.getName());
         assertEquals(0, any.getVersion());

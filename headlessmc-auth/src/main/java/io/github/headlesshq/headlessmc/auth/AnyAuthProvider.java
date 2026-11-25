@@ -17,6 +17,11 @@ public class AnyAuthProvider implements AuthProvider {
     }
 
     @Override
+    public Account refreshIfNeeded(Account account) throws AuthException {
+        return authService.refreshIfNeeded(account);
+    }
+
+    @Override
     public Optional<Account> getAccount(String name) throws AuthException {
         List<Account> result = new ArrayList<>();
         for (AuthProvider provider : authService.getProviders()) {
